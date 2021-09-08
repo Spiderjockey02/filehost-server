@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <p>This will show all available files/folders</p>
+    <% files.children.forEach(file => { %>
+      <p><%= file.name %> Size: <%= file.size %> bytes</p>
+    <% }) %>
+  </body>
+</html>
