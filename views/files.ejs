@@ -1,13 +1,39 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
   </head>
   <body>
-    <p>This will show all available files/folders</p>
-    <% files.children.forEach(file => { %>
-      <p><%= file.name %> Size: <%= file.size %> bytes</p>
-    <% }) %>
+    <div class="container">
+      <div class="row">
+        <div class="col-2 col-md-2" style="color: black;">
+        </div>
+        <div class="col-8 col-md-8">
+          <h4>Index of Home:<%= path%></h4>
+          <a href="/files?path=<%= path == '/' ? '' :  path.split('/').slice(0, path.split('/').length -1).join('/') %>"><i class="fas fa-folder"></i>Back</a>
+          <% files.children.filter(item => item.type == 'directory').forEach(file => { %>
+            <a href="/files?path=<%= (path.endsWith('/') ? path : `${path}/`)%><%= file.name%>"><i class="fas fa-folder"></i><%= file.name %></a>
+          <% }) %>
+
+          <% files.children.filter(item => item.type == 'file').forEach(file => { %>
+            <div class="card" style="width: 18rem;">
+              <img class="card-img-top" src="" alt="Card image cap">
+              <div class="card-body">
+                <h5 class="card-title"><%= file.name %></h5>
+                <p class="card-text">Size: <%= formatBytes(file.size) %>.</p>
+                <a href="/files<%= (path.endsWith('/') ? path : `${path}/`) %><%= file.name %>" class="btn btn-primary">Go somewhere</a>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+        <div class="col-2 col-md-2" style="color: black;">
+        </div>
+      </div>
+    </div>
   </body>
 </html>

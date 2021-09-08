@@ -1,7 +1,7 @@
 {
   "name": "CDN",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "src/index.js",
   "engines": {
     "node": "14.x"
   },
