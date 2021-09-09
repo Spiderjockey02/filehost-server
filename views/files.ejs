@@ -17,18 +17,28 @@
         <div class="col-8 col-md-8">
           <div class="container">
           <h4>Index of Home:<%= path%></h4>
-          <label for="cars">Filter by:</label>
-          <select name="cars" id="cars">
-            <option value="volvo">Name</option>
-            <option value="saab">Size</option>
-            <option value="opel">File type</option>
+          <label>Filter by:</label>
+          <select id="filter_type" name="filter_type" onchange="filterChange()">
+            <option value="name" <% if (!filter || filter == 'name') {%> selected  <% } %> >Name</option>
+            <option value="size" <% if (filter == 'size') {%> selected  <% } %> >Size</option>
+            <option value="file_type" <% if (filter == 'file_type') {%> selected  <% } %> >File type</option>
           </select>
           <a href="/files?path=<%= path == '/' ? '' :  path.split('/').slice(0, path.split('/').length -1).join('/') %>"><i class="fas fa-folder"></i>Back</a>
-          <% files.children.filter(item => item.type == 'directory').forEach(file => { %>
+          <% const directories = files.children.filter(item => item.type == 'directory').sort((a, b) => { %>
+            <% if (!filter || filter == 'name') return a.name - b.name %>
+            <% if (filter == 'size') return a.size - b.size %>
+            <% if (filter == 'file_type') return a.extension - b.extension %>
+          <% }) %>
+          <% directories.forEach(file => { %>
             <a href="/files?path=<%= (path.endsWith('/') ? path : `${path}/`)%><%= file.name%>"><i class="fas fa-folder"></i><%= file.name %></a>
           <% }) %>
           <div class="row">
-          <% files.children.filter(item => item.type == 'file').forEach(file => { %>
+            <% const fileList = files.children.filter(item => item.type == 'file').sort((a, b) => { %>
+              <% if (!filter || filter == 'name') return a.name - b.name %>
+              <% if (filter == 'size') return a.size - b.size %>
+              <% if (filter == 'file_type') return a.extension - b.extension %>
+            <% }) %>
+          <% fileList.forEach(file => { %>
             <div class="col-4 col-md-4" style="padding-bottom:10px">
             <div class="card" style="width: 18rem;">
               <% if (['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(file.extension)) { %>
@@ -56,6 +66,14 @@
       img.loading = 'eager';
     }
   });
+
+  function filterChange() {
+    var x = document.getElementById("filter_type").value;
+    console.log(window.location)
+    console.log(window.location.href.replace(`?filter=${this.filter}`, `?filter=${x}`))
+    window.location.search = `?filter=${x}`
+    console.log(x)
+  }
   </script>
   <style>
   .separator {

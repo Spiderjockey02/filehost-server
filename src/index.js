@@ -23,7 +23,7 @@ app
 		contentSecurityPolicy: {
 			directives: {
 				defaultSrc: ['\'self\''],
-				'script-src': ['\'self\'', 'https://kit.fontawesome.com', 'https://cdn.jsdelivr.net'],
+				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', 'https://cdn.jsdelivr.net'],
 				'style-src': ['\'unsafe-inline\'', 'https://cdn.jsdelivr.net'],
 				'connect-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com/', 'https://cdn.jsdelivr.net'],
 				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com'],

@@ -16,6 +16,7 @@ router.get('/', (req, res) => {
 		.render('files', {
 			files: dirTree(location + path),
 			path: path,
+			filter: req.query.filter,
 			formatBytes: function formatBytes(bytes, decimals = 2) {
 				if (bytes === 0) return '0 Bytes';
 				const k = 1024,
