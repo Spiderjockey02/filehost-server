@@ -1,6 +1,6 @@
 const express = require('express'),
 	router = express.Router(),
-	dirTree = require('directory-tree'),
+	dirTree = require('../directory'),
 	fresh = require('fresh');
 
 const location = process.cwd() + '/src/files';
@@ -8,8 +8,8 @@ const location = process.cwd() + '/src/files';
 // Show file explorer
 router.get('/', (req, res) => {
 	const path = req.query.path ?? '/';
-	console.log(location + path);
-	console.log(dirTree(location + path));
+	// console.log(location + path);
+	// console.log(dirTree(location + path));
 	// console.log(path);
 	res
 		.status(200)

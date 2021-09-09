@@ -2,9 +2,9 @@
 const express = require('express'),
 	cors = require('cors'),
 	app = express(),
-	port = 1111,
 	helmet = require('helmet'),
 	favicon = require('serve-favicon'),
+	config = require('./config.js'),
 	compression = require('compression');
 
 const corsOpt = {
@@ -23,10 +23,11 @@ app
 		contentSecurityPolicy: {
 			directives: {
 				defaultSrc: ['\'self\''],
-				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', 'https://cdn.jsdelivr.net'],
+				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', 'https://cdn.jsdelivr.net', 'https://ajax.googleapis.com'],
 				'style-src': ['\'unsafe-inline\'', 'https://cdn.jsdelivr.net'],
 				'connect-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com/', 'https://cdn.jsdelivr.net'],
 				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com'],
+				'img-src': ['\'unsafe-inline\'', 'https://www.freeiconspng.com', config.domain],
 			},
 		},
 	}))
@@ -40,8 +41,9 @@ app
 	})
 	.engine('html', require('ejs').renderFile)
 	.set('view engine', 'ejs')
+	.set('views', './src/views')
 	.use(favicon(assets + '/favicon.ico'))
 	.get('/robots.txt', (req, res) => res.sendFile(assets + '/robots.txt'))
 	.get('/', (req, res) => res.status(200).render('index'))
 	.use('/files', require('./router/files'))
-	.listen(port, () => console.log(`Started on PORT: ${port}`));
+	.listen(config.port, () => console.log(`Started on PORT: ${config.port}`));
