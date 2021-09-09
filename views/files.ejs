@@ -7,33 +7,68 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
     <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
+    <title>File directory</title>
   </head>
   <body>
-    <div class="container">
+    <div class="container-fluid">
       <div class="row">
         <div class="col-2 col-md-2" style="color: black;">
         </div>
         <div class="col-8 col-md-8">
+          <div class="container">
           <h4>Index of Home:<%= path%></h4>
+          <label for="cars">Filter by:</label>
+          <select name="cars" id="cars">
+            <option value="volvo">Name</option>
+            <option value="saab">Size</option>
+            <option value="opel">File type</option>
+          </select>
           <a href="/files?path=<%= path == '/' ? '' :  path.split('/').slice(0, path.split('/').length -1).join('/') %>"><i class="fas fa-folder"></i>Back</a>
           <% files.children.filter(item => item.type == 'directory').forEach(file => { %>
             <a href="/files?path=<%= (path.endsWith('/') ? path : `${path}/`)%><%= file.name%>"><i class="fas fa-folder"></i><%= file.name %></a>
           <% }) %>
-
+          <div class="row">
           <% files.children.filter(item => item.type == 'file').forEach(file => { %>
+            <div class="col-4 col-md-4" style="padding-bottom:10px">
             <div class="card" style="width: 18rem;">
-              <img class="card-img-top" src="" alt="Card image cap">
+              <% if (['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(file.extension)) { %>
+                <img loading="lazy" class="card-img-top" src="<%= decodeURI(`/files${(path.endsWith('/') ? path : `${path}/`)}${file.name}`) %>" alt="Image icon">
+              <% } %>
               <div class="card-body">
                 <h5 class="card-title"><%= file.name %></h5>
                 <p class="card-text">Size: <%= formatBytes(file.size) %>.</p>
-                <a href="/files<%= (path.endsWith('/') ? path : `${path}/`) %><%= file.name %>" class="btn btn-primary">Go somewhere</a>
+                <a href="<%= decodeURI(`/files${(path.endsWith('/') ? path : `${path}/`)}${file.name}`) %>" class="btn btn-primary">Access file</a>
               </div>
             </div>
+          </div>
           <% }) %>
+        </div>
+      </div>
         </div>
         <div class="col-2 col-md-2" style="color: black;">
         </div>
       </div>
     </div>
   </body>
+  <script>
+  document.getElementById('load-now').addEventListener('click', function(){
+    for (const img of document.getElementsByTagName('img')) {
+      img.loading = 'eager';
+    }
+  });
+  </script>
+  <style>
+  .separator {
+    height: 1px;
+    width: 1px;
+    border: 5px solid red;
+}
+img {
+    height: 340px;
+    border: 5px solid black;
+}
+  #load-now {
+  border: 5px solid black;
+  }
+  </style>
 </html>
