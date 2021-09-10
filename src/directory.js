@@ -87,10 +87,10 @@ function directoryTree(path, options, onEachFile, onEachDirectory, loops = 0) {
 
 		// Skip if it does not match the extension regex
 		if (options.extensions && !options.extensions.test(ext)) return null;
-
 		item.size = stats.size;
 		item.extension = ext;
 		item.type = constants.FILE;
+		item.modified = stats.mtime;
 		if (item.extension == '.url') {
 			item.url = fs.readFileSync(item.path, 'utf8').substring(24, fs.readFileSync(item.path, 'utf8').length - 4);
 		}

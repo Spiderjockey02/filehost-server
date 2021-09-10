@@ -1,17 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous"-->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
-    <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js" crossorigin="anonymous"></script>
-    <title>Test</title>
-  </head>
-  <body>
+<%- include('blocks/header') %>
     <div class="container-fluid">
       <div class="row">
         <div class="col-lg-2 col-md-2" style="color: black;">
@@ -19,6 +6,11 @@
         <div class="col-lg-8 col-md-8">
           <div class="container-fluid">
             <h4>Index of Home:<%= path%></h4>
+            <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
+              <input type="file" name="sampleFile" />
+              <input type="hidden" value=<%= path%>>
+              <input type='submit' value='Upload!' />
+            </form>
             <label>Filter by:</label>
             <select id="filter_type" name="filter_type" onchange="filterChange()">
               <option value="name" <% if (!filter || filter == 'name') {%> selected  <% } %> >Name</option>
@@ -42,9 +34,9 @@
             <% }) %>
             <% fileList.forEach(file => { %>
               <div class="col-xl-4 col-lg-6" style="padding-bottom:10px">
-                <div class="card" style="width: 18rem;height:400px">
+                <div class="card" style="width: 18rem;height:500px">
                   <% if (['.js', '.txt'].includes(file.extension)) { %>
-                    <img loading="lazy" class="card-img-top lozad" data-src="https://www.freeiconspng.com/thumbs/txt-file-icon/txt-file-free-icon-18-67kb-0.jpg">
+                    <img loading="lazy" class="card-img-top lozad" data-src="https://www.freeiconspng.com/thumbs/txt-file-icon/txt-file-free-icon-18-67kb-0.jpg" style="max-height:60%; width:auto">
                   <% }%>
                   <% if (['.png', '.jpg', '.jpeg', '.gif', '.webp', 'jfif'].includes(file.extension)) { %>
                     <img loading="lazy" class="card-img-top lozad" data-src="<%= decodeURI(`/files${(path.endsWith('/') ? path : `${path}/`)}${file.name}`) %>" alt="Image icon" style="max-height:60%; width:auto">
@@ -52,11 +44,13 @@
                   <div class="card-body">
                     <h5 class="card-title"><%= file.name %></h5>
                     <p class="card-text">Size: <%= formatBytes(file.size) %>.</p>
+                    <p class="card-text">Date modified: <%= file.modified.toDateString() %>.</p>
                     <% if (file.extension == '.url') { %>
                       <a href="<%= file.url %>" class="btn btn-primary">Access Link</a>
                     <% } else { %>
                       <a href="<%= decodeURI(`/files${(path.endsWith('/') ? path : `${path}/`)}${file.name}`) %>" class="btn btn-primary">Access file</a>
                     <% } %>
+                    <a href="" class="btn btn-danger">Delete</a>
                   </div>
                 </div>
               </div>
