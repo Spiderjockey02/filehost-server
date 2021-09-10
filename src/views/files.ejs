@@ -52,7 +52,11 @@
                   <div class="card-body">
                     <h5 class="card-title"><%= file.name %></h5>
                     <p class="card-text">Size: <%= formatBytes(file.size) %>.</p>
-                    <a href="<%= decodeURI(`/files${(path.endsWith('/') ? path : `${path}/`)}${file.name}`) %>" class="btn btn-primary">Access file</a>
+                    <% if (file.extension == '.url') { %>
+                      <a href="<%= file.url %>" class="btn btn-primary">Access Link</a>
+                    <% } else { %>
+                      <a href="<%= decodeURI(`/files${(path.endsWith('/') ? path : `${path}/`)}${file.name}`) %>" class="btn btn-primary">Access file</a>
+                    <% } %>
                   </div>
                 </div>
               </div>
@@ -67,15 +71,9 @@
   </body>
   <script>
   $(document).ready(function() {
-    // executes when HTML-Document is loaded and DOM is ready
-    const observer = lozad(); // lazy loads elements with default selector as '.lozad'
+    const observer = lozad();
     observer.observe();
   });
-  //document.getElementById('load-now').addEventListener('click', function() {
-    //for (const img of document.getElementsByTagName('img')) {
-      //img.loading = 'eager';
-    //}
-  //});
 
   function filterChange() {
     var x = document.getElementById("filter_type").value;

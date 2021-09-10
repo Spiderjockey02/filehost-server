@@ -1,20 +1,21 @@
-const FS = require('fs');
-const PATH = require('path');
-const constants = {
-	DIRECTORY: 'directory',
-	FILE: 'file',
-};
-
+const fs = require('fs'),
+	PATH = require('path'),
+	constants = {
+		DIRECTORY: 'directory',
+		FILE: 'file',
+	};
 
 function safeReadDirSync(path) {
 	let dirData = {};
 	try {
-		dirData = FS.readdirSync(path);
+		dirData = fs.readdirSync(path);
 	} catch(ex) {
 		if (ex.code == 'EACCES' || ex.code == 'EPERM') {
 			// User does not have permissions, ignore directory
 			return null;
-		} else {throw ex;}
+		} else {
+			throw ex;
+		}
 	}
 	return dirData;
 }
@@ -55,24 +56,24 @@ function directoryTree(path, options, onEachFile, onEachDirectory, loops = 0) {
 	let lstat;
 
 	try {
-		stats = FS.statSync(path);
-		lstat = FS.lstatSync(path);
-	} catch (e) { return null; }
+		stats = fs.statSync(path);
+		lstat = fs.lstatSync(path);
+	} catch (e) {
+		return null;
+	}
 
 	// Skip if it matches the exclude regex
 	if (options.exclude) {
 		const excludes = isRegExp(options.exclude) ? [options.exclude] : options.exclude;
-		if (excludes.some((exclusion) => exclusion.test(path))) {
-			return null;
-		}
+		if (excludes.some((exclusion) => exclusion.test(path))) return null;
 	}
 
 	if (lstat.isSymbolicLink()) {
 		item.isSymbolicLink = true;
 		// Skip if symbolic links should not be followed
-		if (options.followSymlinks === false) {return null;}
+		if (options.followSymlinks === false) return null;
 		// Initialize the symbolic links array to avoid infinite loops
-		if (!options.symlinks) {options = { ...options, symlinks: [] };}
+		if (!options.symlinks) options = { ...options, symlinks: [] };
 		// Skip if a cyclic symbolic link has been found
 		if (options.symlinks.find(ino => ino === lstat.ino)) {
 			return null;
@@ -82,15 +83,17 @@ function directoryTree(path, options, onEachFile, onEachDirectory, loops = 0) {
 	}
 
 	if (stats.isFile()) {
-
 		const ext = PATH.extname(path).toLowerCase();
 
 		// Skip if it does not match the extension regex
-		if (options.extensions && !options.extensions.test(ext)) {return null;}
+		if (options.extensions && !options.extensions.test(ext)) return null;
 
 		item.size = stats.size;
 		item.extension = ext;
 		item.type = constants.FILE;
+		if (item.extension == '.url') {
+			item.url = fs.readFileSync(item.path, 'utf8').substring(24, fs.readFileSync(item.path, 'utf8').length - 4);
+		}
 
 		if (options.attributes) {
 			options.attributes.forEach((attribute) => {

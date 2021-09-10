@@ -2,4 +2,4 @@
 // the link probably: websiteURL/files/example/test.js
 // and so on.
 
-eval(console.log('subfolder example'));
+console.log('subfolder example');
