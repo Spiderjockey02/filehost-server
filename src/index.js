@@ -52,7 +52,7 @@ app
 	.use(passport.session())
 	.use(function(req, res, next) {
 		if (req.originalUrl !== '/favicon.ico') {
-			console.log(`IP: ${(req.connection.remoteAddress == '::1') ? '127.0.0.1' : req.connection.remoteAddress.slice(7)} -> ${req.originalUrl}`);
+			require('./utils/logger').log(req, res);
 		}
 		next();
 	})

@@ -119,7 +119,7 @@ function directoryTree(path, options, onEachFile, onEachDirectory, loops = 0) {
 				.map(child => directoryTree(PATH.join(path, child), options, onEachFile, onEachDirectory, loops++))
 				.filter(e => !!e);
 		} else {
-			item.children;
+			item.children = [];
 		}
 
 		item.size = 0;

@@ -1,3 +1,4 @@
 node_modules
-/src/files/*.png
+/src/files/*
+!/src/files/example@example.com
 /src/config.js

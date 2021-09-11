@@ -8,11 +8,15 @@ router.get('/', (req, res) => {
 });
 
 router.get('/login', (req, res) => {
-	res.render('login');
+	res.render('login', {
+		auth: req.isAuthenticated(),
+	});
 });
 
 router.get('/signup', (req, res) => {
-	res.render('signup');
+	res.render('signup', {
+		auth: req.isAuthenticated(),
+	});
 });
 
 router.get('/robots.txt', (req, res) => {

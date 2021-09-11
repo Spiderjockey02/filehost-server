@@ -5,57 +5,30 @@
         </div>
         <div class="col-lg-8 col-md-8">
           <div class="container-fluid">
-            <h4>Index of Home:<%= path%></h4>
-            <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
-              <input type="file" name="sampleFile" />
-              <input type="hidden" value=<%= path%>>
-              <input type='submit' value='Upload!' />
-            </form>
-            <label>Filter by:</label>
-            <select id="filter_type" name="filter_type" onchange="filterChange()">
-              <option value="name" <% if (!filter || filter == 'name') {%> selected  <% } %> >Name</option>
-              <option value="size" <% if (filter == 'size') {%> selected  <% } %> >Size</option>
-              <option value="file_type" <% if (filter == 'file_type') {%> selected  <% } %> >File type</option>
-            </select>
-            <a href="/files?path=<%= path == '/' ? '' :  path.split('/').slice(0, path.split('/').length -1).join('/') %>"><i class="fas fa-folder"></i>Back</a>
-            <% const directories = files.children.filter(item => item.type == 'directory').sort((a, b) => { %>
-              <% if (!filter || filter == 'name') return a.name - b.name %>
-              <% if (filter == 'size') return a.size - b.size %>
-              <% if (filter == 'file_type') return a.extension - b.extension %>
-              <% }) %>
-            <% directories.forEach(file => { %>
-                <a href="/files?path=<%= (path.endsWith('/') ? path : `${path}/`)%><%= file.name%>"><i class="fas fa-folder"></i><%= file.name %></a>
-          <% }) %>
-          <div class="row">
-            <% const fileList = files.children.filter(item => item.type == 'file').sort((a, b) => { %>
-              <% if (!filter || filter == 'name') return a.name - b.name %>
-              <% if (filter == 'size') return a.size - b.size %>
-              <% if (filter == 'file_type') return a.extension - b.extension %>
-            <% }) %>
-            <% fileList.forEach(file => { %>
-              <div class="col-xl-4 col-lg-6" style="padding-bottom:10px">
-                <div class="card" style="width: 18rem;height:500px">
-                  <% if (['.js', '.txt'].includes(file.extension)) { %>
-                    <img loading="lazy" class="card-img-top lozad" data-src="https://www.freeiconspng.com/thumbs/txt-file-icon/txt-file-free-icon-18-67kb-0.jpg" style="max-height:60%; width:auto">
-                  <% }%>
-                  <% if (['.png', '.jpg', '.jpeg', '.gif', '.webp', 'jfif'].includes(file.extension)) { %>
-                    <img loading="lazy" class="card-img-top lozad" data-src="<%= decodeURI(`/files${(path.endsWith('/') ? path : `${path}/`)}${file.name}`) %>" alt="Image icon" style="max-height:60%; width:auto">
-                  <% } %>
-                  <div class="card-body">
-                    <h5 class="card-title"><%= file.name %></h5>
-                    <p class="card-text">Size: <%= formatBytes(file.size) %>.</p>
-                    <p class="card-text">Date modified: <%= file.modified.toDateString() %>.</p>
-                    <% if (file.extension == '.url') { %>
-                      <a href="<%= file.url %>" class="btn btn-primary">Access Link</a>
+            &nbsp;
+            <h4>My files</h4>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Size</th>
+                  <th scope="col">Date modified</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% for (const file of files.children) { %>
+                  <tr class="clickable-row" data-href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
+                    <th scope="row"><%= file.name %></th>
+                    <% if (file.type == 'directory') { %>
+                      <td><%= file.children?.length ?? 0 %> files</td>
                     <% } else { %>
-                      <a href="<%= decodeURI(`/files${(path.endsWith('/') ? path : `${path}/`)}${file.name}`) %>" class="btn btn-primary">Access file</a>
+                      <td><%= formatBytes(file.size) %></td>
                     <% } %>
-                    <a href="" class="btn btn-danger">Delete</a>
-                  </div>
-                </div>
-              </div>
-              <% }) %>
-            </div>
+                    <td><%= file.modified?.toDateString() %></td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="col-lg-2 col-md-2" style="color: black;">
@@ -69,6 +42,12 @@
     observer.observe();
   });
 
+  $(document).ready(function($) {
+    $(".clickable-row").click(function() {
+        window.location = $(this).data("href");
+    });
+  });
+
   function filterChange() {
     var x = document.getElementById("filter_type").value;
     console.log(window.location)
@@ -80,6 +59,9 @@
   <style>
     img {
       height: 340px;
+    }
+    tr:hover {
+      cursor:hover
     }
     #load-now {
       border: 5px solid black;

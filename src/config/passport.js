@@ -3,10 +3,10 @@ const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
 
 module.exports = function(passport) {
-	passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, done) => {
+	passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
 		try {
 			// Check database for that email
-			const user = User.findOne({ email: email });
+			const user = await User.findOne({ email: email });
 			if (!user) return done(null, false, { message:'email not registered' });
 
 			// Check if the password is correct
