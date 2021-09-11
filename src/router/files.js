@@ -10,11 +10,10 @@ const location = process.cwd() + '/src/files/';
 // Show file explorer
 router.get('/*', ensureAuthenticated, (req, res) => {
 	// Check if file path exists
-	const path = location + req.user.email + req.originalUrl.substring(6, req.originalUrl.length);
+	const path = decodeURI(location + req.user.email + req.originalUrl.substring(6, req.originalUrl.length));
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
 		const files = dirTree(path);
-		console.log(files);
 		if (files.type == 'file') {
 			// Read file from cached
 			if (isFresh(req, res)) {
@@ -23,7 +22,7 @@ router.get('/*', ensureAuthenticated, (req, res) => {
 			}
 
 			// new file
-			res.status(200).sendFile(path, (err) => {
+			res.status(200).sendFile(decodeURI(path), (err) => {
 				if (err) return res.status(404).end('content not found.');
 			});
 		} else {
@@ -53,19 +52,21 @@ router.get('/*', ensureAuthenticated, (req, res) => {
 
 
 // upload files to user's account
-router.post('/upload', ensureAuthenticated, (req, res, next) => {
-	console.log(req);
-	console.log(req.files);
-	console.log(req.query);
+router.post('/upload', ensureAuthenticated, (req, res) => {
 	if (!req.files || Object.keys(req.files).length === 0) {
 		return res.status(400).send('No files were uploaded.');
 	}
-	// The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-	const sampleFile = req.files.sampleFile;
 
-	sampleFile.mv(location + (req.query.path ?? '/') + sampleFile.name, function(err) {
+	// Find where to place the file
+	const sampleFile = req.files.sampleFile;
+	const path = req.body['path'];
+	const directPath = path.split('/').slice(2, path.length).join('/');
+	const newPath = location + req.user.email + '/' + directPath + '/' + sampleFile.name;
+
+	// save file
+	sampleFile.mv(newPath, function(err) {
 		if (err) return res.status(500).send(err);
-		next();
+		res.redirect('/files/' + directPath + '/');
 	});
 });
 

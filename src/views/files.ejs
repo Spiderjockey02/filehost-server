@@ -6,8 +6,25 @@
         <div class="col-lg-8 col-md-8">
           <div class="container-fluid">
             &nbsp;
-            <h4><a href="/files">My files</a><%- path == '/' ? '' : ` > ${path.split('/').slice(2, path.length).map(name => `<a href="/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}">${name}</a>`).join(' > ')}` %></h4>
-            <p><%= filter%></p>
+            <div class="row">
+              <div class="col-sm-10">
+                <h4><a href="/files">My files</a><%- path == '/' ? '' : ` > ${path.split('/').slice(2, path.length).map(name => `<a href="/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}">${name}</a>`).join(' > ')}` %></h4>
+              </div>
+              <div class="col-sm-2">
+                <div class="btn-group" style="float:right">
+                  <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Upload</button>
+                  <div class="dropdown-menu dropdown-menu-right">
+                    <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
+                      <button type="submit" style="visibility: hidden;" id="imagefile"></button>
+                      <input type="file" name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();">
+                      <input type="hidden" value="<%= path%>" name="path">
+                      <button class="dropdown-item disabled" type="button">Folders</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            &nbsp
             <table class="table" id="myTable">
               <thead>
                 <tr>
@@ -56,6 +73,7 @@
     $(".clickable-row").click(function() {
         window.location = $(this).data("href");
     });
+
   });
   </script>
   <style>
