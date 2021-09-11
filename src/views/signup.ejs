@@ -1,68 +1,46 @@
 <%- include('blocks/header') %>
 <div class="container">
   &nbsp;
+  <%if (typeof error != 'undefined') { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <strong>An error has occured!</strong> <%= error %>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+  <% } %>
   <div class="jumbotron text-center">
     <h2>Sign up</h2>
     <form action="/users/register" method="POST">
-<div>
-    <label for="name">Name</label>
-    <input
-      type="name"
-      name="name"
-      placeholder="Enter Name"
-      value="<%= typeof name != 'undefined' ? name : '' %>"
-    />
-
-</div>
-<div>
-    <label for="email">Email</label>
-    <input
-      type="email"
-      name="email"
-      placeholder="Enter Email"
-      value="<%= typeof email != 'undefined' ? email : '' %>"
-    />
-  </div>
-  <div >
-    <label for="password">Password</label>
-    <input
-      type="password"
-      name="password"
-      placeholder="Create Password"
-      value="<%= typeof password != 'undefined' ? password : '' %>"
-    />
-  </div>
-  <div >
-    <label for="password2">Confirm Password</label>
-    <input
-      type="password"
-      name="password2"
-      placeholder="Confirm Password"
-      value="<%= typeof password2 != 'undefined' ? password2 : '' %>"
-    />
-  </div>
-  <button type="submit" class="btn btn-primary btn-block">
-    Register
-  </button>
-</form>
-    <!--form action="/users/register" method="POST">
       <div class="form-group row">
-        <label for="staticEmail" class="col-sm-2 col-form-label">Email</label>
+        <label for="name" class="col-sm-2 col-form-label">Name</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" id="staticEmail" placeholder="email@example.com">
+          <input type="name" class="form-control" name="name" placeholder="Enter Name" value="<%= typeof name != 'undefined' ? name : '' %>"/>
         </div>
       </div>
       <div class="form-group row">
-        <label for="inputPassword" class="col-sm-2 col-form-label">Password</label>
+        <label for="email" class="col-sm-2 col-form-label">Email</label>
+        <div class="col-sm-10">
+          <input type="email" class="form-control" name="email" placeholder="Enter Email" value="<%= typeof email != 'undefined' ? email : '' %>"/>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="password" class="col-sm-2 col-form-label">Password</label>
         <div class="col-sm-10 input-group" id="show_hide_password">
-          <input type="password" class="form-control" id="inputPassword" placeholder="Password">
+          <input type="password" class="form-control" name="password" placeholder="Create Password" value="<%= typeof password != 'undefined' ? password : '' %>"/>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="password2" class="col-sm-2 col-form-label">Confirm Password</label>
+        <div class="col-sm-10 input-group" id="show_hide_password">
+          <input type="password" class="form-control" name="password2" placeholder="Confirm Password" value="<%= typeof password2 != 'undefined' ? password2 : '' %>"/>
           <div class="input-group-prepend">
             <div class="input-group-text"><a href=""><i class="fa fa-eye-slash" aria-hidden="true"></i></a></div>
           </div>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary btn-block">Register</button>
-    </form-->
+      <button type="submit" class="btn btn-primary btn-block" style="max-width:100px;float:right"> Register</button>
+    </form>
     <h5>or sign up via</h5>
     <a href="/auth/facebook" class="btn btn-primary"><span class="fa fa-facebook"></span> Facebook</a>
     <a href="/auth/twitter" class="btn btn-info"><span class="fa fa-twitter"></span> Twitter</a>

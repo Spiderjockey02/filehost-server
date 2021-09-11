@@ -7,25 +7,58 @@ const express = require('express'),
 
 // Register handle
 router.post('/login', (req, res, next) => {
-	passport.authenticate('local', {
-		successRedirect : '/files',
-		failureRedirect: '/login',
-		failureFlash : true,
+	passport.authenticate('local', function(err, user, info) {
+		// an error occured / unsuccessful log in
+		if (!user) {
+			return res.render('login', {
+				auth: req.isAuthenticated(),
+				error: info.message,
+			});
+		}
+
+		// User logged in
+		req.logIn(user, function(err) {
+			if (err) return next(err);
+			return res.redirect('/files');
+		});
 	})(req, res, next);
 });
 
 // register post handle
 router.post('/register', (req, res) => {
-	console.log(req.body);
+	let error;
 	const { name, email, password, password2 } = req.body;
-	const errors = [];
 	console.log(' Name ' + name + ' email :' + email + ' pass:' + password);
-	// validation passed
-	User.findOne({ email : email }).exec((err, user)=>{
+
+	// Check all fields were filled in
+	if (!name || !email || !password || !password2) {
+		error = 'Please fill in all fields!';
+	}
+	// check if passwords match
+	if (password !== password2) {
+		error = 'Passwords dont match!';
+	}
+
+	// check if password is more than 6 characters
+	if (password.length < 6) {
+		error = 'Password must be atleast 6 characters long!';
+	}
+
+	// If an error was found notify user
+	if (error) {
+		return res.render('signup', {
+			auth: req.isAuthenticated(),
+			error, name, email, password, password2 });
+	}
+
+	// Make sure email isn't already on the database
+	User.findOne({ email : email }).exec((err, user) => {
 		console.log(user);
-		if(user) {
-			errors.push({ msg: 'email already registered' });
-			res.render('signup', { errors, name, email, password, password2 });
+		if (user) {
+			error = 'Email is already registered!';
+			res.render('signup', {
+				auth: req.isAuthenticated(),
+				error, name, email, password, password2 });
 		} else {
 			const newUser = new User({
 				name : name,
