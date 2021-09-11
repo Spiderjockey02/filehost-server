@@ -11,18 +11,15 @@ const location = process.cwd() + '/src/files/';
 router.get('/*', ensureAuthenticated, (req, res) => {
 	// Check if file path exists
 	const path = location + req.user.email + req.originalUrl.substring(6, req.originalUrl.length);
-	console.log(path);
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
 		const files = dirTree(path);
 		console.log(files);
 		if (files.type == 'file') {
-			console.log('yes');
 			// Read file from cached
 			if (isFresh(req, res)) {
 				res.statusCode = 304;
-				res.end();
-				return;
+				return res.end();
 			}
 
 			// new file
@@ -50,8 +47,7 @@ router.get('/*', ensureAuthenticated, (req, res) => {
 				});
 		}
 	} else {
-		console.log('no');
-		res.send('no');
+		res.send('No files found');
 	}
 });
 

@@ -22,7 +22,9 @@ const corsOpt = {
 	optionsSuccessStatus: 204,
 };
 mongoose.connect(config.MongoDBURl, { useNewUrlParser: true, useUnifiedTopology : true })
-	.then(() => console.log('connected,,'));
+	.then(() => {
+		console.log('Connected to database');
+	});
 // normal configuration
 app
 	.use(helmet({

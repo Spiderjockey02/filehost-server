@@ -6,17 +6,30 @@
         <div class="col-lg-8 col-md-8">
           <div class="container-fluid">
             &nbsp;
-            <h4>My files</h4>
-            <table class="table">
+            <h4><a href="/files">My files</a><%- path == '/' ? '' : ` > ${path.split('/').slice(2, path.length).map(name => `<a href="/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}">${name}</a>`).join(' > ')}` %></h4>
+            <p><%= filter%></p>
+            <table class="table" id="myTable">
               <thead>
                 <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Size</th>
-                  <th scope="col">Date modified</th>
+                  <th scope="col" onclick="sortTable(0)">Name</th>
+                  <th scope="col" onclick="sortTable(1)">Size</th>
+                  <th scope="col" onclick="sortTable(2)">Date modified</th>
                 </tr>
               </thead>
               <tbody>
-                <% for (const file of files.children) { %>
+                <!--Show folders first-->
+                <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
+                  <tr class="clickable-row" data-href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
+                    <th scope="row"><%= file.name %></th>
+                    <% if (file.type == 'directory') { %>
+                      <td><%= file.children?.length ?? 0 %> files</td>
+                    <% } else { %>
+                      <td><%= formatBytes(file.size) %></td>
+                    <% } %>
+                    <td><%= file.modified?.toDateString() %></td>
+                  </tr>
+                <% } %>
+                <% for (const file of files.children.filter(file => file.type == 'file')) { %>
                   <tr class="clickable-row" data-href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
                     <th scope="row"><%= file.name %></th>
                     <% if (file.type == 'directory') { %>
@@ -37,34 +50,28 @@
     </div>
   </body>
   <script>
-  $(document).ready(function() {
+  $(document).ready(function($) {
     const observer = lozad();
     observer.observe();
-  });
-
-  $(document).ready(function($) {
     $(".clickable-row").click(function() {
         window.location = $(this).data("href");
     });
   });
-
-  function filterChange() {
-    var x = document.getElementById("filter_type").value;
-    console.log(window.location)
-    console.log(window.location.href.replace(`?filter=${this.filter}`, `?filter=${x}`))
-    const search = `?filter=${x}`
-    window.location.search = search
-  }
   </script>
   <style>
     img {
       height: 340px;
     }
-    tr:hover {
-      cursor:hover
+    .clickable-row:hover {
+      background: grey;
+      cursor: pointer;
     }
     #load-now {
       border: 5px solid black;
+    }
+    th:hover {
+      cursor: pointer;
+      background: grey;
     }
   </style>
 </html>
