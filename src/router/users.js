@@ -10,7 +10,7 @@ router.post('/login', (req, res, next) => {
 	passport.authenticate('local', function(err, user, info) {
 		// an error occured / unsuccessful log in
 		if (!user) {
-			return res.render('login', {
+			return res.render('user/login', {
 				auth: req.isAuthenticated(),
 				error: info.message,
 			});
@@ -46,7 +46,7 @@ router.post('/register', (req, res) => {
 
 	// If an error was found notify user
 	if (error) {
-		return res.render('signup', {
+		return res.render('user/signup', {
 			auth: req.isAuthenticated(),
 			error, name, email, password, password2 });
 	}

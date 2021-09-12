@@ -1,0 +1,137 @@
+<%- include('../blocks/header') %>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-2 col-md-2" style="color: black;">
+    </div>
+    <div class="col-lg-8 col-md-8">
+      <div class="container-fluid">
+        &nbsp;
+        <div class="row">
+          <div class="col-sm-10">
+            <h4><a href="/files">My files</a><%- path == '/' ? '' : ` > ${path.split('/').slice(2, path.length).map(name => `<a href="/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}">${name}</a>`).join(' > ')}` %></h4>
+          </div>
+          <div class="col-sm-2">
+            <div class="btn-group" style="float:right">
+              <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Upload</button>
+              <div class="dropdown-menu dropdown-menu-right">
+                <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
+                  <label class="dropdown-item" type="button" id="fileHover">
+                    Files<input type="file" hidden name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();" />
+                  </label>
+                  <input type="hidden" value="<%= path%>" name="path">
+                  <button class="dropdown-item disabled" type="button">Folders</button>
+                  <button type="submit" style="display:none;" id="imagefile"></button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        &nbsp
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col" onclick="sortTable(0)">Name<i class="fas fa-angle-down" style="float:right;"></i></th>
+              <th scope="col" onclick="sortTable(1)">Size<i class="fas fa-angle-down" style="float:right;"></i></th>
+              <th scope="col" onclick="sortTable(2)">Date modified<i class="fas fa-angle-down" style="float:right;"></i></th>
+            </tr>
+          </thead>
+          <tbody id="myTable">
+            <!--Show folders first-->
+            <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
+              <tr class="clickable-row" data-href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
+                <th scope="row"><%= file.name %></th>
+                <% if (file.type == 'directory') { %>
+                  <td><%= file.children?.length ?? 0 %> files</td>
+                <% } else { %>
+                  <td><%= formatBytes(file.size) %></td>
+                <% } %>
+                  <td><%= file.modified?.toDateString() %></td>
+              </tr>
+            <% } %>
+            <% for (const file of files.children.filter(file => file.type == 'file')) { %>
+              <tr class="clickable-row" data-href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
+              <th scope="row"><%= file.name %></th>
+              <% if (file.type == 'directory') { %>
+                <td><%= file.children?.length ?? 0 %> files</td>
+              <% } else { %>
+                <td><%= formatBytes(file.size) %></td>
+              <% } %>
+              <td><%= file.modified?.toDateString() %></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-lg-2 col-md-2" style="color: black;">
+    </div>
+  </div>
+</div>
+<script>
+  $(document).ready(function($) {
+    const observer = lozad();
+    observer.observe();
+    $(".clickable-row").click(function() {
+        window.location = $(this).data("href");
+    });
+  });
+
+  function sortTable(n) {
+    console.log(new Date())
+    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    table = document.getElementById("myTable");
+    console.log(table)
+    switching = true;
+    dir = "asc";
+    while (switching) {
+      switching = false;
+      rows = table.rows;
+      for (i = 1; i < (rows.length - 1); i++) {
+        shouldSwitch = false;
+        x = rows[i].getElementsByTagName((n == 0) ? "th": "td")[n == 0 ? n : n-1];
+        y = rows[i + 1].getElementsByTagName((n == 0) ? "th": "td")[n == 0 ? n : n-1];
+        if (dir == "asc") {
+          if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+            shouldSwitch = true;
+            break;
+          }
+        } else if (dir == "desc") {
+          if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+            shouldSwitch = true;
+            break;
+          }
+        }
+      }
+      if (shouldSwitch) {
+        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+        switching = true;
+        switchcount++;
+      } else {
+        if (switchcount == 0 && dir == "asc") {
+          dir = "desc";
+          switching = true;
+        }
+      }
+    }
+    console.log(new Date())
+  }
+</script>
+<style>
+  img {
+    height: 340px;
+  }
+  .clickable-row:hover {
+    background: grey;
+    cursor: pointer;
+  }
+  #load-now {
+    border: 5px solid black;
+  }
+  #fileHover:hover {
+    cursor: pointer
+  }
+  th:hover {
+    cursor: pointer;
+    background: grey;
+  }
+</style>

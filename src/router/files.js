@@ -1,6 +1,6 @@
 const express = require('express'),
 	router = express.Router(),
-	dirTree = require('../directory'),
+	dirTree = require('../utils/directory'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	fs = require('fs'),
 	fresh = require('fresh');
@@ -13,7 +13,8 @@ router.get('/*', ensureAuthenticated, (req, res) => {
 	const path = decodeURI(location + req.user.email + req.originalUrl.substring(6, req.originalUrl.length));
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
-		const files = dirTree(path);
+		const files = dirTree(path, null, null, 0);
+		console.log(files);
 		if (files.type == 'file') {
 			// Read file from cached
 			if (isFresh(req, res)) {
@@ -22,13 +23,15 @@ router.get('/*', ensureAuthenticated, (req, res) => {
 			}
 
 			// new file
-			res.status(200).sendFile(decodeURI(path), (err) => {
-				if (err) return res.status(404).end('content not found.');
-			});
+			res
+				.status(200)
+				.sendFile(decodeURI(path), (err) => {
+					if (err) return res.status(404).end('content not found.');
+				});
 		} else {
 			res
 				.status(200)
-				.render('files', {
+				.render('user/files', {
 					files: files,
 					path: (req.originalUrl == '/files' ? '/' : req.originalUrl),
 					filter: req.query.filter,
@@ -59,6 +62,7 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 
 	// Find where to place the file
 	const sampleFile = req.files.sampleFile;
+	console.log(sampleFile);
 	const path = req.body['path'];
 	const directPath = path.split('/').slice(2, path.length).join('/');
 	const newPath = location + req.user.email + '/' + directPath + '/' + sampleFile.name;
@@ -66,7 +70,7 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 	// save file
 	sampleFile.mv(newPath, function(err) {
 		if (err) return res.status(500).send(err);
-		res.redirect('/files/' + directPath + '/');
+		res.redirect('/files/' + directPath);
 	});
 });
 

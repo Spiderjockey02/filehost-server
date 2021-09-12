@@ -65,5 +65,4 @@ app
 	.use('/', require('./router'))
 	.use('/files', require('./router/files'))
 	.use('/users', require('./router/users'))
-	.use('/auth', require('./router/auth')(passport))
 	.listen(config.port, () => console.log(`Started on PORT: ${config.port}`));
