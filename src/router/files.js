@@ -25,8 +25,10 @@ router.get('/*', ensureAuthenticated, (req, res) => {
 			// new file
 			res
 				.status(200)
-				.sendFile(decodeURI(path), (err) => {
-					if (err) return res.status(404).end('content not found.');
+				.render('user/file-preview', {
+					auth: req.isAuthenticated(),
+					fileInfo: files,
+					file: fs.readFileSync(decodeURI(path)),
 				});
 		} else {
 			res

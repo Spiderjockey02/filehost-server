@@ -1,0 +1,22 @@
+<%- include('../blocks/header', { auth: auth }) %>
+<div class="container">
+  &nbsp;
+  <div class="jumbotron">
+    <p>File preview</p>
+    <% if (fileInfo.extension == '.mp4') { %>
+      <video controls width="250">
+        <source src="<%= `data:video/mp4;base64,${Buffer.from(file).toString('base64')}` %>"
+          type="video/mp4">
+      </video>
+    <% } else if (fileInfo.extension == '.png') { %>
+      <img src="<%= `data:image/png;base64,${Buffer.from(file).toString('base64')}` %>" style="width:50%;align:center;" />
+    <% } else if (['.html', '.js', '.css'].includes(fileInfo.extension)) { %>
+      <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+      <pre class="prettyprint">
+        <%= file.toString()%>
+      </pre>
+    <% } %>
+    <a href="<%= `data:image/png;base64,${Buffer.from(file).toString('base64')}` %>" download>Download</a>
+  </div>
+</div>
+<%- include('../blocks/footer') %>
