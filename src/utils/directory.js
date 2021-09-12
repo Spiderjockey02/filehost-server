@@ -28,7 +28,7 @@ function safeReadDirSync(path) {
  * @param  {function} onEachDirectory
  * @return {Object}
  */
-function directoryTree(path, onEachFile, onEachDirectory, loops = 0) {
+function directoryTree(path, onEachFile, onEachDirectory) {
 	const name = PATH.basename(path);
 	const item = { path, name };
 	let stats;
@@ -62,15 +62,11 @@ function directoryTree(path, onEachFile, onEachDirectory, loops = 0) {
 		const dirData = safeReadDirSync(path);
 		if (dirData === null) return null;
 
-		if (loops <= 1) {
-			item.children = dirData
-				.map(child => directoryTree(PATH.join(path, child), onEachFile, onEachDirectory, loops++))
-				.filter(e => !!e);
-		} else {
-			item.children = [];
-		}
+		item.children = dirData
+			.map(child => directoryTree(PATH.join(path, child), onEachFile, onEachDirectory))
+			.filter(e => !!e);
 
-		item.size = 0;
+		item.modified = item.children.sort((a, b) => a.modified.getTime() > b.modified.getTime())[0].modified;
 		item.type = constants.DIRECTORY;
 		if (onEachDirectory) {
 			onEachDirectory(item, path, stats);

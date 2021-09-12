@@ -1,4 +1,4 @@
-<%- include('blocks/header') %>
+<%- include('../blocks/header') %>
     <div class="container-fluid">
       <div class="row">
         <div class="col-lg-2 col-md-2" style="color: black;">
@@ -15,10 +15,12 @@
                   <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Upload</button>
                   <div class="dropdown-menu dropdown-menu-right">
                     <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
-                      <button type="submit" style="visibility: hidden;" id="imagefile"></button>
-                      <input type="file" name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();">
+                      <label class="dropdown-item" type="button" id="fileHover">
+                        Files<input type="file" hidden name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();" />
+                      </label>
                       <input type="hidden" value="<%= path%>" name="path">
                       <button class="dropdown-item disabled" type="button">Folders</button>
+                      <button type="submit" style="display:none;" id="imagefile"></button>
                     </form>
                   </div>
                 </div>
@@ -86,6 +88,9 @@
     }
     #load-now {
       border: 5px solid black;
+    }
+    #fileHover:hover {
+      cursor: pointer
     }
     th:hover {
       cursor: pointer;

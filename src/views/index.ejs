@@ -1,3 +1,10 @@
 <%- include('blocks/header', { auth: auth }) %>
-<p>hello</p>
+<div class="container">
+  &nbsp;
+  <div class="jumbotron text-center">
+    <p>Hello</p>
+    <p><%= NumFiles%> files uploaded</p>
+    <p><%= size%> total size</p>
+  </div>
+</div>
 <%- include('blocks/footer') %>
