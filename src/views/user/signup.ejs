@@ -36,19 +36,22 @@
                 </div>
               </div>
             </div>
-            <hr class="my-4">
             <div class="d-grid" style="padding-left:78%">
               <button class="btn btn-primary btn-login text-uppercase fw-bold" type="submit">Sign up</button>
             </div>
-            <div class="d-grid mb-2">
-              <button class="btn btn-google btn-login text-uppercase fw-bold" type="submit">
-                <i class="fab fa-google me-2"></i> Sign up with Google
-              </button>
-            </div>
-            <div class="d-grid">
-              <button class="btn btn-facebook btn-login text-uppercase fw-bold" type="submit">
-                <i class="fab fa-facebook-f me-2"></i> Sign up with Facebook
-              </button>
+            <h5 style="text-align: center">or sign in via</h5>
+            <div class="d-flex justify-content-center">
+              <a class="btn btn-google btn-login text-uppercase fw-bold" href="/auth/google">
+                <i class="fab fa-google me-2"></i>
+              </a>
+              &nbsp;
+              <a class="btn btn-facebook btn-login text-uppercase fw-bold" href="/auth/facebook">
+                <i class="fab fa-facebook-f me-2"></i>
+              </a>
+              &nbsp;
+              <a class="btn btn-twitter btn-login text-uppercase fw-bold" href="/auth/twitter">
+                <i class="fab fa-twitter"></i>
+              </a>
             </div>
           </form>
         </div>
@@ -61,15 +64,14 @@
   $(document).ready(function() {
     $("#show_hide_password a").on('click', function(event) {
       event.preventDefault();
-      console.log(($('#show_hide_password input').attr("type")))
       if ($('#show_hide_password input').attr("type") == "text") {
         $('#show_hide_password input').attr('type', 'password');
-        $('#show_hide_password i').addClass( "fa-eye-slash" );
-        $('#show_hide_password i').removeClass( "fa-eye" );
-      } else if($('#show_hide_password input').attr("type") == "password") {
+        $('#show_hide_password i').addClass("fa-eye-slash");
+        $('#show_hide_password i').removeClass("fa-eye");
+      } else if ($('#show_hide_password input').attr("type") == "password") {
         $('#show_hide_password input').attr('type', 'text');
-        $('#show_hide_password i').removeClass( "fa-eye-slash" );
-        $('#show_hide_password i').addClass( "fa-eye" );
+        $('#show_hide_password i').removeClass("fa-eye-slash");
+        $('#show_hide_password i').addClass("fa-eye");
       }
     });
   });
@@ -95,5 +97,9 @@
   .btn-facebook {
     color: white !important;
     background-color: #3b5998;
+  }
+  .btn-twitter {
+    color: white !important;
+    background-color: #1da1f2;
   }
 </style>

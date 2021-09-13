@@ -11,7 +11,7 @@ const location = process.cwd() + '/src/files/';
 // Show file explorer
 router.get('/*', ensureAuthenticated, async (req, res) => {
 	// Check if file path exists
-	const path = decodeURI(location + req.user.email + req.originalUrl.substring(6, req.originalUrl.length));
+	const path = decodeURI(location + req.user._id + req.originalUrl.substring(6, req.originalUrl.length));
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
 		const files = dirTree(path, null, null, 0);
@@ -81,7 +81,7 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 	console.log(sampleFile);
 	const path = req.body['path'];
 	const directPath = path.split('/').slice(2, path.length).join('/');
-	const newPath = location + req.user.email + '/' + directPath + '/' + sampleFile.name;
+	const newPath = location + req.user._id + '/' + directPath + '/' + sampleFile.name;
 
 	// save file
 	sampleFile.mv(newPath, function(err) {

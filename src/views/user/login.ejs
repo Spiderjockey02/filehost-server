@@ -30,16 +30,19 @@
             <div class="d-grid">
               <button class="btn btn-primary btn-login text-uppercase fw-bold" type="submit">Sign in</button>
             </div>
-            <hr class="my-4">
-            <div class="d-grid mb-2">
-              <button class="btn btn-google btn-login text-uppercase fw-bold">
-                <i class="fab fa-google me-2"></i> Sign in with Google
-              </button>
-            </div>
-            <div class="d-grid">
-              <button class="btn btn-facebook btn-login text-uppercase fw-bold">
-                <i class="fab fa-facebook-f me-2"></i> Sign in with Facebook
-              </button>
+            <h5 style="text-align: center">or sign in via</h5>
+            <div class="d-flex justify-content-center">
+              <a class="btn btn-google btn-login text-uppercase fw-bold" href="/auth/google">
+                <i class="fab fa-google me-2"></i>
+              </a>
+              &nbsp;
+              <a class="btn btn-facebook btn-login text-uppercase fw-bold" href="/auth/facebook">
+                <i class="fab fa-facebook-f me-2"></i>
+              </a>
+              &nbsp;
+              <a class="btn btn-twitter btn-login text-uppercase fw-bold" href="/auth/twitter">
+                <i class="fab fa-twitter"></i>
+              </a>
             </div>
           </form>
         </div>
@@ -65,5 +68,9 @@
   .btn-facebook {
     color: white !important;
     background-color: #3b5998;
+  }
+  .btn-twitter {
+    color: white !important;
+    background-color: #1da1f2;
   }
 </style>

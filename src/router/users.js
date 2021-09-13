@@ -19,6 +19,7 @@ router.post('/login', (req, res, next) => {
 		// User logged in
 		req.logIn(user, function(err) {
 			if (err) return next(err);
+			console.log(user);
 			return res.redirect('/files');
 		});
 	})(req, res, next);
@@ -75,7 +76,7 @@ router.post('/register', (req, res) => {
 				newUser.save()
 					.then((value) => {
 						console.log(value);
-						fs.mkdirSync(process.cwd() + '/src/files/' + email);
+						fs.mkdirSync(process.cwd() + '/src/files/' + newUser._id);
 						res.redirect('/files');
 					})
 					.catch(value=> console.log(value));
