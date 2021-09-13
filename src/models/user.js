@@ -4,7 +4,9 @@ const UserSchema = new Schema({
 	name: { type: String },
 	email: { type: String },
 	password: { type: String },
-	date: { type: Date, default: Date.now },
+	creationDate: { type: Date, default: Date.now },
+	recent: { type: Array },
+	favourites: { type: Array },
 });
 
 const User = model('User', UserSchema);

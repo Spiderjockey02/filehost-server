@@ -2,13 +2,14 @@ const express = require('express'),
 	router = express.Router(),
 	dirTree = require('../utils/directory'),
 	{ ensureAuthenticated } = require('../config/auth'),
+	User = require('../models/user'),
 	fs = require('fs'),
 	fresh = require('fresh');
 
 const location = process.cwd() + '/src/files/';
 
 // Show file explorer
-router.get('/*', ensureAuthenticated, (req, res) => {
+router.get('/*', ensureAuthenticated, async (req, res) => {
 	// Check if file path exists
 	const path = decodeURI(location + req.user.email + req.originalUrl.substring(6, req.originalUrl.length));
 	if (fs.existsSync(path)) {
@@ -16,6 +17,19 @@ router.get('/*', ensureAuthenticated, (req, res) => {
 		const files = dirTree(path, null, null, 0);
 		console.log(files);
 		if (files.type == 'file') {
+			// update recently viewed files
+			try {
+				const user = await User.findOne({ email: req.user.email });
+				if (user.recent.length >= 10) user.recent.shift();
+				if (!user.recent.some((file) => file.path == req.originalUrl.substring(6, req.originalUrl.length))) {
+					files.path = req.originalUrl.substring(6, req.originalUrl.length);
+					user.recent = [...user.recent, files];
+					await user.save();
+				}
+			} catch (err) {
+				console.log(err);
+			}
+
 			// Read file from cached
 			if (isFresh(req, res)) {
 				res.statusCode = 304;
@@ -27,7 +41,7 @@ router.get('/*', ensureAuthenticated, (req, res) => {
 				.status(200)
 				.render('user/file-preview', {
 					auth: req.isAuthenticated(),
-					fileInfo: files,
+					fileInfo: Object.assign(files, { mimeType: require('mime-types').lookup(files.extension) }),
 					file: fs.readFileSync(decodeURI(path)),
 				});
 		} else {
