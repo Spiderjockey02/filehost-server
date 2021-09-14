@@ -7,7 +7,6 @@ const express = require('express'),
 router.get('/', (req, res) => {
 	const files = require('../utils/directory')(process.cwd() + '/src/files/');
 	const number = getNumberOfFiles(files, 0);
-	console.log(number);
 	res.render('index', {
 		auth: req.isAuthenticated(),
 		NumFiles: number,
@@ -18,6 +17,7 @@ router.get('/', (req, res) => {
 router.get('/login', (req, res) => {
 	res.render('user/login', {
 		auth: req.isAuthenticated(),
+		error: req.query.error ?? undefined,
 	});
 });
 
@@ -25,6 +25,9 @@ router.get('/login', (req, res) => {
 router.get('/signup', (req, res) => {
 	res.render('user/signup', {
 		auth: req.isAuthenticated(),
+		error: req.query.error,
+		name: req.query.name,
+		email: req.query.email,
 	});
 });
 
@@ -54,6 +57,12 @@ router.get('/recent', ensureAuthenticated, async (req, res) => {
 // Show user's favourites
 router.get('/favourites', ensureAuthenticated, (req, res) => {
 	res.render('user/favourites', {
+		auth: req.isAuthenticated(),
+	});
+});
+
+router.get('/dashboard', ensureAuthenticated, (req, res) => {
+	res.render('user/dashboard', {
 		auth: req.isAuthenticated(),
 	});
 });

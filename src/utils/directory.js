@@ -45,7 +45,6 @@ function directoryTree(path, onEachFile, onEachDirectory) {
 
 	if (stats.isFile()) {
 		const ext = PATH.extname(path).toLowerCase();
-
 		// Skip if it does not match the extension regex
 		item.size = stats.size;
 		item.extension = ext;
@@ -66,7 +65,14 @@ function directoryTree(path, onEachFile, onEachDirectory) {
 			.map(child => directoryTree(PATH.join(path, child), onEachFile, onEachDirectory))
 			.filter(e => !!e);
 
-		item.modified = item.children.sort((a, b) => a.modified.getTime() > b.modified.getTime())[0].modified;
+		// Get time modified for folder
+		const folderModifed = item.children.sort((a, b) => (a.modified?.getTime() ?? 0) > (b.modified?.getTime() ?? 0))[0];
+		if(folderModifed) item.modified = folderModifed.modified;
+
+		// Get total size of folder
+		const folderSize = getNumberOfFiles(item, 0);
+
+		item.size = folderSize;
 		item.type = constants.DIRECTORY;
 		if (onEachDirectory) {
 			onEachDirectory(item, path, stats);
@@ -78,3 +84,15 @@ function directoryTree(path, onEachFile, onEachDirectory) {
 }
 
 module.exports = directoryTree;
+
+function getNumberOfFiles(files, num) {
+	for (const file of files.children) {
+		console.log(num);
+		if (file.type == 'directory') {
+			getNumberOfFiles(file, num);
+		} else {
+			num = num + file.size;
+		}
+	}
+	return num;
+}

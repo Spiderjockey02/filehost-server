@@ -1,14 +1,7 @@
-<%- include('../blocks/header', { auth: auth }) %>
+<%- include('../blocks/header', { auth }) %>
 <div class="container">
   &nbsp;
-  <% if (typeof error != 'undefined') { %>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <strong>An error has occured!</strong> <%= error %>
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-  <% } %>
+  <%- include('../partials/message', {error })%>
   <div class="row">
     <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
       <div class="card border-0 shadow rounded-3 my-5">
@@ -27,7 +20,7 @@
               <input class="form-check-input" type="checkbox"" id="rememberPasswordCheck">
               <label class="form-check-label" for="rememberPasswordCheck">Remember password</label>
             </div>
-            <div class="d-grid">
+            <div class="d-grid" style="padding-left:74%">
               <button class="btn btn-primary btn-login text-uppercase fw-bold" type="submit">Sign in</button>
             </div>
             <h5 style="text-align: center">or sign in via</h5>

@@ -10,10 +10,7 @@ router.post('/login', (req, res, next) => {
 	passport.authenticate('local', function(err, user, info) {
 		// an error occured / unsuccessful log in
 		if (!user) {
-			return res.render('user/login', {
-				auth: req.isAuthenticated(),
-				error: info.message,
-			});
+			return res.redirect(`/login?error=${info.message}`);
 		}
 
 		// User logged in
@@ -35,6 +32,7 @@ router.post('/register', (req, res) => {
 	if (!name || !email || !password || !password2) {
 		error = 'Please fill in all fields!';
 	}
+
 	// check if passwords match
 	if (password !== password2) {
 		error = 'Passwords dont match!';
@@ -46,11 +44,7 @@ router.post('/register', (req, res) => {
 	}
 
 	// If an error was found notify user
-	if (error) {
-		return res.render('user/signup', {
-			auth: req.isAuthenticated(),
-			error, name, email, password, password2 });
-	}
+	if (error) return res.redirect(`/signup?error=${error}&name=${name}&email=${email}`);
 
 	// Make sure email isn't already on the database
 	User.findOne({ email : email }).exec((err, user) => {

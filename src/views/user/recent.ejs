@@ -1,4 +1,4 @@
-<%- include('../blocks/header') %>
+<%- include('../blocks/header', { auth }) %>
 <div id="wrapper">
   <!-- Sidebar -->
   <%- include('../blocks/sidebar') %>
@@ -10,7 +10,6 @@
       </div>
     </div>
     &nbsp
-    <%- console.log(files)%>
     <table class="table" id="myTable">
       <thead>
         <tr>

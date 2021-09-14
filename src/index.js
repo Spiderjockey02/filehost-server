@@ -42,7 +42,16 @@ app
 	}))
 	.use(cors(corsOpt))
 	.use(compression())
-	.use(fileUpload())
+	.use(fileUpload({
+		// 100 MB file upload
+		debug: true,
+		limits: {
+			fileSize: 50 * 1024 * 1024,
+		},
+		useTempFiles : true,
+		tempFileDir : '/tmp/',
+		abortOnLimit: true,
+	}))
 	.use(bodyParser.urlencoded({
 		extended: true,
 	}))
