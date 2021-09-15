@@ -1,0 +1,67 @@
+<%- include('../blocks/header', { auth: auth }) %>
+<div class="container">
+  &nbsp;
+  <div class="jumbotron">
+    <h4 class="text-center"></h4>
+    <div class="row">
+      <div class="col-lg-4">
+        <ul class="list-group">
+          <li class="list-group-item"><a href="#">Account</a></li>
+          <li class="list-group-item"><a href="#">Password</a></li>
+          <li class="list-group-item"><a href="#">Sharing</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-8">
+        <h1>Account</h1>
+        <div class="media">
+          <img src="https://www.tenforums.com/geek/gars/images/2/types/thumb_15951118880user.png" class="align-self-start rounded-circle mr-3" alt="User image" width="100px">
+          <div class="media-body">
+            <h5 class="mt-0" style="padding-bottom:20px">Avatar</h5>
+            <form action="/users/avatar/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
+              <label class="btn btn-md btn-secondary" type="button" id="fileHover">
+                Upload<input type="file" hidden name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();" />
+              </label>
+              <button class="btn btn-md btn-danger" type="button" name="button">Remove</button>
+              <button type="submit" style="display:none;" id="imagefile"></button>
+            </form>
+          </div>
+        </div>
+        <h4>Connections</h4>
+        <ul class="sidebar-nav h-100">
+          <li>
+            <a class="btn btn-google btn-login text-uppercase fw-bold" href="/auth/google">
+              <i class="fab fa-google me-2"></i>
+            </a>
+          </li>
+          <li>
+            <a class="btn btn-facebook btn-login text-uppercase fw-bold" href="/auth/facebook">
+              <i class="fab fa-facebook-f me-2"></i>
+            </a>
+          </li>
+          <li>
+            <a class="btn btn-twitter btn-login text-uppercase fw-bold disabled" href="/auth/twitter">
+              <i class="fab fa-twitter"></i>
+            </a>
+          </li>
+          <!--Bottom of sidebar-->
+        </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../blocks/footer') %>
+<style>
+  .btn-google {
+    color: white !important;
+    background-color: #ea4335;
+  }
+  .btn-facebook {
+    color: white !important;
+    background-color: #3b5998;
+  }
+  .btn-twitter {
+    color: white !important;
+    background-color: #1da1f2;
+  }
+</style>

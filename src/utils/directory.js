@@ -87,11 +87,10 @@ module.exports = directoryTree;
 
 function getNumberOfFiles(files, num) {
 	for (const file of files.children) {
-		console.log(num);
 		if (file.type == 'directory') {
-			getNumberOfFiles(file, num);
+			num = getNumberOfFiles(file, num);
 		} else {
-			num = num + file.size;
+			num += file.size;
 		}
 	}
 	return num;

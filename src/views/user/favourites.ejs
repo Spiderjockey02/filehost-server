@@ -1,2 +1,7 @@
-<div class="container">
+<%- include('../blocks/header') %>
+<div id="wrapper">
+  <!-- Sidebar -->
+  <%- include('../blocks/sidebar', { size: files.size, formatBytes }) %>
+  <div class="container-fluid" style="padding:0px 30px 0px;">
+  </div>
 </div>

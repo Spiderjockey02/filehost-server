@@ -1,12 +1,21 @@
 <%- include('../blocks/header') %>
 <div id="wrapper">
   <!-- Sidebar -->
-  <%- include('../blocks/sidebar') %>
+  <%- include('../blocks/sidebar', { size: files.size, formatBytes }) %>
   <div class="container-fluid" style="padding:0px 30px 0px;">
     &nbsp;
     <div class="row">
       <div class="col-sm-10">
-        <h4><a href="/files">My files</a><%- path == '/' ? '' : ` > ${path.split('/').slice(2, path.length).map(name => `<a href="/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}">${name}</a>`).join(' > ')}` %></h4>
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/files">Home</a></li>
+            <% for (var name of path.split('/').slice(2, path.length)) { %>
+              <li class="breadcrumb-item active">
+                <a href=<%= `/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}` %>><%= name%></a>
+              </li>
+            <% } %>
+          </ol>
+        </nav>
       </div>
       <div class="col-sm-2">
         <div class="btn-group" style="float:right">
@@ -17,7 +26,9 @@
                 Files<input type="file" hidden name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();" />
               </label>
               <input type="hidden" value="<%= path%>" name="path">
-              <button class="dropdown-item disabled" type="button">Folders</button>
+              <label class="dropdown-item" type="button" id="fileHover">
+                Folders<input type="file" hidden name="sampleFile" webkitdirectory mozdirectory onChange="javascript:document.getElementById('imagefile').click();" />
+              </label>
               <button type="submit" style="display:none;" id="imagefile"></button>
             </form>
           </div>
@@ -28,23 +39,66 @@
     <table class="table" id="myTable">
       <thead>
         <tr>
-          <th scope="col">Name</th>
-          <th scope="col">Size</th>
-          <th scope="col">Date modified</th>
+          <th scope="col" style="width:4%">
+            <a type="button" class="hide" data-toggle="tooltip" data-placement="top" title="Toggle selection for all items">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios2" value="option2">
+              </div>
+            </a>
+          </th>
+          <th id="Name" scope="col">Name</th>
+          <th id="Size" scope="col">Size</th>
+          <th id="Date modified" scope="col">Date modified</th>
         </tr>
       </thead>
       <tbody>
         <!--Show folders first-->
         <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
-          <tr class="clickable-row" data-href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
-            <th scope="row" class="text-truncate" style="min-width: 150px;"><%= file.name %></th>
+          <tr>
+            <th>
+              <div class="form-check form-check-inline hide">
+                <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios2" value="option2">
+              </div>
+            </th>
+            <th scope="row" class="text-truncate" style="min-width: 150px;">
+              <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
+              <!-- Default dropright button -->
+              <div class="btn-group dropright hide" style="float:right">
+                <a type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="fas fa-ellipsis-v"></i>
+                </a>
+                <div class="dropdown-menu" style="overflow-y: visible !important;position: static !important">
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0"><a href="/">Share</a></li>
+                    <li class="list-group-item border-0"><a href="/">Copy link</a></li>
+                  </ul>
+                    <hr class="mt-2 mb-3"/>
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0"><a href="/">Download</a></li>
+                    <li class="list-group-item border-0"><a href="/">Delete</a></li>
+                    <li class="list-group-item border-0"><a href="/">Move to</a></li>
+                    <li class="list-group-item border-0"><a href="/">Copy to</a></li>
+                    <li class="list-group-item border-0"><a href="/">Rename</a></li>
+                  </ul>
+                  <form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+                    <input type="hidden" value="<%= path %>" name="path">
+                    <button type="submit" class="btn" id="imagefile">${e.target.parentElement.childNodes[1].outerText}</button>
+                  </form>
+                </div>
+              </div>
+            </th>
             <td><%= file.children?.length ?? 0 %> files</td>
             <td><%= file.modified?.toDateString() %></td>
           </tr>
         <% } %>
         <% for (const file of files.children.filter(file => file.type == 'file')) { %>
-          <tr class="clickable-row" data-href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
-            <th scope="row" class="text-truncate" style="max-width: 150px;"><%= file.name %></th>
+          <tr>
+            <th>
+              <div class="form-check form-check-inline hide">
+                <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios2" value="option2">
+              </div>
+            </th>
+            <th scope="row" class="text-truncate" style="max-width: 150px;"><a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
             <td><%= formatBytes(file.size) %></td>
             <td><%= file.modified?.toDateString() %></td>
           </tr>
@@ -54,40 +108,48 @@
   </div>
 </div>
 <script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
   $(document).ready(function($) {
     const observer = lozad();
     observer.observe();
     $(".clickable-row").click(function() {
         window.location = $(this).data("href");
     });
-  });
-  $(document).ready(function () {
-  var trigger = $('.hamburger'),
-      overlay = $('.overlay'),
-     isClosed = false;
 
-    trigger.click(function () {
-      hamburger_cross();
-    });
-
-    function hamburger_cross() {
-      if (isClosed == true) {
-        overlay.hide();
-        trigger.removeClass('is-open');
-        trigger.addClass('is-closed');
-        isClosed = false;
-      } else {
-        overlay.show();
-        trigger.removeClass('is-closed');
-        trigger.addClass('is-open');
-        isClosed = true;
+    //Custom context menu
+    oncontextmenu = (e) => {
+      console.log(e.target.parentElement.childNodes)
+      if (e.target.parentElement != null && e.target.parentElement.childNodes[3]?.className == 'text-truncate') {
+        const file = e.target.parentElement.childNodes[3].outerText
+        e.preventDefault()
+        let menu = document.createElement("div")
+        menu.id = "ctxmenu"
+        menu.style = `top:${e.pageY}px;left:${e.pageX}px`
+        menu.onmouseleave = () => ctxmenu.outerHTML = ''
+        menu.innerHTML = `
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item border-0"><a href="/">Share</a></li>
+          <li class="list-group-item border-0"><a href="/">Copy link</a></li>
+        </ul>
+          <hr class="mt-2 mb-3"/>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item border-0"><a href="/">Download</a></li>
+          <li class="list-group-item border-0"><a href="/">Delete</a></li>
+          <li class="list-group-item border-0"><a href="/">Move to</a></li>
+          <li class="list-group-item border-0"><a href="/">Copy to</a></li>
+          <li class="list-group-item border-0"><a href="/">Rename</a></li>
+        </ul>
+        <form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+          <input type="hidden" value="<%= path %>" name="path">
+          <button type="submit" class="btn" id="imagefile">${e.target.parentElement.childNodes[1].outerText}</button>
+        </form>`
+        document.body.appendChild(menu)
       }
-  }
-
-  $('[data-toggle="offcanvas"]').click(function () {
-        $('#wrapper').toggleClass('toggled');
+    }
   });
-});
+
   //Sorts table
   const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
   const comparer = (idx, asc) => (a, b) => ((v1, v2) =>
@@ -100,6 +162,8 @@
       if (th.className == 'text-truncate') return
       return th.addEventListener('click', (() => {
         const table = th.closest('table');
+        const element = document.getElementById(th.id);
+        element.innerHTML = element.id + ((!this.asc) ? " <i class=\"fas fa-sort-up\"></i>" : " <i class=\"fas fa-sort-down\"></i>")
         Array.from(table.childNodes[3].querySelectorAll('tr:nth-child(n+1)'))
           .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
           .forEach(tr => table.childNodes[3].appendChild(tr));
@@ -110,9 +174,14 @@
   img {
     height: 340px;
   }
-  .clickable-row:hover {
-    background: grey;
-    cursor: pointer;
+  tr:hover {
+    background: #edebe9;
+  }
+  a {
+    color: #717171
+  }
+  a:hover {
+    color: #3B3B3B
   }
   #load-now {
     border: 5px solid black;
@@ -120,85 +189,58 @@
   #fileHover:hover {
     cursor: pointer
   }
-  th:hover {
-    cursor: pointer;
-    background: grey;
-  }
   body {
    overflow-x: hidden;
-}
+  }
+  .hide {
+    display: none;
+  }
+
+  tr:hover > th >  .hide {
+    display: block;
+    color: red;
+  }
 
 /* Toggle Styles */
 
 #wrapper {
-   padding-left: 0;
+  padding-left: 0;
+}
+#ctxmenu {
+  position: fixed;
+  background: ghostwhite;
+  color: black;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
 }
 
+#ctxmenu > p {
+  padding: 0 1rem;
+  margin: 0
+}
+
+#ctxmenu > p:hover {
+  background: black;
+  color: ghostwhite
+}
 #sidebar-wrapper {
-   z-index: 1000;
-   position: fixed;
-   left: 250px;
-   width: 0;
-   height: 100%;
-   margin-left: -250px;
-   overflow-y: auto;
-   background: #000;
+  z-index: 1000;
+  position: fixed;
+  left: 250px;
+  width: 0;
+  height: 100%;
+  margin-left: -250px;
+  overflow-y: auto;
+  background: #000;
 }
 
 #wrapper.toggled #sidebar-wrapper {
-   width: 250px;
+  width: 250px;
 }
 
 #wrapper.toggled #page-content-wrapper {
-   position: absolute;
-   margin-right: -250px;
-}
-/* Sidebar Styles */
-
-.sidebar-nav {
-   position: absolute;
-   top: 0;
-   width: 250px;
-   margin: 0;
-   padding: 0;
-   list-style: none;
-}
-
-.sidebar-nav li {
-   text-indent: 20px;
-   line-height: 40px;
-}
-
-.sidebar-nav li a {
-   display: block;
-   text-decoration: none;
-   color: #999999;
-}
-
-.sidebar-nav li a:hover {
-   text-decoration: none;
-   color: #fff;
-   background: rgba(255,255,255,0.2);
-}
-
-.sidebar-nav li a:active,
-.sidebar-nav li a:focus {
-   text-decoration: none;
-}
-
-.sidebar-nav > .sidebar-brand {
-   height: 65px;
-   font-size: 18px;
-   line-height: 60px;
-}
-
-.sidebar-nav > .sidebar-brand a {
-   color: #999999;
-}
-
-.sidebar-nav > .sidebar-brand a:hover {
-   color: #fff;
-   background: none;
+  position: absolute;
+  margin-right: -250px;
 }
 
 @media(min-width:993px) {

@@ -14,7 +14,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 	const path = decodeURI(location + req.user._id + req.originalUrl.substring(6, req.originalUrl.length));
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
-		const files = dirTree(path, null, null, 0);
+		const files = dirTree(path);
 		console.log(files);
 		if (files.type == 'file') {
 			// update recently viewed files
@@ -90,6 +90,10 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 	});
 });
 
+router.post('/delete', ensureAuthenticated, (req, res) => {
+	console.log(req.body['path']);
+	res.redirect('/files');
+});
 // Caching
 function isFresh(req, res) {
 	return fresh(req.headers, {

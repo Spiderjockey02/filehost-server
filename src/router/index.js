@@ -61,6 +61,13 @@ router.get('/favourites', ensureAuthenticated, (req, res) => {
 	});
 });
 
+// Show user's favourites
+router.get('/trash', ensureAuthenticated, (req, res) => {
+	res.render('user/trash', {
+		auth: req.isAuthenticated(),
+	});
+});
+
 router.get('/dashboard', ensureAuthenticated, (req, res) => {
 	res.render('user/dashboard', {
 		auth: req.isAuthenticated(),

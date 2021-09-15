@@ -31,11 +31,11 @@ app
 		contentSecurityPolicy: {
 			directives: {
 				defaultSrc: ['\'self\''],
-				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', 'https://maxcdn.bootstrapcdn.com', 'https://cdnjs.cloudflare.com', 'https://code.jquery.com', 'https://cdn.jsdelivr.net'],
+				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', 'https://maxcdn.bootstrapcdn.com', 'https://cdnjs.cloudflare.com', 'https://code.jquery.com', 'https://cdn.jsdelivr.net', 'https://unpkg.com/'],
 				'style-src': ['\'unsafe-inline\'', 'https://maxcdn.bootstrapcdn.com', 'https://cdn.jsdelivr.net'],
 				'connect-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com/', 'https://cdn.jsdelivr.net'],
 				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com'],
-				'img-src': ['\'unsafe-inline\'', 'https://www.freeiconspng.com', config.domain, 'data:'],
+				'img-src': ['\'unsafe-inline\'', 'https://www.freeiconspng.com', config.domain, 'data:', 'https://www.tenforums.com'],
 				'media-src': ['\'unsafe-inline\'', 'data:'],
 			},
 		},

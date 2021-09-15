@@ -11,15 +11,26 @@
     <% } else if (['.png', '.gif', '.jpg'].includes(fileInfo.extension)) { %>
       <img src="<%= `data:${fileInfo.mimeType};base64,${Buffer.from(file).toString('base64')}` %>" style="width:50%;align:center;" />
     <% } else if (['.html', '.js', '.css'].includes(fileInfo.extension)) { %>
-      <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
-      <pre class="prettyprint  linenums">
+      <!--script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script-->
+      <script src="https://unpkg.com/prettier@2.4.0/standalone.js"></script>
+      <script src="https://unpkg.com/prettier@2.4.0/parser-graphql.js"></script>
+      <!--pre class="prettyprint  linenums">
         <%= file.toString()%>
-      </pre>
+      </pre-->
     <% } %>
-    <%console.log(file.toString()) %>
     <a href="<%= `data:${fileInfo.mimeType};base64,${Buffer.from(file).toString('base64')}` %>" download>Download</a>
   </div>
 </div>
+<script>
+  $(document).ready(function($) {
+    console.log(prettier.format(file.toString(), {
+      parser: "html",
+      plugins: prettierPlugins,
+    }))
+  })
+</script>
+
+
 <style>
   li.L0,
   li.L1,

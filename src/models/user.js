@@ -7,6 +7,7 @@ const UserSchema = new Schema({
 	creationDate: { type: Date, default: Date.now },
 	recent: { type: Array },
 	favourites: { type: Array },
+	avatar: { type:String },
 	facebook: {
 		id: String,
 		token: String,
