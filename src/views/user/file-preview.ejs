@@ -4,10 +4,7 @@
   <div class="jumbotron">
     <p>File preview</p>
     <% if (fileInfo.extension == '.mp4') { %>
-      <video controls width="250">
-        <source src="<%= `data:${fileInfo.mimeType};base64,${Buffer.from(file).toString('base64')}` %>"
-          type="video/mp4">
-      </video>
+      <%- include('../partials/video-player', { video: file })%>
     <% } else if (['.png', '.gif', '.jpg'].includes(fileInfo.extension)) { %>
       <img src="<%= `data:${fileInfo.mimeType};base64,${Buffer.from(file).toString('base64')}` %>" style="width:50%;align:center;" />
     <% } else if (['.html', '.js', '.css'].includes(fileInfo.extension)) { %>
@@ -21,14 +18,6 @@
     <a href="<%= `data:${fileInfo.mimeType};base64,${Buffer.from(file).toString('base64')}` %>" download>Download</a>
   </div>
 </div>
-<script>
-  $(document).ready(function($) {
-    console.log(prettier.format(file.toString(), {
-      parser: "html",
-      plugins: prettierPlugins,
-    }))
-  })
-</script>
 
 
 <style>

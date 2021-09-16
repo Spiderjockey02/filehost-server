@@ -6,15 +6,14 @@
     <div class="row">
       <div class="col-3">
         <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-          <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true">Account</a>
-          <a class="nav-link" id="v-pills-profile-tab" data-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile" aria-selected="false">Password</a>
-          <a class="nav-link" id="v-pills-messages-tab" data-toggle="pill" href="#v-pills-messages" role="tab" aria-controls="v-pills-messages" aria-selected="false">Sharing</a>
+          <a class="nav-link <%if (!option || !['2', '3'].includes(option)) { %> active <% } %>" id="v-pills-home-tab" data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true">Account</a>
+          <a class="nav-link <%if (option == '2') { %> active <% } %>" id="v-pills-profile-tab" data-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile" aria-selected="false">Password</a>
+          <a class="nav-link <%if (option == '3') { %> active <% } %>" id="v-pills-messages-tab" data-toggle="pill" href="#v-pills-messages" role="tab" aria-controls="v-pills-messages" aria-selected="false">Sharing</a>
         </div>
       </div>
       <div class="col-9">
-        <%= option%>
         <div class="tab-content" id="v-pills-tabContent">
-          <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
+          <div class="tab-pane fade <%if (!option || !['2', '3'].includes(option)) { %> show active <% } %>" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
             <h1>Account</h1>
             <div class="media">
               <% if (avatar) { %>
@@ -67,7 +66,7 @@
               </a>
             <% } %>
           </div>
-          <div class="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+          <div class="tab-pane fade <%if (option == '2') { %> show active <% } %>" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
             <%- include('../partials/message', { error })%>
             <form action="/user/password_update" method="POST">
               <h4>Update password</h4>
@@ -89,8 +88,7 @@
               </div>
             </form>
           </div>
-          <div class="tab-pane fade" id="v-pills-messages" role="tabpanel" aria-labelledby="v-pills-messages-tab">..3.</div>
-          <div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">..4.</div>
+          <div class="tab-pane fade<%if (option == '3') { %> show active <% } %>" id="v-pills-messages" role="tabpanel" aria-labelledby="v-pills-messages-tab">..3.</div>
         </div>
       </div>
     </div>

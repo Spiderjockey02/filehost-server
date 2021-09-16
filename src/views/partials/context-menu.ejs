@@ -1,0 +1,16 @@
+<ul class="list-group list-group-flush">
+  <li class="list-group-item border-0"><a href="/">Share</a></li>
+  <li class="list-group-item border-0"><a href="/">Copy link</a></li>
+</ul>
+  <hr class="mt-2 mb-3"/>
+<ul class="list-group list-group-flush">
+  <li class="list-group-item border-0"><a href="/">Download</a></li>
+  <li class="list-group-item border-0"><a href="/">Delete</a></li>
+  <li class="list-group-item border-0"><a href="/">Move to</a></li>
+  <li class="list-group-item border-0"><a href="/">Copy to</a></li>
+  <li class="list-group-item border-0"><a href="/">Rename</a></li>
+</ul>
+<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+  <input type="hidden" value="<%= path %>" name="path">
+  <button type="submit" class="btn" id="imagefile">${e.target.parentElement.childNodes[1].outerText}</button>
+</form>

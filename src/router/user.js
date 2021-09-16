@@ -124,7 +124,7 @@ router.post('/password_update', (req, res) => {
 	bcrypt.genSalt(10, (err, salt) => bcrypt.hash(password, salt, async (err, hash) => {
 		if (err) throw err;
 		await User.findOneAndUpdate({ _id: req.user.id }, { password: hash });
-		res.redirect('/dashboard?success=Password successfully updated');
+		res.redirect('/dashboard?option=2&success=Password successfully updated');
 	}));
 });
 module.exports = router;
