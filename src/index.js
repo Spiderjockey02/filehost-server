@@ -9,6 +9,8 @@ const express = require('express'),
 	passport = require('passport'),
 	mongoose = require('mongoose'),
 	session = require('express-session'),
+	MemoryStore = require('memorystore'),
+	mStore = MemoryStore(session),
 	bodyParser = require('body-parser'),
 	compression = require('compression');
 
@@ -48,17 +50,18 @@ app
 		limits: {
 			fileSize: 50 * 1024 * 1024,
 		},
-		useTempFiles : true,
-		tempFileDir : '/tmp/',
+		useTempFiles: true,
+		tempFileDir: '/tmp/',
 		abortOnLimit: true,
 	}))
 	.use(bodyParser.urlencoded({
 		extended: true,
 	}))
 	.use(session({
-		secret : 'secret',
-		resave : true,
-		saveUninitialized : true,
+		store:  new mStore({ checkPeriod: 86400000 }),
+		secret: 'secret',
+		resave: false,
+		saveUninitialized: false,
 	}))
 	.use(passport.initialize())
 	.use(passport.session())
@@ -74,6 +77,6 @@ app
 	.use(favicon('./src/assets/favicon.ico'))
 	.use('/', require('./router'))
 	.use('/files', require('./router/files'))
-	.use('/users', require('./router/users'))
+	.use('/user', require('./router/user'))
 	.use('/auth', require('./router/auth'))
 	.listen(config.port, () => console.log(`Started on PORT: ${config.port}`));

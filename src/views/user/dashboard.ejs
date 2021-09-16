@@ -4,47 +4,93 @@
   <div class="jumbotron">
     <h4 class="text-center"></h4>
     <div class="row">
-      <div class="col-lg-4">
-        <ul class="list-group">
-          <li class="list-group-item"><a href="#">Account</a></li>
-          <li class="list-group-item"><a href="#">Password</a></li>
-          <li class="list-group-item"><a href="#">Sharing</a></li>
-        </ul>
+      <div class="col-3">
+        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+          <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true">Account</a>
+          <a class="nav-link" id="v-pills-profile-tab" data-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile" aria-selected="false">Password</a>
+          <a class="nav-link" id="v-pills-messages-tab" data-toggle="pill" href="#v-pills-messages" role="tab" aria-controls="v-pills-messages" aria-selected="false">Sharing</a>
+        </div>
       </div>
-      <div class="col-lg-8">
-        <h1>Account</h1>
-        <div class="media">
-          <img src="https://www.tenforums.com/geek/gars/images/2/types/thumb_15951118880user.png" class="align-self-start rounded-circle mr-3" alt="User image" width="100px">
-          <div class="media-body">
-            <h5 class="mt-0" style="padding-bottom:20px">Avatar</h5>
-            <form action="/users/avatar/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
-              <label class="btn btn-md btn-secondary" type="button" id="fileHover">
-                Upload<input type="file" hidden name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();" />
-              </label>
-              <button class="btn btn-md btn-danger" type="button" name="button">Remove</button>
-              <button type="submit" style="display:none;" id="imagefile"></button>
+      <div class="col-9">
+        <%= option%>
+        <div class="tab-content" id="v-pills-tabContent">
+          <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
+            <h1>Account</h1>
+            <div class="media">
+              <% if (avatar) { %>
+                <img src="<%= `data:image/png;base64,${Buffer.from(avatar).toString('base64')}` %>" class="align-self-start rounded-circle mr-3" alt="User image" width="100px">
+              <% } else { %>
+                <img src="https://www.tenforums.com/geek/gars/images/2/types/thumb_15951118880user.png" class="align-self-start rounded-circle mr-3" alt="User image" width="100px">
+              <% } %>
+              <div class="media-body">
+                <h5 class="mt-0" style="padding-bottom:20px">Avatar</h5>
+                <form action="/user/avatar/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
+                  <label class="btn btn-md btn-secondary" type="button" id="fileHover">
+                    Upload<input type="file" hidden name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();" />
+                  </label>
+                  <button type="submit" style="display:none;" id="imagefile"></button>
+                </form>
+                <form action="/user/avatar/delete" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
+                  <button class="btn btn-md btn-danger" type="submit" name="button">Remove</button>
+                </form>
+              </div>
+            </div>
+            <blockquote class="blockquote">
+              <p class="mb-0">Linked Accounts</p>
+              <p>We use this to let you sign in and populate your profile information</p>
+            </blockquote>
+            <% if (user.google.id) { %>
+              <a class="btn btn-google btn-login disabled">
+                <i class="fab fa-google me-2"> Connected</i>
+              </a>
+            <% } else { %>
+              <a class="btn btn-google btn-login" href="/auth/google">
+                <i class="fab fa-google me-2"> Connect</i>
+              </a>
+            <% } %>
+            <% if (user.facebook.id) { %>
+              <a class="btn btn-facebook btn-login disabled" href="/auth/facebook">
+                <i class="fab fa-facebook-f me-2"> Connected</i>
+              </a>
+            <% } else { %>
+              <a class="btn btn-facebook btn-login" href="/auth/facebook">
+                <i class="fab fa-facebook-f me-2"> Connect</i>
+              </a>
+            <% } %>
+            <% if (user.twitter.id) { %>
+              <a class="btn btn-twitter btn-login disabled" href="/auth/twitter">
+                <i class="fab fa-twitter"> Connected</i>
+              </a>
+            <% } else { %>
+              <a class="btn btn-twitter btn-login" href="/auth/twitter">
+                <i class="fab fa-twitter"> Connect</i>
+              </a>
+            <% } %>
+          </div>
+          <div class="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+            <%- include('../partials/message', { error })%>
+            <form action="/user/password_update" method="POST">
+              <h4>Update password</h4>
+              <div class="form-floating mb-3" id="show_hide_password">
+                <label for="password">Password: </label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Create Password" value="<%= typeof password != 'undefined' ? password : '' %>" />
+              </div>
+              <div class="form-floating mb-3" id="show_hide_password">
+                <label for="password2">Confirm password: </label>
+                <div class="input-group" id="show_hide_password">
+                  <input type="password" class="form-control" id="password2" name="password2" placeholder="Confirm Password" value="<%= typeof password2 != 'undefined' ? password2 : '' %>" />
+                  <div class="input-group-prepend">
+                    <div class="input-group-text"><a href=""><i class="fa fa-eye-slash" aria-hidden="true"></i></a></div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-grid" style="padding-left:89%">
+                <button class="btn btn-primary btn-login text-uppercase fw-bold" type="submit">Sign up</button>
+              </div>
             </form>
           </div>
-        </div>
-        <h4>Connections</h4>
-        <ul class="sidebar-nav h-100">
-          <li>
-            <a class="btn btn-google btn-login text-uppercase fw-bold" href="/auth/google">
-              <i class="fab fa-google me-2"></i>
-            </a>
-          </li>
-          <li>
-            <a class="btn btn-facebook btn-login text-uppercase fw-bold" href="/auth/facebook">
-              <i class="fab fa-facebook-f me-2"></i>
-            </a>
-          </li>
-          <li>
-            <a class="btn btn-twitter btn-login text-uppercase fw-bold disabled" href="/auth/twitter">
-              <i class="fab fa-twitter"></i>
-            </a>
-          </li>
-          <!--Bottom of sidebar-->
-        </ul>
+          <div class="tab-pane fade" id="v-pills-messages" role="tabpanel" aria-labelledby="v-pills-messages-tab">..3.</div>
+          <div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">..4.</div>
         </div>
       </div>
     </div>
@@ -65,3 +111,19 @@
     background-color: #1da1f2;
   }
 </style>
+<script>
+  $(document).ready(function() {
+    $("#show_hide_password a").on('click', function(event) {
+      event.preventDefault();
+      if ($('#show_hide_password input').attr("type") == "text") {
+        $('#show_hide_password input').attr('type', 'password');
+        $('#show_hide_password i').addClass("fa-eye-slash");
+        $('#show_hide_password i').removeClass("fa-eye");
+      } else if ($('#show_hide_password input').attr("type") == "password") {
+        $('#show_hide_password input').attr('type', 'text');
+        $('#show_hide_password i').removeClass("fa-eye-slash");
+        $('#show_hide_password i').addClass("fa-eye");
+      }
+    });
+  });
+</script>

@@ -1,6 +1,7 @@
 const express = require('express'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	User = require('../models/user'),
+	fs = require('fs'),
 	router = express.Router();
 
 // Home page
@@ -69,8 +70,14 @@ router.get('/trash', ensureAuthenticated, (req, res) => {
 });
 
 router.get('/dashboard', ensureAuthenticated, (req, res) => {
+	const path = process.cwd() + '/src/files/' + req.user._id + '/avatar.png';
 	res.render('user/dashboard', {
 		auth: req.isAuthenticated(),
+		user: req.user,
+		option: req.query.option,
+		error: req.query.error,
+		success: req.query.success,
+		avatar: fs.existsSync(path) ? fs.readFileSync(decodeURI(path)) : undefined,
 	});
 });
 

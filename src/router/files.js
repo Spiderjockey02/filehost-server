@@ -86,14 +86,16 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 	// save file
 	sampleFile.mv(newPath, function(err) {
 		if (err) return res.status(500).send(err);
-		res.redirect('/files/' + directPath);
+		res.redirect('/files' + `${directPath ? `/${directPath}` : '/'}`);
 	});
 });
 
 router.post('/delete', ensureAuthenticated, (req, res) => {
 	console.log(req.body['path']);
+	fs.unlinkSync(filePath);
 	res.redirect('/files');
 });
+
 // Caching
 function isFresh(req, res) {
 	return fresh(req.headers, {
