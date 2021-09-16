@@ -1,6 +1,6 @@
 const express = require('express'),
 	router = express.Router(),
-	User = require('../models/user'),
+	User = require('../../models/user'),
 	bcrypt = require('bcrypt'),
 	fs = require('fs'),
 	passport = require('passport');

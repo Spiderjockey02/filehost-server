@@ -1,4 +1,4 @@
 node_modules
-/src/files/*
-!/src/files/example@example.com
+/src/website/files/*
+!/src/website/files/example@example.com
 /src/config.js

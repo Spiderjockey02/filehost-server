@@ -38,11 +38,11 @@
     &nbsp
     <table class="table" id="myTable">
       <thead>
-        <tr>
-          <th scope="col" style="width:4%">
+        <tr onClick="updateAll();">
+          <th scope="col" style="width:5%">
             <a type="button" class="hide" data-toggle="tooltip" data-placement="top" title="Toggle selection for all items">
               <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios2" value="option2">
+                <input class="form-check-input" type="checkbox" name="exampleRadios" id="All" value="option2">
               </div>
             </a>
           </th>
@@ -63,27 +63,18 @@
             <th scope="row" class="text-truncate" style="min-width: 150px;">
               <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
               <!-- Default dropright button -->
-              <div class="btn-group dropright hide" style="float:right">
-                <a type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="fas fa-ellipsis-v"></i>
-                </a>
-                <div class="dropdown-menu" style="overflow-y: visible !important;position: static !important">
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item border-0"><a href="/">Share</a></li>
-                    <li class="list-group-item border-0"><a href="/">Copy link</a></li>
-                  </ul>
-                    <hr class="mt-2 mb-3"/>
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item border-0"><a href="/">Download</a></li>
-                    <li class="list-group-item border-0"><a href="/">Delete</a></li>
-                    <li class="list-group-item border-0"><a href="/">Move to</a></li>
-                    <li class="list-group-item border-0"><a href="/">Copy to</a></li>
-                    <li class="list-group-item border-0"><a href="/">Rename</a></li>
-                  </ul>
-                  <form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
-                    <input type="hidden" value="<%= path %>" name="path">
-                    <button type="submit" class="btn" id="imagefile">${e.target.parentElement.childNodes[1].outerText}</button>
-                  </form>
+              <div class="btn-group dropright">
+                <button type="button" class="btn btn-secondary">
+                  Split dropright
+                </button>
+                <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-boundary="scrollParent">
+                  <span class="sr-only">Toggle Dropright</span>
+                </button>
+                <div class="dropdown-menu">
+                  <p>Test</p>
+                  <p>Test</p>
+                  <p>Test</p>
+                  <p>Test</p>
                 </div>
               </div>
             </th>
@@ -92,13 +83,13 @@
           </tr>
         <% } %>
         <% for (const file of files.children.filter(file => file.type == 'file')) { %>
-          <tr>
+          <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
             <th>
               <div class="form-check form-check-inline hide">
-                <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios2" value="option2">
+                <input onclick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" value="option2">
               </div>
             </th>
-            <th scope="row" class="text-truncate" style="max-width: 150px;"><a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
+            <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
             <td><%= formatBytes(file.size) %></td>
             <td><%= file.modified?.toDateString() %></td>
           </tr>
@@ -111,6 +102,64 @@
   $(function () {
     $('[data-toggle="tooltip"]').tooltip()
   })
+
+  $("tr").bind('mouseover', function() {
+    onHover($(this)[0])
+
+    $("tr").bind('mouseout', function () {
+      offHover($(this)[0])
+    });
+  });
+
+  function onHover(item, parent) {
+    //item.classList.remove("hide");
+    if (parent) {
+      item.parentElement.classList.remove("hide");
+      item.parentElement.parentElement.parentElement.style.background = "#edebe9"
+    } else {
+      item.style.background = "#edebe9"
+    }
+  }
+
+  function offHover(item, parent) {
+    if (parent) {
+      item.parentElement.classList.add("hide");
+      item.parentElement.parentElement.parentElement.style.background = "white"
+    } else {
+      item.style.background = "white"
+
+    }
+  }
+
+  function updateAll() {
+    if (document.getElementById('All').checked) {
+      var checkboxes = document.querySelectorAll("input[type=checkbox]")
+      console.log(checkboxes)
+      checkboxes.forEach((checkbox) => {
+        updateValue(checkbox.id)
+      });
+    } else {
+      var checkboxes = document.querySelectorAll("input[type=checkbox]")
+      console.log(checkboxes)
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = false
+      });
+    }
+  }
+  function updateValue(id) {
+    if (document.getElementById(id).checked) {
+      offHover(document.getElementById(id), true)
+      //document.getElementById(id).parentElement.classList.add("hide");
+      //console.log(document.getElementById(id).parentElement.parentElement.parentElement)
+      //document.getElementById(id).parentElement.parentElement.parentElement.style.background = "white"
+    } else {
+      onHover(document.getElementById(id), true)
+      //document.getElementById(id).parentElement.classList.remove("hide");
+      //document.getElementById(id).parentElement.parentElement.parentElement.style.background = "#edebe9"
+    }
+    document.getElementById(id).checked = !document.getElementById(id).checked
+  }
+
   $(document).ready(function($) {
     const observer = lozad();
     observer.observe();
@@ -120,7 +169,6 @@
 
     //Custom context menu
     oncontextmenu = (e) => {
-      console.log(e.target.parentElement.childNodes)
       if (e.target.parentElement != null && e.target.parentElement.childNodes[3]?.className == 'text-truncate') {
         const file = e.target.parentElement.childNodes[3].outerText
         e.preventDefault()
@@ -128,23 +176,7 @@
         menu.id = "ctxmenu"
         menu.style = `top:${e.pageY}px;left:${e.pageX}px`
         menu.onmouseleave = () => ctxmenu.outerHTML = ''
-        menu.innerHTML = `
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item border-0"><a href="/">Share</a></li>
-          <li class="list-group-item border-0"><a href="/">Copy link</a></li>
-        </ul>
-          <hr class="mt-2 mb-3"/>
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item border-0"><a href="/">Download</a></li>
-          <li class="list-group-item border-0"><a href="/">Delete</a></li>
-          <li class="list-group-item border-0"><a href="/">Move to</a></li>
-          <li class="list-group-item border-0"><a href="/">Copy to</a></li>
-          <li class="list-group-item border-0"><a href="/">Rename</a></li>
-        </ul>
-        <form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
-          <input type="hidden" value="<%= path %>" name="path">
-          <button type="submit" class="btn" id="imagefile">${e.target.parentElement.childNodes[1].outerText}</button>
-        </form>`
+        menu.innerHTML = `<%- include('../partials/context-menu')%>`
         document.body.appendChild(menu)
       }
     }
@@ -163,6 +195,7 @@
       return th.addEventListener('click', (() => {
         const table = th.closest('table');
         const element = document.getElementById(th.id);
+        if (!element) return
         element.innerHTML = element.id + ((!this.asc) ? " <i class=\"fas fa-sort-up\"></i>" : " <i class=\"fas fa-sort-down\"></i>")
         Array.from(table.childNodes[3].querySelectorAll('tr:nth-child(n+1)'))
           .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
@@ -174,11 +207,11 @@
   img {
     height: 340px;
   }
-  tr:hover {
-    background: #edebe9;
-  }
   a {
     color: #717171
+  }
+  input[type="checkbox"]:hover  {
+    background-color: blue;
   }
   a:hover {
     color: #3B3B3B

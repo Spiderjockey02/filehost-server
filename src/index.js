@@ -14,7 +14,7 @@ const express = require('express'),
 	bodyParser = require('body-parser'),
 	compression = require('compression');
 
-require('./config/passport')(passport);
+require('./website/config/passport')(passport);
 
 const corsOpt = {
 	origin: '*',
@@ -73,10 +73,10 @@ app
 	})
 	.engine('html', require('ejs').renderFile)
 	.set('view engine', 'ejs')
-	.set('views', './src/views')
-	.use(favicon('./src/assets/favicon.ico'))
-	.use('/', require('./router'))
-	.use('/files', require('./router/files'))
-	.use('/user', require('./router/user'))
-	.use('/auth', require('./router/auth'))
+	.set('views', './src/website/views')
+	.use(favicon('./src/website/assets/favicon.ico'))
+	.use('/', require('./website/router'))
+	.use('/files', require('./website/router/files'))
+	.use('/user', require('./website/router/user'))
+	.use('/auth', require('./website/router/auth'))
 	.listen(config.port, () => console.log(`Started on PORT: ${config.port}`));

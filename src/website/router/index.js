@@ -1,12 +1,12 @@
 const express = require('express'),
 	{ ensureAuthenticated } = require('../config/auth'),
-	User = require('../models/user'),
+	User = require('../../models/user'),
 	fs = require('fs'),
 	router = express.Router();
 
 // Home page
 router.get('/', (req, res) => {
-	const files = require('../utils/directory')(process.cwd() + '/src/files/');
+	const files = require('../../utils/directory')(process.cwd() + '/src/website/files/');
 	const number = getNumberOfFiles(files, 0);
 	res.render('index', {
 		auth: req.isAuthenticated(),

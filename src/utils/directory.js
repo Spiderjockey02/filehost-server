@@ -20,14 +20,6 @@ function safeReadDirSync(path) {
 	return dirData;
 }
 
-/**
- * Collects the files and folders for a directory path into an Object, subject
- * to the options supplied, and invoking optional
- * @param  {String} path
- * @param  {function} onEachFile
- * @param  {function} onEachDirectory
- * @return {Object}
- */
 function directoryTree(path, onEachFile, onEachDirectory) {
 	const name = PATH.basename(path);
 	const item = { path, name };

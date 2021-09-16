@@ -1,4 +1,4 @@
-const User = require('../models/user'),
+const User = require('../../models/user'),
 	fs = require('fs'),
 	LocalStrategy = require('passport-local').Strategy,
 	FacebookStrategy = require('passport-facebook').Strategy,
@@ -30,9 +30,9 @@ module.exports = function(passport) {
 
 	// For logging in via twitter
 	passport.use(new TwitterStrategy({
-		consumerKey: require('../config').twitter.consumer_key,
-		consumerSecret: require('../config').twitter.consumer_secret,
-		callbackURL: 	`${require('../config').domain}/auth/twitter/callback`,
+		consumerKey: require('../../config').twitter.consumer_key,
+		consumerSecret: require('../../config').twitter.consumer_secret,
+		callbackURL: 	`${require('../../config').domain}/auth/twitter/callback`,
 		passReqToCallback : true,
 	}, function(req, token, tokenSecret, profile, done) {
 		// asynchronous
@@ -83,7 +83,7 @@ module.exports = function(passport) {
 	}));
 
 	// facebook loggign in
-	const fbStrategy = require('../config').facebook;
+	const fbStrategy = require('../../config').facebook;
 	fbStrategy.passReqToCallback = true;
 	passport.use(new FacebookStrategy(fbStrategy,
 		function(req, token, refreshToken, profile, done) {
@@ -139,9 +139,9 @@ module.exports = function(passport) {
 
 	// google
 	passport.use(new GoogleStrategy({
-		clientID: require('../config').google.clientID,
-		clientSecret: require('../config').google.clientSecret,
-		callbackURL: `${require('../config').domain}/auth/google/callback`,
+		clientID: require('../../config').google.clientID,
+		clientSecret: require('../../config').google.clientSecret,
+		callbackURL: `${require('../../config').domain}/auth/google/callback`,
 		passReqToCallback: true,
 	}, function(req, token, refreshToken, profile, done) {
 		// asynchronous

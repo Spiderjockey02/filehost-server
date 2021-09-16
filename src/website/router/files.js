@@ -1,12 +1,12 @@
 const express = require('express'),
 	router = express.Router(),
-	dirTree = require('../utils/directory'),
+	dirTree = require('../../utils/directory'),
 	{ ensureAuthenticated } = require('../config/auth'),
-	User = require('../models/user'),
+	User = require('../../models/user'),
 	fs = require('fs'),
 	fresh = require('fresh');
 
-const location = process.cwd() + '/src/files/';
+const location = process.cwd() + '/src/website/files/';
 
 // Show file explorer
 router.get('/*', ensureAuthenticated, async (req, res) => {
