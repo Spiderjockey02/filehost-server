@@ -40,7 +40,7 @@
     <table class="table" id="myTable">
       <thead>
         <tr onClick="updateAll();">
-          <th scope="col" style="width:5%">
+          <th scope="col" style="width:5%" class="dot">
             <a type="button" class="hide" data-toggle="tooltip" data-placement="top" title="Toggle selection for all items">
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="checkbox" name="exampleRadios" id="All" value="option2">
@@ -56,7 +56,7 @@
         <!--Show folders first-->
         <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
           <tr>
-            <th>
+            <th class="dot">
               <div class="form-check form-check-inline hide">
                 <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios2" value="option2">
               </div>
@@ -85,7 +85,7 @@
         <% } %>
         <% for (const file of files.children.filter(file => file.type == 'file')) { %>
           <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
-            <th>
+            <th class="dot">
               <div class="form-check form-check-inline hide">
                 <input onclick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" value="option2">
               </div>
@@ -170,12 +170,28 @@
     oncontextmenu = (e) => {
       if (e.target.parentElement != null && e.target.parentElement.childNodes[3]?.className == 'text-truncate') {
         const file = e.target.parentElement.childNodes[3].outerText
+        console.log(file)
         e.preventDefault()
         let menu = document.createElement("div")
         menu.id = "ctxmenu"
         menu.style = `top:${e.pageY}px;left:${e.pageX}px`
         menu.onmouseleave = () => ctxmenu.outerHTML = ''
-        menu.innerHTML = `<%- include('../partials/context-menu')%>`
+        menu.innerHTML = `<ul class="list-group list-group-flush">
+          <li class="list-group-item border-0"><a href="/">Share</a></li>
+          <li class="list-group-item border-0"><a href="/">Copy link</a></li>
+        </ul>
+          <hr class="mt-2 mb-3"/>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item border-0"><a href="/">Download</a></li>
+          <li class="list-group-item border-0"><a href="/">Delete</a></li>
+          <li class="list-group-item border-0"><a href="/">Move to</a></li>
+          <li class="list-group-item border-0"><a href="/">Copy to</a></li>
+          <li class="list-group-item border-0"><a href="/">Rename</a></li>
+        </ul>
+        <form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+          <input type="hidden" value="<%= path %>${file}" name="path">
+          <button type="submit" class="btn" id="imagefile">${file}</button>
+        </form>`
         document.body.appendChild(menu)
       }
     }
@@ -292,6 +308,14 @@
       position: relative;
       margin-right: 0;
    }
-}
 
+}
+@media(max-width:993px) {
+  .dropright {
+    display: none;
+  }
+  .dot {
+    display: none;
+  }
+}
 </style>

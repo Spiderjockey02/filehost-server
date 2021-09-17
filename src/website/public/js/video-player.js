@@ -12,11 +12,14 @@ const video = document.getElementById('video'),
 	volumeMute = document.querySelector('use[href="#volume-mute"]'),
 	volumeLow = document.querySelector('use[href="#volume-low"]'),
 	volumeHigh = document.querySelector('use[href="#volume-high"]'),
+	settings = document.getElementById('settings-button'),
 	volume = document.getElementById('volume'),
+	settingsTab = document.getElementById('settings-tab'),
 	playbackAnimation = document.getElementById('playback-animation'),
 	fullscreenButton = document.getElementById('fullscreen-button'),
 	videoContainer = document.getElementById('video-container'),
 	fullscreenIcons = fullscreenButton.querySelectorAll('use'),
+	playBack = document.getElementById('formControlRange'),
 	pipButton = document.getElementById('pip-button');
 
 const videoWorks = !!document.createElement('video').canPlayType;
@@ -74,11 +77,8 @@ function updateTimeElapsed() {
 /* updateProgress indicates how far through the video
 the current playback is by updating the progress bar */
 function updateProgress() {
-	console.log('Actual time' + video.currentTime);
 	seek.value = video.currentTime;
-	console.log('Seek' + seek.value);
 	progressBar.value = video.currentTime;
-	console.log('Progess' + progressBar.value);
 }
 
 /* updateSeekTooltip uses the position of the mouse on the progress bar to
@@ -166,6 +166,7 @@ function toggleFullScreen() {
 	} else {
 		videoContainer.requestFullscreen();
 	}
+	updateFullscreenButton(!document.fullscreenElement);
 }
 
 /* updateFullscreenButton changes the icon of the full screen button
@@ -236,8 +237,20 @@ function keyboardShortcuts(event) {
 	}
 }
 
+// Open/closes the settings tab
+function togglesettingstab() {
+	settingsTab.classList.toggle('hidden');
+}
+
+// Update the video's playback rate
+function updatePlaybackSpeed() {
+	document.getElementById('textInput').innerHTML = `Playback speed: ${playBack.value}x`;
+	video.playbackRate = playBack.value;
+}
+
 // Add eventlisteners here
 playButton.addEventListener('click', togglePlay);
+settings.addEventListener('click', togglesettingstab);
 video.addEventListener('play', updatePlayButton);
 video.addEventListener('pause', updatePlayButton);
 video.addEventListener('loadedmetadata', initializeVideo);
@@ -255,8 +268,8 @@ seek.addEventListener('input', skipAhead);
 volume.addEventListener('input', updateVolume);
 volumeButton.addEventListener('click', toggleMute);
 fullscreenButton.addEventListener('click', toggleFullScreen);
-videoContainer.addEventListener('fullscreenchange', updateFullscreenButton);
 pipButton.addEventListener('click', togglePip);
+playBack.addEventListener('input', updatePlaybackSpeed);
 
 document.addEventListener('DOMContentLoaded', () => {
 	if (!('pictureInPictureEnabled' in document)) {

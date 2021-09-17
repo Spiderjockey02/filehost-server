@@ -15,6 +15,14 @@ video {
   height: 100%;
   border-radius: 4px;
 }
+#settings-tab {
+  color: white;
+  position: absolute;
+  bottom: 80px;
+  right: 0;
+  width: 175px;
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.9));
+}
 .video-controls {
   right: 0;
   left: 0;

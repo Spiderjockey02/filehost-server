@@ -1,17 +1,16 @@
 const express = require('express'),
 	router = express.Router(),
 	User = require('../../models/user'),
+	{ ensureAuthenticated } = require('../config/auth'),
 	bcrypt = require('bcrypt'),
 	fs = require('fs'),
 	passport = require('passport');
 
-// Register handle
+// User is trying to login
 router.post('/login', (req, res, next) => {
 	passport.authenticate('local', function(err, user, info) {
 		// an error occured / unsuccessful log in
-		if (!user) {
-			return res.redirect(`/login?error=${info.message}`);
-		}
+		if (!user) return res.redirect(`/login?error=${info.message}`);
 
 		// User logged in
 		req.logIn(user, function(err) {
@@ -22,26 +21,21 @@ router.post('/login', (req, res, next) => {
 	})(req, res, next);
 });
 
-// register post handle
+// User is creating a new account
 router.post('/register', (req, res) => {
 	let error;
 	const { name, email, password, password2 } = req.body;
 	console.log(' Name ' + name + ' email :' + email + ' pass:' + password);
 
 	// Check all fields were filled in
-	if (!name || !email || !password || !password2) {
-		error = 'Please fill in all fields!';
-	}
+	if (!name || !email || !password || !password2) error = 'Please fill in all fields!';
 
 	// check if passwords match
-	if (password !== password2) {
-		error = 'Passwords dont match!';
-	}
+	if (password !== password2) error = 'Passwords dont match!';
+
 
 	// check if password is more than 6 characters
-	if (password.length < 6) {
-		error = 'Password must be atleast 6 characters long!';
-	}
+	if (password.length < 6)	error = 'Password must be atleast 6 characters long!';
 
 	// If an error was found notify user
 	if (error) return res.redirect(`/signup?error=${error}&name=${name}&email=${email}`);
@@ -73,7 +67,7 @@ router.post('/register', (req, res) => {
 						fs.mkdirSync(process.cwd() + '/src/files/' + newUser._id);
 						res.redirect('/files');
 					})
-					.catch(value=> console.log(value));
+					.catch(err => console.log(err));
 			}));
 		}
 	});
@@ -110,13 +104,11 @@ router.post('/password_update', (req, res) => {
 	// Check all fields were filled in
 	if (!password || !password2) error = 'Please fill in all fields!';
 
-
 	// check if passwords match
 	if (password !== password2) error = 'Passwords dont match!';
 
 	// check if password is more than 6 characters
 	if (password.length < 6)	error = 'Password must be atleast 6 characters long!';
-
 
 	// If an error was found notify user
 	if (error) return res.redirect(`/dashboard?error=${error}`);
@@ -127,4 +119,49 @@ router.post('/password_update', (req, res) => {
 		res.redirect('/dashboard?option=2&success=Password successfully updated');
 	}));
 });
+
+// Show user's recent viewings
+router.get('/recent', ensureAuthenticated, async (req, res) => {
+	const files = await User.findOne({ email: req.user.email });
+	res.render('user/recent', {
+		auth: req.isAuthenticated(),
+		files: files.recent,
+		formatBytes: function formatBytes(bytes, decimals = 2) {
+			if (bytes === 0) return '0 Bytes';
+			const k = 1024,
+				dm = decimals < 0 ? 0 : decimals,
+				sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+				i = Math.floor(Math.log(bytes) / Math.log(k));
+
+			return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+		},
+	});
+});
+
+// Show user's favourites
+router.get('/favourites', ensureAuthenticated, (req, res) => {
+	res.render('user/favourites', {
+		auth: req.isAuthenticated(),
+	});
+});
+
+// Show user's favourites
+router.get('/trash', ensureAuthenticated, (req, res) => {
+	res.render('user/trash', {
+		auth: req.isAuthenticated(),
+	});
+});
+
+router.get('/dashboard', ensureAuthenticated, (req, res) => {
+	const path = process.cwd() + '/src/files/' + req.user._id + '/avatar.png';
+	res.render('user/dashboard', {
+		auth: req.isAuthenticated(),
+		user: req.user,
+		option: req.query.option,
+		error: req.query.error,
+		success: req.query.success,
+		avatar: fs.existsSync(path) ? fs.readFileSync(decodeURI(path)) : undefined,
+	});
+});
+
 module.exports = router;
