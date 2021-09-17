@@ -34,7 +34,7 @@ router.get('/signup', (req, res) => {
 
 // For web scalpers
 router.get('/robots.txt', (req, res) => {
-	res.sendFile('../assets/robots.txt');
+	res.sendFile(process.cwd() + '/src/website/assets/robots.txt');
 });
 
 // Show user's recent viewings
