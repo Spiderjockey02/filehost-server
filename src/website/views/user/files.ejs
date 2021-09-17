@@ -4,6 +4,7 @@
   <%- include('../blocks/sidebar', { size: files.size, formatBytes }) %>
   <div class="container-fluid" style="padding:0px 30px 0px;">
     &nbsp;
+    <%- include('../partials/message', { error })%>
     <div class="row">
       <div class="col-sm-10">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
@@ -161,8 +162,6 @@
   }
 
   $(document).ready(function($) {
-    const observer = lozad();
-    observer.observe();
     $(".clickable-row").click(function() {
         window.location = $(this).data("href");
     });

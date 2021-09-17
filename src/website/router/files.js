@@ -11,7 +11,8 @@ const location = process.cwd() + '/src/website/files/';
 // Show file explorer
 router.get('/*', ensureAuthenticated, async (req, res) => {
 	// Check if file path exists
-	const path = decodeURI(location + req.user._id + req.originalUrl.substring(6, req.originalUrl.length));
+	const URLpath = req._parsedOriginalUrl.pathname;
+	const path = decodeURI(location + req.user._id + URLpath.substring(6, URLpath.length));
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
 		const files = dirTree(path);
@@ -21,8 +22,8 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 			try {
 				const user = await User.findOne({ email: req.user.email });
 				if (user.recent.length >= 10) user.recent.shift();
-				if (!user.recent.some((file) => file.path == req.originalUrl.substring(6, req.originalUrl.length))) {
-					files.path = req.originalUrl.substring(6, req.originalUrl.length);
+				if (!user.recent.some((file) => file.path == URLpath.substring(6, URLpath.length))) {
+					files.path = URLpath.substring(6, URLpath.length);
 					user.recent = [...user.recent, files];
 					await user.save();
 				}
@@ -49,10 +50,10 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				.status(200)
 				.render('user/files', {
 					files: files,
-					path: (req.originalUrl == '/files' ? '/' : req.originalUrl),
-					filter: req.query.filter,
+					path: (URLpath == '/files' ? '/' : URLpath),
 					auth: req.isAuthenticated(),
 					user: req.user,
+					error: req.query.error,
 					formatBytes: function formatBytes(bytes, decimals = 2) {
 						if (bytes === 0) return '0 Bytes';
 						const k = 1024,
@@ -82,7 +83,9 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 	const path = req.body['path'];
 	const directPath = path.split('/').slice(2, path.length).join('/');
 	const newPath = location + req.user._id + '/' + directPath + '/' + sampleFile.name;
-
+	if (sampleFile.truncated) {
+		return res.redirect('/files?error=File was too big to upload (Limit 50MB)');
+	}
 	// save file
 	sampleFile.mv(newPath, function(err) {
 		if (err) return res.status(500).send(err);
@@ -92,7 +95,6 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 
 router.post('/delete', ensureAuthenticated, (req, res) => {
 	console.log(req.body['path']);
-	fs.unlinkSync(filePath);
 	res.redirect('/files');
 });
 
