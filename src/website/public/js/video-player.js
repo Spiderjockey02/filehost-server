@@ -95,11 +95,16 @@ function updateSeekTooltip(event) {
 
 /* skipAhead jumps to a different point in the video,
 when the progress bar is clicked */
-function skipAhead(event) {
-	const skipTo = event.target.dataset.seek ?? event.target.value;
+function skipAhead(event, pressed) {
+	let skipTo;
+	if (pressed) {
+		skipTo = event;
+	} else {
+		skipTo = event.target.dataset.seek ?? event.target.value;
+	}
+	seek.value = skipTo;
 	video.currentTime = skipTo;
 	progressBar.value = skipTo;
-	seek.value = skipTo;
 }
 
 /* updateVolume updates the video's volume
@@ -172,7 +177,6 @@ function toggleFullScreen() {
 /* updateFullscreenButton changes the icon of the full screen button
 and tooltip to reflect the current full screen state of the video */
 function updateFullscreenButton(toggle) {
-	console.log('hello');
 	fullscreenIcons.forEach((icon) => icon.classList.toggle('hidden'));
 	if (toggle) {
 		fullscreenButton.setAttribute('data-title', 'Exit full screen (f)');
@@ -215,6 +219,7 @@ function keyboardShortcuts(event) {
 	const { key } = event;
 	switch (key) {
 	case 'k':
+	case ' ':
 		togglePlay();
 		animatePlayback();
 		if (video.paused) {
@@ -233,6 +238,24 @@ function keyboardShortcuts(event) {
 		break;
 	case 'p':
 		togglePip();
+		break;
+	case 'ArrowRight':
+		if (video.currentTime == video.duration) return;
+		skipAhead(Math.round(Number(seek.value) + 5), true);
+		break;
+	case 'ArrowLeft':
+		if (video.currentTime == 0) return;
+		skipAhead(Math.round(Number(seek.value) - 5), true);
+		break;
+	case 'ArrowUp':
+		if (video.volume == 1) return;
+		video.volume = (video.volume + 0.05).toFixed(3);
+		volume.value = (Number(volume.value) + 0.05).toFixed(3);
+		break;
+	case 'ArrowDown':
+		if (video.volume == 0) return;
+		video.volume = (video.volume - 0.05).toFixed(3);
+		volume.value = (Number(volume.value) - 0.05).toFixed(3);
 		break;
 	}
 }
@@ -272,8 +295,6 @@ pipButton.addEventListener('click', togglePip);
 playBack.addEventListener('input', updatePlaybackSpeed);
 
 document.addEventListener('DOMContentLoaded', () => {
-	if (!('pictureInPictureEnabled' in document)) {
-		pipButton.classList.add('hidden');
-	}
+	if (!('pictureInPictureEnabled' in document)) pipButton.classList.add('hidden');
 });
-document.addEventListener('keyup', keyboardShortcuts);
+document.addEventListener('keydown', keyboardShortcuts);

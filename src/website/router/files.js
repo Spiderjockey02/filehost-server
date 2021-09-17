@@ -43,7 +43,8 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				.render('user/file-preview', {
 					auth: req.isAuthenticated(),
 					fileInfo: Object.assign(files, { mimeType: require('mime-types').lookup(files.extension) }),
-					file: fs.readFileSync(decodeURI(path)),
+					file: req.user._id + URLpath.substring(6, URLpath.length),
+					domain: require('../../config').domain,
 				});
 		} else {
 			res

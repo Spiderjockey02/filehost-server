@@ -1,12 +1,12 @@
 <%- include('../blocks/header', { auth: auth }) %>
-<div class="container">
+<div class="container-fluid">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
   &nbsp;
-  <div class="jumbotron">
     <p>File preview</p>
     <% if (fileInfo.extension == '.mp4') { %>
-      <%- include('../partials/video-player', { video: file })%>
+      <%- include('../partials/video-player', { video: file, domain })%>
     <% } else if (['.png', '.gif', '.jpg'].includes(fileInfo.extension)) { %>
-      <img src="<%= `data:${fileInfo.mimeType};base64,${Buffer.from(file).toString('base64')}` %>" style="width:50%;align:center;" />
+      <img class="lozad" data-src="http://86.25.177.233:1111/user-content/<%=  file%>" style="width:50%;align:center;" />
     <% } else if (['.html', '.js', '.css'].includes(fileInfo.extension)) { %>
       <!--script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script-->
       <script src="https://unpkg.com/prettier@2.4.0/standalone.js"></script>
@@ -15,21 +15,12 @@
         <%= file.toString()%>
       </pre-->
     <% } %>
-    <a href="<%= `data:${fileInfo.mimeType};base64,${Buffer.from(file).toString('base64')}` %>" download>Download</a>
-  </div>
+    <a href="<%= domain%>/user-content/<%=  file%>" download>Download</a>
 </div>
-
-
-<style>
-  li.L0,
-  li.L1,
-  li.L2,
-  li.L3,
-  li.L5,
-  li.L6,
-  li.L7,
-  li.L8 {
-    list-style-type: decimal !important;
-  }
-</style>
 <%- include('../blocks/footer') %>
+<script>
+  $(document).ready(function($) {
+    const observer = lozad(); // lazy loads elements with default selector as '.lozad'
+    observer.observe();
+  })
+</script>

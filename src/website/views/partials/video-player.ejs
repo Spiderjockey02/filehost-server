@@ -7,7 +7,7 @@
     </svg>
   </div>
   <video controls class="video" id="video" preload="metadata">
-    <source src="<%= `data:video/mp4;base64,${Buffer.from(file).toString('base64')}#t=0` %>" type="video/mp4"></source>
+    <source src="<%= domain%>/user-content/<%=  file%>" type="video/mp4"></source>
   </video>
   <div id="settings-tab" class="video-controls hidden">
     <div class="form-group">
@@ -37,8 +37,7 @@
               <use href="#volume-high"></use>
             </svg>
           </button>
-          <input class="volume" id="volume" value="1"
-            data-mute="0.5" type="range" max="1" min="0" step="0.01">
+          <input class="volume" id="volume" value="1" data-mute="0.5" type="range" max="1" min="0" step="0.05">
         </div>
         <div class="time">
           <time id="time-elapsed">00:00</time>
