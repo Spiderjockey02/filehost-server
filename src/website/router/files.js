@@ -79,13 +79,24 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 
 	// Find where to place the file
 	const sampleFile = req.files.sampleFile;
-	console.log(sampleFile);
 	const path = req.body['path'];
 	const directPath = path.split('/').slice(2, path.length).join('/');
-	const newPath = location + req.user._id + '/' + directPath + '/' + sampleFile.name;
+	let newPath = location + req.user._id + '/' + directPath + '/' + sampleFile.name;
+	let times = 1;
+
+	// Check if file is too big
 	if (sampleFile.truncated) {
 		return res.redirect('/files?error=File was too big to upload (Limit 50MB)');
 	}
+
+	// Make sure not to upload duplicate files (add (x) to the end)
+	while (fs.existsSync(newPath)) {
+		const index = sampleFile.name.lastIndexOf('.');
+		const name = sampleFile.name.substring(0, index) + ` (${times})` + sampleFile.name.substring(index);
+		newPath = location + req.user._id + '/' + directPath + '/' + name;
+		times++;
+	}
+
 	// save file
 	sampleFile.mv(newPath, function(err) {
 		if (err) return res.status(500).send(err);
