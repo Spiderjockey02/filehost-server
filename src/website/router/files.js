@@ -106,7 +106,9 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 });
 
 router.post('/delete', ensureAuthenticated, (req, res) => {
-	console.log(req.body['path']);
+	console.log(req.body);
+	console.log(req.body.path);
+	fs.unlinkSync(location + req.user._id + req.body.path);
 	res.redirect('/files');
 });
 

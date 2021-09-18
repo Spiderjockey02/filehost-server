@@ -33,12 +33,13 @@ app
 		contentSecurityPolicy: {
 			directives: {
 				defaultSrc: ['\'self\''],
-				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', config.domain],
+				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', config.domain, 'https://cdn.jsdelivr.net'],
 				'style-src': ['\'unsafe-inline\'', config.domain],
 				'connect-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com/'],
 				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com'],
 				'img-src': ['\'unsafe-inline\'', 'https://www.freeiconspng.com', config.domain, 'data:', 'https://www.tenforums.com'],
-				'media-src': ['\'unsafe-inline\'', 'data:'],
+				'media-src': ['\'unsafe-inline\'', config.domain],
+				'frame-src': ['\'unsafe-inline\'', config.domain, ...config.frame_domains],
 			},
 		},
 	}))

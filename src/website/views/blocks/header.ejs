@@ -14,34 +14,39 @@
     <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
     <title>File Sharer</title>
   </head>
-  <body style="height:100%">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light" id="navBar" style="border-bottom: 1px solid black;">
-        <a class="navbar-brand btn" href="/">Home</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-          </ul>
-          <ul class="navbar-nav">
-            <% if (auth) { %>
-              <li class="navbar-nav">
-                <a class="nav-item nav-link" href="/user/dashboard">Dashboard</a>
-              </li>
-              <li class="navbar-nav">
-                <a class="nav-item nav-link" href="/files">My files</a>
-              </li>
-              <li class="navbar-nav">
-                <a class="nav-item nav-link" href="/user/logout">Logout</a>
-              </li>
-            <% } else { %>
-              <li class="navbar-nav">
-                <a class="nav-item nav-link" href="/login">Login</a>
-              </li>
-              <li class="navbar-nav">
-                <a class="nav-item nav-link" href="/signup">Sign up</a>
-              </li>
-            <% } %>
-          </ul>
-        </div>
-      </nav>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light" id="navBar" style="border-bottom: 1px solid black;background-color:#969696">
+      <a class="navbar-brand btn" href="/">Home</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+        </ul>
+        <ul class="navbar-nav">
+          <% if (auth) { %>
+            <li class="navbar-nav">
+              <a class="nav-item nav-link" href="/user/dashboard">Dashboard</a>
+            </li>
+            <li class="navbar-nav">
+              <a class="nav-item nav-link" href="/files">My files</a>
+            </li>
+            <li class="navbar-nav">
+              <a class="nav-item nav-link" href="/user/logout">Logout</a>
+            </li>
+          <% } else { %>
+            <li class="navbar-nav">
+              <a class="nav-item nav-link" href="/login">Login</a>
+            </li>
+            <li class="navbar-nav">
+              <a class="nav-item nav-link" href="/signup">Sign up</a>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+    </nav>
+<style>
+html, body {
+  height: 100%;
+}
+</style>
