@@ -12,6 +12,7 @@ const express = require('express'),
 	MemoryStore = require('memorystore'),
 	mStore = MemoryStore(session),
 	bodyParser = require('body-parser'),
+	logger = require('./utils/logger'),
 	compression = require('compression');
 
 require('./website/config/passport')(passport);
@@ -25,7 +26,7 @@ const corsOpt = {
 };
 mongoose.connect(config.MongoDBURl, { useNewUrlParser: true, useUnifiedTopology : true })
 	.then(() => {
-		console.log('Connected to database');
+		logger.log('Connected to database', 'ready');
 	});
 // normal configuration
 app
@@ -46,8 +47,7 @@ app
 	.use(cors(corsOpt))
 	.use(compression())
 	.use(fileUpload({
-		// 100 MB file upload
-		debug: true,
+		// 50 MB file upload
 		limits: {
 			fileSize: 50 * 1024 * 1024,
 		},
@@ -66,9 +66,7 @@ app
 	.use(passport.initialize())
 	.use(passport.session())
 	.use(function(req, res, next) {
-		if (req.originalUrl !== '/favicon.ico') {
-			require('./utils/logger').log(req, res);
-		}
+		if (req.originalUrl !== '/favicon.ico') logger.connection(req, res);
 		next();
 	})
 	.engine('html', require('ejs').renderFile)
@@ -80,4 +78,4 @@ app
 	.use('/files', require('./website/router/files'))
 	.use('/user', require('./website/router/user'))
 	.use('/auth', require('./website/router/auth'))
-	.listen(config.port, () => console.log(`Started on PORT: ${config.port}`));
+	.listen(config.port, () => logger.log(`Started on PORT: ${config.port}`, 'ready'));
