@@ -54,7 +54,7 @@ This file sharing service is in a continuous state of development. New features/
   * Add a context menu (custom right-click menu) for interaction with files.
 
 ## 🖥️ My other projects
- * [Egglord](https://github.com/Spiderjockey02/Discord-Bo) - An advanced multi-purpose discord bot.
+ * [Egglord](https://github.com/Spiderjockey02/Discord-Bot) - An advanced multi-purpose discord bot.
  * [erela.js-facebook](https://github.com/Spiderjockey02/erela.js-facebook) - Allows facebook videos to played with [erela.js](https://github.com/MenuDocs/erela.js) (A [lavalink](https://github.com/Freyacodes/Lavalink) client).
 
 ## 📖 License
