@@ -16,15 +16,15 @@
 </div>
 
 <div align="center">
-  <a href="#about">About</a>
+  <a href="#-about">About</a>
   •
-  <a href="#Features">Features</a>
+  <a href="#-features">Features</a>
   •
-  <a href="#installation">Installation</a>
+  <a href="https://github.com/Spiderjockey02/CDN-server/blob/master/docs/INSTALLATION.md">Installation</a>
   •
-  <a href="#license">License</a>
+  <a href="#-license">License</a>
   •
-  <a href="#credits">Credits</a>
+  <a href="#-credits">Credits</a>
 </div>
 
 ## ❓ About
