@@ -7,7 +7,7 @@
 <h3 align=center>A secure, easy-to-use file hosting service built with <a href="https://ejs.co/">ejs</a></h3>
 
 
-<div align=center> 
+<div align="center"> 
   
  [![Discord](https://img.shields.io/discord/658113349384667198.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/8g6zUQu)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Spiderjockey02_CDN-server&metric=ncloc)](https://sonarcloud.io/dashboard?id=Spiderjockey02_CDN-server)
@@ -15,7 +15,7 @@
  
 </div>
 
-<p align="center">
+<div align="center">
   <a href="#about">About</a>
   •
   <a href="#Features">Features</a>
@@ -25,13 +25,15 @@
   <a href="#license">License</a>
   •
   <a href="#credits">Credits</a>
-</p>
+</div>
 
 ## ❓ About
 
-![image](https://user-images.githubusercontent.com/55885015/133273028-700c7e79-0ce7-4071-be6f-441835cb642c.png)
-![image](https://user-images.githubusercontent.com/55885015/133273104-3f7e73d2-3fc9-4a4b-9f76-81fe6817cac1.png)
-
+<div align="center"> 
+  <img src="https://github.com/Spiderjockey02/CDN-server/blob/master/docs/images/signup.png" height="250">
+  <img src="https://github.com/Spiderjockey02/CDN-server/blob/master/docs/images/file-directory.png" height="250">
+  <img src="https://github.com/Spiderjockey02/CDN-server/blob/master/docs/images/custom%20video-player.png" height="250">
+</div>
 
 If you liked this repository, feel free to leave a star ⭐ to help promote this new web server!
 
