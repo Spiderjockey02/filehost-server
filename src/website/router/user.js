@@ -4,6 +4,8 @@ const express = require('express'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	bcrypt = require('bcrypt'),
 	fs = require('fs'),
+	logger = require('../../utils/logger'),
+	location = process.cwd() + '/src/website/files/',
 	passport = require('passport');
 
 // User is trying to login
@@ -15,7 +17,7 @@ router.post('/login', (req, res, next) => {
 		// User logged in
 		req.logIn(user, function(err) {
 			if (err) return next(err);
-			console.log(user);
+			logger.log(`User logged in: ${user.email ?? user.name}`);
 			return res.redirect('/files');
 		});
 	})(req, res, next);
@@ -56,18 +58,20 @@ router.post('/register', (req, res) => {
 			});
 
 			// hash password
-			bcrypt.genSalt(10, (err, salt) => bcrypt.hash(newUser.password, salt, (err, hash) => {
+			bcrypt.genSalt(10, (err, salt) => bcrypt.hash(newUser.password, salt, async (err, hash) => {
 				if (err) throw err;
 				// save pass to hash
 				newUser.password = hash;
 				// save user
-				newUser.save()
-					.then((value) => {
-						console.log(value);
-						fs.mkdirSync(process.cwd() + '/src/files/' + newUser._id);
-						res.redirect('/files');
-					})
-					.catch(err => console.log(err));
+				try {
+					await newUser.save();
+					const t = fs.mkdirSync(location + newUser._id);
+					console.log(t);
+					logger.log(`New user: ${newUser.email}`);
+					res.redirect('/files');
+				} catch (err) {
+					console.log(err);
+				}
 			}));
 		}
 	});
@@ -88,7 +92,7 @@ router.post('/avatar/upload', (req, res) => {
 	// Find where to place the file
 	const sampleFile = req.files.sampleFile;
 	console.log(sampleFile);
-	const newPath = process.cwd() + '/src/files/' + req.user._id + '/' + 'avatar.png';
+	const newPath = location + req.user._id + '/' + 'avatar.png';
 
 	// save file
 	sampleFile.mv(newPath, async function(err) {
@@ -153,7 +157,7 @@ router.get('/trash', ensureAuthenticated, (req, res) => {
 });
 
 router.get('/dashboard', ensureAuthenticated, (req, res) => {
-	const path = process.cwd() + '/src/files/' + req.user._id + '/avatar.png';
+	const path = location + req.user._id + '/avatar.png';
 	res.render('user/dashboard', {
 		auth: req.isAuthenticated(),
 		user: req.user,

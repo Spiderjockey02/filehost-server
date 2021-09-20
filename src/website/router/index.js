@@ -6,7 +6,7 @@ const express = require('express'),
 
 // Home page
 router.get('/', (req, res) => {
-	const files = require('../../utils/directory')(process.cwd() + '/src/website/files/');
+	const files = require('../../utils/directory')(location);
 	const number = getNumberOfFiles(files, 0);
 	res.render('index', {
 		auth: req.isAuthenticated(),
