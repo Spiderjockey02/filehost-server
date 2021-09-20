@@ -1,5 +1,6 @@
 const User = require('../../models/user'),
 	fs = require('fs'),
+	location = process.cwd() + '/src/website/files/',
 	LocalStrategy = require('passport-local').Strategy,
 	FacebookStrategy = require('passport-facebook').Strategy,
 	TwitterStrategy = require('passport-twitter').Strategy,
@@ -62,7 +63,7 @@ module.exports = function(passport) {
 						newUser.twitter.displayName = profile.displayName;
 						newUser.save(function(err) {
 							if (err) return done(err);
-							fs.mkdirSync(process.cwd() + '/src/files/' + newUser._id);
+							fs.mkdirSync(location + newUser._id);
 							return done(null, newUser);
 						});
 					}
@@ -101,7 +102,7 @@ module.exports = function(passport) {
 								user.facebook.email = (profile.emails[0].value || '').toLowerCase();
 
 								user.save(function(err) {
-									if (err) {return done(err);}
+									if (err) return done(err);
 									return done(null, user);
 								});
 							}
@@ -116,7 +117,7 @@ module.exports = function(passport) {
 
 							newUser.save(function(err) {
 								if (err) return done(err);
-								fs.mkdirSync(process.cwd() + '/src/files/' + newUser._id);
+								fs.mkdirSync(location + newUser._id);
 								return done(null, newUser);
 							});
 						}
@@ -172,7 +173,7 @@ module.exports = function(passport) {
 
 						newUser.save(function(err) {
 							if (err) return done(err);
-							fs.mkdirSync(process.cwd() + '/src/files/' + newUser._id);
+							fs.mkdirSync(location + newUser._id);
 							return done(null, newUser);
 						});
 					}

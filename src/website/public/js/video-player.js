@@ -1,3 +1,4 @@
+// JS for the custom video player ONLY
 const video = document.getElementById('video'),
 	videoControls = document.getElementById('video-controls'),
 	playButton = document.getElementById('play'),
