@@ -11,9 +11,9 @@ const config = {
 	MongoDBURl: 'mongodb://localhost:27017/filesharer',
 	// Allows people to login in via twitter
 	twitter: {
-		consumer_key:	'',
-		consumer_secret:	'',
-		access_token_key:	'',
+		consumer_key: '',
+		consumer_secret: '',
+		access_token_key: '',
 		access_token_secret: '',
 	},
 	// Allows people to login in via facebook
