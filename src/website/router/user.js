@@ -130,6 +130,7 @@ router.get('/recent', ensureAuthenticated, async (req, res) => {
 	res.render('user/recent', {
 		auth: req.isAuthenticated(),
 		files: files.recent,
+		user: req.user,
 		formatBytes: function formatBytes(bytes, decimals = 2) {
 			if (bytes === 0) return '0 Bytes';
 			const k = 1024,
@@ -146,6 +147,7 @@ router.get('/recent', ensureAuthenticated, async (req, res) => {
 router.get('/favourites', ensureAuthenticated, (req, res) => {
 	res.render('user/favourites', {
 		auth: req.isAuthenticated(),
+		user: req.user,
 	});
 });
 

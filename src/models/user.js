@@ -1,13 +1,13 @@
 const { Schema, model } = require('mongoose');
 
 const UserSchema = new Schema({
-	name: { type: String },
-	email: { type: String },
-	password: { type: String },
+	name: String,
+	email: String,
+	password: String,
 	creationDate: { type: Date, default: Date.now },
-	recent: { type: Array },
-	favourites: { type: Array },
-	avatar: { type:String },
+	recent: Array,
+	favourites: Array,
+	size: String,
 	facebook: {
 		id: String,
 		token: String,

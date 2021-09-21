@@ -16,7 +16,6 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
 		const files = dirTree(path);
-		console.log(files);
 		if (files.type == 'file') {
 			// update recently viewed files
 			try {
@@ -73,7 +72,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 
 
 // upload files to user's account
-router.post('/upload', ensureAuthenticated, (req, res) => {
+router.post('/upload', ensureAuthenticated, async (req, res) => {
 	if (!req.files || Object.keys(req.files).length === 0) {
 		return res.status(400).send('No files were uploaded.');
 	}
@@ -90,6 +89,9 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 		return res.redirect('/files?error=File was too big to upload (Limit 50MB)');
 	}
 
+	if ((req.user.size ?? 0) + sampleFile.size >= 5 * 1024 * 1024 * 1024) {
+		return res.redirect('/files?error=You have reached your data limit (Limit 5GB)');
+	}
 	// Make sure not to upload duplicate files (add (x) to the end)
 	while (fs.existsSync(newPath)) {
 		const index = sampleFile.name.lastIndexOf('.');
@@ -98,6 +100,7 @@ router.post('/upload', ensureAuthenticated, (req, res) => {
 		times++;
 	}
 
+	await User.findOneAndUpdate({ email: req.user.email }, { size: (req.user.size ?? 0) + sampleFile.size });
 	// save file
 	sampleFile.mv(newPath, function(err) {
 		if (err) return res.status(500).send(err);

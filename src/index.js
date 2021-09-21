@@ -1,4 +1,4 @@
-// pkg
+// dependecies
 const express = require('express'),
 	cors = require('cors'),
 	app = express(),
@@ -17,17 +17,12 @@ const express = require('express'),
 
 require('./website/config/passport')(passport);
 
-const corsOpt = {
-	origin: '*',
-	credentials: true,
-	methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
-	allowedHeaders: ['X-CSRF-Token', 'X-Requested-With', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Content-Type', 'Date', 'X-Api-Version'],
-	optionsSuccessStatus: 204,
-};
+// Connect to database
 mongoose.connect(config.MongoDBURl, { useNewUrlParser: true, useUnifiedTopology : true })
 	.then(() => {
 		logger.log('Connected to database', 'ready');
 	});
+
 // normal configuration
 app
 	.use(helmet({
@@ -44,19 +39,21 @@ app
 			},
 		},
 	}))
-	.use(cors(corsOpt))
+	.use(cors({
+		origin: '*',
+		credentials: true,
+		methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+		allowedHeaders: ['X-CSRF-Token', 'X-Requested-With', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Content-Type', 'Date', 'X-Api-Version'],
+		optionsSuccessStatus: 204,
+	}))
 	.use(compression())
 	.use(fileUpload({
 		// 50 MB file upload
-		limits: {
-			fileSize: 50 * 1024 * 1024,
-		},
+		limits: { fileSize: 50 * 1024 * 1024 },
 		useTempFiles: true,
 		tempFileDir: '/tmp/',
 	}))
-	.use(bodyParser.urlencoded({
-		extended: true,
-	}))
+	.use(bodyParser.urlencoded({ extended: true }))
 	.use(session({
 		store:  new mStore({ checkPeriod: 86400000 }),
 		secret: 'secret',

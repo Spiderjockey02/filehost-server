@@ -2,12 +2,12 @@
 <link rel="stylesheet" href="/css/file-directory.css" type="text/css">
 <div id="wrapper">
   <!-- Sidebar -->
-  <%- include('../blocks/sidebar', { size: files.size, formatBytes }) %>
+  <%- include('../blocks/sidebar', { size: user.size, formatBytes }) %>
   <div class="container-fluid" style="padding:0px 30px 0px;">
     &nbsp;
     <%- include('../partials/message', { error })%>
     <div class="row">
-      <div class="col-sm-10">
+      <div class="col-md-10 col-lg-10">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
           <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/files">Home</a></li>
