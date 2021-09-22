@@ -10,51 +10,58 @@ $('tr').bind('mouseover', function() {
 	});
 });
 
+// Row is active (mouse is hovering or checkbox is ticked)
 function onHover(item, parent) {
-	// item.classList.remove("hide");
 	if (parent) {
 		item.parentElement.classList.remove('hide');
+		if (item.getAttribute('data-option') == '1') return;
 		item.parentElement.parentElement.parentElement.style.background = '#edebe9';
 	} else {
+		if (item.childNodes[1].childNodes[1].childNodes[1].getAttribute('data-option') == '1') return;
 		item.style.background = '#edebe9';
 	}
 }
 
+// Row is no longer active (mouse has stopped hovering or checkbox is not ticked)
 function offHover(item, parent) {
 	if (parent) {
 		item.parentElement.classList.add('hide');
+		if (item.getAttribute('data-option') == '1') return;
 		item.parentElement.parentElement.parentElement.style.background = 'white';
 	} else {
+		if (item.childNodes[1].childNodes[1].childNodes[1].getAttribute('data-option') == '1') return;
 		item.style.background = 'white';
-
 	}
 }
 
 function updateAll() {
-	if (document.getElementById('All').checked) {
+	if (!document.getElementById('All').checked) {
 		const checkboxes = document.querySelectorAll('input[type=checkbox]');
-		console.log(checkboxes);
 		checkboxes.forEach((checkbox) => {
+			if (checkbox.id == 'All' || !checkbox.checked) return;
 			updateValue(checkbox.id);
 		});
+		document.getElementById('All').setAttribute('data-option', '0');
+		offHover(document.getElementById('All'), true);
 	} else {
 		const checkboxes = document.querySelectorAll('input[type=checkbox]');
-		console.log(checkboxes);
 		checkboxes.forEach((checkbox) => {
-			checkbox.checked = false;
+			if (checkbox.id == 'All' || checkbox.checked) return;
+			updateValue(checkbox.id);
 		});
+		document.getElementById('All').setAttribute('data-option', '1');
+		onHover(document.getElementById('All'), true);
 	}
 }
-function updateValue(id) {
+
+function updateValue(id, ignore) {
 	if (document.getElementById(id).checked) {
+		document.getElementById(id).setAttribute('data-option', '0');
 		offHover(document.getElementById(id), true);
-		// document.getElementById(id).parentElement.classList.add("hide");
-		// console.log(document.getElementById(id).parentElement.parentElement.parentElement)
-		// document.getElementById(id).parentElement.parentElement.parentElement.style.background = "white"
+		if (document.getElementById('All').checked && !ignore) updateValue('All', true);
 	} else {
 		onHover(document.getElementById(id), true);
-		// document.getElementById(id).parentElement.classList.remove("hide");
-		// document.getElementById(id).parentElement.parentElement.parentElement.style.background = "#edebe9"
+		document.getElementById(id).setAttribute('data-option', '1');
 	}
 	document.getElementById(id).checked = !document.getElementById(id).checked;
 }

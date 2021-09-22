@@ -2,7 +2,7 @@
 <div class="container-fluid">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
   &nbsp;
-  <p><%= fileInfo.name.replace(fileInfo.extension, ' ')%></p>
+  <h4 style="text-align:center"><%= fileInfo.name.replace(fileInfo.extension, ' ')%></h4>
   <% if (fileInfo.extension == '.mp4') { %>
     <%- include('../partials/video-player', { video: file, domain })%>
   <% } else if (['.png', '.gif', '.jpg'].includes(fileInfo.extension)) { %>

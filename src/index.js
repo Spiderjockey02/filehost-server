@@ -12,7 +12,7 @@ const express = require('express'),
 	MemoryStore = require('memorystore'),
 	mStore = MemoryStore(session),
 	bodyParser = require('body-parser'),
-	logger = require('./utils/logger'),
+	{ logger } = require('./utils'),
 	compression = require('compression');
 
 require('./website/config/passport')(passport);

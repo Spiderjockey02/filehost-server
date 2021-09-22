@@ -1,6 +1,6 @@
 const express = require('express'),
 	router = express.Router(),
-	logger = require('../../utils/logger'),
+	{ logger } = require('../../utils'),
 	passport = require('passport');
 
 // send to facebook to do the authentication
@@ -30,9 +30,6 @@ router.get('/twitter/callback', (req, res, next) => passport.authenticate('twitt
 		return res.redirect('/files');
 	});
 })(req, res, next));
-
-
-// google ---------------------------------
 
 // send to google to do the authentication
 router.get('/google', passport.authenticate('google', { scope : ['profile', 'email'] }));

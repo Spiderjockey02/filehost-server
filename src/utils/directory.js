@@ -43,12 +43,11 @@ function directoryTree(path, onEachFile, onEachDirectory) {
 		item.type = constants.FILE;
 		item.modified = stats.mtime;
 		if (item.extension == '.url') {
-			item.url = fs.readFileSync(item.path, 'utf8').substring(24, fs.readFileSync(item.path, 'utf8').length - 4);
+			const filedata = fs.readFileSync(item.path, 'utf8');
+			item.url = filedata.split('\n')[4].substring(4, filedata.split('\n')[4].length);
 		}
 
-		if (onEachFile) {
-			onEachFile(item, path, stats);
-		}
+		if (onEachFile) onEachFile(item, path, stats);
 	} else if (stats.isDirectory()) {
 		const dirData = safeReadDirSync(path);
 		if (dirData === null) return null;
@@ -59,16 +58,14 @@ function directoryTree(path, onEachFile, onEachDirectory) {
 
 		// Get time modified for folder
 		const folderModifed = item.children.sort((a, b) => (a.modified?.getTime() ?? 0) > (b.modified?.getTime() ?? 0))[0];
-		if(folderModifed) item.modified = folderModifed.modified;
+		if (folderModifed) item.modified = folderModifed.modified;
 
 		// Get total size of folder
 		const folderSize = getNumberOfFiles(item, 0);
 
 		item.size = folderSize;
 		item.type = constants.DIRECTORY;
-		if (onEachDirectory) {
-			onEachDirectory(item, path, stats);
-		}
+		if (onEachDirectory) onEachDirectory(item, path, stats);
 	} else {
 		return null;
 	}

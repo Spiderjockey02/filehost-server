@@ -4,7 +4,7 @@ const express = require('express'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	bcrypt = require('bcrypt'),
 	fs = require('fs'),
-	logger = require('../../utils/logger'),
+	{ logger } = require('../../utils'),
 	location = process.cwd() + '/src/website/files/',
 	passport = require('passport');
 

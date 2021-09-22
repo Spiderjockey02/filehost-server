@@ -2,7 +2,7 @@
 <link rel="stylesheet" href="/css/file-directory.css" type="text/css">
 <div id="wrapper">
   <!-- Sidebar -->
-  <%- include('../blocks/sidebar', { size: user.size, formatBytes }) %>
+  <%- include('../blocks/sidebar', { size: Number(user.size), formatBytes }) %>
   <div class="container-fluid" style="padding:0px 30px 0px;">
     &nbsp;
     <%- include('../partials/message', { error })%>
@@ -19,7 +19,7 @@
           </ol>
         </nav>
       </div>
-      <div class="col-sm-2">
+      <div class="col-md-2 col-lg-2">
         <div class="btn-group" style="float:right">
           <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Upload</button>
           <div class="dropdown-menu dropdown-menu-right">
@@ -40,13 +40,11 @@
     &nbsp
     <table class="table" id="myTable">
       <thead>
-        <tr onClick="updateAll();">
+        <tr>
           <th scope="col" style="width:5%" class="dot">
-            <a type="button" class="hide" data-toggle="tooltip" data-placement="top" title="Toggle selection for all items">
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" name="exampleRadios" id="All" value="option2">
-              </div>
-            </a>
+            <div class="form-check form-check-inline hide">
+              <input onClick="updateAll();" class="form-check-input" type="checkbox" name="exampleRadios" id="All" data-option="0">
+            </div>
           </th>
           <th id="Name" scope="col">Name</th>
           <th id="Size" scope="col">Size</th>
@@ -56,39 +54,26 @@
       <tbody>
         <!--Show folders first-->
         <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
-          <tr>
+          <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
             <th class="dot">
               <div class="form-check form-check-inline hide">
-                <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios2" value="option2">
+                <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
               </div>
             </th>
             <th scope="row" class="text-truncate" style="min-width: 150px;">
               <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
               <!-- Default dropright button -->
-              <div class="btn-group dropright">
-                <button type="button" class="btn btn-secondary">
-                  Split dropright
-                </button>
-                <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-boundary="scrollParent">
-                  <span class="sr-only">Toggle Dropright</span>
-                </button>
-                <div class="dropdown-menu">
-                  <p>Test</p>
-                  <p>Test</p>
-                  <p>Test</p>
-                  <p>Test</p>
-                </div>
-              </div>
             </th>
             <td><%= file.children?.length ?? 0 %> files</td>
             <td><%= file.modified?.toDateString() %></td>
           </tr>
         <% } %>
+
         <% for (const file of files.children.filter(file => file.type == 'file')) { %>
           <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
             <th class="dot">
               <div class="form-check form-check-inline hide">
-                <input onclick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" value="option2">
+                <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
               </div>
             </th>
             <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>

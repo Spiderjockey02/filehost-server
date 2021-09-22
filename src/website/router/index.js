@@ -6,8 +6,8 @@ const express = require('express'),
 
 // Home page
 router.get('/', (req, res) => {
-	const files = require('../../utils/directory')(location);
-	const number = getNumberOfFiles(files, 0);
+	const files = require('../../utils/directory')(location),
+		number = getNumberOfFiles(files, 0);
 	res.render('index', {
 		auth: req.isAuthenticated(),
 		NumFiles: number,
@@ -18,7 +18,7 @@ router.get('/', (req, res) => {
 router.get('/login', (req, res) => {
 	res.render('user/login', {
 		auth: req.isAuthenticated(),
-		error: req.query.error ?? undefined,
+		error: req.query.error,
 	});
 });
 
@@ -39,11 +39,11 @@ router.get('/robots.txt', (req, res) => {
 
 // Show user content like images/videos etc
 router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
+	// Make sure no one else accessing their data
 	if (req.user._id == req.params.userID) {
 		// Check if file path exists
 		const URLpath = req._parsedOriginalUrl.pathname;
 		const path = decodeURI(location + URLpath.slice(14));
-		console.log(path);
 		if (fs.existsSync(path)) {
 			res.sendFile(path, (err) => {
 				if (err) return res.status(404).end('content not found.');
@@ -56,6 +56,13 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 			.status(403)
 			.send('Access denied!');
 	}
+});
+
+router.get('/terms-and-conditions', (req, res) => {
+	res.render('extra/terms', {
+		auth: req.isAuthenticated(),
+		companyName: require('../../config').name,
+	});
 });
 
 module.exports = router;

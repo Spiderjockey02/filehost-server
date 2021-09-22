@@ -56,6 +56,10 @@ exports.connection = async (req, res) => {
 			if (res._endTime && req._endTime) response_time = (res._endTime + req._endTime) - (res._startTime + req._startTime);
 
 			// log
+			if ((url.startsWith('/js') || url.startsWith('/css'))) {
+				if (require('../config').debug) return require('./logger').log(`${requester} ${method} ${url} ${chalk[color](status)} - ${(response_time ?? '?')} ms`, 'debug');
+				return;
+			}
 			require('./logger').log(`${requester} ${method} ${url} ${chalk[color](status)} - ${(response_time ?? '?')} ms`, 'log');
 		});
 	});
