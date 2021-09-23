@@ -2,3 +2,4 @@ node_modules
 /src/website/files/*
 !/src/website/files/example@example.com
 /src/config.js
+/src/client*

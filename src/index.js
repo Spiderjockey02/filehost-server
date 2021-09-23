@@ -13,6 +13,9 @@ const express = require('express'),
 	mStore = MemoryStore(session),
 	bodyParser = require('body-parser'),
 	{ logger } = require('./utils'),
+	fs = require('fs'),
+	https = require('https'),
+	http = require('http'),
 	compression = require('compression');
 
 require('./website/config/passport')(passport);
@@ -29,10 +32,10 @@ app
 		contentSecurityPolicy: {
 			directives: {
 				defaultSrc: ['\'self\''],
-				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', config.domain, 'https://cdn.jsdelivr.net'],
-				'style-src': ['\'unsafe-inline\'', config.domain],
+				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', config.domain, 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
+				'style-src': ['\'unsafe-inline\'', config.domain, 'https://fonts.googleapis.com'],
 				'connect-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com/'],
-				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com'],
+				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com', 'data:', config.domain, 'https://fonts.gstatic.com'],
 				'img-src': ['\'unsafe-inline\'', 'https://www.freeiconspng.com', config.domain, 'data:', 'https://www.tenforums.com'],
 				'media-src': ['\'unsafe-inline\'', config.domain],
 				'frame-src': ['\'unsafe-inline\'', config.domain, ...config.frame_domains],
@@ -75,4 +78,20 @@ app
 	.use('/files', require('./website/router/files'))
 	.use('/user', require('./website/router/user'))
 	.use('/auth', require('./website/router/auth'))
-	.listen(config.port, () => logger.log(`Started on PORT: ${config.port}`, 'ready'));
+	.use('/admin', require('./website/router/admin'));
+
+// Run HTTP & HTTPS server
+const options = {
+	key: fs.readFileSync('./src/client-key.pem'),
+	cert: fs.readFileSync('./src/client-cert.pem'),
+};
+
+
+// Create an HTTP service.
+http
+	.createServer(app)
+	.listen(80, () => logger.log('HTTP server online', 'ready'));
+// Create an HTTPS service identical to the HTTP service.
+https
+	.createServer(options, app)
+	.listen(443, () => logger.log('HTTPS server online', 'ready'));
