@@ -32,7 +32,7 @@
     "passport-google-oauth": "^2.0.0",
     "passport-local": "^1.0.0",
     "passport-twitter": "^1.0.4",
-    "prettier": "^2.4.0",
+    "prettier": "^2.4.1",
     "serve-favicon": "^2.5.0",
     "windows-shortcuts": "^0.1.6"
   },
