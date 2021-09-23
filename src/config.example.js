@@ -1,8 +1,6 @@
 const config = {
 	// The domain of the website
 	domain: 'URL',
-	// port the server will run on
-	port: 1111,
 	// the database for storing user info
 	MongoDBURl: 'mongodb://localhost:27017/filesharer',
 	// Allows people to login in via twitter
@@ -27,6 +25,11 @@ const config = {
 	},
 	// What domains should be allowed to be viewed via an iframe
 	frame_domains: ['https://www.youtube.com/'],
+	// This is the email that will send out verification emails to new users
+	emailAuth: {
+		user: 'EMAIL_ADDRESS',
+		pass: 'PASSWORD',
+	},
 };
 
 module.exports = config;

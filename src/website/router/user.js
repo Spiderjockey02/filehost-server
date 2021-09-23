@@ -43,7 +43,7 @@ router.post('/register', (req, res) => {
 	if (error) return res.redirect(`/signup?error=${error}&name=${name}&email=${email}`);
 
 	// Make sure email isn't already on the database
-	User.findOne({ email : email }).exec((err, user) => {
+	User.findOne({ email : email }).exec(async (err, user) => {
 		console.log(user);
 		if (user) {
 			error = 'Email is already registered!';
@@ -56,6 +56,9 @@ router.post('/register', (req, res) => {
 				email : email,
 				password : password,
 			});
+			// Verify email
+			const t = await require('axios').get(`http://localhost:1500/verify?email=${email}&ID=${newUser._id}`);
+			console.log(t);
 
 			// hash password
 			bcrypt.genSalt(10, (err, salt) => bcrypt.hash(newUser.password, salt, async (err, hash) => {
@@ -68,7 +71,7 @@ router.post('/register', (req, res) => {
 					const t = fs.mkdirSync(location + newUser._id);
 					console.log(t);
 					logger.log(`New user: ${newUser.email}`);
-					res.redirect('/files');
+					res.redirect('/login?error=Please check your email to verify your email');
 				} catch (err) {
 					console.log(err);
 				}

@@ -14,6 +14,7 @@ module.exports = function(passport) {
 			// Check database for that email
 			const user = await User.findOne({ email: email });
 			if (!user) return done(null, false, { message:'Email not registered!' });
+			if (!user.verified) return done(null, false, { message:'Please verify your email' });
 
 			// Check if the password is correct
 			bcrypt.compare(password, user.password, (err, isMatch) => {

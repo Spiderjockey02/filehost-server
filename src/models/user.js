@@ -8,6 +8,7 @@ const UserSchema = new Schema({
 	recent: Array,
 	favourites: Array,
 	size: { type: String, default: '0' },
+	verified: { type: Boolean, default: false },
 	facebook: {
 		id: String,
 		token: String,

@@ -19,7 +19,7 @@ const express = require('express'),
 	compression = require('compression');
 
 require('./website/config/passport')(passport);
-
+require('./mailservice')();
 // Connect to database
 mongoose.connect(config.MongoDBURl, { useNewUrlParser: true, useUnifiedTopology : true })
 	.then(() => {
