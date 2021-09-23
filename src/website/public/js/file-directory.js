@@ -70,34 +70,70 @@ $(document).ready(function($) {
 	$('.clickable-row').click(function() {
 		window.location = $(this).data('href');
 	});
+	function getPosition(e) {
+		let posx = 0;
+		let posy = 0;
 
+		if (!e) {
+			const e = window.event;
+		}
+
+		if (e.pageX || e.pageY) {
+			posx = e.pageX;
+			posy = e.pageY;
+		} else if (e.clientX || e.clientY) {
+			posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+			posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+		}
+
+		return { x: posx, y: posy };
+	}
 	// Custom context menu
 	oncontextmenu = (e) => {
 		if (e.target.parentElement != null && e.target.parentElement.childNodes[3]?.className == 'text-truncate') {
 			const file = e.target.parentElement.childNodes[3].outerText;
 			console.log(file);
 			e.preventDefault();
+			// Create context menu
 			const menu = document.createElement('div');
+			const user = document.getElementById('user_id').innerHTML;
+			console.log(window.location);
+			console.log(`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}`);
 			menu.id = 'ctxmenu';
-			menu.style = `top:${e.pageY}px;left:${e.pageX}px`;
 			menu.onmouseleave = () => ctxmenu.outerHTML = '';
-			menu.innerHTML = `<ul class="list-group list-group-flush">
-        <li class="list-group-item border-0"><a href="/">Share</a></li>
-        <li class="list-group-item border-0"><a href="/">Copy link</a></li>
-      </ul>
-        <hr class="mt-2 mb-3"/>
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item border-0"><a href="/">Download</a></li>
-        <li class="list-group-item border-0"><a href="/">Delete</a></li>
-        <li class="list-group-item border-0"><a href="/">Move to</a></li>
-        <li class="list-group-item border-0"><a href="/">Copy to</a></li>
-        <li class="list-group-item border-0"><a href="/">Rename</a></li>
-      </ul>
-      <form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
-        <input type="hidden" value="<%= path %>${file}" name="path">
-        <button type="submit" class="btn" id="imagefile">${file}</button>
-      </form>`;
+			menu.innerHTML = `<p><a href="/">Share</a></p>
+			<p><a href="/">Copy link</a></p>
+			<hr class="mt-2 mb-3"/>
+			<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download>Download</a></p>
+			<p><a href="/">Delete</a></p>
+			<p><a href="/">Move to</a></p>
+			<p><a href="/">Copy to</a></p>
+			<p><a href="/">Rename</a></p>
+			<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+			  <input type="hidden" value="${window.location.pathname}" name="path">
+			  <button type="submit" class="btn" id="imagefile">${file.toString()}</button>
+			</form>`;
 			document.body.appendChild(menu);
+			// Calculate where it will show on the screen
+			const clickCoords = getPosition(e),
+				clickCoordsX = clickCoords.x,
+				clickCoordsY = clickCoords.y,
+				menuWidth = menu.offsetWidth + 4,
+				menuHeight = menu.offsetHeight + 4,
+				windowWidth = window.innerWidth,
+				windowHeight = window.innerHeight;
+			// Calculate X value
+			if ((windowWidth - clickCoordsX) < menuWidth) {
+				menu.style.left = windowWidth - menuWidth + 'px';
+			} else {
+				menu.style.left = clickCoordsX + 'px';
+			}
+			// Calculate Y value
+			if ((windowHeight - clickCoordsY) < menuHeight) {
+				menu.style.top = windowHeight - menuHeight + 'px';
+			} else {
+				menu.style.top = clickCoordsY + 'px';
+			}
 		}
 	};
 });
