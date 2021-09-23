@@ -1,16 +1,23 @@
 const express = require('express'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	location = process.cwd() + '/src/website/files/',
+	User = require('../../models/user'),
 	fs = require('fs'),
 	router = express.Router();
 
 // Home page
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
 	const files = require('../../utils/directory')(location),
-		number = getNumberOfFiles(files, 0);
+		number = getNumberOfFiles(files, 0),
+		userCount = await User.find().then(resp => resp.length);
 	res.render('index', {
 		auth: req.isAuthenticated(),
 		NumFiles: number,
+		companyName: require('../../config').name,
+		slogan: require('../../config').slogan,
+		size: getTotalSize(files, 0),
+		formatBytes: require('../../utils').formatBytes,
+		userCount,
 	});
 });
 
@@ -75,6 +82,17 @@ function getNumberOfFiles(n, num) {
 			num = getNumberOfFiles(file, num);
 		}
 		num++;
+	}
+	return num;
+}
+
+function getTotalSize(n, num) {
+	for (const file of n.children) {
+		if (file.type == 'directory') {
+			num = getTotalSize(file, num);
+		} else {
+			num += file.size;
+		}
 	}
 	return num;
 }
