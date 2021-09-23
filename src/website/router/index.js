@@ -58,6 +58,7 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 	}
 });
 
+// Terms and conditions page
 router.get('/terms-and-conditions', (req, res) => {
 	res.render('extra/terms', {
 		auth: req.isAuthenticated(),

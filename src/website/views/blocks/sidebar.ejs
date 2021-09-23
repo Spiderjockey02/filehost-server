@@ -3,46 +3,41 @@
     <div class="p-2"><a class="btn" href="/user/recent" style="width:100%;text-align:left"><i class="fas fa-history"></i> Recent</a></div>
     <div class="p-2"><a class="btn" href="/user/favourites" style="width:100%;text-align:left"><i class="fas fa-star"></i> Favourites</a></div>
     <div class="p-2"><a class="btn" href="/user/shared" style="width:100%;text-align:left"><i class="fas fa-share-alt"></i> Shared</a></div>
-    <div class="p-2 bottom" style="position:fixed; bottom:0; height:10%;">
+    <div class="p-2 bottom" style="position:fixed; bottom:0; height:11%;">
       <label><%= formatBytes(size) %> of 5GB used</label>
-      <div class="progress" style="width:150%">
-        <div class="progress-bar" role="progressbar" style="width: <%= (size / (5 * 1024 * 1024 * 1024))*100 %>%" aria-valuenow="<%= size%>" aria-valuemin="0" aria-valuemax="<%= 5 * 1024 * 1024 * 1024%>"></div>
+      <div class="progress" style="width:140%;">
+        <div class="progress-bar<%if (size  >= 4 * 1024 * 1024 * 1024) {%> bg-danger <%} else if (size  >= 2.5 * 1024 * 1024 * 1024) {%> bg-warning <%} else {%> bg-success <%}%>" role="progressbar" style="width: <%= (size / (5 * 1024 * 1024 * 1024))*100 %>%" aria-valuenow="<%= size%>" aria-valuemin="0" aria-valuemax="<%= 5 * 1024 * 1024 * 1024%>"></div>
       </div>
-      <a href="/trash"><i class="fas fa-trash"></i> Deleted files</a>
+      <a href="/user/trash" style="position:fixed; bottom:0; height:4%;"><i class="fas fa-trash"></i> Deleted files</a>
     </div>
   </div>
 </div>
 <style>
   /* Sidebar Styles */
   .sidebar-nav {
-     position: absolute;
-     top: 0;
-     width: 250px;
-     margin: 0;
-     padding: 0;
-     list-style: none;
+    position: absolute;
+    top: 0;
+    width: 250px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
-
   .sidebar-nav li {
-     text-indent: 20px;
-     line-height: 40px;
+    text-indent: 20px;
+    line-height: 40px;
   }
-
   .sidebar-nav > .sidebar-brand {
-     height: 65px;
-     font-size: 18px;
-     line-height: 60px;
+    height: 65px;
+    font-size: 18px;
+    line-height: 60px;
   }
-
   .sidebar-nav > .sidebar-brand a {
-     color: #999999;
+    color: #999999;
   }
-
   .sidebar-nav > .sidebar-brand a:hover {
-     color: #fff;
-     background: none;
+    color: #fff;
+    background: none;
   }
-
   @media(max-width:993px) {
     .bottom {
       display: none;

@@ -65,29 +65,32 @@ function updateValue(id, ignore) {
 	}
 	document.getElementById(id).checked = !document.getElementById(id).checked;
 }
+function copyURL(str) {
+	navigator.clipboard.writeText(str);
+}
 
+function getPosition(e) {
+	let posx = 0;
+	let posy = 0;
+
+	if (!e) {
+		const e = window.event;
+	}
+
+	if (e.pageX || e.pageY) {
+		posx = e.pageX;
+		posy = e.pageY;
+	} else if (e.clientX || e.clientY) {
+		posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+		posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+	}
+
+	return { x: posx, y: posy };
+}
 $(document).ready(function($) {
 	$('.clickable-row').click(function() {
 		window.location = $(this).data('href');
 	});
-	function getPosition(e) {
-		let posx = 0;
-		let posy = 0;
-
-		if (!e) {
-			const e = window.event;
-		}
-
-		if (e.pageX || e.pageY) {
-			posx = e.pageX;
-			posy = e.pageY;
-		} else if (e.clientX || e.clientY) {
-			posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-			posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
-		}
-
-		return { x: posx, y: posy };
-	}
 	// Custom context menu
 	oncontextmenu = (e) => {
 		if (e.target.parentElement != null && e.target.parentElement.childNodes[3]?.className == 'text-truncate') {
@@ -97,12 +100,11 @@ $(document).ready(function($) {
 			// Create context menu
 			const menu = document.createElement('div');
 			const user = document.getElementById('user_id').innerHTML;
-			console.log(window.location);
-			console.log(`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}`);
+			console.log(window.location.pathname.slice(7));
 			menu.id = 'ctxmenu';
 			menu.onmouseleave = () => ctxmenu.outerHTML = '';
 			menu.innerHTML = `<p><a href="/">Share</a></p>
-			<p><a href="/">Copy link</a></p>
+			<p><a onClick="copyURL(\`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}\`)">Copy link</a></p>
 			<hr class="mt-2 mb-3"/>
 			<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download>Download</a></p>
 			<p><a href="/">Delete</a></p>

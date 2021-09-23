@@ -15,7 +15,7 @@
       <%= file.toString()%>
     </pre-->
   <% } else if (fileInfo.extension == '.url') { %>
-    <p><%= fileInfo.url.split('\n')[4].slice(4) %></p>
+    <p><%= fileInfo.url %></p>
     <iframe id="inlineFrameExample" src="" title="Inline Frame Example"width="300" height="200">
     </iframe>
   <% } %>
@@ -29,7 +29,7 @@
     const observer = lozad(); // lazy loads elements with default selector as '.lozad'
     observer.observe();
     if (fileInfo.extension !== '.url') return
-    document.querySelector("iframe").src = `https://www.youtube.com/embed/${youtube_parser("<%= fileInfo.url?.split('\n')[4].slice(4) %>")}?`
+    document.querySelector("iframe").src = `https://www.youtube.com/embed/${youtube_parser("<%= fileInfo.url %>")}?`
   })
   function youtube_parser(url){
     var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
