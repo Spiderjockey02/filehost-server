@@ -108,8 +108,8 @@ $(document).ready(function($) {
 			<hr class="mt-2 mb-3"/>
 			<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download>Download</a></p>
 			<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
-			  <input type="hidden" value="${window.location.pathname.slice(7)}/${file.toString()}" name="path">
-			  <p><a type="submit" id="imagefile" href="#">Delete</a></p>
+			  <input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
+			  <p><button type="submit" id="imagefile" href="#">Delete</button></p>
 			</form>
 			<p><a href="/">Move to</a></p>
 			<p><a href="/">Copy to</a></p>
