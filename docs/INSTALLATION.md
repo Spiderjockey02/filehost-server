@@ -5,8 +5,6 @@ The config file that needs to be edited (Must be rename to config.js):
 const config = {
 	// The domain of the website
 	domain: 'URL',
-	// port the server will run on
-	port: 1111,
 	// the database for storing user info
 	MongoDBURl: 'mongodb://localhost:27017/filesharer',
 	// Allows people to login in via twitter
@@ -66,3 +64,13 @@ The database natively used is [MongoDB](https://www.mongodb.com/). So you will n
 
 ### Setting up google connection (Can not use an IP-based domain)
 * Unknown for now as I currently only have an IP-based URL.
+
+### Setting up HTTPS connection
+* Either you can make your own SSL certificates or buy them from a trusted source.
+* The commands for creating your own SSL certificates. (place the created files in /src)
+```
+openssl genrsa -out client-key.pem 2048
+openssl req -new -key client-key.pem -out client.csr
+openssl x509 -req -in client.csr -signkey client-key.pem -out client-cert.pem
+```
+* NOTE! the copy URL button on the context menu won't work unless the website is HTTPS
