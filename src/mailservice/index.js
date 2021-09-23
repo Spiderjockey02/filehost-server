@@ -34,10 +34,10 @@ module.exports = async () => {
 			}
 		})
 		.get('/verifed', async (req, res) => {
-			const user = await User.findOne({ _id: req.query.ID });
-			if (!user) return res.send('Incorrect ID');
-			if (user.verified) return res.send('This email is already verified');
 			try {
+				const user = await User.findOne({ _id: req.query.ID });
+				if (!user) return res.send('Incorrect ID');
+				if (user.verified) return res.send('This email is already verified');
 				user.verified = true;
 				await user.save();
 				res.send('Successfully verified email');

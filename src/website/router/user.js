@@ -6,6 +6,7 @@ const express = require('express'),
 	fs = require('fs'),
 	{ logger } = require('../../utils'),
 	location = process.cwd() + '/src/website/files/',
+	{ validate } = require('deep-email-validator'),
 	passport = require('passport');
 
 // User is trying to login
@@ -27,7 +28,6 @@ router.post('/login', (req, res, next) => {
 router.post('/register', (req, res) => {
 	let error;
 	const { name, email, password, password2 } = req.body;
-	console.log(' Name ' + name + ' email :' + email + ' pass:' + password);
 
 	// Check all fields were filled in
 	if (!name || !email || !password || !password2) error = 'Please fill in all fields!';
@@ -37,7 +37,7 @@ router.post('/register', (req, res) => {
 
 
 	// check if password is more than 6 characters
-	if (password.length < 6)	error = 'Password must be atleast 6 characters long!';
+	if (password.length < 6) error = 'Password must be atleast 6 characters long!';
 
 	// If an error was found notify user
 	if (error) return res.redirect(`/signup?error=${error}&name=${name}&email=${email}`);
@@ -51,14 +51,19 @@ router.post('/register', (req, res) => {
 				auth: req.isAuthenticated(),
 				error, name, email, password, password2 });
 		} else {
+			// Check if email is valid
+			const resp = await validate(email);
+			if (!resp.valid) return res.redirect(`/signup?error=${resp.validators[resp.reason].reason}&name=${name}&email=${email}`);
+
+			// Create user model
 			const newUser = new User({
 				name : name,
 				email : email,
 				password : password,
 			});
+
 			// Verify email
-			const t = await require('axios').get(`http://localhost:1500/verify?email=${email}&ID=${newUser._id}`);
-			console.log(t);
+			await require('axios').get(`http://localhost:1500/verify?email=${email}&ID=${newUser._id}`);
 
 			// hash password
 			bcrypt.genSalt(10, (err, salt) => bcrypt.hash(newUser.password, salt, async (err, hash) => {
@@ -68,12 +73,12 @@ router.post('/register', (req, res) => {
 				// save user
 				try {
 					await newUser.save();
-					const t = fs.mkdirSync(location + newUser._id);
-					console.log(t);
+					fs.mkdirSync(location + newUser._id);
 					logger.log(`New user: ${newUser.email}`);
 					res.redirect('/login?error=Please check your email to verify your email');
 				} catch (err) {
 					console.log(err);
+					res.redirect('/login?error=An error has occured');
 				}
 			}));
 		}
