@@ -43,6 +43,7 @@ If you liked this repository, feel free to leave a star ⭐ to help promote this
 * Allow users to log in to access their files.
 * File/folder upload support.
 * Login with Facebook, Twitter, Google or just via email + password.
+* Email verification via nodemailer (`smtp.gmail.com`).
 * Recently viewed/ favourite files.
 * File viewing (Doesn't support all file types yet).
 * Ability to share files/folders with other people.

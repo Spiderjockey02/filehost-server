@@ -74,3 +74,6 @@ openssl req -new -key client-key.pem -out client.csr
 openssl x509 -req -in client.csr -signkey client-key.pem -out client-cert.pem
 ```
 * NOTE! the copy URL button on the context menu won't work unless the website is HTTPS
+
+### Email verification
+* You must make sure https://myaccount.google.com/lesssecureapps is true
