@@ -1,0 +1,15 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+<canvas id="pie-chart" width="800" height="450"></canvas>
+<script type="text/javascript">
+  // Bar chart
+  new Chart(document.getElementById("pie-chart"), {
+    type: 'pie',
+    data: <%- JSON.stringify(data)%>,
+    options: {
+      title: {
+        display: true,
+        text: 'Predicted world population (millions) in 2050'
+      }
+    }
+  });
+</script>
