@@ -92,11 +92,19 @@ router.post('/upload', ensureAuthenticated, async (req, res) => {
 	});
 });
 
-router.post('/delete', ensureAuthenticated, (req, res) => {
-	console.log(req.body);
-	console.log(req.body.path);
-	fs.unlinkSync(location + req.user._id + req.body.path);
-	res.redirect('/files');
+// delete file/folder
+router.post('/delete', ensureAuthenticated, async (req, res) => {
+	// how big is the file that they are deleting
+	const p = fs.statSync(location + req.user._id + req.body.path);
+	try {
+		// update user's total size
+		await User.findOneAndUpdate({ _id: req.user._id }, { size: Number(req.user.size ?? 0) - p.size });
+		// delete file
+		await fs.unlinkSync(location + req.user._id + req.body.path);
+		res.redirect('/files');
+	} catch (err) {
+		res.redirect(`/files?error=${err.message}`);
+	}
 });
 
 // Caching

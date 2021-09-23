@@ -107,14 +107,13 @@ $(document).ready(function($) {
 			<p><a onClick="copyURL(\`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}\`)">Copy link</a></p>
 			<hr class="mt-2 mb-3"/>
 			<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download>Download</a></p>
-			<p><a href="/">Delete</a></p>
+			<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+			  <input type="hidden" value="${window.location.pathname.slice(7)}/${file.toString()}" name="path">
+			  <p><a type="submit" id="imagefile" href="#">Delete</a></p>
+			</form>
 			<p><a href="/">Move to</a></p>
 			<p><a href="/">Copy to</a></p>
-			<p><a href="/">Rename</a></p>
-			<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
-			  <input type="hidden" value="${window.location.pathname}" name="path">
-			  <button type="submit" class="btn" id="imagefile">${file.toString()}</button>
-			</form>`;
+			<p><a href="/">Rename</a></p>`;
 			document.body.appendChild(menu);
 			// Calculate where it will show on the screen
 			const clickCoords = getPosition(e),
