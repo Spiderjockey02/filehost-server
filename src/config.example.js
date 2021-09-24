@@ -1,35 +1,49 @@
 const config = {
-	// The domain of the website
-	domain: 'URL',
-	// the database for storing user info
+	// domain of your website
+	domain: '',
 	MongoDBURl: 'mongodb://localhost:27017/filesharer',
-	// Allows people to login in via twitter
-	twitter: {
-		consumer_key:	'',
-		consumer_secret:	'',
-		access_token_key:	'',
-		access_token_secret: '',
+	// For verifing email addresses
+	mailService: {
+		enable: true,
+		domain: '',
+		port: 1500,
+		emailAuth: {
+			user: 'EMAIL',
+			pass: 'PASSWORD',
+		},
 	},
-	// Allows people to login in via facebook
-	facebook: {
-		clientID: '',
-		clientSecret: '',
-		callbackURL: '',
-		profileURL: '',
-		profileFields: ['id', 'email', 'name'],
+	// For logging in via social media
+	passport: {
+		twitter: {
+			consumer_key:	'',
+			consumer_secret:	'',
+			access_token_key:	'',
+			access_token_secret: '',
+		},
+		facebook: {
+			clientID: '',
+			clientSecret: '',
+			// replace DOMAIN with the domain your wrote above
+			callbackURL: 'DOMAIN/auth/facebook/callback',
+			profileURL: '',
+			profileFields: ['id', 'email', 'name'],
+		},
+		google: {
+			clientID: '',
+			clientSecret: '',
+		},
 	},
-	// Allows people to login in via google
-	google: {
-		clientID: '',
-		clientSecret: '',
+	// Information about your project (for home page/footer etc)
+	company: {
+		name: 'Name of the project',
+		slogan: 'A nice slogan for a nice company',
 	},
-	// What domains should be allowed to be viewed via an iframe
+	// what URL's to play in iframes for internet shortcut files
 	frame_domains: ['https://www.youtube.com/'],
-	// This is the email that will send out verification emails to new users
-	emailAuth: {
-		user: 'EMAIL_ADDRESS',
-		pass: 'PASSWORD',
-	},
+	// Should be HTTPS or not
+	secure: true,
+	// Extra information in console for debugging issues
+	debug: true,
 };
 
 module.exports = config;

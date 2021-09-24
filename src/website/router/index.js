@@ -13,8 +13,8 @@ router.get('/', async (req, res) => {
 	res.render('index', {
 		auth: req.isAuthenticated(),
 		NumFiles: number,
-		companyName: require('../../config').name,
-		slogan: require('../../config').slogan,
+		companyName: require('../../config').company.name,
+		slogan: require('../../config').company.slogan,
 		size: getTotalSize(files, 0),
 		formatBytes: require('../../utils').formatBytes,
 		userCount,

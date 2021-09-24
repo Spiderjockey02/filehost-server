@@ -6,6 +6,7 @@
   <div class="container-fluid" style="padding:0px 30px 0px;">
     &nbsp;
     <%- include('../partials/message', { error })%>
+    <!--New add on-->
     <div class="row">
       <div class="col-md-10 col-lg-10">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
@@ -83,6 +84,11 @@
         <% } %>
       </tbody>
     </table>
+    <%if (!files.children[0]) { %>
+      <div >
+        <h4>You should upload some files here!</h4>
+      </div>
+    <% } %>
   </div>
   <p id="user_id" style="display:none;"><%= user._id %></p>
 </div>

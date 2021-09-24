@@ -17,9 +17,11 @@ const express = require('express'),
 	https = require('https'),
 	http = require('http'),
 	compression = require('compression');
-
 require('./website/config/passport')(passport);
-require('./mailservice')();
+
+// IF the mail service should be enabled for verifing emails
+if (config.mailService.enable) require('./mailservice')();
+
 // Connect to database
 mongoose.connect(config.MongoDBURl, { useNewUrlParser: true, useUnifiedTopology : true })
 	.then(() => {
@@ -80,18 +82,29 @@ app
 	.use('/auth', require('./website/router/auth'))
 	.use('/admin', require('./website/router/admin'));
 
-// Run HTTP & HTTPS server
-const options = {
-	key: fs.readFileSync('./src/client-key.pem'),
-	cert: fs.readFileSync('./src/client-cert.pem'),
-};
 
+if (config.secure) {
+	try {
+		// Create an HTTP service.
+		http.createServer(function(req, res) {
+			res.writeHead(301, { 'Location': 'https://' + req.headers['host'] + req.url });
+			res.end();
+		})
+			.listen(80, () => logger.log('HTTP server online', 'ready'));
 
-// Create an HTTP service.
-http
-	.createServer(app)
-	.listen(80, () => logger.log('HTTP server online', 'ready'));
-// Create an HTTPS service identical to the HTTP service.
-https
-	.createServer(options, app)
-	.listen(443, () => logger.log('HTTPS server online', 'ready'));
+		// Create an HTTPS service identical to the HTTP service.
+		https
+			.createServer({
+				key: fs.readFileSync('./src/client-key.pem'),
+				cert: fs.readFileSync('./src/client-cert.pem'),
+			}, app)
+			.listen(443, () => logger.log('HTTPS server online', 'ready'));
+	} catch (err) {
+		console.log(`HTTPS server not online due to ${err.message}`);
+	}
+} else {
+	// Create an HTTP service.
+	http
+		.createServer(app)
+		.listen(80, () => logger.log('HTTP server online', 'ready'));
+}

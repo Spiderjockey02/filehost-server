@@ -52,7 +52,10 @@ router.post('/register', (req, res) => {
 				error, name, email, password, password2 });
 		} else {
 			// Check if email is valid
-			const resp = await validate(email);
+			const resp = await validate({
+				email: email,
+				validateSMTP: false });
+			console.log(resp);
 			if (!resp.valid) return res.redirect(`/signup?error=${resp.validators[resp.reason].reason}&name=${name}&email=${email}`);
 
 			// Create user model
@@ -63,7 +66,11 @@ router.post('/register', (req, res) => {
 			});
 
 			// Verify email
-			await require('axios').get(`http://localhost:1500/verify?email=${email}&ID=${newUser._id}`);
+			if (require('../../config').mailService.enable) {
+				await require('axios').get(`http://localhost:1500/verify?email=${email}&ID=${newUser._id}`);
+			} else {
+				newUser.verified = true;
+			}
 
 			// hash password
 			bcrypt.genSalt(10, (err, salt) => bcrypt.hash(newUser.password, salt, async (err, hash) => {
@@ -75,7 +82,11 @@ router.post('/register', (req, res) => {
 					await newUser.save();
 					fs.mkdirSync(location + newUser._id);
 					logger.log(`New user: ${newUser.email}`);
-					res.redirect('/login?error=Please check your email to verify your email');
+					if (require('../../config').mailService.enable) {
+						res.redirect('/login?error=Please check your email to verify your email');
+					} else {
+						res.redirect('/files');
+					}
 				} catch (err) {
 					console.log(err);
 					res.redirect('/login?error=An error has occured');

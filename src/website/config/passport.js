@@ -5,6 +5,7 @@ const User = require('../../models/user'),
 	FacebookStrategy = require('passport-facebook').Strategy,
 	TwitterStrategy = require('passport-twitter').Strategy,
 	GoogleStrategy = require('passport-google-oauth').OAuth2Strategy,
+	config = require('../../config').passport,
 	bcrypt = require('bcrypt');
 
 module.exports = function(passport) {
@@ -32,8 +33,8 @@ module.exports = function(passport) {
 
 	// For logging in via twitter
 	passport.use(new TwitterStrategy({
-		consumerKey: require('../../config').twitter.consumer_key,
-		consumerSecret: require('../../config').twitter.consumer_secret,
+		consumerKey: config.twitter.consumer_key,
+		consumerSecret: config.twitter.consumer_secret,
 		callbackURL: 	`${require('../../config').domain}/auth/twitter/callback`,
 		passReqToCallback : true,
 	}, function(req, token, tokenSecret, profile, done) {
@@ -85,7 +86,7 @@ module.exports = function(passport) {
 	}));
 
 	// facebook loggign in
-	const fbStrategy = require('../../config').facebook;
+	const fbStrategy = config.facebook;
 	fbStrategy.passReqToCallback = true;
 	passport.use(new FacebookStrategy(fbStrategy,
 		function(req, token, refreshToken, profile, done) {
@@ -141,8 +142,8 @@ module.exports = function(passport) {
 
 	// google
 	passport.use(new GoogleStrategy({
-		clientID: require('../../config').google.clientID,
-		clientSecret: require('../../config').google.clientSecret,
+		clientID: config.google.clientID,
+		clientSecret: config.google.clientSecret,
 		callbackURL: `${require('../../config').domain}/auth/google/callback`,
 		passReqToCallback: true,
 	}, function(req, token, refreshToken, profile, done) {

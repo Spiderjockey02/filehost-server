@@ -1,13 +1,14 @@
 const nodemailer = require('nodemailer'),
 	express = require('express'),
 	User = require('../models/user'),
+	config = require('../config'),
 	app = express();
 
 // Run mail service
 module.exports = async () => {
 	const smtpTransport = nodemailer.createTransport({
 		host: 'smtp.gmail.com',
-		auth: require('../config').emailAuth,
+		auth: require('../config').mailService.emailAuth,
 	});
 	// Verifying the Nodemailer Transport instance
 	smtpTransport.verify((error) => {
@@ -17,7 +18,7 @@ module.exports = async () => {
 		// URL/verify?email=EMAIL_ADDRESS&ID=USER_ID
 		.get('/verify', async (req, res) => {
 			console.log(`Verifing ${req.query.email}`);
-			const link = `http://localhost:1500/verifed?ID=${req.query.ID}`;
+			const link = `${config.mailService.domain}/verifed?ID=${req.query.ID}`;
 			const mailOptions = {
 				to: req.query.email,
 				subject: 'Please confirm your Email account',
@@ -46,5 +47,5 @@ module.exports = async () => {
 				res.send(err.message);
 			}
 			console.log(res);
-		}).listen(1500, () => 'mail service online');
+		}).listen(require('../config').mailService.port, () => 'mail service online');
 };
