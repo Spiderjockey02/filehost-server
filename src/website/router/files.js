@@ -107,6 +107,27 @@ router.post('/delete', ensureAuthenticated, async (req, res) => {
 	}
 });
 
+router.post('/share', ensureAuthenticated, async (req, res) => {
+	try {
+		const user = await User.findOne({ _id: req.user._id });
+		let link = randomStr(20, '12345abcde');
+
+		// Make sure item isn't already being shared
+		if (user.shared.find(item => item.path == req.body.path)) {
+			return res.redirect('/files?error=Item is already being shared');
+		}
+
+		// Make sure no duplicate share links
+		while (user.shared.find(item => item.id == link)) {
+			link = randomStr(20, '12345abcde');
+		}
+
+		user.shared.push({ id: link, path: req.body.path });
+		await user.save();
+	} catch (err) {
+		console.log(err);
+	}
+});
 // Caching
 function isFresh(req, res) {
 	return fresh(req.headers, {

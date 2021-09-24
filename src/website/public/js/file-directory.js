@@ -73,9 +73,7 @@ function getPosition(e) {
 	let posx = 0;
 	let posy = 0;
 
-	if (!e) {
-		const e = window.event;
-	}
+	if (!e) e = window.event;
 
 	if (e.pageX || e.pageY) {
 		posx = e.pageX;
@@ -103,7 +101,10 @@ $(document).ready(function($) {
 			console.log(window.location.pathname.slice(7));
 			menu.id = 'ctxmenu';
 			menu.onmouseleave = () => ctxmenu.outerHTML = '';
-			menu.innerHTML = `<p><a href="/">Share</a></p>
+			menu.innerHTML = `<form action="/files/share" method="post" ref='uploadForm' id='uploadForm'>
+			  <input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
+			  <p><button type="submit" id="imagefile" href="#">Share</button></p>
+			</form>
 			<p><a onClick="copyURL(\`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}\`)">Copy link</a></p>
 			<hr class="mt-2 mb-3"/>
 			<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download>Download</a></p>
@@ -113,7 +114,8 @@ $(document).ready(function($) {
 			</form>
 			<p><a href="/">Move to</a></p>
 			<p><a href="/">Copy to</a></p>
-			<p><a href="/">Rename</a></p>`;
+			<p><a href="/">Rename</a></p>
+			<p><a href="/">Details</a></p>`;
 			document.body.appendChild(menu);
 			// Calculate where it will show on the screen
 			const clickCoords = getPosition(e),

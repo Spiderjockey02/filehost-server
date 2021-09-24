@@ -14,6 +14,8 @@ router.get('/', async (req, res) => {
 		auth: req.isAuthenticated(),
 		NumFiles: number,
 		companyName: require('../../config').company.name,
+		email: require('../../config').company.email,
+		phone: require('../../config').company.phone,
 		slogan: require('../../config').company.slogan,
 		size: getTotalSize(files, 0),
 		formatBytes: require('../../utils').formatBytes,
@@ -73,6 +75,21 @@ router.get('/terms-and-conditions', (req, res) => {
 	});
 });
 
+router.get('/share/:ID/:path*', async (req, res) => {
+	try {
+		const user = await User.findOne({ _id: req.params.ID });
+		console.log(user);
+		if (user) {
+			console.log();
+			const file = user.shared.find(item => item.id == req.params.path).path;
+			return res.sendFile(decodeURI(location + req.params.ID + file));
+		}
+		return res.send('Incorrect ID');
+	} catch (err) {
+		console.log(err);
+		res.send(err.message);
+	}
+});
 module.exports = router;
 
 // Get number of files

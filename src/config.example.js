@@ -37,6 +37,8 @@ const config = {
 	company: {
 		name: 'Name of the project',
 		slogan: 'A nice slogan for a nice company',
+		devs: [''],
+		email: 'totallylegit@example.com',
 	},
 	// what URL's to play in iframes for internet shortcut files
 	frame_domains: ['https://www.youtube.com/'],

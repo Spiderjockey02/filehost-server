@@ -1,21 +1,20 @@
 const express = require('express'),
 	User = require('../../models/user'),
+	{ checkDev } = require('../config/auth'),
 	router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', checkDev, async (req, res) => {
 	const users = await User.find();
 	console.log(users);
 	res.render('admin/index', {
-		data: users.map(user => ({
-			label,
-		})),
 		data: {
-			labels: ['Africa', 'Asia', 'Europe', 'Latin America', 'North America'],
+			labels: users.map(user => user._id ?? 'missing'),
 			datasets: [{
-				label: 'Population (millions)',
-				backgroundColor: ['#3e95cd', '#8e5ea2', '#3cba9f', '#e8c3b9', '#c45850'],
-				data: [2478, 5267, 734, 784, 433],
-			}] },
+				label: 'Data storage per a user',
+				backgroundColor: ['#3e95cd', '#8e5ea2', '#3cba9f', '#e8c3b9', '#c458500', '#3e95cd', '#8e5ea2', '#3cba9f'],
+				data: users.map(user => user.size ?? 0),
+			}],
+		},
 	});
 });
 

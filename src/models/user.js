@@ -7,6 +7,7 @@ const UserSchema = new Schema({
 	creationDate: { type: Date, default: Date.now },
 	recent: Array,
 	favourites: Array,
+	shared: Array,
 	size: { type: String, default: '0' },
 	verified: { type: Boolean, default: false },
 	facebook: {

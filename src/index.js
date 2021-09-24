@@ -34,7 +34,7 @@ app
 		contentSecurityPolicy: {
 			directives: {
 				defaultSrc: ['\'self\''],
-				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', config.domain, 'https://cdn.jsdelivr.net', 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
+				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', config.domain, 'https://cdn.jsdelivr.net', 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
 				'style-src': ['\'unsafe-inline\'', config.domain, 'https://fonts.googleapis.com', 'https://unpkg.com', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net' ],
 				'connect-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com/'],
 				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com', 'data:', config.domain, 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'https://unpkg.com'],
@@ -80,6 +80,7 @@ app
 	.use('/files', require('./website/router/files'))
 	.use('/user', require('./website/router/user'))
 	.use('/auth', require('./website/router/auth'))
+	.use('/social', require('./website/router/social'))
 	.use('/admin', require('./website/router/admin'));
 
 
