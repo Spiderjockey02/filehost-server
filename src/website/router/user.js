@@ -141,41 +141,32 @@ router.post('/password_update', (req, res) => {
 router.get('/recent', ensureAuthenticated, async (req, res) => {
 	const files = await User.findOne({ email: req.user.email });
 	res.render('user/recent', {
-		auth: req.isAuthenticated(),
+		user: req.isAuthenticated() ? req.user : null,
 		files: files.recent,
-		user: req.user,
-		formatBytes: function formatBytes(bytes, decimals = 2) {
-			if (bytes === 0) return '0 Bytes';
-			const k = 1024,
-				dm = decimals < 0 ? 0 : decimals,
-				sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-				i = Math.floor(Math.log(bytes) / Math.log(k));
-
-			return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-		},
+		formatBytes: require('../../utils').formatBytes,
 	});
 });
 
 // Show user's favourites
 router.get('/favourites', ensureAuthenticated, (req, res) => {
 	res.render('user/favourites', {
-		auth: req.isAuthenticated(),
-		user: req.user,
+		user: req.isAuthenticated() ? req.user : null,
+		formatBytes: require('../../utils').formatBytes,
 	});
 });
 
 // Show user's favourites
 router.get('/trash', ensureAuthenticated, (req, res) => {
 	res.render('user/trash', {
-		auth: req.isAuthenticated(),
+		user: req.isAuthenticated() ? req.user : null,
+		formatBytes: require('../../utils').formatBytes,
 	});
 });
 
 router.get('/dashboard', ensureAuthenticated, (req, res) => {
 	const path = location + req.user._id + '/avatar.png';
 	res.render('user/dashboard', {
-		auth: req.isAuthenticated(),
-		user: req.user,
+		user: req.isAuthenticated() ? req.user : null,
 		option: req.query.option,
 		error: req.query.error,
 		success: req.query.success,

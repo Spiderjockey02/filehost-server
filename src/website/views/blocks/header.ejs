@@ -26,15 +26,29 @@
         <ul class="navbar-nav mr-auto">
         </ul>
         <ul class="navbar-nav">
-          <% if (auth) { %>
-            <li class="navbar-nav">
-              <a class="nav-item text-dark nav-link" href="/user/dashboard">Dashboard</a>
+          <% if (user) { %>
+            <li class="navbar-nav dropdown">
+              <a class="nav-item text-dark nav-link" href="" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-bell"></i>
+              </a>
+              <div class="dropdown-menu dropdown-menu-right">
+                <h6 class="dropdown-header">Notifications - 0</h6>
+                <p class="dropdown-item" href="#">You currently have no notifications.</p>
+              </div>
             </li>
-            <li class="navbar-nav">
-              <a class="nav-item text-dark nav-link" href="/files">My files</a>
-            </li>
-            <li class="navbar-nav">
-              <a class="nav-item text-dark nav-link" href="/user/logout">Logout</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <% if (user.avatar) { %>
+                  <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=32" width="25" height="25" class="rounded-circle" alt="User avatar"> <%= user.name %>
+                <% } else { %>
+                  <img src="https://www.tenforums.com/geek/gars/images/2/types/thumb_15951118880user.png" style="width:25px;height:25px" class="rounded-circle" alt="User avatar"> <%= user.name %>
+                <% } %>
+              </a>
+              <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item text-dark" href="/user/dashboard">Dashboard</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="/user/logout" id="logout">Logout</a>
+              </div>
             </li>
           <% } else { %>
             <li class="navbar-nav">

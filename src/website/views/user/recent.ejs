@@ -1,8 +1,8 @@
-<%- include('../blocks/header', { auth }) %>
+<%- include('../blocks/header', { user }) %>
 <link rel="stylesheet" href="/css/file-directory.css" type="text/css">
 <div id="wrapper">
   <!-- Sidebar -->
-  <%- include('../blocks/sidebar', { size: user.size, formatBytes }) %>
+  <%- include('../blocks/sidebar', { size: Number(user.size), formatBytes }) %>
   <div class="container-fluid" style="padding:0px 30px 0px;">
     &nbsp;
     <div class="row">

@@ -1,8 +1,19 @@
 <div id="sidebar-wrapper" class="bg-dark">
   <div class="d-grid gap-3" style="width:100%">
-    <div class="p-2"><a class="btn" href="/user/recent" style="width:100%;text-align:left"><i class="fas fa-history"></i> Recent</a></div>
-    <div class="p-2"><a class="btn" href="/user/favourites" style="width:100%;text-align:left"><i class="fas fa-star"></i> Favourites</a></div>
-    <div class="p-2"><a class="btn" href="/user/shared" style="width:100%;text-align:left"><i class="fas fa-share-alt"></i> Shared</a></div>
+    <ul class="list-unstyled">
+      <li>
+        <a class="btn" href="/files"><i class="fas fa-folder"></i> All files</a>
+      </li>
+      <li>
+        <a class="btn" href="/user/recent"><i class="fas fa-history"></i> Recent</a>
+      </li>
+      <li>
+        <a class="btn" href="/user/favourites"><i class="fas fa-star"></i> Favourites</a>
+      </li>
+      <li>
+        <a class="btn" href="/user/shared"><i class="fas fa-share-alt"></i> Shared</a>
+      </li>
+    </ul>
     <div class="p-2 bottom" style="position:fixed; bottom:0; height:11%;">
       <label><%= formatBytes(size) %> of 5GB used</label>
       <div class="progress" style="width:140%;">
@@ -13,7 +24,15 @@
   </div>
 </div>
 <style>
-  /* Sidebar Styles */
+  ul.list-unstyled > li > a {
+    padding-top: 30px;
+    font-size: 20px;
+    width: 100%;
+    text-align: left;
+  }
+  ul.list-unstyled > li > a:hover {
+    color: #6c757d
+  }
   .sidebar-nav {
     position: absolute;
     top: 0;

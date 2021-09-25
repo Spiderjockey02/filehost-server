@@ -16,8 +16,8 @@ router.get('/', async (req, res) => {
 
 	// render page
 	res.render('index', {
-		auth: req.isAuthenticated(),
-		NumFiles: number,
+		user: req.isAuthenticated() ? req.user : null,
+		NumFiles: number - userCount,
 		size: getTotalSize(files, 0),
 		formatBytes: require('../../utils').formatBytes,
 		userCount, company,
@@ -33,7 +33,7 @@ router.get('/sitemap.xml', (req, res) => res.sendFile(process.cwd() + '/src/webs
 // Terms and conditions page
 router.get('/terms-and-conditions', (req, res) => {
 	res.render('extra/terms', {
-		auth: req.isAuthenticated(),
+		user: req.isAuthenticated() ? req.user : null,
 		terms: md(fs.readFileSync('./src/website/assets/TERMS.md', 'utf8').replace(/\{\{companyName\}\}/g, company.name)),
 		company,
 	});
@@ -42,7 +42,7 @@ router.get('/terms-and-conditions', (req, res) => {
 // Privacy policy page
 router.get('/privacy-policy', (req, res) => {
 	res.render('extra/privacy', {
-		auth: req.isAuthenticated(),
+		user: req.isAuthenticated() ? req.user : null,
 		privacy: md(fs.readFileSync('./src/website/assets/PRIVACY.md', 'utf8').replace(/\{\{companyName\}\}/g, company.name)),
 		company,
 	});
@@ -56,16 +56,20 @@ router.get('/contact-us', (req, res) => res.send('contact us page coming soon'))
 
 // Login page
 router.get('/login', (req, res) => {
+	// Only access page if user isn't signed in
+	if (req.isAuthenticated()) return res.redirect('/files');
 	res.render('user/login', {
-		auth: req.isAuthenticated(),
+		user: req.isAuthenticated() ? req.user : null,
 		error: req.query.error,
 	});
 });
 
 // Sign up page
 router.get('/signup', (req, res) => {
+	// Only access page if user isn't signed in
+	if (req.isAuthenticated()) return res.redirect('/files');
 	res.render('user/signup', {
-		auth: req.isAuthenticated(),
+		user: req.isAuthenticated() ? req.user : null,
 		error: req.query.error,
 		name: req.query.name,
 		email: req.query.email,
