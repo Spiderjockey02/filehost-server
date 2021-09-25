@@ -3,13 +3,13 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-3 col-md-6 footer-contact">
-          <h3><%= companyName%><span>.</span></h3>
+          <h3><%= company.name%><span>.</span></h3>
           <p>
-            <%= slogan%>
+            <%= company.slogan%>
             <br>
             <br>
-            <strong>Phone:</strong> <%= phone%><br>
-            <strong>Email:</strong> <%= email%><br>
+            <strong>Phone:</strong> <%= company.phone%><br>
+            <strong>Email:</strong> <%= company.email%><br>
           </p>
         </div>
         <div class="col-lg-3 col-md-6 footer-links">
@@ -18,7 +18,7 @@
             <li><i class="bx bx-chevron-right"></i> <a href="/">Home</a></li>
             <li><i class="bx bx-chevron-right"></i> <a href="/terms-and-conditions">Terms of service</a></li>
             <li><i class="bx bx-chevron-right"></i> <a href="/privacy-policy">Privacy policy</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="/about-us">Contact us</a></li>
+            <li><i class="bx bx-chevron-right"></i> <a href="/contact-us">Contact us</a></li>
           </ul>
         </div>
         <div class="col-lg-3 col-md-6 footer-links">
@@ -43,7 +43,7 @@
   </div>
   <div class="container py-4">
     <div class="copyright">
-      &copy; Copyright <strong><span><%= companyName%></span></strong>. All Rights Reserved
+      &copy; Copyright <strong><span><%= company.companyName%></span></strong>. All Rights Reserved
     </div>
   </div>
 </footer>

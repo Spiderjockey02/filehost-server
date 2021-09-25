@@ -25,7 +25,7 @@ router.post('/login', (req, res, next) => {
 });
 
 // User is creating a new account
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
 	let error;
 	const { name, email, password, password2 } = req.body;
 
@@ -42,58 +42,52 @@ router.post('/register', (req, res) => {
 	// If an error was found notify user
 	if (error) return res.redirect(`/signup?error=${error}&name=${name}&email=${email}`);
 
-	// Make sure email isn't already on the database
-	User.findOne({ email : email }).exec(async (err, user) => {
-		console.log(user);
-		if (user) {
-			error = 'Email is already registered!';
-			res.render('user/signup', {
-				auth: req.isAuthenticated(),
-				error, name, email, password, password2 });
-		} else {
-			// Check if email is valid
-			const resp = await validate({
-				email: email,
-				validateSMTP: false });
-			console.log(resp);
-			if (!resp.valid) return res.redirect(`/signup?error=${resp.validators[resp.reason].reason}&name=${name}&email=${email}`);
+	// Check if user already exists
+	const user = await User.findOne({ email: email });
+	if (user) return res.redirect(`/signup?error=Email is already registered!&name=${name}&email=${email}`);
 
-			// Create user model
-			const newUser = new User({
-				name : name,
-				email : email,
-				password : password,
-			});
+	// Check if email is valid
+	const resp = await validate({ email: email, validateSMTP: false });
+	if (!resp.valid) return res.redirect(`/signup?error=${resp.validators[resp.reason].reason}&name=${name}&email=${email}`);
 
-			// Verify email
-			if (require('../../config').mailService.enable) {
-				await require('axios').get(`http://localhost:1500/verify?email=${email}&ID=${newUser._id}`);
-			} else {
-				newUser.verified = true;
-			}
-
-			// hash password
-			bcrypt.genSalt(10, (err, salt) => bcrypt.hash(newUser.password, salt, async (err, hash) => {
-				if (err) throw err;
-				// save pass to hash
-				newUser.password = hash;
-				// save user
-				try {
-					await newUser.save();
-					fs.mkdirSync(location + newUser._id);
-					logger.log(`New user: ${newUser.email}`);
-					if (require('../../config').mailService.enable) {
-						res.redirect('/login?error=Please check your email to verify your email');
-					} else {
-						res.redirect('/files');
-					}
-				} catch (err) {
-					console.log(err);
-					res.redirect('/login?error=An error has occured');
-				}
-			}));
-		}
+	// Create new user model
+	const newUser = new User({
+		name : name,
+		email : email,
+		password : password,
 	});
+
+	// Check if email needs verifing
+	if (require('../../config').mailService.enable) {
+		const t = await require('axios').get(`${require('../../config').mailService.domain}/verify?email=${email}&ID=${newUser._id}`);
+		console.log(t);
+	} else {
+		newUser.verified = true;
+	}
+
+	// Encrypt password (Dont save raw password to database)
+	try {
+		const salt = await bcrypt.genSalt(10);
+		newUser.password = await bcrypt.hash(newUser.password, salt);
+	} catch (err) {
+		res.redirect(`/signup?error=Failed to encrypt password&name=${name}&=email=${email}`);
+		return console.log(err);
+	}
+
+	// Save the new user to database + make sure folder
+	try {
+		await newUser.save();
+		fs.mkdirSync(location + newUser._id);
+		logger.log(`New user: ${newUser.email}`);
+		if (require('../../config').mailService.enable) {
+			res.redirect('/login?error=Please check your email to verify your email');
+		} else {
+			res.redirect('/files');
+		}
+	} catch (err) {
+		console.log(err);
+		res.redirect('/login?error=An error has occured');
+	}
 });
 
 // logout

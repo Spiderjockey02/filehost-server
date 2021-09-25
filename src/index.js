@@ -91,7 +91,7 @@ if (config.secure) {
 			res.writeHead(301, { 'Location': 'https://' + req.headers['host'] + req.url });
 			res.end();
 		})
-			.listen(80, () => logger.log('HTTP server online', 'ready'));
+			.listen(80, () => logger.log('HTTP server online (port: 80)', 'ready'));
 
 		// Create an HTTPS service identical to the HTTP service.
 		https
@@ -99,7 +99,7 @@ if (config.secure) {
 				key: fs.readFileSync('./src/client-key.pem'),
 				cert: fs.readFileSync('./src/client-cert.pem'),
 			}, app)
-			.listen(443, () => logger.log('HTTPS server online', 'ready'));
+			.listen(443, () => logger.log('HTTPS server online (port: 443)', 'ready'));
 	} catch (err) {
 		console.log(`HTTPS server not online due to ${err.message}`);
 	}
@@ -107,5 +107,5 @@ if (config.secure) {
 	// Create an HTTP service.
 	http
 		.createServer(app)
-		.listen(80, () => logger.log('HTTP server online', 'ready'));
+		.listen(80, () => logger.log('HTTP server online (port: 80)', 'ready'));
 }

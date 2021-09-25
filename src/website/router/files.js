@@ -35,7 +35,6 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				res.statusCode = 304;
 				return res.end();
 			}
-
 			// new file
 			res.render('user/file-preview', {
 				auth: req.isAuthenticated(),
@@ -128,6 +127,9 @@ router.post('/share', ensureAuthenticated, async (req, res) => {
 		console.log(err);
 	}
 });
+
+module.exports = router;
+
 // Caching
 function isFresh(req, res) {
 	return fresh(req.headers, {
@@ -144,6 +146,3 @@ function randomStr(len, arr) {
 	}
 	return ans;
 }
-
-
-module.exports = router;

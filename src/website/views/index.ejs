@@ -8,8 +8,8 @@
 <!-- ======= Hero Section ======= -->
 <section id="hero" class="d-flex align-items-center">
   <div class="container" data-aos="zoom-out" data-aos-delay="100">
-    <h1>Welcome to <span><%= companyName%></span></h1>
-    <h2><%= slogan%></h2>
+    <h1>Welcome to <span><%= company.name%></span></h1>
+    <h2><%= company.slogan%></h2>
     <div class="d-flex">
       <a href="/signup" class="btn-get-started">Get Started</a>
       &nbsp
@@ -33,7 +33,7 @@
           <div class="icon-box" data-aos="fade-up" data-aos-delay="200">
             <div class="icon"><i class="bx bx-file"></i></div>
             <h4 class="title">Back up and protect</h4>
-            <p class="description">If you lose your device, you won’t lose your files and photos when they’re saved in <%= companyName%>.</p>
+            <p class="description">If you lose your device, you won’t lose your files and photos when they’re saved in <%= company.name%>.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
@@ -93,7 +93,7 @@
     <div class="container" data-aos="fade-up">
       <div class="section-title">
         <h3>Check our <span>Pricing</span></h3>
-        <p>Compare <%= companyName%> cloud storage pricing and plans</p>
+        <p>Compare <%= company.name%> cloud storage pricing and plans</p>
       </div>
       <div class="row">
         <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
@@ -169,7 +169,7 @@
     <div class="container" data-aos="fade-up">
       <div class="section-title">
         <h3>Frequently Asked <span>Questions</span></h3>
-        <p>Get quick and simple help on any of <%= companyName%>'s services, either use the following options or click <a href="/FAQ">here.</a></p>
+        <p>Get quick and simple help on any of <%= company.name%>'s services, either use the following options or click <a href="/FAQ">here.</a></p>
       </div>
       <div class="row justify-content-center">
         <div class="col-xl-10">
@@ -199,7 +199,7 @@
               </div>
             </li>
             <li>
-              <div data-toggle="collapse" href="#faq4" class="collapsed question">Does <%= companyName%> offer a Service Level Agreement (SLA)? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
+              <div data-toggle="collapse" href="#faq4" class="collapsed question">Does <%= company.name%> offer a Service Level Agreement (SLA)? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
               <div id="faq4" class="collapse" data-parent=".faq-list">
                 <p>
                   Yes, have a look <a href="/SLA">here</a>.
@@ -215,7 +215,7 @@
               </div>
             </li>
             <li>
-              <div data-toggle="collapse" href="#faq6" class="collapsed question">How much does <%= companyName %> Storage cost? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
+              <div data-toggle="collapse" href="#faq6" class="collapsed question">How much does <%= company.name %> Storage cost? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
               <div id="faq6" class="collapse" data-parent=".faq-list">
                 <p>
                   Have a look at our available plans <a href="#pricing">here</a>.
