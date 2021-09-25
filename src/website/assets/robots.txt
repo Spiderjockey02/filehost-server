@@ -1,2 +1,14 @@
 User-agent: *
-Disallow: /
+Allow: /social
+Allow: /terms-and-conditions
+Allow: /SLA
+Allow: /signup
+Allow: /login
+Disallow: /files
+Disallow: /admin
+Disallow: /auth
+Disallow: /user-content
+Disallow: /share
+Disallow: /user
+
+Sitemap: YOUR_URL/sitemap.xml

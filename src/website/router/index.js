@@ -46,6 +46,9 @@ router.get('/robots.txt', (req, res) => {
 	res.sendFile(process.cwd() + '/src/website/assets/robots.txt');
 });
 
+router.get('sitemap.xml', (req, res) => {
+	res.sendFile(process.cwd() + '/src/website/assets/robots.txt');
+});
 // Show user content like images/videos etc
 router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 	// Make sure no one else accessing their data
