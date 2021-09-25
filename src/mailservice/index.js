@@ -1,37 +1,50 @@
 const nodemailer = require('nodemailer'),
 	express = require('express'),
 	User = require('../models/user'),
-	config = require('../config'),
+	{ mailService } = require('../config'),
+	{ logger } = require('../utils'),
+	fs = require('fs'),
 	app = express();
 
 // Run mail service
 module.exports = async () => {
 	const smtpTransport = nodemailer.createTransport({
 		host: 'smtp.gmail.com',
-		auth: require('../config').mailService.emailAuth,
+		auth: mailService.emailAuth,
 	});
+
 	// Verifying the Nodemailer Transport instance
 	smtpTransport.verify((error) => {
-		console.log(error ?? 'Server is ready to take messages');
+		if (error) logger.log(error?.message, 'error');
 	});
+
 	app
-		// URL/verify?email=EMAIL_ADDRESS&ID=USER_ID
+	// URL/verify?email=EMAIL_ADDRESS&ID=USER_ID
 		.get('/verify', async (req, res) => {
-			console.log(`Verifing ${req.query.email}`);
-			const link = `${config.mailService.domain}/verifed?ID=${req.query.ID}`;
-			const mailOptions = {
-				to: req.query.email,
-				subject: 'Please confirm your Email account',
-				html: 'Hello,<br> Please Click on the link to verify your email.<br><a href=' + link + '>Click here to verify</a>',
-			};
 			try {
-				const resp = await smtpTransport.sendMail(mailOptions);
-				console.log(resp);
-				console.log('Message sent: ' + resp.message);
-				res.end('sent');
-			} catch (err) {
-				console.log(err);
-				res.end('error');
+				const user = await User.findOne({ _id: req.query.ID });
+				if (user?.verified) return res.end('User is already verified');
+
+				// get html to send to user
+				const verifyHTML = fs.readFileSync('./src/mailservice/assets/link.html', 'utf8')
+					.replace(/\{\{LINK\}\}/g, `${mailService.domain}/verifed?ID=${req.query.ID}`);
+
+				const mailOptions = {
+					to: req.query.email,
+					subject: 'Please confirm your Email address',
+					html: `${verifyHTML}`,
+				};
+				try {
+					const resp = await smtpTransport.sendMail(mailOptions);
+					console.log(resp);
+					console.log('Message sent: ' + resp.message);
+					res.end('sent');
+				} catch (err) {
+					console.log(err);
+					res.end('error');
+				}
+			} catch (e) {
+				console.log(e);
 			}
 		})
 		.get('/verifed', async (req, res) => {
@@ -41,11 +54,12 @@ module.exports = async () => {
 				if (user.verified) return res.send('This email is already verified');
 				user.verified = true;
 				await user.save();
-				res.send('Successfully verified email');
+				res.redirect(`${require('../config').domain}/login`);
+				console.log(`Verified ${user.email}`);
 			} catch (err) {
 				console.log(err);
 				res.send(err.message);
 			}
-			console.log(res);
-		}).listen(require('../config').mailService.port, () => 'mail service online');
+		})
+		.listen(mailService.port, () => logger.log(`Mail service online (port: ${mailService.port})`, 'ready'));
 };

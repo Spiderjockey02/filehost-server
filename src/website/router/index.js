@@ -34,7 +34,7 @@ router.get('/sitemap.xml', (req, res) => res.sendFile(process.cwd() + '/src/webs
 router.get('/terms-and-conditions', (req, res) => {
 	res.render('extra/terms', {
 		auth: req.isAuthenticated(),
-		terms: md(fs.readFileSync('./src/website/assets/TERMS.md', 'utf8').replace().replace(/\{\{companyName\}\}/g, company.name)),
+		terms: md(fs.readFileSync('./src/website/assets/TERMS.md', 'utf8').replace(/\{\{companyName\}\}/g, company.name)),
 		company,
 	});
 });
@@ -43,7 +43,7 @@ router.get('/terms-and-conditions', (req, res) => {
 router.get('/privacy-policy', (req, res) => {
 	res.render('extra/privacy', {
 		auth: req.isAuthenticated(),
-		privacy: md(fs.readFileSync('./src/website/assets/PRIVACY.md', 'utf8').replace().replace(/\{\{companyName\}\}/g, company.name)),
+		privacy: md(fs.readFileSync('./src/website/assets/PRIVACY.md', 'utf8').replace(/\{\{companyName\}\}/g, company.name)),
 		company,
 	});
 });
