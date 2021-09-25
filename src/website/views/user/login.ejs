@@ -1,10 +1,14 @@
 <%- include('../blocks/header', { auth }) %>
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<link rel='stylesheet' href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css'>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+<link href="/css/style.css" rel="stylesheet">
 <div class="container">
   &nbsp;
   <%- include('../partials/message', { error })%>
   <div class="row">
     <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
-      <div class="card border-0 shadow rounded-3 my-5">
+      <div class="card border-0 rounded-3 my-5" style="box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75)" data-aos="zoom-out" data-aos-delay="100">
         <div class="card-body p-4 p-sm-5">
           <h5 class="card-title text-center mb-5 fw-light fs-5">Sign In</h5>
           <form action="/user/login" method="POST">
@@ -18,10 +22,10 @@
             </div>
               <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox"" id="rememberPasswordCheck">
-              <label class="form-check-label" name="remember_me" for="rememberPasswordCheck">Remember password</label>
+              <label class="form-check-label" name="remember_me" for="rememberPasswordCheck">Remember Me</label>
             </div>
-            <div class="d-grid" style="padding-left:74%">
-              <button class="btn btn-primary btn-login text-uppercase fw-bold" type="submit">Sign in</button>
+            <div class="d-grid" style="padding-left:78%">
+              <button class="btn btn-primary text-uppercase fw-bold" type="submit">Login</button>
             </div>
             <h5 style="text-align: center">or sign in via</h5>
             <div class="d-flex justify-content-center">
@@ -44,10 +48,13 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
+<script src="https://unpkg.com/swiper@7/swiper-bundle.min.js"></script>
+<script src="/js/main.js"></script>
 <style>
   body {
-    background: #007bff;
-    background: linear-gradient(to right, #0062E6, #33AEFF);
+    background: linear-gradient(to right, #30ADFD, #66C1FC);
   }
   .btn-login {
     font-size: 0.9rem;
@@ -59,10 +66,13 @@
     background-color: #ea4335;
   }
   .btn-facebook {
+    font-size: 1rem;
     color: white !important;
     background-color: #3b5998;
+    padding: 0.75rem 1.1rem;
   }
   .btn-twitter {
+    font-size: 1rem;
     color: white !important;
     background-color: #1da1f2;
   }

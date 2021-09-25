@@ -3,7 +3,30 @@ const express = require('express'),
 	location = process.cwd() + '/src/website/files/',
 	User = require('../../models/user'),
 	fs = require('fs'),
+	md = require('marked'),
 	router = express.Router();
+
+// Convert terms and conditions md to html
+let termsMD = '';
+fs.readFile('./src/website/assets/TERMS.md', function(err, data) {
+	if (err) {
+		console.log(err);
+		termsMD = 'Error';
+		return;
+	}
+	termsMD = data.toString().replace().replace(/\{\{companyName\}\}/g, require('../../config').company.name);
+});
+
+// Convert privacy policy md to html
+let privacyMD = '';
+fs.readFile('./src/website/assets/PRIVACY.md', function(err, data) {
+	if (err) {
+		console.log(err);
+		privacyMD = 'Error';
+		return;
+	}
+	privacyMD = data.toString().replace().replace(/\{\{companyName\}\}/g, require('../../config').company.name);
+});
 
 // Home page
 router.get('/', async (req, res) => {
@@ -46,9 +69,11 @@ router.get('/robots.txt', (req, res) => {
 	res.sendFile(process.cwd() + '/src/website/assets/robots.txt');
 });
 
+// See the site map
 router.get('/sitemap.xml', (req, res) => {
 	res.sendFile(process.cwd() + '/src/website/assets/sitemap.xml');
 });
+
 // Show user content like images/videos etc
 router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 	// Make sure no one else accessing their data
@@ -74,9 +99,26 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 router.get('/terms-and-conditions', (req, res) => {
 	res.render('extra/terms', {
 		auth: req.isAuthenticated(),
-		companyName: require('../../config').name,
+		terms: md(termsMD),
+		companyName: require('../../config').company.name,
+		email: require('../../config').company.email,
+		phone: require('../../config').company.phone,
+		slogan: require('../../config').company.slogan,
 	});
 });
+
+// Privacy policy page
+router.get('/privacy-policy', (req, res) => {
+	res.render('extra/privacy', {
+		auth: req.isAuthenticated(),
+		privacy: md(privacyMD),
+		companyName: require('../../config').company.name,
+		email: require('../../config').company.email,
+		phone: require('../../config').company.phone,
+		slogan: require('../../config').company.slogan,
+	});
+});
+
 
 router.get('/share/:ID/:path*', async (req, res) => {
 	try {
