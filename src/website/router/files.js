@@ -5,6 +5,7 @@ const express = require('express'),
 	User = require('../../models/user'),
 	fs = require('fs'),
 	fresh = require('fresh'),
+	{ IncomingForm } = require('formidable'),
 	location = process.cwd() + '/src/website/files/';
 
 // Show file explorer
@@ -37,17 +38,16 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 			}
 			// new file
 			res.render('user/file-preview', {
-				auth: req.isAuthenticated(),
+				user: req.isAuthenticated() ? req.user : null,
 				fileInfo: Object.assign(files, { mimeType: require('mime-types').lookup(files.extension) }),
 				file: req.user._id + URLpath.substring(6, URLpath.length),
 				domain: require('../../config').domain,
 			});
 		} else {
 			res.render('user/files', {
+				user: req.isAuthenticated() ? req.user : null,
 				files: files,
 				path: (URLpath == '/files' ? '/' : URLpath),
-				auth: req.isAuthenticated(),
-				user: req.user,
 				error: req.query.error,
 				formatBytes: require('../../utils').formatBytes,
 			});
@@ -60,35 +60,48 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 
 // upload files to user's account
 router.post('/upload', ensureAuthenticated, async (req, res) => {
-	if (!req.files || Object.keys(req.files).length === 0) res.redirect('/files?error=No files were uploaded');
+	const form = new IncomingForm({ multiples: true, allowEmptyFiles: false, maxFieldsSize : 50 * 1024 * 1024, uploadDir: location });
 
-	// Find where to place the file
-	const sampleFile = req.files.sampleFile,
-		path = req.body['path'],
-		directPath = path.split('/').slice(2, path.length).join('/');
-	let newPath = location + req.user._id + '/' + directPath + '/' + sampleFile.name,
-		times = 1;
+	// File has been uploaded (create folders if neccessary)
+	form.on('file', function(field, file) {
+		if (!file.name) return;
+		const name = file.name.split('/');
+		name.pop();
+		for (const folder of name) {
+			const newPath = name.splice(name.indexOf(folder));
+			if (folder !== name[name.length - 1]) {
+				const items = [];
+				newPath.forEach((item) => {
+					items.push(item);
+					if (!fs.existsSync(location + req.user._id + `/${items.join('/')}`)) {
+						fs.mkdirSync(location + req.user._id + `/${items.join('/')}`);
+					}
+				});
+			}
+		}
 
-	// Check if file is too big
-	if (sampleFile.truncated) return res.redirect('/files?error=File was too big to upload (Limit 50MB)');
 
-	// Make sure if the file is uploaded it doesn't go over the limit (5GB)
-	if (Number(req.user.size ?? 0) + sampleFile.size >= 5 * 1024 * 1024 * 1024)	return res.redirect('/files?error=You have reached your data limit (Limit 5GB)');
-
-	// Make sure not to upload duplicate files (add (x) to the end)
-	while (fs.existsSync(newPath)) {
-		const index = sampleFile.name.lastIndexOf('.');
-		const name = sampleFile.name.substring(0, index) + ` (${times})` + sampleFile.name.substring(index);
-		newPath = location + req.user._id + '/' + directPath + '/' + name;
-		times++;
-	}
-
-	await User.findOneAndUpdate({ _id: req.user._id }, { size: Number(req.user.size ?? 0) + sampleFile.size });
-	// save file
-	sampleFile.mv(newPath, function(err) {
-		if (err) return res.status(500).send(err);
-		res.redirect('/files' + `${directPath ? `/${directPath}` : '/'}`);
+		// Move item to new area
+		fs.rename(file.path, `${location + req.user._id}/${file.name}`, function(err) {
+			if (err) throw err;
+			console.log('renamed complete: ' + file.name);
+		});
 	});
+
+	// log any errors that occur
+	form.on('error', function(err) {
+		res.redirect(`/files?error=${err}`);
+	});
+
+	// once all the files have been uploaded, send a response to the client
+	form.on('end', function() {
+		res.statusCode = 200;
+		res.redirect('/files');
+		res.end();
+	});
+
+	// parse the incoming request containing the form data
+	form.parse(req);
 });
 
 // delete file/folder

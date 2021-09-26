@@ -5,7 +5,6 @@ const express = require('express'),
 	helmet = require('helmet'),
 	favicon = require('serve-favicon'),
 	config = require('./config.js'),
-	fileUpload = require('express-fileupload'),
 	passport = require('passport'),
 	mongoose = require('mongoose'),
 	session = require('express-session'),
@@ -52,12 +51,6 @@ app
 		optionsSuccessStatus: 204,
 	}))
 	.use(compression())
-	.use(fileUpload({
-		// 50 MB file upload
-		limits: { fileSize: 50 * 1024 * 1024 },
-		useTempFiles: true,
-		tempFileDir: '/tmp/',
-	}))
 	.use(bodyParser.urlencoded({ extended: true }))
 	.use(session({
 		store:  new mStore({ checkPeriod: 86400000 }),
