@@ -64,6 +64,7 @@ app
 		if (req.originalUrl !== '/favicon.ico') logger.connection(req, res);
 		next();
 	})
+	.use(require('./website/config/RateLimit'))
 	.engine('html', require('ejs').renderFile)
 	.set('view engine', 'ejs')
 	.set('views', './src/website/views')

@@ -60,7 +60,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 
 // upload files to user's account
 router.post('/upload', ensureAuthenticated, async (req, res) => {
-	const form = new IncomingForm({ multiples: true, allowEmptyFiles: false, maxFieldsSize : 50 * 1024 * 1024, uploadDir: location });
+	const form = new IncomingForm({ multiples: true, allowEmptyFiles: false, maxFieldsSize: require('../../config').uploadLimit, uploadDir: location });
 
 	// File has been uploaded (create folders if neccessary)
 	form.on('file', function(field, file) {

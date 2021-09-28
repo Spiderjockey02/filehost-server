@@ -46,6 +46,8 @@ const config = {
 	secure: true,
 	// Extra information in console for debugging issues
 	debug: true,
+	// Upload limit (50MB)
+	uploadLimit: 50 * 1024 * 1024,
 };
 
 module.exports = config;

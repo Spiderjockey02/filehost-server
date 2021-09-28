@@ -48,7 +48,7 @@ exports.connection = async (req, res) => {
 			const	method = req.method,
 				url = req.originalUrl || req.url,
 				status = res.statusCode,
-				color = status >= 500 ? 'bgRed' : status >= 400 ? 'bgYellow' : status >= 300 ? 'bgCyan' : status >= 200 ? 'bgGreen' : 'dim',
+				color = status >= 500 ? 'bgRed' : status >= 400 ? 'bgMagenta' : status >= 300 ? 'bgCyan' : status >= 200 ? 'bgGreen' : 'dim',
 				requester = getIP(req);
 
 			// How long did it take for the page to load
