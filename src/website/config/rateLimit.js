@@ -15,6 +15,12 @@ const limiter = new RateLimit({
 	max: 100,
 	// should match expireTimeMs
 	windowMs: 15 * 60 * 1000,
+	keyGenerator: function(req) {
+		return req.ip ||
+		req._remoteAddress ||
+		(req.connection && req.connection.remoteAddress) ||
+		undefined;
+	},
 });
 
 module.exports = limiter;

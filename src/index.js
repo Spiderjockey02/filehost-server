@@ -64,12 +64,12 @@ app
 		if (req.originalUrl !== '/favicon.ico') logger.connection(req, res);
 		next();
 	})
-	.use(require('./website/config/RateLimit'))
 	.engine('html', require('ejs').renderFile)
 	.set('view engine', 'ejs')
 	.set('views', './src/website/views')
 	.use(express.static('./src/website/public'))
 	.use(favicon('./src/website/assets/favicon.ico'))
+	.use(require('./website/config/RateLimit'))
 	.use('/', require('./website/router'))
 	.use('/files', require('./website/router/files'))
 	.use('/user', require('./website/router/user'))
