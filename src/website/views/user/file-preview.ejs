@@ -1,19 +1,19 @@
-<%- include('../blocks/header', { auth: auth }) %>
+<%- include('../blocks/header', { user }) %>
 <div class="container-fluid">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
   &nbsp;
   <h4 style="text-align:center"><%= fileInfo.name.replace(fileInfo.extension, ' ')%></h4>
-  <% if (fileInfo.extension == '.mp4') { %>
+  <% if (['.mp4', '.mov'].includes(fileInfo.extension)) { %>
     <%- include('../partials/video-player', { video: file, domain })%>
   <% } else if (['.png', '.gif', '.jpg'].includes(fileInfo.extension)) { %>
-    <img class="lozad center" data-src="http://86.25.177.233:1111/user-content/<%=  file%>" style="height:65vh;width:auto" />
-  <% } else if (['.html', '.js', '.css'].includes(fileInfo.extension)) { %>
+    <img class="lozad center" data-src="<%= domain%>/user-content/<%=  file%>" style="height:65vh;width:auto" />
+  <% } else if (['.html', '.js', '.css', '.jar'].includes(fileInfo.extension)) { %>
     <!--script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script-->
     <script src="https://unpkg.com/prettier@2.4.0/standalone.js"></script>
     <script src="https://unpkg.com/prettier@2.4.0/parser-graphql.js"></script>
-    <!--pre class="prettyprint  linenums">
+    <pre class="prettyprint linenums">
       <%= file.toString()%>
-    </pre-->
+    </pre>
   <% } else if (fileInfo.extension == '.url') { %>
     <p><%= fileInfo.url %></p>
     <iframe id="inlineFrameExample" src="" title="Inline Frame Example"width="300" height="200">
@@ -23,13 +23,12 @@
   <a class="btn btn-secondary center" href="<%= domain%>/user-content/<%=  file%>" download>Download</a>
 </div>
 &nbsp;
-<%- include('../blocks/footer') %>
 <script>
   $(document).ready(function($) {
     const observer = lozad(); // lazy loads elements with default selector as '.lozad'
     observer.observe();
-    if (fileInfo.extension !== '.url') return
-    document.querySelector("iframe").src = `https://www.youtube.com/embed/${youtube_parser("<%= fileInfo.url %>")}?`
+  //  if (fileInfo.extension !== '.url') return
+    //document.querySelector("iframe").src = `https://www.youtube.com/embed/${youtube_parser("<%= fileInfo.url %>")}?`
   })
   function youtube_parser(url){
     var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;

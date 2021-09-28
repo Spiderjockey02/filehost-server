@@ -180,8 +180,12 @@ and tooltip to reflect the current full screen state of the video */
 function updateFullscreenButton(toggle) {
 	fullscreenIcons.forEach((icon) => icon.classList.toggle('hidden'));
 	if (toggle) {
+		video.style['max-height'] = '100%';
+		video.style['max-width'] = '100%';
 		fullscreenButton.setAttribute('data-title', 'Exit full screen (f)');
 	} else {
+		video.style['max-height'] = '800px';
+		video.style['max-width'] = '800px';
 		fullscreenButton.setAttribute('data-title', 'Full screen (f)');
 	}
 }
