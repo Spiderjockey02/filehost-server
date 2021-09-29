@@ -39,15 +39,17 @@
       </div>
     </div>
     &nbsp
-    <table class="table" id="myTable" >
+    <table class="table" id="myTable">
       <thead>
         <tr>
-          <th scope="col" style="width:5%" class="dot">
+          <th scope="col" style="width:5%;text-align:center" class="dot">
             <div class="form-check form-check-inline hide">
               <input onClick="updateAll();" class="form-check-input" type="checkbox" name="exampleRadios" id="All" data-option="0">
             </div>
           </th>
-          <th id="Type" scope="col">Type</th>
+          <th id="Type" scope="col" style="width:5%;text-align:center">
+            <i class="far fa-file"></i>
+          </th>
           <th id="Name" scope="col">Name</th>
           <th id="Size" scope="col">Size</th>
           <th id="Date modified" scope="col">Date modified</th>
@@ -57,29 +59,29 @@
         <!--Show folders first-->
         <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
           <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
-            <th class="dot">
+            <th class="dot" style="text-align:center">
               <div class="form-check form-check-inline hide">
                 <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
               </div>
             </th>
-            <th id="Type" scope="col">Type</th>
+            <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
             <th scope="row" class="text-truncate" style="min-width: 150px;">
               <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
               <!-- Default dropright button -->
             </th>
-            <td data-trueValue="<%= file.children?.length ?? 0 %>"><%= file.children?.length ?? 0 %> files</td>
+            <td data-trueValue="0"><%= file.children?.length ?? 0 %> files</td>
             <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
           </tr>
         <% } %>
 
         <% for (const file of files.children.filter(file => file.type == 'file')) { %>
           <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
-            <th class="dot">
+            <th class="dot" style="text-align:center">
               <div class="form-check form-check-inline hide">
                 <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
               </div>
             </th>
-            <th id="Type" scope="col">Type</th>
+            <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
             <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
             <td data-trueValue="<%= file.size%>"><%= formatBytes(file.size) %></td>
             <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>

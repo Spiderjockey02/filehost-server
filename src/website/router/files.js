@@ -25,7 +25,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				if (!user.recent.some((file) => file.path == URLpath.substring(6, URLpath.length))) {
 					files.path = URLpath.substring(6, URLpath.length);
 					user.recent = [...user.recent, files];
-					await User.findOneAndUpdate({ _id: req.user._id }, { recent: user.recent });
+					await UserSchema.findOneAndUpdate({ _id: req.user._id }, { recent: user.recent });
 				}
 			} catch (err) {
 				logger.log(err.message, 'error');
@@ -50,6 +50,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				path: (URLpath == '/files' ? '/' : URLpath),
 				error: req.query.error,
 				formatBytes: require('../../utils').formatBytes,
+				getFileIcon: require('../../utils').getFileIcon,
 			});
 		}
 	} else {
@@ -61,10 +62,8 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 // upload files to user's account
 router.post('/upload', ensureAuthenticated, async (req, res) => {
 	const form = new IncomingForm({ multiples: true, allowEmptyFiles: false, maxFieldsSize: require('../../config').uploadLimit, uploadDir: location });
-
 	// File has been uploaded (create folders if neccessary)
 	form.on('file', function(field, file) {
-		console.log(file.name);
 		if (!file.name) return;
 		const name = file.name.split('/');
 		name.pop();
@@ -85,20 +84,12 @@ router.post('/upload', ensureAuthenticated, async (req, res) => {
 		// Move item to new area
 		fs.rename(file.path, `${location + req.user._id}/${file.name}`, function(err) {
 			if (err) throw err;
-			console.log('renamed complete: ' + file.name);
 		});
 	});
 
 	// log any errors that occur
 	form.on('error', function(err) {
 		res.redirect(`/files?error=${err}`);
-	});
-
-	// once all the files have been uploaded, send a response to the client
-	form.on('end', function() {
-		res.statusCode = 200;
-		res.redirect('/files');
-		res.end();
 	});
 
 	// parse the incoming request containing the form data
@@ -111,7 +102,7 @@ router.post('/delete', ensureAuthenticated, async (req, res) => {
 	const p = fs.statSync(location + req.user._id + req.body.path);
 	try {
 		// update user's total size
-		await User.findOneAndUpdate({ _id: req.user._id }, { size: Number(req.user.size ?? 0) - p.size });
+		await UserSchema.findOneAndUpdate({ _id: req.user._id }, { size: Number(req.user.size ?? 0) - p.size });
 		// delete file
 		if (p.isFile()) {
 			await fs.unlinkSync(location + req.user._id + req.body.path);
@@ -127,7 +118,7 @@ router.post('/delete', ensureAuthenticated, async (req, res) => {
 
 router.post('/share', ensureAuthenticated, async (req, res) => {
 	try {
-		const user = await User.findOne({ _id: req.user._id });
+		const user = await UserSchema.findOne({ _id: req.user._id });
 		let link = randomStr(20, '12345abcde');
 
 		// Make sure item isn't already being shared

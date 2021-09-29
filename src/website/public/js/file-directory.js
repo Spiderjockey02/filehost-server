@@ -98,7 +98,6 @@ $(document).ready(function($) {
 				// add the files to formData object for the data payload
 				formData.append('uploads[]', file, file.name);
 			}
-
 			$.ajax({
 				url: '/files/upload',
 				type: 'POST',
@@ -142,10 +141,9 @@ $(document).ready(function($) {
 			for (let i = 0; i < files.length; i++) {
 				const file = files[i];
 				// add the files to formData object for the data payload
-				console.log(file);
 				formData.append('uploads[]', file, file.webkitRelativePath || file.name);
 			}
-			console.log(formData);
+
 			$.ajax({
 				url: '/files/upload',
 				type: 'POST',
@@ -188,32 +186,44 @@ $(document).ready(function($) {
 
 	// Custom context menu
 	oncontextmenu = (e) => {
-		console.log(e.target.parentElement.childNode5);
 		if (e.target.parentElement != null && e.target.parentElement.childNodes[5]?.className == 'text-truncate') {
-			const file = e.target.parentElement.childNodes[5].outerText;
-			console.log(file);
-			e.preventDefault();
+			// Check to see if any checkboxes were selected
+			const table = $('table tr');
+			const checkedItems = table.filter(th => table[th].childNodes[1].childNodes[1].childNodes[1].checked);
 			// Create context menu
 			const menu = document.createElement('div');
 			const user = document.getElementById('user_id').innerHTML;
 			console.log(window.location.pathname.slice(7));
 			menu.id = 'ctxmenu';
 			menu.onmouseleave = () => ctxmenu.outerHTML = '';
-			menu.innerHTML = `<form action="/files/share" method="post" ref='uploadForm' id='uploadForm'>
-			  <input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
-			  <p><button type="submit" id="imagefile" href="#">Share</button></p>
-			</form>
-			<p><a onClick="copyURL(\`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}\`)">Copy link</a></p>
-			<hr class="mt-2 mb-3"/>
-			<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download>Download</a></p>
-			<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
-			  <input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
-			  <p><button type="submit" id="imagefile" href="#">Delete</button></p>
-			</form>
-			<p><a href="/">Move to</a></p>
-			<p><a href="/">Copy to</a></p>
-			<p><a href="/">Rename</a></p>
-			<p><a href="/">Details</a></p>`;
+			e.preventDefault();
+			if (checkedItems.length >= 1) {
+				menu.innerHTML = `
+				<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/" download>Download ${checkedItems.length} item</a></p>
+				<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+					<input type="hidden" value="/${window.location.pathname.slice(7)}/" name="path">
+					<p><button type="submit" id="imagefile" href="#">Delete ${checkedItems.length} items</button></p>
+				</form>
+				<p><a href="/">Move to</a></p>
+				<p><a href="/">Copy to</a></p>`;
+			} else {
+				const file = e.target.parentElement.childNodes[5].outerText;
+				menu.innerHTML = `<form action="/files/share" method="post" ref='uploadForm' id='uploadForm'>
+					<input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
+					<p><button type="submit" id="imagefile" href="#">Share</button></p>
+				</form>
+				<p><a onClick="copyURL(\`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}\`)">Copy link</a></p>
+				<hr class="mt-2 mb-3"/>
+				<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download>Download</a></p>
+				<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+					<input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
+					<p><button type="submit" id="imagefile" href="#">Delete</button></p>
+				</form>
+				<p><a href="/">Move to</a></p>
+				<p><a href="/">Copy to</a></p>
+				<p><a href="/">Rename</a></p>
+				<p><a href="/">Details</a></p>`;
+			}
 			document.body.appendChild(menu);
 			// Calculate where it will show on the screen
 			const clickCoords = getPosition(e),
