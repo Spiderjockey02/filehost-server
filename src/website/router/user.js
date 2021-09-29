@@ -4,6 +4,7 @@ const express = require('express'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	bcrypt = require('bcrypt'),
 	fs = require('fs'),
+	{ company } = require('../../config'),
 	{ logger } = require('../../utils'),
 	location = process.cwd() + '/src/website/files/',
 	{ validate } = require('deep-email-validator'),
@@ -171,6 +172,7 @@ router.get('/dashboard', ensureAuthenticated, (req, res) => {
 		error: req.query.error,
 		success: req.query.success,
 		avatar: fs.existsSync(path) ? fs.readFileSync(decodeURI(path)) : undefined,
+		company,
 	});
 });
 

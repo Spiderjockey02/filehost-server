@@ -86,13 +86,111 @@ function getPosition(e) {
 	return { x: posx, y: posy };
 }
 $(document).ready(function($) {
-	$('.clickable-row').click(function() {
-		window.location = $(this).data('href');
+	$('#upload-input').on('change', function() {
+		const files = $(this).get(0).files;
+		if (files.length > 0) {
+			// create a FormData object which will be sent as the data payload in the
+			// AJAX request
+			const formData = new FormData();
+			// loop through all the selected files and add them to the formData object
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				// add the files to formData object for the data payload
+				formData.append('uploads[]', file, file.name);
+			}
+
+			$.ajax({
+				url: '/files/upload',
+				type: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: function(data) {
+					console.log('upload successful!\n' + data);
+				},
+				xhr: function() {
+					// create an XMLHttpRequest
+					const xhr = new XMLHttpRequest();
+					// listen to the 'progress' event
+					xhr.upload.addEventListener('progress', function(evt) {
+						if (evt.lengthComputable) {
+							// calculate the percentage of upload completed
+							let percentComplete = evt.loaded / evt.total;
+							percentComplete = parseInt(percentComplete * 100);
+							// update the Bootstrap progress bar with the new percentage
+							$('.progress-bar').text(percentComplete + '%');
+							$('.progress-bar').width(percentComplete + '%');
+							// once the upload reaches 100%, set the progress bar text to done
+							if (percentComplete === 100) {
+								$('.progress-bar').html('Done');
+								window.location = '/files';
+							}
+						}
+					}, false);
+					return xhr;
+				},
+			});
+		}
 	});
+	$('#upload-input-2').on('change', function() {
+		const files = $(this).get(0).files;
+		if (files.length > 0) {
+			// create a FormData object which will be sent as the data payload in the
+			// AJAX request
+			const formData = new FormData();
+			// loop through all the selected files and add them to the formData object
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				// add the files to formData object for the data payload
+				console.log(file);
+				formData.append('uploads[]', file, file.webkitRelativePath || file.name);
+			}
+			console.log(formData);
+			$.ajax({
+				url: '/files/upload',
+				type: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: function(data) {
+					console.log('upload successful!\n' + data);
+				},
+				xhr: function() {
+					// create an XMLHttpRequest
+					const xhr = new XMLHttpRequest();
+					// listen to the 'progress' event
+					xhr.upload.addEventListener('progress', function(evt) {
+						if (evt.lengthComputable) {
+							// calculate the percentage of upload completed
+							let percentComplete = evt.loaded / evt.total;
+							percentComplete = parseInt(percentComplete * 100);
+							// update the Bootstrap progress bar with the new percentage
+							$('.progress-bar').text(percentComplete + '%');
+							$('.progress-bar').width(percentComplete + '%');
+							// once the upload reaches 100%, set the progress bar text to done
+							if (percentComplete === 100) {
+								$('.progress-bar').html('Done');
+								window.location = '/files';
+							}
+						}
+					}, false);
+					return xhr;
+				},
+			});
+		}
+	});
+	$('#upload-input').on('change', function() {
+		const files = $(this).get(0).files;
+		if (files.length > 0) {
+			// One or more files selected, process the file upload
+		}
+	});
+
 	// Custom context menu
 	oncontextmenu = (e) => {
-		if (e.target.parentElement != null && e.target.parentElement.childNodes[3]?.className == 'text-truncate') {
-			const file = e.target.parentElement.childNodes[3].outerText;
+		console.log(e.target.parentElement.childNode5);
+		if (e.target.parentElement != null && e.target.parentElement.childNodes[5]?.className == 'text-truncate') {
+			const file = e.target.parentElement.childNodes[5].outerText;
 			console.log(file);
 			e.preventDefault();
 			// Create context menu

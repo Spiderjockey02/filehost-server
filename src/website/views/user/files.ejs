@@ -26,11 +26,11 @@
           <div class="dropdown-menu dropdown-menu-right">
             <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
               <label class="dropdown-item" type="button" id="fileHover">
-                Files<input type="file" hidden name="sampleFile" onChange="javascript:document.getElementById('imagefile').click();" />
+                Files<input type="file" hidden name="sampleFile" id="upload-input">
               </label>
               <input type="hidden" value="<%= path%>" name="path">
               <label class="dropdown-item" type="button" id="fileHover">
-                Folders<input type="file" hidden name="sampleFile" webkitdirectory mozdirectory onChange="javascript:document.getElementById('imagefile').click();" />
+                Folders<input type="file" hidden name="sampleFile" webkitdirectory mozdirectory id="upload-input-2">
               </label>
               <button type="submit" style="display:none;" id="imagefile"></button>
             </form>
@@ -39,7 +39,7 @@
       </div>
     </div>
     &nbsp
-    <table class="table" id="myTable">
+    <table class="table" id="myTable" >
       <thead>
         <tr>
           <th scope="col" style="width:5%" class="dot">
@@ -47,6 +47,7 @@
               <input onClick="updateAll();" class="form-check-input" type="checkbox" name="exampleRadios" id="All" data-option="0">
             </div>
           </th>
+          <th id="Type" scope="col">Type</th>
           <th id="Name" scope="col">Name</th>
           <th id="Size" scope="col">Size</th>
           <th id="Date modified" scope="col">Date modified</th>

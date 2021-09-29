@@ -64,6 +64,7 @@ router.post('/upload', ensureAuthenticated, async (req, res) => {
 
 	// File has been uploaded (create folders if neccessary)
 	form.on('file', function(field, file) {
+		console.log(file.name);
 		if (!file.name) return;
 		const name = file.name.split('/');
 		name.pop();
@@ -112,9 +113,14 @@ router.post('/delete', ensureAuthenticated, async (req, res) => {
 		// update user's total size
 		await User.findOneAndUpdate({ _id: req.user._id }, { size: Number(req.user.size ?? 0) - p.size });
 		// delete file
-		await fs.unlinkSync(location + req.user._id + req.body.path);
+		if (p.isFile()) {
+			await fs.unlinkSync(location + req.user._id + req.body.path);
+		} else {
+			await fs.rmdirSync(location + req.user._id + req.body.path, { recursive: true });
+		}
 		res.redirect('/files');
 	} catch (err) {
+		console.log(err);
 		res.redirect(`/files?error=${err.message}`);
 	}
 });
