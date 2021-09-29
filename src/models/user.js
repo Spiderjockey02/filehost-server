@@ -10,6 +10,7 @@ const UserSchema = new Schema({
 	shared: Array,
 	size: { type: String, default: '0' },
 	verified: { type: Boolean, default: false },
+	group: { type: String, default: 'Free' },
 	facebook: {
 		id: String,
 		token: String,

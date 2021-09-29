@@ -1,6 +1,6 @@
 const express = require('express'),
 	router = express.Router(),
-	User = require('../../models/user'),
+	{ UserSchema } = require('../../models'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	bcrypt = require('bcrypt'),
 	fs = require('fs'),
@@ -9,6 +9,7 @@ const express = require('express'),
 	location = process.cwd() + '/src/website/files/',
 	{ validate } = require('deep-email-validator'),
 	passport = require('passport');
+
 
 // User is trying to login
 router.post('/login', (req, res, next) => {
@@ -44,7 +45,7 @@ router.post('/register', async (req, res) => {
 	if (error) return res.redirect(`/signup?error=${error}&name=${name}&email=${email}`);
 
 	// Check if user already exists
-	const user = await User.findOne({ email: email });
+	const user = await UserSchema.findOne({ email: email });
 	if (user) return res.redirect(`/signup?error=Email is already registered!&name=${name}&email=${email}`);
 
 	// Check if email is valid
@@ -52,7 +53,7 @@ router.post('/register', async (req, res) => {
 	if (!resp.valid) return res.redirect(`/signup?error=${resp.validators[resp.reason].reason}&name=${name}&email=${email}`);
 
 	// Create new user model
-	const newUser = new User({
+	const newUser = new UserSchema({
 		name : name,
 		email : email,
 		password : password,
@@ -133,14 +134,14 @@ router.post('/password_update', (req, res) => {
 
 	bcrypt.genSalt(10, (err, salt) => bcrypt.hash(password, salt, async (err, hash) => {
 		if (err) throw err;
-		await User.findOneAndUpdate({ _id: req.user.id }, { password: hash });
+		await UserSchema.findOneAndUpdate({ _id: req.user.id }, { password: hash });
 		res.redirect('/dashboard?option=2&success=Password successfully updated');
 	}));
 });
 
 // Show user's recent viewings
 router.get('/recent', ensureAuthenticated, async (req, res) => {
-	const files = await User.findOne({ email: req.user.email });
+	const files = await UserSchema.findOne({ email: req.user.email });
 	res.render('user/recent', {
 		user: req.isAuthenticated() ? req.user : null,
 		files: files.recent,

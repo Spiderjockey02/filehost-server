@@ -1,7 +1,7 @@
 const express = require('express'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	location = process.cwd() + '/src/website/files/',
-	User = require('../../models/user'),
+	{ UserSchema } = require('../../models'),
 	fs = require('fs'),
 	{ company } = require('../../config'),
 	{ logger } = require('../../utils'),
@@ -12,7 +12,7 @@ const express = require('express'),
 router.get('/', async (req, res) => {
 	const files = require('../../utils/directory')(location),
 		number = getNumberOfFiles(files, 0),
-		userCount = await User.find().then(resp => resp.length);
+		userCount = await UserSchema.find().then(resp => resp.length);
 
 	// render page
 	res.render('index', {
@@ -93,7 +93,7 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 // People's shared files/folders
 router.get('/share/:ID/:path*', async (req, res) => {
 	try {
-		const user = await User.findOne({ _id: req.params.ID });
+		const user = await UserSchema.findOne({ _id: req.params.ID });
 		if (user) {
 			const file = user.shared.find(item => item.id == req.params.path).path;
 			return res.sendFile(decodeURI(location + req.params.ID + file), (err) => {

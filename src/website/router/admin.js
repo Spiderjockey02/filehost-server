@@ -1,10 +1,10 @@
 const express = require('express'),
-	User = require('../../models/user'),
+	{ UserSchema } = require('../../models'),
 	{ checkDev } = require('../config/auth'),
 	router = express.Router();
 
 router.get('/', checkDev, async (req, res) => {
-	const users = await User.find();
+	const users = await UserSchema.find();
 	console.log(users);
 	res.render('admin/index', {
 		data: {
