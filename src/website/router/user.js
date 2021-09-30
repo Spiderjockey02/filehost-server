@@ -167,7 +167,7 @@ router.get('/trash', ensureAuthenticated, (req, res) => {
 
 router.get('/dashboard', ensureAuthenticated, (req, res) => {
 	const path = location + req.user._id + '/avatar.png';
-	res.render('user/dashboard', {
+	res.render('navbar/dashboard', {
 		user: req.isAuthenticated() ? req.user : null,
 		option: req.query.option,
 		error: req.query.error,

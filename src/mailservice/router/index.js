@@ -1,7 +1,7 @@
 const express = require('express'),
 	{ UserSchema, FeedbackSchema } = require('../../models'),
 	{ logger } = require('../../utils'),
-	{ mailService } = require('../../config'),
+	{ mailService, domain } = require('../../config'),
 	fs = require('fs'),
 	router = express.Router();
 
@@ -41,7 +41,7 @@ module.exports = (smtpTransport) => {
 			if (user.verified) return res.send('This email is already verified');
 			user.verified = true;
 			await user.save();
-			res.redirect(`${require('../config').domain}/login`);
+			res.redirect(`${domain}/login`);
 			console.log(`Verified ${user.email}`);
 		} catch (err) {
 			console.log(err);

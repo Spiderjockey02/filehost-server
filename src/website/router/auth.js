@@ -12,7 +12,7 @@ router.get('/facebook/callback', (req, res, next) => passport.authenticate('face
 
 	req.logIn(user, function(err) {
 		if (err) return next(err);
-		logger.log(`User logged in: ${user.facebook.email ?? user.facebook.name} via facebook`);
+		logger.log(`User logged in: ${user.name} via facebook`);
 		return res.redirect('/files');
 	});
 })(req, res, next));
@@ -26,7 +26,7 @@ router.get('/twitter/callback', (req, res, next) => passport.authenticate('twitt
 
 	req.logIn(user, function(err) {
 		if (err) return next(err);
-		logger.log(`User logged in: ${user.twitter.displayName ?? user.twitter.username} via twitter`);
+		logger.log(`User logged in: ${user.name} via twitter`);
 		return res.redirect('/files');
 	});
 })(req, res, next));
@@ -40,7 +40,7 @@ router.get('/google/callback', (req, res, next) => passport.authenticate('google
 
 	req.logIn(user, function(err) {
 		if (err) return next(err);
-		logger.log(`User logged in: ${user.google.email ?? user.google.name} via google`);
+		logger.log(`User logged in: ${user.name} via google`);
 		return res.redirect('/files');
 	});
 })(req, res, next));
