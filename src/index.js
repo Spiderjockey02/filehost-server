@@ -69,14 +69,14 @@ app
 	.set('views', './src/website/views')
 	.use(express.static('./src/website/public'))
 	.use(favicon('./src/website/assets/favicon.ico'))
-	.use(require('./website/config/RateLimit'))
+	.use(require('./website/config/RateLimit').apiLimiter)
 	.use('/', require('./website/router'))
 	.use('/files', require('./website/router/files'))
 	.use('/user', require('./website/router/user'))
 	.use('/auth', require('./website/router/auth'))
 	.use('/social', require('./website/router/social'))
+	.use('/api', require('./website/router/api'))
 	.use('/admin', require('./website/router/admin'));
-
 
 if (config.secure) {
 	try {

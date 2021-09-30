@@ -32,7 +32,7 @@ router.get('/sitemap.xml', (req, res) => res.sendFile(process.cwd() + '/src/webs
 
 // Terms and conditions page
 router.get('/terms-and-conditions', (req, res) => {
-	res.render('extra/terms', {
+	res.render('navbar/terms', {
 		user: req.isAuthenticated() ? req.user : null,
 		terms: md(fs.readFileSync('./src/website/assets/TERMS.md', 'utf8').replace(/\{\{companyName\}\}/g, company.name)),
 		company,
@@ -41,7 +41,7 @@ router.get('/terms-and-conditions', (req, res) => {
 
 // Privacy policy page
 router.get('/privacy-policy', (req, res) => {
-	res.render('extra/privacy', {
+	res.render('navbar/privacy', {
 		user: req.isAuthenticated() ? req.user : null,
 		privacy: md(fs.readFileSync('./src/website/assets/PRIVACY.md', 'utf8').replace(/\{\{companyName\}\}/g, company.name)),
 		company,
@@ -52,13 +52,19 @@ router.get('/privacy-policy', (req, res) => {
 router.get('/FAQ', (req, res) => res.send('FAQ page coming soon'));
 
 // Contact us page
-router.get('/contact-us', (req, res) => res.send('contact us page coming soon'));
+router.get('/contact-us', (req, res) => {
+	res.render('navbar/contact-us', {
+		user: req.isAuthenticated() ? req.user : null,
+		error: req.query.error,
+		company,
+	});
+});
 
 // Login page
 router.get('/login', (req, res) => {
 	// Only access page if user isn't signed in
 	if (req.isAuthenticated()) return res.redirect('/files');
-	res.render('user/login', {
+	res.render('navbar/login', {
 		user: req.isAuthenticated() ? req.user : null,
 		error: req.query.error,
 	});
@@ -68,7 +74,7 @@ router.get('/login', (req, res) => {
 router.get('/signup', (req, res) => {
 	// Only access page if user isn't signed in
 	if (req.isAuthenticated()) return res.redirect('/files');
-	res.render('user/signup', {
+	res.render('navbar/signup', {
 		user: req.isAuthenticated() ? req.user : null,
 		error: req.query.error,
 		name: req.query.name,

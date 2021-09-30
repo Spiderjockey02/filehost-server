@@ -1,26 +1,17 @@
-const RateLimit = require('express-rate-limit'),
-	config = require('../../config'),
-	MongoStore = require('rate-limit-mongo');
+const RateLimit = require('express-rate-limit');
 
-const limiter = new RateLimit({
-	store: new MongoStore({
-		uri: config.MongoDBURl,
-		user: '',
-		password: '',
-		// should match windowMs
-		expireTimeMs: 15 * 60 * 1000,
-		errorHandler: console.error.bind(null, 'rate-limit-mongo'),
-		// see Configuration section for more options and details
-	}),
-	max: 100,
-	// should match expireTimeMs
-	windowMs: 15 * 60 * 1000,
-	keyGenerator: function(req) {
-		return req.ip ||
-		req._remoteAddress ||
-		(req.connection && req.connection.remoteAddress) ||
-		undefined;
-	},
+// Only allow 5 accounts a day
+const createAccountLimiter = RateLimit({
+	windowMs: 24 * 60 * 60 * 1000,
+	max: 5,
+	message: 'Too many accounts created from this IP, please try again after an hour',
 });
 
-module.exports = limiter;
+// General API limit
+const apiLimiter = RateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 100,
+});
+
+// Only allow to send 2 feedback a day
+module.exports = { createAccountLimiter, apiLimiter };

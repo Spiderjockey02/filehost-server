@@ -177,12 +177,6 @@ $(document).ready(function($) {
 			});
 		}
 	});
-	$('#upload-input').on('change', function() {
-		const files = $(this).get(0).files;
-		if (files.length > 0) {
-			// One or more files selected, process the file upload
-		}
-	});
 
 	// Custom context menu
 	oncontextmenu = (e) => {
