@@ -33,13 +33,19 @@ app
 		contentSecurityPolicy: {
 			directives: {
 				defaultSrc: ['\'self\''],
-				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', config.domain, 'https://cdn.jsdelivr.net', 'https://unpkg.com', 'https://cdnjs.cloudflare.com'],
-				'style-src': ['\'unsafe-inline\'', config.domain, 'https://fonts.googleapis.com', 'https://unpkg.com', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net' ],
-				'connect-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com/', config.domain, 'https://cdn.jsdelivr.net', 'https://unpkg.com', 'https://cdnjs.cloudflare.com', 'https://kit.fontawesome.com'],
-				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com', 'data:', config.domain, 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'https://unpkg.com'],
-				'img-src': ['\'unsafe-inline\'', 'https://www.freeiconspng.com', config.domain, 'data:', 'https://www.tenforums.com'],
+				'script-src': ['\'unsafe-inline\'', 'https://kit.fontawesome.com', config.domain, 'https://cdn.jsdelivr.net', 'https://unpkg.com',
+					'https://cdnjs.cloudflare.com', 'https://arc.io', 'https://static.arc.io', 'https://tracker.arc.io/'],
+				'style-src': ['\'unsafe-inline\'', config.domain, 'https://fonts.googleapis.com', 'https://unpkg.com', 'https://cdnjs.cloudflare.com',
+					'https://cdn.jsdelivr.net', 'https://static.arc.io' ],
+				'connect-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com/', config.domain, 'https://cdn.jsdelivr.net', 'https://unpkg.com',
+					'https://cdnjs.cloudflare.com', 'https://kit.fontawesome.com', 'wss://tkr.arc.io', 'https://static.arc.io', 'https://gateway.arc.io',
+					'https://warden.arc.io', 'https://arc.io', 'https://tracker.arc.io/', 'https://www.google-analytics.com', 'https://storage.arc.io'],
+				'font-src': ['\'unsafe-inline\'', 'https://ka-f.fontawesome.com', 'data:', config.domain, 'https://fonts.gstatic.com',
+					'https://cdnjs.cloudflare.com', 'https://unpkg.com', 'https://static.arc.io'],
+				'img-src': ['\'unsafe-inline\'', 'https://www.freeiconspng.com', config.domain, 'data:', 'https://www.tenforums.com', 'https://static.arc.io',
+					'https://storage.arc.io'],
 				'media-src': ['\'unsafe-inline\'', config.domain],
-				'frame-src': ['\'unsafe-inline\'', config.domain, ...config.frame_domains],
+				'frame-src': ['\'unsafe-inline\'', config.domain, ...config.frame_domains, 'https://core.arc.io'],
 			},
 		},
 	}))
@@ -76,7 +82,15 @@ app
 	.use('/auth', require('./website/router/auth'))
 	.use('/social', require('./website/router/social'))
 	.use('/api', require('./website/router/api'))
-	.use('/admin', require('./website/router/admin'));
+	.use('/admin', require('./website/router/admin'))
+	.get('*', function(req, res) {
+		res
+			.status(404)
+			.render('404-page', {
+				user: req.isAuthenticated() ? req.user : null,
+				company: config.company,
+			});
+	});
 
 if (config.secure) {
 	try {

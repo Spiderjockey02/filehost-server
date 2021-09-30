@@ -7,6 +7,7 @@ router.get('/', checkDev, async (req, res) => {
 	const users = await UserSchema.find();
 	console.log(users);
 	res.render('admin/index', {
+		user: req.isAuthenticated() ? req.user : null,
 		data: {
 			labels: users.map(user => user._id ?? 'missing'),
 			datasets: [{

@@ -27,6 +27,9 @@ router.get('/', async (req, res) => {
 // For web scalpers
 router.get('/robots.txt', (req, res) => res.sendFile(process.cwd() + '/src/website/assets/robots.txt'));
 
+// For web scalpers
+router.get('/arc-sw.js', (req, res) => res.sendFile(process.cwd() + '/src/website/public/js/arc-sw.js'));
+
 // Site map
 router.get('/sitemap.xml', (req, res) => res.sendFile(process.cwd() + '/src/website/assets/sitemap.xml'));
 

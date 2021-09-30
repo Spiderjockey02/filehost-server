@@ -35,13 +35,14 @@
     "passport-google-oauth": "^2.0.0",
     "passport-local": "^1.0.0",
     "passport-twitter": "^0.1.5",
+    "paypal-rest-sdk": "^1.8.1",
     "prettier": "^2.4.0",
     "rate-limit-mongo": "^2.3.2",
     "serve-favicon": "^2.5.0",
     "windows-shortcuts": "^0.1.6"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node src/index.js"
   },
   "repository": {
     "type": "git",
