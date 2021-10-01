@@ -1,5 +1,7 @@
 <%- include('../blocks/header') %>
 <link rel="stylesheet" href="/css/file-directory.css" type="text/css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css" integrity="sha512-xnP2tOaCJnzp2d2IqKFcxuOiVCbuessxM6wuiolT9eeEJCyy0Vhcwa4zQvdrZNVqlqaxXhHqsSV1Ww7T2jSCUQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 <div id="wrapper">
   <!-- Sidebar -->
   <%- include('../blocks/sidebar', { size: Number(user.size), formatBytes }) %>
@@ -50,9 +52,9 @@
           <th id="Type" scope="col" style="width:5%;text-align:center">
             <i class="far fa-file"></i>
           </th>
-          <th id="Name" scope="col">Name</th>
-          <th id="Size" scope="col">Size</th>
-          <th id="Date modified" scope="col">Date modified</th>
+          <th id="Name" scope="col">Name <i class="bi bi-arrow-down-up"></i></th>
+          <th id="Size" scope="col">Size <i class="bi bi-arrow-down-up"></i></th>
+          <th id="Date modified" scope="col">Date modified <i class="bi bi-arrow-down-up"></i></th>
         </tr>
       </thead>
       <tbody>

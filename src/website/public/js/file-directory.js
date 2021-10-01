@@ -253,12 +253,17 @@ const comparer = (idx, asc) => (a, b) => ((v1, v2) =>
 // Activate everytime table header is clicked
 document.querySelectorAll('th')
 	.forEach(th => {
-		if (th.className == 'text-truncate') return;
+		if (th.className == 'text-truncate' || th.id == 'Type') return;
 		return th.addEventListener('click', (() => {
 			const table = th.closest('table');
 			const element = document.getElementById(th.id);
-			if (!element) return;
-			element.innerHTML = element.id + ((!this.asc) ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>');
+			// update all the other headers to back to default
+			const thtags = new Array(...document.querySelectorAll('th')).filter(item => item.className !== 'text-truncate');
+			let headers = [thtags[2], thtags[3], thtags[4]];
+			headers = headers.filter(item => item.id != element.id);
+			headers.forEach(head => head.innerHTML = head.id + ' <i class="bi bi-arrow-down-up"></i>');
+			// update clicked item
+			element.innerHTML = element.id + ((!this.asc) ? ' <i class="bi bi-arrow-up"></i>' : ' <i class="bi bi-arrow-down"></i>');
 			Array.from(table.childNodes[3].querySelectorAll('tr:nth-child(n+1)'))
 				.sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
 				.forEach(tr => table.childNodes[3].appendChild(tr));
