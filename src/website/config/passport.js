@@ -48,6 +48,7 @@ module.exports = function(passport) {
 						// if there is a user id already but no token (user was linked at one point and then removed)
 						if (!user.twitter.token) {
 							user.twitter.token = token;
+							if (!user.avatar && profile.profile_image_url_https != 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png') user.avatar = profile.profile_image_url_https;
 							user.save(function(err) {
 								if (err) return done(err);
 								return done(null, user);
@@ -60,6 +61,7 @@ module.exports = function(passport) {
 						newUser.name = profile.username ?? profile.displayName;
 						newUser.twitter.id = profile.id;
 						newUser.twitter.token = token;
+						if (profile.profile_image_url_https != 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png') newUser.avatar = profile.profile_image_url_https;
 						newUser.save(function(err) {
 							if (err) return done(err);
 							fs.mkdirSync(location + newUser._id);
@@ -72,6 +74,7 @@ module.exports = function(passport) {
 				const user = req.user;
 				user.twitter.id = profile.id;
 				user.twitter.token = token;
+				if (!user.avatar && profile.profile_image_url_https != 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png') user.avatar = profile.profile_image_url_https;
 				user.save(function(err) {
 					if (err) return done(err);
 					return done(null, user);
@@ -96,7 +99,7 @@ module.exports = function(passport) {
 							if (!user.facebook.token) {
 								user.facebook.token = token;
 								user.facebook.email = (profile.emails[0].value || '').toLowerCase();
-
+								if (!user.avatar && profile.profileUrl) user.avatar = profile.profileUrl;
 								user.save(function(err) {
 									if (err) return done(err);
 									return done(null, user);
@@ -110,7 +113,7 @@ module.exports = function(passport) {
 							newUser.facebook.token = token;
 							newUser.name = profile.name.givenName + ' ' + profile.name.familyName;
 							newUser.facebook.email = (profile.emails[0].value || '').toLowerCase();
-
+							if (profile.profileUrl) newUser.avatar = profile.profileUrl;
 							newUser.save(function(err) {
 								if (err) return done(err);
 								fs.mkdirSync(location + newUser._id);
@@ -124,7 +127,7 @@ module.exports = function(passport) {
 					user.facebook.id = profile.id;
 					user.facebook.token = token;
 					user.facebook.email = (profile.emails[0].value || '').toLowerCase();
-
+					if (!user.avatar && profile.profileUrl) user.avatar = profile.profileUrl;
 					user.save(function(err) {
 						if (err) return done(err);
 						return done(null, user);
@@ -151,7 +154,7 @@ module.exports = function(passport) {
 						if (!user.google.token) {
 							user.google.token = token;
 							user.google.email = (profile.emails[0].value || '').toLowerCase();
-
+							if (!user.avatar) user.avatar = profile.photos[0].value;
 							user.save(function(err) {
 								if (err) return done(err);
 								return done(null, user);
@@ -162,8 +165,9 @@ module.exports = function(passport) {
 						const newUser = new User();
 						newUser.google.id = profile.id;
 						newUser.google.token = token;
+						newUser.name = profile.displayName;
 						newUser.google.email = (profile.emails[0].value || '').toLowerCase();
-
+						newUser.avatar = profile.photos[0].value;
 						newUser.save(function(err) {
 							if (err) return done(err);
 							fs.mkdirSync(location + newUser._id);
@@ -177,7 +181,7 @@ module.exports = function(passport) {
 				user.google.id = profile.id;
 				user.google.token = token;
 				user.google.email = (profile.emails[0].value || '').toLowerCase();
-
+				if (!user.avatar) user.avatar = profile.photos[0].value;
 				user.save(function(err) {
 					if (err) return done(err);
 					return done(null, user);

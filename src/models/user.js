@@ -11,6 +11,7 @@ const UserSchema = new Schema({
 	size: { type: String, default: '0' },
 	verified: { type: Boolean, default: false },
 	group: { type: String, default: 'Free' },
+	avatar: String,
 	facebook: {
 		id: String,
 		token: String,
