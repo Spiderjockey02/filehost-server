@@ -1,6 +1,6 @@
 // turn bytes to data string (1024 => 1KB)
 module.exports.formatBytes = (bytes) => {
-	if (bytes === 0) return '0 Bytes';
+	if (bytes == 0) return '0 Bytes';
 	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
 		i = Math.floor(Math.log(bytes) / Math.log(1024));
 
@@ -14,11 +14,11 @@ module.exports.getFileIcon = (file) => {
 	} else if (['.json'].includes(file.extension)) {
 		// text file
 		return '<i class="far fa-file-alt"></i>';
-	} else if (['.png', '.jpg', 'jpeg'].includes(file.extension)) {
+	} else if (['.png', '.jpg', '.jpeg', '.ico'].includes(file.extension)) {
 		// picture
 		return '<i class="far fa-file-image"></i>';
 	} else if (!file.extension && file.children) {
-		if (file.children.filter(item => ['.png', '.jpg', 'jpeg'].includes(item.extension)).length / file.children.length >= 0.60) {
+		if (file.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico'].includes(item.extension)).length / file.children.length >= 0.60) {
 			return '<i class="far fa-images"></i>';
 		}
 		return '<i class="far fa-folder"></i>';
