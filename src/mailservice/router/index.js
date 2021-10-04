@@ -72,6 +72,7 @@ module.exports = (smtpTransport) => {
 			res.json({ success: 'Email sent' });
 		} catch (err) {
 			logger.log(err.mesage, 'error');
+			res.json({ error: err.message });
 		}
 	});
 

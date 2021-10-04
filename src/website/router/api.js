@@ -3,34 +3,28 @@ const express = require('express'),
 	{ validate } = require('deep-email-validator'),
 	{ FeedbackSchema, UserSchema } = require('../../models'),
 	{ logger } = require('../../utils'),
-	{ get } = require('axios'),
 	fs = require('fs'),
 	location = process.cwd() + '/src/website/files/',
 	router = express.Router();
 
-// Create paypal connection
-// paypal.configure({
-// 'mode': 'sandbox',
-// 'client_id': 'AdPcJ6iZrHdUBiOzEQKFCkf-EbCbrqj6xiyOctRntYdZmDWWC2oyl3W_mwoqWmbfgKjvN2rG5Mmvaz5j',
-// 'client_secret': 'EDEjhZJ5j1L2nnswluXKnn3fOF2mqUgmG28gc-6ycazUpPmjzO4fXCp2s_VQGTtWdHidtGORX8XGmXMi',
-// });
-
 // Recieve and save feedback to database and acknowledge system admins
 router.post('/feedback', async (req, res) => {
 	// Make sure email is valid
-	const resp = await validate({ email: req.body.email, validateSMTP: false });
-	if (!resp.valid) return res.redirect(`/contact-us?error=Invalid email&name=${req.body.name}&email=${req.body.email}`);
+	const { valid } = await validate({ email: req.body.email, validateSMTP: false });
+	if (!valid) return res.redirect(`/contact-us?error=Invalid email&name=${req.body.name}&email=${req.body.email}`);
 
-	// make sure they haven't already sent a feedback
+	// Check if they have already send a feedback within the last week
 	const feedback = await FeedbackSchema.findOne({ email: req.body.email });
-	if (feedback) return res.redirect('/contact-us?error=You have already sent us feedback in the last week.');
+	if (Date.now() - feedback.creationDate <= 604800000) return res.redirect('/contact-us?error=You have already sent us feedback in the last week.');
 
 	// Send data to mail service so person can be emailed
 	try {
-		await post(`${require('../../config').mailService.domain}/feedback`, {
+		const resp = await post(`${require('../../config').mailService.domain}/feedback`, {
 			data: req.body,
-		});
+		}).then(data => data.json());
+		if (resp.error) console.log(resp.error);
 	} catch (err) {
+		res.redirect('/contact-us?error=Unable to save feedback, please try again later.');
 		logger.log(err.message, 'error');
 	}
 	res.redirect('/contact-us');
@@ -55,16 +49,6 @@ router.post('/account-delete/:ID', async (req, res) => {
 	}
 });
 
-
-router.post('/pay', async (req, res) => {
-	const t = await get('https://api-m.sandbox.paypal.com/v1/billing/plans', {
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Basic ${'AdPcJ6iZrHdUBiOzEQKFCkf-EbCbrqj6xiyOctRntYdZmDWWC2oyl3W_mwoqWmbfgKjvN2rG5Mmvaz5j'}:${'EDEjhZJ5j1L2nnswluXKnn3fOF2mqUgmG28gc-6ycazUpPmjzO4fXCp2s_VQGTtWdHidtGORX8XGmXMi'}`,
-		},
-	});
-	console.log(t);
-});
 // Update user settings - password, avatar, re-sending verification emails
 
 // Get files - This endpoint will be used for caching aswell (on file upload add optin for cache override meaning cache will be force fetched)
