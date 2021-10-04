@@ -244,8 +244,9 @@
             </button>
           </div>
           <form class="change-tier" action="/api/account/tier" method="post">
+            <input type="hidden" class="custId" name="custId">
             <div class="modal-body">
-              <select class="custom-select" aria-label="Default select example">
+              <select name="tier" class="custom-select" aria-label="Default select example">
                 <option value="Free">Free</option>
                 <option value="Dev">Developer</option>
                 <option value="Business">Business</option>
@@ -273,7 +274,8 @@
             <p class="debug-url"></p>
           </div>
           <div class="modal-footer">
-            <form class="account-delete" action="/api/account/password-reset" method="post">
+            <form class="account-delete" action="/api/account/reset" method="post">
+              <input type="hidden" class="custId" name="custId">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
               <button type="submit" class="btn btn-danger">Confirm</button>
             </form>
@@ -285,17 +287,18 @@
 </div>
 <script type="text/javascript">
   $('#deleteAccount').on('show.bs.modal', function(e) {
-    $(this).find('.account-delete').attr('action', '/api/account-delete/' + $(e.relatedTarget).data('href'));
+    $(this).find('.custId').attr('value', $(e.relatedTarget).data('href'))
 
     $('.debug-url').html('Are you sure want to delete ' + $(e.relatedTarget).data('href') + '\'s account');
   });
 
   $('#changeTier').on('show.bs.modal', function(e) {
+    $(this).find('.custId').attr('value', $(e.relatedTarget).data('href'))
     $(this).find('.account-delete').attr('action', '/api/account-delete/' + $(e.relatedTarget).data('href'));
   });
 
   $('#resetPassword').on('show.bs.modal', function(e) {
-    $(this).find('.account-delete').attr('action', '/api/account-delete/' + $(e.relatedTarget).data('href'));
+    $(this).find('.custId').attr('value', $(e.relatedTarget).data('href'))
 
     $('.debug-url').html('Are you sure want to reset ' + $(e.relatedTarget).data('href') + '\'s password');
   });

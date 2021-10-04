@@ -27,7 +27,7 @@ router.post('/login', (req, res, next) => {
 });
 
 // User is creating a new account
-router.post('/register', async (req, res) => {
+router.post('/register', require('../config/RateLimit').createAccountLimiter, async (req, res) => {
 	let error;
 	const { name, email, password, password2 } = req.body;
 
@@ -114,29 +114,6 @@ router.post('/avatar/upload', (req, res) => {
 		if (err) return res.status(500).send(err);
 		res.redirect('/dashboard');
 	});
-});
-
-router.post('/password_update', (req, res) => {
-	let error;
-	const { password, password2 } = req.body;
-
-	// Check all fields were filled in
-	if (!password || !password2) error = 'Please fill in all fields!';
-
-	// check if passwords match
-	if (password !== password2) error = 'Passwords dont match!';
-
-	// check if password is more than 6 characters
-	if (password.length < 6)	error = 'Password must be atleast 6 characters long!';
-
-	// If an error was found notify user
-	if (error) return res.redirect(`/dashboard?error=${error}`);
-
-	bcrypt.genSalt(10, (err, salt) => bcrypt.hash(password, salt, async (err, hash) => {
-		if (err) throw err;
-		await UserSchema.findOneAndUpdate({ _id: req.user.id }, { password: hash });
-		res.redirect('/dashboard?option=2&success=Password successfully updated');
-	}));
 });
 
 // Show user's recent viewings

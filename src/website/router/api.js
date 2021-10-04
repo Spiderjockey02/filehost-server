@@ -2,13 +2,14 @@ const express = require('express'),
 	{ post } = require('axios'),
 	{ validate } = require('deep-email-validator'),
 	{ FeedbackSchema, UserSchema } = require('../../models'),
+	{ apiLimiter } = require('../config/RateLimit'),
 	{ logger } = require('../../utils'),
 	fs = require('fs'),
 	location = process.cwd() + '/src/website/files/',
 	router = express.Router();
 
 // Recieve and save feedback to database and acknowledge system admins
-router.post('/feedback', async (req, res) => {
+router.post('/feedback', apiLimiter, async (req, res) => {
 	// Make sure email is valid
 	const { valid } = await validate({ email: req.body.email, validateSMTP: false });
 	if (!valid) return res.redirect(`/contact-us?error=Invalid email&name=${req.body.name}&email=${req.body.email}`);
@@ -31,25 +32,45 @@ router.post('/feedback', async (req, res) => {
 });
 
 // Delete an account
-router.post('/account-delete/:ID', async (req, res) => {
-	// try and delete account
-	if (require('../../config').company.devs.includes(req.user.id)) {
-		const userID = req.params.ID;
-		console.log(userID);
+router.post('/account/:endpoint', apiLimiter, async (req, res) => {
+	const endpoint = req.params.endpoint;
+	const userID = req.body.custId;
+	switch (endpoint) {
+	case 'delete':
 		try {
+			// delete user from database and all their files
 			await UserSchema.findOneAndDelete({ _id: userID });
 			await fs.rmdirSync(location + userID, { recursive: true });
-			res.redirect(`/admin/users?success=Deleted ${userID} account`);
+			res.redirect(`/admin/users?success=Deleted ${userID}'s account`);
 		} catch (err) {
 			logger.log(err.message, 'error');
 			res.redirect(`/admin/users?error=${err.message}`);
 		}
-	} else {
-		res.status(401).json({ error: 'You do not have permission to do this.'	});
+		break;
+	case 'reset':
+		try {
+			// set password to empty & email user to update password
+			await UserSchema.findOneAndUpdate({ _id: userID }, { password: '' });
+			res.redirect(`/admin/users?success=Resetted ${userID}'s account`);
+		} catch (err) {
+			logger.log(err.message, 'error');
+			res.redirect(`/admin/users?error=${err.message}`);
+		}
+		break;
+	case 'tier':
+		try {
+			// set password to empty & email user to update password
+			await UserSchema.findOneAndUpdate({ _id: userID }, { group: req.body.tier });
+			res.redirect(`/admin/users?success=Changed ${userID}'s tier to ${req.body.tier}.`);
+		} catch (err) {
+			logger.log(err.message, 'error');
+			res.redirect(`/admin/users?error=${err.message}`);
+		}
+		break;
+	default:
+		res.redirect('/admin/users?error=An error occured');
 	}
 });
-
-// Update user settings - password, avatar, re-sending verification emails
 
 // Get files - This endpoint will be used for caching aswell (on file upload add optin for cache override meaning cache will be force fetched)
 module.exports = router;

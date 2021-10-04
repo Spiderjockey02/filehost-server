@@ -76,7 +76,7 @@ app
 	.set('views', './src/website/views')
 	.use(express.static('./src/website/public'))
 	.use(favicon('./src/website/assets/favicon.ico'))
-	.use(require('./website/config/RateLimit').apiLimiter)
+	.use(require('./website/config/RateLimit').connectionLimiter)
 	.use('/', require('./website/router'))
 	.use('/files', require('./website/router/files'))
 	.use('/user', require('./website/router/user'))
