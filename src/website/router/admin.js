@@ -3,6 +3,7 @@ const express = require('express'),
 	{ checkDev } = require('../config/auth'),
 	{ readdirSync } = require('fs'),
 	location = process.cwd() + '/src/website/files/',
+	checkDiskSpace = require('check-disk-space').default,
 	router = express.Router();
 
 router.get('/', checkDev, async (req, res) => {
@@ -48,8 +49,11 @@ router.get('/users', checkDev, async (req, res) => {
 				data: [users.filter(user => user.verified).length, users.filter(user => !user.verified).length],
 			}],
 		},
+		totalSize: await checkDiskSpace(location).then(disk => disk.size),
 		formatBytes: require('../../utils').formatBytes,
 		size: getTotalSize(files, 0),
+		error: req.query.error,
+		success: req.query.success,
 		users, folders,
 	});
 });

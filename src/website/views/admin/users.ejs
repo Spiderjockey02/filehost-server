@@ -8,6 +8,7 @@
     &nbsp;
     <h3>User Information</h3>
     &nbsp;
+    <%- include('../partials/message', { error })%>
     <div class="row">
       <!--Overall information-->
       <div class="col-xl-3 col-md-6 mb-4">
@@ -52,7 +53,7 @@
             <div class="row no-gutters align-items-center">
               <div class="col mr-2">
                 <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                  Total storage being used
+                  Total storage (<%= formatBytes(totalSize)%>)
                 </div>
                 <div class="row no-gutters align-items-center">
                   <div class="col-auto">
@@ -61,8 +62,8 @@
                   <div class="col">
                     <div class="progress progress-sm mr-2">
                       <div class="progress-bar bg-info" role="progressbar"
-                        style="width: 50%" aria-valuenow="50" aria-valuemin="0"
-                        aria-valuemax="100"></div>
+                        style="width: <%= (size / totalSize)*100 %>%" aria-valuenow="<%= size / totalSize%>" aria-valuemin="0"
+                        aria-valuemax="<%= totalSize%>"></div>
                     </div>
                   </div>
                 </div>
@@ -120,6 +121,18 @@
           </div>
         </div>
       </div>
+      <div class="col-xl-6 col-md-6 col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">User growth</h6>
+          </div>
+          <div class="card-body">
+            <div class="chart-area">
+              <canvas id="myAreaChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="col-xl-3 col-md-6 col-lg-6 mb-4">
         <div class="card shadow mb-4">
           <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -141,15 +154,16 @@
         </div>
       </div>
     </div>
-    <table class="table" id="myTable">
+    <table class="table table-responsive-sm table-hover" id="myTable">
       <thead>
         <tr>
-          <th>_id <i class="bi bi-arrow-down-up"></i></th>
+          <th>ID <i class="bi bi-arrow-down-up"></i></th>
           <th>Name <i class="bi bi-arrow-down-up"></i></th>
           <th>Email <i class="bi bi-arrow-down-up"></i></th>
+          <th>Tier <i class="bi bi-arrow-down-up"></i></th>
           <th>Connections <i class="bi bi-arrow-down-up"></i></th>
           <th>filesize <i class="bi bi-arrow-down-up"></i></th>
-          <th>Interact <i class="bi bi-arrow-down-up"></i></th>
+          <th>Options <i class="bi bi-arrow-down-up"></i></th>
         </tr>
       </thead>
       <tbody>
@@ -159,20 +173,133 @@
             <th><%= user._id %></th>
             <td><%= user.name %></td>
             <td><%= user.email%></td>
+            <td><%= user.group ?? 'Free' %></td>
             <td>
-              <% if (user.twitter.id) { %>3 <% } %>
-              <% if (user.google.id) { %>2 <% } %>
-              <% if (user.facebook.id) { %>1 <% } %>
+              <% if (user.twitter.id) { %>
+                <div class="btn btn-twitter btn-login text-uppercase fw-bold">
+                  <i class="fab fa-twitter"></i>
+                </div>
+                &nbsp;
+              <% } %>
+              <% if (user.google.id) { %>
+                <div class="btn btn-google btn-login text-uppercase fw-bold">
+                  <i class="fab fa-google me-2"></i>
+                </div>
+                &nbsp;
+              <% } %>
+              <% if (user.facebook.id) { %>
+                <div class="btn btn-facebook btn-login text-uppercase fw-bold">
+                  <i class="fab fa-facebook-f me-2"></i>
+                </div>
+                &nbsp;
+              <% } %>
             </td>
             <td><%= formatBytes(user.size || 0) %></td>
-            <td><%= user.size%></td>
+            <td>
+              <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Options
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <button class="dropdown-item" data-toggle="modal" data-target="#deleteAccount" data-href="<%= user._id%>">Delete account</button>
+                  <button class="dropdown-item" data-toggle="modal" data-target="#changeTier" data-href="<%= user._id%>">Change tier</button>
+                  <button class="dropdown-item" data-toggle="modal" data-target="#resetPassword" data-href="<%= user._id%>">Reset password</button>
+                </div>
+              </div>
+            </td>
           </tr>
         <% } %>
       </tbody>
     </table>
+    <!-- Delete account popup -->
+    <div class="modal fade" id="deleteAccount" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Delete account</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="debug-url"></p>
+          </div>
+          <div class="modal-footer">
+            <form class="account-delete" action="/api/account-delete" method="post">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-danger">Confirm</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Change tier popup -->
+    <div class="modal fade" id="changeTier" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Change user's tier</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form class="change-tier" action="/api/account/tier" method="post">
+            <div class="modal-body">
+              <select class="custom-select" aria-label="Default select example">
+                <option value="Free">Free</option>
+                <option value="Dev">Developer</option>
+                <option value="Business">Business</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-danger">Confirm</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- Reset password popup -->
+    <div class="modal fade" id="resetPassword" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Reset account's password</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="debug-url"></p>
+          </div>
+          <div class="modal-footer">
+            <form class="account-delete" action="/api/account/password-reset" method="post">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-danger">Confirm</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <script type="text/javascript">
+  $('#deleteAccount').on('show.bs.modal', function(e) {
+    $(this).find('.account-delete').attr('action', '/api/account-delete/' + $(e.relatedTarget).data('href'));
+
+    $('.debug-url').html('Are you sure want to delete ' + $(e.relatedTarget).data('href') + '\'s account');
+  });
+
+  $('#changeTier').on('show.bs.modal', function(e) {
+    $(this).find('.account-delete').attr('action', '/api/account-delete/' + $(e.relatedTarget).data('href'));
+  });
+
+  $('#resetPassword').on('show.bs.modal', function(e) {
+    $(this).find('.account-delete').attr('action', '/api/account-delete/' + $(e.relatedTarget).data('href'));
+
+    $('.debug-url').html('Are you sure want to reset ' + $(e.relatedTarget).data('href') + '\'s password');
+  });
+
   new Chart(document.getElementById("userConnections"), {
     type: 'pie',
     data: <%- JSON.stringify(userConnections)%>,
@@ -211,4 +338,64 @@
       },
     },
   });
+  new Chart(document.getElementById("myAreaChart"), {
+  type: 'line',
+  data: {
+    labels: ["Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun"],
+    datasets: [{
+      label: "User count",
+      lineTension: 0.3,
+      backgroundColor: "rgba(78, 115, 223, 0.05)",
+      borderColor: "rgba(78, 115, 223, 1)",
+      pointRadius: 3,
+      pointBackgroundColor: "rgba(78, 115, 223, 1)",
+      pointBorderColor: "rgba(78, 115, 223, 1)",
+      pointHoverRadius: 3,
+      pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+      pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      data: [0, 5, 7, 10, 12, 15, 20, 25, 23, 27, 28, 26],
+    }],
+  },
+  options: {
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      titleMarginBottom: 10,
+      titleFontColor: '#6e707e',
+      titleFontSize: 14,
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: false,
+      intersect: false,
+      mode: 'index',
+      caretPadding: 10,
+    }
+  }
+});
 </script>
+<style>
+  .btn-login {
+    font-size: 0.9rem;
+    letter-spacing: 0.05rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .btn-google {
+    color: white !important;
+    background-color: #ea4335;
+  }
+  .btn-facebook {
+    font-size: 1rem;
+    color: white !important;
+    background-color: #3b5998;
+    padding: 0.25rem 0.6rem;
+  }
+  .btn-twitter {
+    font-size: 1rem;
+    color: white !important;
+    background-color: #1da1f2;
+  }
+</style>
