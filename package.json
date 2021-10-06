@@ -20,7 +20,6 @@
     "formidable": "^1.2.2",
     "fs": "^0.0.1-security",
     "helmet": "^4.4.1",
-    "highlight.js": "^11.2.0",
     "http": "^0.0.1-security",
     "marked": "^3.0.4",
     "memorystore": "^1.6.6",
@@ -37,10 +36,8 @@
     "passport-local": "^1.0.0",
     "passport-twitter": "^0.1.5",
     "paypal-rest-sdk": "^1.8.1",
-    "prettier": "^2.4.0",
     "rate-limit-mongo": "^2.3.2",
-    "serve-favicon": "^2.5.0",
-    "windows-shortcuts": "^0.1.6"
+    "serve-favicon": "^2.5.0"
   },
   "scripts": {
     "start": "node src/index.js"
@@ -49,7 +46,7 @@
     "type": "git",
     "url": "git+https://github.com/Spiderjockey02/CDN-server.git"
   },
-  "author": "Blob Project",
+  "author": "I am Ben#6686",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Spiderjockey02/CDN-server/issues"
