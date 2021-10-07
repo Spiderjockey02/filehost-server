@@ -138,6 +138,10 @@ router.post('/share', ensureAuthenticated, async (req, res) => {
 	}
 });
 
+router.post('/search', ensureAuthenticated, (req, res) => {
+	console.log(req.body);
+	res.redirect(`/files?search=${req.body.search}&fileType=${req.body.fileType}&dateUpdated=${req.body.dateUpdated}`);
+});
 module.exports = router;
 
 // Caching

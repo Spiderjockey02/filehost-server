@@ -65,6 +65,7 @@ function updateValue(id, ignore) {
 	}
 	document.getElementById(id).checked = !document.getElementById(id).checked;
 }
+
 function copyURL(str) {
 	navigator.clipboard.writeText(str);
 }
@@ -116,6 +117,7 @@ $(document).ready(function($) {
 							// calculate the percentage of upload completed
 							let percentComplete = evt.loaded / evt.total;
 							percentComplete = parseInt(percentComplete * 100);
+							console.log(percentComplete);
 							// update the Bootstrap progress bar with the new percentage
 							$('.progress-bar').text(percentComplete + '%');
 							$('.progress-bar').width(percentComplete + '%');

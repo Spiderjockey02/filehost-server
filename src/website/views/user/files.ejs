@@ -1,105 +1,112 @@
-<%- include('../blocks/header') %>
-<link rel="stylesheet" href="/css/file-directory.css" type="text/css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css" integrity="sha512-xnP2tOaCJnzp2d2IqKFcxuOiVCbuessxM6wuiolT9eeEJCyy0Vhcwa4zQvdrZNVqlqaxXhHqsSV1Ww7T2jSCUQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-<div id="wrapper">
-  <!-- Sidebar -->
-  <%- include('../blocks/sidebar', { size: Number(user.size), formatBytes }) %>
-  <div class="container-fluid" style="padding:0px 30px 0px;">
-    &nbsp;
-    <%- include('../partials/message', { error })%>
-    <!--New add on-->
-    <div class="row">
-      <div class="col-md-10 col-lg-10">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/files">Home</a></li>
-            <% for (var name of path.split('/').slice(2, path.length)) { %>
-              <li class="breadcrumb-item active">
-                <a href=<%= `/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}` %>><%= name%></a>
-              </li>
-            <% } %>
-          </ol>
-        </nav>
-      </div>
-      <div class="col-md-2 col-lg-2">
-        <div class="btn-group" style="float:right">
-          <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Upload</button>
-          <div class="dropdown-menu dropdown-menu-right">
-            <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
-              <label class="dropdown-item" type="button" id="fileHover">
-                Files<input type="file" hidden name="sampleFile" id="upload-input">
-              </label>
-              <input type="hidden" value="<%= path%>" name="path">
-              <label class="dropdown-item" type="button" id="fileHover">
-                Folders<input type="file" hidden name="sampleFile" webkitdirectory mozdirectory id="upload-input-2">
-              </label>
-              <button type="submit" style="display:none;" id="imagefile"></button>
-            </form>
-          </div>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="manifest" href="/js/pwa.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <link rel="apple-touch-icon" href="/img/apple-touch.png">
+    <meta name="theme-color" content="#106eea"/>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="File Sharer">
+    <meta property="og:description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <meta property="og:image" content="/favicon.ico">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
+    <script async src="https://arc.io/widget.min.js#Wa9QgvFs"></script>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <title>File Sharer</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <%- include('../blocks/sidebar.ejs', {size: user.size, formatBytes}) %>
+      <!-- Page Content  -->
+      <div class="container-fluid" id="content">
+        <%- include('../blocks/file-navbar.ejs', {user}) %>
+        <%- include('../blocks/directory') %>
       </div>
     </div>
-    &nbsp
-    <table class="table" id="myTable">
-      <thead>
-        <tr>
-          <th scope="col" style="width:5%;text-align:center" class="dot">
-            <div class="form-check form-check-inline hide">
-              <input onClick="updateAll();" class="form-check-input" type="checkbox" name="exampleRadios" id="All" data-option="0">
-            </div>
-          </th>
-          <th id="Type" scope="col" style="width:5%;text-align:center">
-            <i class="far fa-file"></i>
-          </th>
-          <th id="Name" scope="col">Name <i class="bi bi-arrow-down-up"></i></th>
-          <th id="Size" scope="col">Size <i class="bi bi-arrow-down-up"></i></th>
-          <th id="Date modified" scope="col">Date modified <i class="bi bi-arrow-down-up"></i></th>
-        </tr>
-      </thead>
-      <tbody>
-        <!--Show folders first-->
-        <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
-          <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
-            <th class="dot" style="text-align:center">
-              <div class="form-check form-check-inline hide">
-                <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
-              </div>
-            </th>
-            <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
-            <th scope="row" class="text-truncate" style="min-width: 150px;">
-              <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
-              <!-- Default dropright button -->
-            </th>
-            <td data-trueValue="0"><%= file.children?.length ?? 0 %> files</td>
-            <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
-          </tr>
-        <% } %>
+  </body>
+<style>
+/* ---------------------------------------------------
+    SIDEBAR STYLE
+----------------------------------------------------- */
+.wrapper {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+#sidebar {
+  width: 250px;
+  background: #1992d4;
+  transition: all 0.3s;
+}
 
-        <% for (const file of files.children.filter(file => file.type == 'file')) { %>
-          <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
-            <th class="dot" style="text-align:center">
-              <div class="form-check form-check-inline hide">
-                <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
-              </div>
-            </th>
-            <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
-            <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
-            <td data-trueValue="<%= file.size%>"><%= formatBytes(file.size) %></td>
-            <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
-          </tr>
-        <% } %>
-      </tbody>
-    </table>
-    <div class="progress">
-      <div class="progress-bar" role="progressbar"></div>
-    </div>
-    <%if (!files.children[0]) { %>
-      <div >
-        <h4>You should upload some files here!</h4>
-      </div>
-    <% } %>
-  </div>
-  <p id="user_id" style="display:none;"><%= user._id %></p>
-</div>
-<script type="text/javascript" src="/js/file-directory.js"></script>
+
+#sidebar .sidebar-header {
+  color: black;
+  padding: 20px;
+}
+
+#sidebar ul.components {
+  padding: 20px 0;
+  border-bottom: 1px solid #47748b;
+}
+
+#sidebar ul p {
+  color: #fff;
+  padding: 10px;
+}
+
+#sidebar ul li a {
+  padding: 10px;
+  font-size: 1.1em;
+  display: block;
+  color: black;
+}
+#sidebar ul li a:not(.active):hover {
+  color: black;
+  background: #53A5D2;
+  border-radius: 8px;
+}
+.active {
+  background: #157cb4;
+  border-radius: 8px;
+}
+/* ---------------------------------------------------
+    CONTENT STYLE
+----------------------------------------------------- */
+#content {
+  width: 100%;
+  min-height: 100vh;
+  transition: all 0.3s;
+}
+
+/* ---------------------------------------------------
+    MEDIAQUERIES
+----------------------------------------------------- */
+@media (max-width: 1260px) {
+  #sidebar {
+    width: 70px;
+  }
+  .side-text {
+    display: none
+  }
+  .fas {
+    padding-left: 15px;
+  }
+  #sidebar.active {
+    margin-left: 0;
+  }
+  #sidebarCollapse span {
+    display: none;
+  }
+}
+@media (max-width: 710px) {
+  .searchBar {
+    display: none;
+  }
+}
+</style>

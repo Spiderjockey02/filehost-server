@@ -1,65 +1,50 @@
-<div id="sidebar-wrapper" class="bg-dark">
-  <div class="d-grid gap-3" style="width:100%">
-    <ul class="list-unstyled">
-      <li>
-        <a class="btn" href="/files"><i class="fas fa-folder"></i> All files</a>
-      </li>
-      <li>
-        <a class="btn" href="/user/recent"><i class="fas fa-history"></i> Recent</a>
-      </li>
-      <li>
-        <a class="btn" href="/user/favourites"><i class="fas fa-star"></i> Favourites</a>
-      </li>
-      <li>
-        <a class="btn" href="/user/shared"><i class="fas fa-share-alt"></i> Shared</a>
-      </li>
-    </ul>
-    <div class="p-2 bottom" style="position:fixed; bottom:0; height:11%;">
-      <label><%= formatBytes(size) %> of 5GB used</label>
-      <div class="progress" style="width:140%;">
-        <div class="progress-bar<%if (size  >= 4 * 1024 * 1024 * 1024) {%> bg-danger <%} else if (size  >= 2.5 * 1024 * 1024 * 1024) {%> bg-warning <%} else {%> bg-success <%}%>" role="progressbar" style="width: <%= (size / (5 * 1024 * 1024 * 1024))*100 %>%" aria-valuenow="<%= size%>" aria-valuemin="0" aria-valuemax="<%= 5 * 1024 * 1024 * 1024%>"></div>
-      </div>
-      <a href="/user/trash" style="position:fixed; bottom:0; height:4%;"><i class="fas fa-trash"></i> Deleted files</a>
+<nav id="sidebar">
+  <a href="/">
+    <div class="sidebar-header">
+      <h3><span class="side-text">File sharer</span></h3>
     </div>
+  </a>
+  <ul class="list-unstyled components" style="align:center">
+    <li class="active">
+      <a href="/files"><i class="fas fa-folder"></i><span class="side-text"> All files</span></a>
+    </li>
+    <li>
+      <a href="/user/recents"><i class="fas fa-clock"></i><span class="side-text"> Recents</span></a>
+    </li>
+    <li>
+      <a type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+        <i class="fas fa-star"></i> <span class="side-text">Favourites <i class="fas fa-sort-up" style="align:center;float:right"></i></span>
+      </a>
+      <div class="collapse" id="collapseExample">
+        <div class="card card-body">
+          <% for (file of user.recent.slice(0,9)) { %>
+            <a class="card-text text-truncate" style="color: black"><%= file.name%></a>
+          <% } %>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <div class="p-2 bottom" style="position:fixed; bottom:0; height:11%;">
+    <label class="side-text"><%= formatBytes(size) %> of 5GB used</label>
+    <div class="progress" style="width:140%;">
+      <div class="progress-bar<%if (size  >= 4 * 1024 * 1024 * 1024) {%> bg-danger <%} else if (size  >= 2.5 * 1024 * 1024 * 1024) {%> bg-warning <%} else {%> bg-success <%}%>" role="progressbar" style="width: <%= (size / (5 * 1024 * 1024 * 1024))*100 %>%" aria-valuenow="<%= size%>" aria-valuemin="0" aria-valuemax="<%= 5 * 1024 * 1024 * 1024%>"></div>
+    </div>
+    <a href="/user/trash" style="position:fixed; bottom:0; height:4%;color:black;"><i class="fas fa-trash"></i> <span class="side-text">Deleted files</span></a>
   </div>
-</div>
+</nav>
 <style>
-  ul.list-unstyled > li > a {
-    padding-top: 30px;
-    font-size: 20px;
-    width: 100%;
-    text-align: left;
-  }
-  ul.list-unstyled > li > a:hover {
-    color: #6c757d
-  }
-  .sidebar-nav {
-    position: absolute;
-    top: 0;
-    width: 250px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .sidebar-nav li {
-    text-indent: 20px;
-    line-height: 40px;
-  }
-  .sidebar-nav > .sidebar-brand {
-    height: 65px;
-    font-size: 18px;
-    line-height: 60px;
-  }
-  .sidebar-nav > .sidebar-brand a {
-    color: #999999;
-  }
-  .sidebar-nav > .sidebar-brand a:hover {
-    color: #fff;
-    background: none;
-  }
-  @media(max-width:993px) {
-    .bottom {
-      display: none;
-    }
+  a:hover {
+    text-decoration: none;
   }
 </style>
+<script type="text/javascript">
+  //icon update
+  $('[data-toggle="collapse"]').on('click', function(){
+    console.log('boo')
+    if ($(this).attr('aria-expanded') == 'true') {
+      $(new Array($(this).find('i'))[0][1]).addClass('fa-sort-up').removeClass('fa-sort-down');
+    } else {
+      $(new Array($(this).find('i'))[0][1]).removeClass('fa-sort-up').addClass('fa-sort-down');
+    }
+  });
+</script>

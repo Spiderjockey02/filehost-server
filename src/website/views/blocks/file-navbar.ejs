@@ -1,0 +1,122 @@
+<!-- example 2 - using auto margins -->
+<nav class="navbar navbar-expand">
+  <div class="navbar-collapse w-100 dual-collapse2">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <span class="searchIcon">
+          <button class="btn btn-secondary"><i class="fas fa-search"></i></button>
+        </span>
+        <span class="searchBar">
+        <form action="/files/search" method="post">
+          <!-- Actual search box -->
+          <div class="input-group mb-3 w-100">
+            <div class="input-group-prepend">
+              <button type="submit" class="input-group-text " data-toggle="tooltip" data-placement="bottom" title="Tooltip on top"><i class="fas fa-search"></i></button>
+            </div>
+            <input type="text" class="form-control text-truncate" placeholder="Search files and folders" aria-label="Amount (to the nearest dollar)" name="search" autocomplete="off">
+            <div class="input-group-append" id="filter">
+              <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="fas fa-sliders-h"></i>
+              </button>
+              <div class="dropdown-menu p-4" style="width:100%;padding:15px">
+                <div class="form-group">
+                  <label for="inputGroupSelect01">File type(s)</label>
+                  <select class="custom-select" id="inputGroupSelect01" name="fileType">
+                    <option selected>Any type</option>
+                    <option value="1">Files</option>
+                    <option value="2">Folders</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="inputGroupSelect01">Date updated</label>
+                  <select class="custom-select" id="inputGroupSelect01" name="dateUpdated">
+                    <option value="0" selected>Any time</option>
+                    <option value="1">Past day</option>
+                    <option value="2">Past week</option>
+                    <option value="3">Past month</option>
+                    <option value="3">Past year</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+        </span>
+      </li>
+    </ul>
+  </div>
+  <div class="mx-auto">
+  </div>
+  <div class="navbar-collapse w-100 dual-collapse2">
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <div class="dropdown mr-1" id="notifications">
+          <a class="nav-link" href="" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-bell" id="notifIcons"></i>
+          </a>
+          <div class="dropdown-menu dropdown-menu-right p-4 text-muted" style="width: 300px;">
+            <h6 class="dropdown-header">Notifications - 0</h6>
+            <p class="mb-0">You currently have no notifications.</p>
+          </div>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <% if (user.avatar) { %>
+        <img src="<%= user.avatar %>" style="width:25px;height:25px" class="rounded-circle" alt="User avatar"> <span class="side-text"><%= user.name %></span>
+        <% } else { %>
+        <img src="/img/default-avatar.webp" style="width:25px;height:25px" class="rounded-circle" alt="User avatar"> <span class="side-text"><%= user.name %></span>
+        <% } %>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right">
+          <a class="dropdown-item text-dark" href="/user/dashboard">Dashboard</a>
+          <a class="dropdown-item text-dark" href="/files">My files</a>
+          <% if (user.group == "Dev")  { %>
+          <a class="dropdown-item text-dark" href="/admin">Admin</a>
+          <% } %>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="/user/logout" id="logout">Logout</a>
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<style media="screen">
+  #filter::after {
+    content: none;
+  }
+  .searchIcon {
+    display: none;
+  }
+  @media (max-width: 1260px) {
+    #navbarDropdown::after {
+      content: none;
+    }
+  }
+  @media (max-width: 710px) {
+    .searchIcon {
+      display: block
+    }
+  }
+
+</style>
+
+<script type="text/javascript">
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+
+  $('#filter').on('hide.bs.dropdown', function () {
+    console.log('boo')
+    return false;
+  });
+
+  $('#notifications').on('show.bs.dropdown', function() {
+    $('#notifIcons').css('color', 'black')
+  })
+
+  $('#notifications').on('hide.bs.dropdown', function() {
+    $('#notifIcons').css('color', 'grey')
+  })
+</script>

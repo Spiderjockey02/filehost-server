@@ -286,20 +286,21 @@
   </div>
 </div>
 <script type="text/javascript">
+  //Update delete account modal based on user ID
   $('#deleteAccount').on('show.bs.modal', function(e) {
     $(this).find('.custId').attr('value', $(e.relatedTarget).data('href'))
-
     $('.debug-url').html('Are you sure want to delete ' + $(e.relatedTarget).data('href') + '\'s account');
   });
 
+  //Update change modal tier based on user ID
   $('#changeTier').on('show.bs.modal', function(e) {
     $(this).find('.custId').attr('value', $(e.relatedTarget).data('href'))
     $(this).find('.account-delete').attr('action', '/api/account-delete/' + $(e.relatedTarget).data('href'));
   });
 
+  //Reset password modal based on user ID
   $('#resetPassword').on('show.bs.modal', function(e) {
     $(this).find('.custId').attr('value', $(e.relatedTarget).data('href'))
-
     $('.debug-url').html('Are you sure want to reset ' + $(e.relatedTarget).data('href') + '\'s password');
   });
 

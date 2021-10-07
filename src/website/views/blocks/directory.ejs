@@ -1,0 +1,143 @@
+<link rel="stylesheet" href="/css/file-directory.css" />
+<div class="container-fluid">
+  <%- include('../partials/message', { error })%>
+  <!--New add on-->
+  <div class="row">
+    <div class="col-md-10">
+      <nav style="--breadcrumb-divider: quote('>');font-size:18.72px;" aria-label="breadcrumb">
+        <ol class="breadcrumb" style="background-color:white;">
+          <li class="breadcrumb-item">
+            <% if (path == '/') { %>
+              <b style="color:black">Home</b>
+            <% } else { %>
+              <b><a class="directoyLink" href="/files" style="color:grey">Home</a></b>
+            <% } %>
+          </li>
+          <% for (var name of path.split('/').slice(2, path.length)) { %>
+            <li class="breadcrumb-item">
+              <% if (name !== path.split('/').slice(2, path.length).pop())  { %>
+                <b><a class="directoyLink" href=<%= `/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}` %> style="color:grey"><%= name%></a></b>
+              <% } else { %>
+                <b style="color:black"><%= name%></b>
+              <% } %>
+            </li>
+          <% } %>
+        </ol>
+      </nav>
+    </div>
+    <div class="col-md-2">
+      <div class="btn-group" style="float:right">
+        <button type="button" id="fileUpload" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">New <i class="fas fa-plus"></i></button>
+        <div class="dropdown-menu dropdown-menu-right">
+          <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
+            <label class="dropdown-item" type="button" id="fileHover">
+              File upload<input type="file" hidden name="sampleFile" id="upload-input">
+            </label>
+            <input type="hidden" value="<%= path%>" name="path">
+            <label class="dropdown-item" type="button" id="fileHover">
+              Folder upload<input type="file" hidden name="sampleFile" webkitdirectory mozdirectory id="upload-input-2">
+            </label>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="#">Create folder</a>
+            <button type="submit" style="display:none;" id="imagefile"></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%- include('./recent-preview')%>
+  <table class="table" id="myTable">
+    <thead>
+      <tr>
+        <th scope="col" style="width:5%;text-align:center" class="dot">
+          <div class="form-check form-check-inline hide">
+            <input onClick="updateAll();" class="form-check-input" type="checkbox" name="exampleRadios" id="All" data-option="0">
+          </div>
+        </th>
+        <th id="Type" scope="col" style="width:5%;text-align:center">
+          <i class="far fa-file"></i>
+        </th>
+        <th id="Name" scope="col">Name <i class="bi bi-arrow-down-up"></i></th>
+        <th id="Size" scope="col">Size <i class="bi bi-arrow-down-up"></i></th>
+        <th id="Date modified" scope="col">Date modified <i class="bi bi-arrow-down-up"></i></th>
+      </tr>
+    </thead>
+    <tbody>
+      <!--Show folders first-->
+      <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
+        <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
+          <th class="dot" style="text-align:center">
+            <div class="form-check form-check-inline hide">
+              <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
+            </div>
+          </th>
+          <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
+          <th scope="row" class="text-truncate" style="min-width: 150px;">
+            <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
+            <!-- Default dropright button -->
+          </th>
+          <td data-trueValue="0"><%= file.children?.length ?? 0 %> files</td>
+          <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
+        </tr>
+      <% } %>
+      <% for (const file of files.children.filter(file => file.type == 'file')) { %>
+        <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
+          <th class="dot" style="text-align:center">
+            <div class="form-check form-check-inline hide">
+              <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
+            </div>
+          </th>
+          <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
+          <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
+          <td data-trueValue="<%= file.size%>"><%= formatBytes(file.size) %></td>
+          <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <div class="progress">
+    <div class="progress-bar" role="progressbar"></div>
+  </div>
+  <%if (!files.children[0]) { %>
+    <div >
+      <h4>You should upload some files here!</h4>
+    </div>
+  <% } %>
+</div>
+<p id="user_id" style="display:none;"><%= user._id %></p>
+<script src="/js/file-directory.js" charset="utf-8"></script>
+<style>
+  .breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+  }
+  #fileUpload::after {
+    content: none;
+  }
+  .directoyLink {
+    position: relative;
+    text-decoration: none;
+  }
+  .directoyLink:hover {
+    color: #606060;
+  }
+  .directoyLink::before {
+    content: "";
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #606060;
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+  .directoyLink:hover::before {
+    transform: scaleX(1);
+  }
+  @media (max-width: 710px) {
+    th:last-child, td:last-child {
+      display:none
+    }
+  }
+</style>
