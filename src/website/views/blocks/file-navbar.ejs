@@ -11,14 +11,16 @@
           <!-- Actual search box -->
           <div class="input-group mb-3 w-100">
             <div class="input-group-prepend">
-              <button type="submit" class="input-group-text " data-toggle="tooltip" data-placement="bottom" title="Tooltip on top"><i class="fas fa-search"></i></button>
+              <button id="searchIconBtn" type="submit" class="input-group-text" style="background-color:#f4f4f4;border:none;border-radius:8px 0px 0px 8px;" data-toggle="tooltip" data-placement="bottom" title="Search"><i class="fas fa-search"></i></button>
             </div>
-            <input type="text" class="form-control text-truncate" placeholder="Search files and folders" aria-label="Amount (to the nearest dollar)" name="search" autocomplete="off">
+            <input type="text" class="form-input form-control text-truncate" style="border:none;background-color:#f4f4f4" placeholder="Search files and folders" aria-label="Amount (to the nearest dollar)" name="search" autocomplete="off">
             <div class="input-group-append" id="filter">
-              <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i class="fas fa-sliders-h"></i>
-              </button>
-              <div class="dropdown-menu p-4" style="width:100%;padding:15px">
+              <span data-toggle="tooltip" data-placement="bottom" title="Search options">
+                <button id="fileTypeButton" class="btn btn-outline-secondary dropdown-toggle" style="background-color:#f4f4f4;border-radius:0px 8px 8px 0px;border:none;color:#505762;height:38px" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="fas fa-sliders-h"></i>
+                </button>
+              <span>
+              <div class="dropdown-menu p-4" style="width:100%;padding:15px;box-shadow: 1px 1px 1px 1px rgba(0,0,0,0.25)">
                 <div class="form-group">
                   <label for="inputGroupSelect01">File type(s)</label>
                   <select class="custom-select" id="inputGroupSelect01" name="fileType">
@@ -89,6 +91,13 @@
   .searchIcon {
     display: none;
   }
+  .form-input:focus {
+    outline:0px !important;
+    -webkit-appearance:none;
+    box-shadow: none !important;
+    border: 1px solid #d0d6dc;
+    border-right:none;
+  }
   @media (max-width: 1260px) {
     #navbarDropdown::after {
       content: none;
@@ -103,14 +112,38 @@
 </style>
 
 <script type="text/javascript">
-  $(function () {
-    $('[data-toggle="tooltip"]').tooltip()
-  })
+  const x = document.getElementsByClassName('form-input')[0]
+  const y = document.getElementById('fileTypeButton')
+  const z = document.getElementById('searchIconBtn')
+  x.addEventListener("focus", myFocusFunction, true);
+  x.addEventListener("blur", myBlurFunction, true);
 
-  $('#filter').on('hide.bs.dropdown', function () {
-    console.log('boo')
-    return false;
-  });
+  function myFocusFunction() {
+    x.style.backgroundColor = "white";
+    y.style.backgroundColor = 'white';
+    z.style.backgroundColor = 'white';
+    x.style.borderTop = '1px solid black';
+    x.style.borderBottom = '1px solid black';
+    //endpoint
+    y.style.borderTop = '1px solid black';
+    y.style.borderBottom = '1px solid black';
+    y.style.borderRight = '1px solid black';
+    //start point
+    z.style.borderTop = '1px solid black';
+    z.style.borderBottom = '1px solid black';
+    z.style.borderLeft = '1px solid black';
+  }
+
+  function myBlurFunction() {
+    x.style.border = 'none'
+    x.style.backgroundColor = "#f4f4f4";
+    //endpoint
+    y.style.border = 'none'
+    y.style.backgroundColor = '#f4f4f4';
+    //start point
+    z.style.border = 'none';
+    z.style.backgroundColor = '#f4f4f4';
+  }
 
   $('#notifications').on('show.bs.dropdown', function() {
     $('#notifIcons').css('color', 'black')

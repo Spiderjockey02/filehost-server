@@ -6,14 +6,14 @@
   </a>
   <ul class="list-unstyled components" style="align:center">
     <li class="active">
-      <a href="/files"><i class="fas fa-folder"></i><span class="side-text"> All files</span></a>
+      <a href="/files"><i class="fas fa-folder" data-toggle="tooltip" data-placement="right" title="All files"></i><span class="side-text"> All files</span></a>
     </li>
     <li>
-      <a href="/user/recents"><i class="fas fa-clock"></i><span class="side-text"> Recents</span></a>
+      <a href="/user/recents"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Recents</span></a>
     </li>
     <li>
       <a type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-        <i class="fas fa-star"></i> <span class="side-text">Favourites <i class="fas fa-sort-up" style="align:center;float:right"></i></span>
+        <i class="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i> <span class="side-text">Favourites <i class="fas fa-sort-up" style="align:center;float:right"></i></span>
       </a>
       <div class="collapse" id="collapseExample">
         <div class="card card-body">
@@ -47,4 +47,9 @@
       $(new Array($(this).find('i'))[0][1]).removeClass('fa-sort-up').addClass('fa-sort-down');
     }
   });
+
+  //Only show sidebar tooltips on small screens
+  $('.fas').on('show.bs.tooltip', function () {
+    if ($(window).width() >= 1200) return false
+  })
 </script>

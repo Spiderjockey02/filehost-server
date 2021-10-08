@@ -1,7 +1,7 @@
 <div class="side-text" style="padding-bottom:20px">
   <% if (path == '/') { %>
   <a type="button" data-toggle="collapse" data-target="#recentCollapse" aria-expanded="true" aria-controls="collapseExample">
-    Recent files <svg height="16" viewBox="0 0 16 16" width="16" focusable="false" aria-hidden="true" role="presentation">
+    Recent files <svg height="16" viewBox="0 0 16 16" width="16" focusable="false" aria-hidden="true" role="presentation" data-toggle="tooltip" data-placement="top" title="Toggle recent">
       <path class="fill-color" d="M3.46 6.727a.572.572 0 0 1 .81-.81L8 9.648l3.73-3.73a.572.572 0 0 1 .81.81L8.495 10.77a.7.7 0 0 1-.99 0L3.46 6.727zm9.49 6.223a7 7 0 1 0-9.9-9.9 7 7 0 0 0 9.9 9.9z" fill="#4e4e4e" fill-rule="evenodd"></path>
     </svg>
   </a>
@@ -12,7 +12,7 @@
           <div class="card recentIcon" style="width:170px;">
             <img class="card-img-top" src="/img/file-icon.png" alt="Card image cap" style="height:75px">
             <div class="card-body" style="border-top: 1px solid #e3e3e3;padding:0px 10px">
-              <p class="text-truncate" style="color:black"><%= file.name%></p>
+              <p class="text-truncate"  data-toggle="tooltip" data-placement="top" title="<%= file.name%>" style="color:black"><%= file.name%></p>
             </div>
           </div>
         </a>

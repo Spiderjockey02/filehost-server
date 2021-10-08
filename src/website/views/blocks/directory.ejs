@@ -1,4 +1,5 @@
-<link rel="stylesheet" href="/css/file-directory.css" />
+<script src="/js/file-directory.js" charset="utf-8"></script>
+<link rel="stylesheet" href="/css/file-directory.css">
 <div class="container-fluid">
   <%- include('../partials/message', { error })%>
   <!--New add on-->
@@ -105,7 +106,7 @@
   <% } %>
 </div>
 <p id="user_id" style="display:none;"><%= user._id %></p>
-<script src="/js/file-directory.js" charset="utf-8"></script>
+
 <style>
   .breadcrumb-item + .breadcrumb-item::before {
     content: ">";
