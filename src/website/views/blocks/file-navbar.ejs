@@ -4,7 +4,47 @@
     <ul class="navbar-nav">
       <li class="nav-item">
         <span class="searchIcon">
-          <button class="btn btn-secondary"><i class="fas fa-search"></i></button>
+          <button class="btn btn-outline-secondary" style="width:40px;padding:2px;" data-toggle="modal" data-target="#exampleModal"><i class="fas fa-search"></i></button>
+          <!-- Modal -->
+          <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <form action="/files/search" method="post">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Search</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <input type="text" class="form-input form-control text-truncate" placeholder="Search files and folders" aria-label="Amount (to the nearest dollar)" name="search" autocomplete="off">
+                  &nbsp;
+                  <div class="form-group">
+                    <label for="inputGroupSelect01">File type(s)</label>
+                    <select class="custom-select" id="inputGroupSelect01" name="fileType">
+                      <option selected>Any type</option>
+                      <option value="1">Files</option>
+                      <option value="2">Folders</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="inputGroupSelect01">Date updated</label>
+                    <select class="custom-select" id="inputGroupSelect01" name="dateUpdated">
+                      <option value="0" selected>Any time</option>
+                      <option value="1">Past day</option>
+                      <option value="2">Past week</option>
+                      <option value="3">Past month</option>
+                      <option value="3">Past year</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" type="button" class="btn btn-primary">Search</button>
+                </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </span>
         <span class="searchBar">
         <form action="/files/search" method="post">
@@ -112,7 +152,7 @@
 </style>
 
 <script type="text/javascript">
-  const x = document.getElementsByClassName('form-input')[0]
+  const x = document.getElementsByClassName('form-input')[1]
   const y = document.getElementById('fileTypeButton')
   const z = document.getElementById('searchIconBtn')
   x.addEventListener("focus", myFocusFunction, true);
