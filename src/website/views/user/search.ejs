@@ -21,36 +21,43 @@
   </head>
   <body>
     <div class="wrapper">
-      <%- include('../blocks/sidebar.ejs', {size: user.size, formatBytes, active: 'recent'}) %>
+      <%- include('../blocks/sidebar.ejs', {size: user.size, formatBytes, active: 'files'}) %>
       <!-- Page Content  -->
       <div class="container-fluid" id="content">
         <%- include('../blocks/file-navbar.ejs', {user}) %>
         &nbsp;
         <div class="row">
           <div class="col-sm-10">
-            <h4><a href="/recent">Recently viewed</a></h4>
+            <h4>Search Results for: <%= query%></h4>
           </div>
         </div>
         &nbsp
-        <table class="table" id="myTable">
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Size</th>
-              <th scope="col">Date modified</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!--Show folders first-->
-            <% for (file of files) { %>
-              <tr class="clickable-row" data-href="/files<%= decodeURI(`${file.path}`) %>">
-                <th scope="row" class="text-truncate" style="max-width: 150px;"><%= file.name %></th>
-                <td><%= formatBytes(file.size) %></td>
-                <td><%= file.modified?.toDateString() %></td>
-              </tr>
-            <% } %>
-          </tbody>
-        </table>
+        <% console.log(files)%>
+        <% for (const file of files) { %>
+          <div class="media" style="background-color:grey">
+            <img class="mr-3" src="/img/file-icon.png" alt="Generic placeholder image" style="padding:10px;">
+            <div class="media-body">
+              <h5 class="mt-0"><a href="<%= file%>"><%= file.name.split('/').shift() %></a></h5>
+              <nav style="--breadcrumb-divider: quote('>');font-size:13px;" aria-label="breadcrumb">
+                <ol class="breadcrumb" style="background-color:white;">
+                  <li class="breadcrumb-item">
+                    <b><a class="directoyLink" href="/files" style="color:grey">Home</a></b>
+                  </li>
+                  <% for (var name of file.name.split('/').slice(2, file.length)) { %>
+                    <li class="breadcrumb-item">
+                      <% if (name !== file.name.split('/').slice(2, file.length).pop())  { %>
+                        <b><a class="directoyLink" href=<%= `/${file.sname.plit('/').slice(1, file.name.split('/').indexOf(name)+1).join('/')}` %> style="color:grey"><%= name%></a></b>
+                      <% } else { %>
+                        <b style="color:black"><%= name%></b>
+                      <% } %>
+                    </li>
+                  <% } %>
+                </ol>
+              </nav>
+            </div>
+          </div>
+          &nbsp;
+        <% } %>
       </div>
     </div>
   </body>

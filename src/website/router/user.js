@@ -116,16 +116,6 @@ router.post('/avatar/upload', (req, res) => {
 	});
 });
 
-// Show user's recent viewings
-router.get('/recent', ensureAuthenticated, async (req, res) => {
-	const files = await UserSchema.findOne({ email: req.user.email });
-	res.render('user/recent', {
-		user: req.isAuthenticated() ? req.user : null,
-		files: files.recent,
-		formatBytes: require('../../utils').formatBytes,
-	});
-});
-
 // Show user's favourites
 router.get('/favourites', ensureAuthenticated, (req, res) => {
 	res.render('user/favourites', {

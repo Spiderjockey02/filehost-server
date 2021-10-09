@@ -117,6 +117,16 @@ router.get('/share/:ID/:path*', async (req, res) => {
 	}
 });
 
+// Show user's recent viewings
+router.get('/recent', ensureAuthenticated, async (req, res) => {
+	const files = await UserSchema.findOne({ email: req.user.email });
+	res.render('user/recent', {
+		user: req.isAuthenticated() ? req.user : null,
+		files: files.recent,
+		formatBytes: require('../../utils').formatBytes,
+	});
+});
+
 module.exports = router;
 
 // Get number of files

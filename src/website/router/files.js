@@ -6,10 +6,61 @@ const express = require('express'),
 	fs = require('fs'),
 	fresh = require('fresh'),
 	{ IncomingForm } = require('formidable'),
+	stringSimilarity = require('string-similarity'),
 	location = process.cwd() + '/src/website/files/';
+
+// search for item
+function SearchHG(tree, value, path = tree.name) {
+	const foundItems = [];
+	for (const child of tree.children) {
+		if (child.type == 'directory') {
+			const newItems = SearchHG(child, value, `${path}/${child.name}`);
+			if (newItems[0]) foundItems.push(...newItems);
+		}
+		const output = stringSimilarity.compareTwoStrings(value, child.name);
+		if (output > 0.60) foundItems.push(`${path}/${child.name}`);
+	}
+	return foundItems;
+}
 
 // Show file explorer
 router.get('/*', ensureAuthenticated, async (req, res) => {
+	// User is searching for file
+	if (req.query.search) {
+		const { search, fileType, dateUpdated } = req.query;
+		const tree = dirTree(decodeURI(location + req.user._id));
+		let files = SearchHG(tree, search);
+		// Filter out files/folders
+		if (fileType && fileType !== 0) {
+			files = files.filter(item => {
+				const stats = fs.statSync(location + item);
+				if (fileType == 1 && stats.isFile()) return true;
+				if (fileType == 2 && stats.isDirectory()) return true;
+				return false;
+			});
+		}
+
+		// Filter out my date updated
+		if (dateUpdated && dateUpdated !== 0) {
+			files = files.filter(item => {
+				const stats = fs.statSync(location + item);
+				// day, week, month, year
+				if (dateUpdated == 1 && stats.mtime <= 86400000) return true;
+				if (dateUpdated == 2 && stats.mtime <= 7 * 86400000) return true;
+				if (dateUpdated == 3 && stats.mtime <= 30 * 86400000) return true;
+				if (dateUpdated == 4 && stats.mtime <= 365 * 86400000) return true;
+				return false;
+			});
+		}
+
+		return res.render('user/search', {
+			user: req.isAuthenticated() ? req.user : null,
+			query: req.query.search,
+			formatBytes: require('../../utils').formatBytes,
+			files: files.map(file => dirTree(decodeURI(location + file))),
+		});
+	}
+
 	const URLpath = req._parsedOriginalUrl.pathname,
 		user = req.user,
 		path = decodeURI(location + req.user._id + URLpath.substring(6, URLpath.length));

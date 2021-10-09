@@ -5,11 +5,11 @@
     </div>
   </a>
   <ul class="list-unstyled components" style="align:center">
-    <li class="active">
+    <li <% if (active == 'files') { %> class="active" <% }%>>
       <a href="/files"><i class="fas fa-folder" data-toggle="tooltip" data-placement="right" title="All files"></i><span class="side-text"> All files</span></a>
     </li>
-    <li>
-      <a href="/user/recent"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Recents</span></a>
+    <li <% if (active == 'recent') { %> class="active" <% }%>>
+      <a href="/recent"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Recents</span></a>
     </li>
     <li>
       <span class="smallFav">

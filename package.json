@@ -37,7 +37,8 @@
     "passport-twitter": "^0.1.5",
     "paypal-rest-sdk": "^1.8.1",
     "rate-limit-mongo": "^2.3.2",
-    "serve-favicon": "^2.5.0"
+    "serve-favicon": "^2.5.0",
+    "string-similarity": "^4.0.4"
   },
   "scripts": {
     "start": "node src/index.js"
