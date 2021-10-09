@@ -34,30 +34,46 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 		if (fileType && fileType !== 0) {
 			files = files.filter(item => {
 				const stats = fs.statSync(location + item);
-				if (fileType == 1 && stats.isFile()) return true;
-				if (fileType == 2 && stats.isDirectory()) return true;
-				return false;
+				if (fileType == 1) {
+					if (stats.isFile()) return true;
+					return false;
+				} else if (fileType == 2) {
+					if (stats.isFile()) return false;
+					return true;
+				}
+				return true;
 			});
 		}
 
 		// Filter out my date updated
 		if (dateUpdated && dateUpdated !== 0) {
 			files = files.filter(item => {
-				const stats = fs.statSync(location + item);
+				const fileTime = fs.statSync(location + item).mtime.getTime();
 				// day, week, month, year
-				if (dateUpdated == 1 && stats.mtime <= 86400000) return true;
-				if (dateUpdated == 2 && stats.mtime <= 7 * 86400000) return true;
-				if (dateUpdated == 3 && stats.mtime <= 30 * 86400000) return true;
-				if (dateUpdated == 4 && stats.mtime <= 365 * 86400000) return true;
-				return false;
+				if (dateUpdated == 1) {
+					if (fileTime >= (new Date().getTime() - 86400000)) return true;
+					return false;
+				}
+				if (dateUpdated == 2) {
+					if (fileTime >= (new Date().getTime() - 7 * 86400000)) return true;
+					return false;
+				}
+				if (dateUpdated == 3) {
+					if (fileTime >= (new Date().getTime() - 30 * 86400000)) return true;
+					return false;
+				}
+				if (dateUpdated == 4) {
+					if (fileTime >= (new Date().getTime() - 365 * 86400000)) return true;
+					return false;
+				}
+				return true;
 			});
 		}
-
 		return res.render('user/search', {
 			user: req.isAuthenticated() ? req.user : null,
 			query: req.query.search,
 			formatBytes: require('../../utils').formatBytes,
-			files: files.map(file => dirTree(decodeURI(location + file))),
+			files: files.map(file => Object.assign(dirTree(decodeURI(location + file)), { url: file })),
 		});
 	}
 

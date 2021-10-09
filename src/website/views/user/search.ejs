@@ -32,21 +32,20 @@
           </div>
         </div>
         &nbsp
-        <% console.log(files)%>
         <% for (const file of files) { %>
           <div class="media" style="background-color:grey">
             <img class="mr-3" src="/img/file-icon.png" alt="Generic placeholder image" style="padding:10px;">
             <div class="media-body">
-              <h5 class="mt-0"><a href="<%= file%>"><%= file.name.split('/').shift() %></a></h5>
+              <h5 class="mt-0"><a href="files<%= file.url.slice(24)%>"><%= file.name.split('/').shift() %></a></h5>
               <nav style="--breadcrumb-divider: quote('>');font-size:13px;" aria-label="breadcrumb">
                 <ol class="breadcrumb" style="background-color:white;">
                   <li class="breadcrumb-item">
                     <b><a class="directoyLink" href="/files" style="color:grey">Home</a></b>
                   </li>
-                  <% for (var name of file.name.split('/').slice(2, file.length)) { %>
+                  <% for (var name of file.url.split('/').slice(2, file.length)) { %>
                     <li class="breadcrumb-item">
-                      <% if (name !== file.name.split('/').slice(2, file.length).pop())  { %>
-                        <b><a class="directoyLink" href=<%= `/${file.sname.plit('/').slice(1, file.name.split('/').indexOf(name)+1).join('/')}` %> style="color:grey"><%= name%></a></b>
+                      <% if (name !== file.url.split('/').slice(2, file.length).pop())  { %>
+                        <b><a class="directoyLink" href=<%= `/files/${file.url.split('/').slice(1, file.url.split('/').indexOf(name)+1).join('/')}` %> style="color:grey"><%= name%></a></b>
                       <% } else { %>
                         <b style="color:black"><%= name%></b>
                       <% } %>

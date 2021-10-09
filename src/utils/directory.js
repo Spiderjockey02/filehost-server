@@ -44,7 +44,7 @@ function directoryTree(path, onEachFile, onEachDirectory) {
 		item.modified = stats.mtime;
 		if (item.extension == '.url') {
 			const filedata = fs.readFileSync(item.path, 'utf8');
-			item.url = filedata.split('\n')[4].substring(4, filedata.split('\n')[4].length);
+			item.url = filedata.split('\n')[1].substring(4, filedata.split('\n')[1].length);
 		}
 
 		if (onEachFile) onEachFile(item, path, stats);
