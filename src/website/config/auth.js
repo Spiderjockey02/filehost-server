@@ -1,4 +1,4 @@
-const config = require('../../config');
+const { company } = require('../../config');
 
 module.exports = {
 	// Check if user is logged in
@@ -10,15 +10,14 @@ module.exports = {
 	},
 	checkDev: function(req, res, next) {
 		if (req.isAuthenticated()) {
-			if (config.company.devs.includes(req.user._id.toString())) {
+			if (company.devs.includes(req.user._id.toString())) {
 				return next();
 			}
-			return res
-				.status(302)
-				.redirect('/login?error=Access denied');
 		}
-		res
-			.status(302)
-			.redirect('/login');
+		res.status(403)
+			.render('403-page.ejs', {
+				user: req.isAuthenticated() ? req.user : null,
+				company,
+			});
 	},
 };

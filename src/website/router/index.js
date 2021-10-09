@@ -92,10 +92,20 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 		// Send file, if it doesn't exist error
 		const path = decodeURI(location + req._parsedOriginalUrl.pathname.slice(14));
 		res.sendFile(path, (err) => {
-			if (err) return res.status(404).end('Content not found.');
+			if (err) {
+				return res.status(404)
+					.render('404-page.ejs', {
+						user: req.isAuthenticated() ? req.user : null,
+						company,
+					});
+			}
 		});
 	} else {
-		res.status(403).end('Access denied!');
+		res.status(403)
+			.render('403-page.ejs', {
+				user: req.isAuthenticated() ? req.user : null,
+				company,
+			});
 	}
 });
 
