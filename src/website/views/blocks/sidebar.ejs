@@ -9,19 +9,29 @@
       <a href="/files"><i class="fas fa-folder" data-toggle="tooltip" data-placement="right" title="All files"></i><span class="side-text"> All files</span></a>
     </li>
     <li>
-      <a href="/user/recents"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Recents</span></a>
+      <a href="/user/recent"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Recents</span></a>
     </li>
     <li>
+      <span class="searchIcon">
+        <a type="button" href="/favourites">
+          <i class="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>
+        </a>
+      </span>
+      <span class="side-text">
       <a type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-        <i class="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i> <span class="side-text">Favourites <i class="fas fa-sort-up" style="align:center;float:right"></i></span>
+        <i class="fas fa-star"></i><span class="side-text">Favourites <i class="fas fa-sort-up" style="align:center;float:right"></i></span>
       </a>
       <div class="collapse" id="collapseExample">
-        <div class="card card-body">
-          <% for (file of user.recent.slice(0,9)) { %>
-            <a class="card-text text-truncate" style="color: black"><%= file.name%></a>
-          <% } %>
-        </div>
+        <% for (file of user.recent.slice(0,9)) { %>
+          <div style="padding-left:35px;">
+            <a class="card-text text-truncate" style="color:black;font-size:15px" href="/<%= file.name%>" data-toggle="tooltip" data-placement="right" title="<%= file.name%>">
+              <i class="far fa-file"></i>
+              <b><%= file.name%></b>
+            </a>
+          </div>
+        <% } %>
       </div>
+      </span>
     </li>
   </ul>
   <div class="p-2 bottom" style="position:fixed; bottom:0; height:11%;">
@@ -35,6 +45,9 @@
 <style>
   a:hover {
     text-decoration: none;
+  }
+  .card-text:hover {
+    background-color: none;
   }
 </style>
 <script type="text/javascript">
