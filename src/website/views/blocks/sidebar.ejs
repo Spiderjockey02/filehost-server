@@ -12,7 +12,7 @@
       <a href="/user/recent"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Recents</span></a>
     </li>
     <li>
-      <span class="searchIcon">
+      <span class="smallFav">
         <a type="button" href="/favourites">
           <i class="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>
         </a>
@@ -48,6 +48,14 @@
   }
   .card-text:hover {
     background-color: none;
+  }
+  .smallFav {
+    display: none;
+  }
+  @media (max-width: 1260px) {
+    .smallFav {
+      display: block
+    }
   }
 </style>
 <script type="text/javascript">

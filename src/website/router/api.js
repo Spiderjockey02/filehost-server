@@ -16,7 +16,7 @@ router.post('/feedback', apiLimiter, async (req, res) => {
 
 	// Check if they have already send a feedback within the last week
 	const feedback = await FeedbackSchema.findOne({ email: req.body.email });
-	if (Date.now() - feedback.creationDate <= 604800000) return res.redirect('/contact-us?error=You have already sent us feedback in the last week.');
+	if (feedback && Date.now() - feedback.creationDate <= 604800000) return res.redirect('/contact-us?error=You have already sent us feedback in the last week.');
 
 	// Send data to mail service so person can be emailed
 	try {
