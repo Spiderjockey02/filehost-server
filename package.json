@@ -6,7 +6,7 @@
     "node": "14.x"
   },
   "dependencies": {
-    "axios": "^0.21.4",
+    "axios": "^0.23.0",
     "bcrypt": "^5.0.1",
     "chalk": "^4.1.2",
     "check-disk-space": "^3.0.1",
