@@ -39,6 +39,10 @@ const config = {
 		slogan: 'A nice slogan for a nice company',
 		devs: [''],
 		email: 'totallylegit@example.com',
+		facebookURL: 'https://facebook.com',
+		twitterURL: 'https://twitter.com',
+		instagramURL: 'https://instagram.com',
+		linkedinURL: 'https://linkedin.com',
 	},
 	// what URL's to play in iframes for internet shortcut files
 	frame_domains: ['https://www.youtube.com/'],

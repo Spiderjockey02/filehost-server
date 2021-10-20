@@ -14,7 +14,7 @@ module.exports.getFileIcon = (file) => {
 	} else if (['.json'].includes(file.extension)) {
 		// text file
 		return '<i class="far fa-file-alt"></i>';
-	} else if (['.png', '.jpg', '.jpeg', '.ico'].includes(file.extension)) {
+	} else if (['.png', '.jpg', '.jpeg', '.ico', '.gif'].includes(file.extension)) {
 		// picture
 		return '<i class="far fa-file-image"></i>';
 	} else if (!file.extension && file.children) {
