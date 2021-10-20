@@ -7,7 +7,7 @@ const express = require('express'),
 	fresh = require('fresh'),
 	{ IncomingForm } = require('formidable'),
 	stringSimilarity = require('string-similarity'),
-	location = process.cwd() + '/src/website/files/';
+	location = process.cwd() + '/src/website/files/userContent/';
 
 // search for item
 function SearchHG(tree, value, path = tree.name) {

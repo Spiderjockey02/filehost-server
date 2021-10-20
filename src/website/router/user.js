@@ -6,7 +6,7 @@ const express = require('express'),
 	fs = require('fs'),
 	{ company } = require('../../config'),
 	{ logger } = require('../../utils'),
-	location = process.cwd() + '/src/website/files/',
+	location = process.cwd() + '/src/website/files/userContent/',
 	{ validate } = require('deep-email-validator'),
 	passport = require('passport');
 
@@ -113,14 +113,6 @@ router.post('/avatar/upload', (req, res) => {
 	sampleFile.mv(newPath, async function(err) {
 		if (err) return res.status(500).send(err);
 		res.redirect('/dashboard');
-	});
-});
-
-// Show user's favourites
-router.get('/favourites', ensureAuthenticated, (req, res) => {
-	res.render('user/favourites', {
-		user: req.isAuthenticated() ? req.user : null,
-		formatBytes: require('../../utils').formatBytes,
 	});
 });
 

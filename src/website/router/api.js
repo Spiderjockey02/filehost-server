@@ -5,7 +5,7 @@ const express = require('express'),
 	{ apiLimiter } = require('../config/RateLimit'),
 	{ logger } = require('../../utils'),
 	fs = require('fs'),
-	location = process.cwd() + '/src/website/files/',
+	location = process.cwd() + '/src/website/files/userContent/',
 	router = express.Router();
 
 // Recieve and save feedback to database and acknowledge system admins

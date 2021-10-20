@@ -1,6 +1,6 @@
 const express = require('express'),
 	{ ensureAuthenticated } = require('../config/auth'),
-	location = process.cwd() + '/src/website/files/',
+	location = process.cwd() + '/src/website/files/userContent/',
 	{ UserSchema } = require('../../models'),
 	fs = require('fs'),
 	{ company } = require('../../config'),
@@ -133,6 +133,14 @@ router.get('/recent', ensureAuthenticated, async (req, res) => {
 	res.render('user/recent', {
 		user: req.isAuthenticated() ? req.user : null,
 		files: files.recent,
+		formatBytes: require('../../utils').formatBytes,
+	});
+});
+
+// Show user's favourites
+router.get('/favourites', ensureAuthenticated, (req, res) => {
+	res.render('user/favourites', {
+		user: req.isAuthenticated() ? req.user : null,
 		formatBytes: require('../../utils').formatBytes,
 	});
 });
