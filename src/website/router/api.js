@@ -22,7 +22,7 @@ router.post('/feedback', apiLimiter, async (req, res) => {
 	try {
 		const resp = await post(`${require('../../config').mailService.domain}/feedback`, {
 			data: req.body,
-		}).then(data => data.json());
+		});
 		if (resp.error) console.log(resp.error);
 	} catch (err) {
 		res.redirect('/contact-us?error=Unable to save feedback, please try again later.');

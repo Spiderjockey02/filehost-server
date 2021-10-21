@@ -109,6 +109,27 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 	}
 });
 
+router.get('/thumbnail/:userID/*', ensureAuthenticated, (req, res) => {
+	// Make sure no one else accessing their data
+	console.log('test');
+	if (req.user._id == req.params.userID) {
+		const path = decodeURI(process.cwd() + '/src/website/files/thumbnails/' + req._parsedOriginalUrl.pathname.slice(11));
+		if (fs.existsSync(path)) {
+			res.sendFile(path, (err) => {
+				if (err) console.log(err);
+			});
+		} else {
+			res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
+		}
+	} else {
+		res.status(403)
+			.render('403-page.ejs', {
+				user: req.isAuthenticated() ? req.user : null,
+				company,
+			});
+	}
+});
+
 // People's shared files/folders
 router.get('/share/:ID/:path*', async (req, res) => {
 	try {
