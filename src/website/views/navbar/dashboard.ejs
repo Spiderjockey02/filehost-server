@@ -16,11 +16,7 @@
           <div class="tab-pane fade <%if (!option || !['2', '3'].includes(option)) { %> show active <% } %>" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
             <h1>Account</h1>
             <div class="media">
-              <% if (avatar) { %>
-                <img src="<%= `data:image/png;base64,${Buffer.from(avatar).toString('base64')}` %>" class="align-self-start rounded-circle mr-3" alt="User image" width="100px">
-              <% } else { %>
-                <img src="https://www.tenforums.com/geek/gars/images/2/types/thumb_15951118880user.png" class="align-self-start rounded-circle mr-3" alt="User image" width="100px">
-              <% } %>
+              <img src="/avatar/<%= user._id%>" class="align-self-start rounded-circle mr-3" alt="User image" width="100px">
               <div class="media-body">
                 <h5 class="mt-0" style="padding-bottom:20px">Avatar</h5>
                 <form action="/user/avatar/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
@@ -123,5 +119,58 @@
         $('#show_hide_password i').addClass("fa-eye");
       }
     });
+
+    $('#upload-input').on('change', function() {
+  		const files = $(this)[0].files;
+  		console.log('h');
+  		console.log(files);
+  		if (files.length > 0) {
+  			// create a FormData object which will be sent as the data payload in the
+  			const formData = new FormData();
+
+  			// loop through all the selected files and add them to the formData object
+  			for (const file of files) {
+  				// add the files to formData object for the data payload
+  				const name = file.webkitRelativePath.length >= 1 ? file.webkitRelativePath : file.name;
+  				formData.append('uploads[]', file, name);
+  			}
+
+  			// Send data
+  			$.ajax({
+  				url: '/user/avatar/upload',
+  				type: 'POST',
+  				data: formData,
+  				processData: false,
+  				contentType: false,
+  				success: function(data) {
+  					console.log('upload successful!\n' + data);
+  				},
+  				xhr: function() {
+  					console.log('boo');
+  					// create an XMLHttpRequest
+  					const xhr = new XMLHttpRequest();
+  					// listen to the 'progress' event
+  					console.log(xhr);
+  					xhr.upload.addEventListener('progress', function(evt) {
+  						if (evt.lengthComputable) {
+  							// calculate the percentage of upload completed
+  							let percentComplete = evt.loaded / evt.total;
+  							percentComplete = parseInt(percentComplete * 100);
+  							console.log(percentComplete);
+  							// update the Bootstrap progress bar with the new percentage
+  							$('.upload').text(percentComplete + '%');
+  							$('.upload').width(percentComplete + '%');
+  							// once the upload reaches 100%, set the progress bar text to done
+  							if (percentComplete === 100) {
+  								$('.upload').html('Done');
+  								window.location = '/files';
+  							}
+  						}
+  					}, false);
+  					return xhr;
+  				},
+  			});
+  		}
+  	});
   });
 </script>

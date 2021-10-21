@@ -8,6 +8,7 @@ const express = require('express'),
 	{ logger } = require('../../utils'),
 	location = process.cwd() + '/src/website/files/userContent/',
 	{ validate } = require('deep-email-validator'),
+	{ IncomingForm } = require('formidable'),
 	passport = require('passport');
 
 
@@ -100,20 +101,36 @@ router.get('/logout', (req, res) => {
 
 // Upload new avatar
 router.post('/avatar/upload', (req, res) => {
-	if (!req.files || Object.keys(req.files).length === 0) {
-		return res.status(400).send('No files were uploaded.');
-	}
+	const form = new IncomingForm({
+		multiples: true,
+		allowEmptyFiles: false,
+		maxFileSize: require('../../config').uploadLimit,
+		maxFieldsSize: require('../../config').uploadLimit,
+		uploadDir: location });
 
-	// Find where to place the file
-	const sampleFile = req.files.sampleFile;
-	console.log(sampleFile);
-	const newPath = location + req.user._id + '/' + 'avatar.png';
-
-	// save file
-	sampleFile.mv(newPath, async function(err) {
-		if (err) return res.status(500).send(err);
-		res.redirect('/dashboard');
+	// File has been uploaded (create folders if neccessary)
+	form.on('file', async function(field, file) {
+		fs.rename(file.path, `${process.cwd()}/src/website/files/avatars/${req.user._id}.png`, function(err) {
+			if (err) throw err;
+		});
+		res.redirect('/user/dashboard');
 	});
+
+	// log any errors that occur
+	form.on('error', function(err) {
+		res.redirect(`/files?error=${err}`);
+	});
+
+	// parse the incoming request containing the form data
+	form.parse(req);
+});
+
+// Upload new avatar
+router.post('/avatar/delete', (req, res) => {
+	fs.unlink(`${process.cwd()}/src/website/files/avatars/${req.user._id}.png`, function(err) {
+		if (err) throw err;
+	});
+	res.redirect('/user/dashboard');
 });
 
 // Show user's favourites

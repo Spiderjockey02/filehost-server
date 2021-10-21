@@ -104,11 +104,7 @@
       </li>
       <li class="nav-item">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <% if (user.avatar) { %>
-        <img src="<%= user.avatar %>" style="width:25px;height:25px" class="rounded-circle" alt="User avatar"> <span class="side-text"><%= user.name %></span>
-        <% } else { %>
-        <img src="/img/default-avatar.webp" style="width:25px;height:25px" class="rounded-circle" alt="User avatar"> <span class="side-text"><%= user.name %></span>
-        <% } %>
+          <img src="/avatar/<%= user._id%>" style="width:25px;height:25px" class="rounded-circle" alt="User avatar"> <span class="side-text"><%= user.name %></span>
         </a>
         <div class="dropdown-menu dropdown-menu-right">
           <a class="dropdown-item text-dark" href="/user/dashboard">Dashboard</a>
