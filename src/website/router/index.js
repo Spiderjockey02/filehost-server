@@ -111,7 +111,6 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 
 router.get('/thumbnail/:userID/*', ensureAuthenticated, (req, res) => {
 	// Make sure no one else accessing their data
-	console.log('test');
 	if (req.user._id == req.params.userID) {
 		const path = decodeURI(process.cwd() + '/src/website/files/thumbnails/' + req._parsedOriginalUrl.pathname.slice(11));
 		if (fs.existsSync(path)) {

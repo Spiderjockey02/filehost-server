@@ -6,13 +6,13 @@
     </svg>
   </a>
   <div class="collapse show" id="recentCollapse">
-    <div class="d-flex justify-content-start flex-wrap">
+    <div class="d-flex justify-content-start">
       <% for (file of user.recent.slice(0,9)) { %>
         <a href="/files<%= file.path%>">
-          <div class="card recentIcon" style="width:170px;">
-            <img class="card-img-top" src="/img/file-icon.png" alt="Card image cap" style="height:75px">
+          <div class="card recentIcon" style="max-width:170px;">
+            <img class="card-img-top" src="/thumbnail/<%= user._id%><%= file.path.replace(file.extension, '.png')%>" alt="Card image cap" style="height:75px;">
             <div class="card-body" style="border-top: 1px solid #e3e3e3;padding:0px 10px">
-              <p class="text-truncate"  data-toggle="tooltip" data-placement="top" title="<%= file.name%>" style="color:black"><%= file.name%></p>
+              <p class="text-truncate" data-toggle="tooltip" data-placement="top" title="<%= file.name%>" style="color:black"><%= file.name%></p>
             </div>
           </div>
         </a>

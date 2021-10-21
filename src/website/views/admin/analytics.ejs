@@ -1,0 +1,107 @@
+<%- include('../blocks/header') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
+<link rel="stylesheet" href="/css/file-directory.css" type="text/css">
+<div id="wrapper">
+  <!-- Sidebar -->
+  <%- include('../blocks/admin-sidebar') %>
+  <div class="container-fluid">
+    &nbsp;
+    <h3>Analytics</h3>
+    &nbsp;
+    <div class="row">
+      <div class="col-xl-6 col-md-6 col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Data usage</h6>
+          </div>
+          <div class="card-body">
+            <div class="chart-area">
+              <canvas id="userConnections"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-6 col-md-6 col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Data usage</h6>
+          </div>
+          <div class="card-body">
+            <div class="chart-area">
+              <canvas id="referralLinks"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  function formatBytes(bytes) {
+  	if (bytes == 0) return '0 Bytes';
+  	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+  		i = Math.floor(Math.log(bytes) / Math.log(1024));
+
+  	return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+  new Chart(document.getElementById("referralLinks"), {
+    type: 'bar',
+    data: <%- JSON.stringify(ReferLinks)%>,
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  new Chart(document.getElementById("userConnections"), {
+    type: 'line',
+    data: <%- JSON.stringify(cachedData)%>,
+    options: {
+      responsive: true,
+      scales: {
+        xAxes: [{
+          time: {
+            unit: 'date'
+          },
+          gridLines: {
+            display: false,
+            drawBorder: false
+          },
+          ticks: {
+            maxTicksLimit: 7
+          }
+        }],
+        yAxes: [{
+          ticks: {
+            maxTicksLimit: 5,
+            padding: 10,
+            // Include a dollar sign in the ticks
+            callback: function(value, index, values) {
+              return formatBytes(value)
+            }
+          },
+          gridLines: {
+            color: "rgb(234, 236, 244)",
+            zeroLineColor: "rgb(234, 236, 244)",
+            drawBorder: false,
+            borderDash: [2],
+            zeroLineBorderDash: [2]
+          }
+        }],
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Chart.js Line Chart'
+        }
+      },
+    },
+  });
+</script>

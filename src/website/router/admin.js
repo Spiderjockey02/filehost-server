@@ -1,13 +1,15 @@
 const express = require('express'),
-	{ UserSchema } = require('../../models'),
+	{ UserSchema, StatSchema } = require('../../models'),
 	{ checkDev } = require('../config/auth'),
 	{ readdirSync } = require('fs'),
-	location = process.cwd() + '/src/website/files/',
+	location = process.cwd() + '/src/website/files/userContent/',
+	{ post } = require('axios'),
 	checkDiskSpace = require('check-disk-space').default,
 	router = express.Router();
 
 router.get('/', checkDev, async (req, res) => {
-	const users = await UserSchema.find();
+	const users = await UserSchema.find(),
+		files = require('../../utils/directory')(location);
 	res.render('admin/index', {
 		user: req.isAuthenticated() ? req.user : null,
 		data: {
@@ -18,6 +20,10 @@ router.get('/', checkDev, async (req, res) => {
 				data: users.map(user => user.size ?? 0),
 			}],
 		},
+		totalSize: await checkDiskSpace(location).then(disk => disk.size),
+		formatBytes: require('../../utils').formatBytes,
+		size: getTotalSize(files, 0),
+		users,
 	});
 });
 

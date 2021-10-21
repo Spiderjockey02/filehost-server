@@ -32,11 +32,11 @@
         <div class="dropdown-menu dropdown-menu-right">
           <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
             <label class="dropdown-item" type="button" id="fileHover">
-              File upload<input type="file" hidden name="sampleFile" id="upload-input">
+              File upload<input type="file" hidden name="sampleFile" class="upload-input">
             </label>
             <input type="hidden" value="<%= path%>" name="path">
             <label class="dropdown-item" type="button" id="fileHover">
-              Folder upload<input type="file" hidden name="sampleFile" webkitdirectory mozdirectory id="upload-input-2">
+              Folder upload<input type="file" hidden name="sampleFile" webkitdirectory mozdirectory class="upload-input">
             </label>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="#">Create folder</a>
@@ -97,7 +97,7 @@
     </tbody>
   </table>
   <div class="progress">
-    <div class="progress-bar" role="progressbar"></div>
+    <div class="progress-bar upload" role="progressbar"></div>
   </div>
   <%if (!files.children[0]) { %>
     <div >

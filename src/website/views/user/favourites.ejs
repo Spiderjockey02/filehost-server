@@ -1,178 +1,117 @@
-<%- include('../blocks/header', { user }) %>
-<link rel="stylesheet" href="/css/file-directory.css" type="text/css">
-<div id="wrapper">
-  <!-- Sidebar -->
-  <%- include('../blocks/sidebar', { size: Number(user.size), formatBytes }) %>
-  <div class="container-fluid" style="padding:0px 30px 0px;">
-    &nbsp;
-    <div class="row">
-      <div class="col-sm-10">
-        <h4><a href="/recent">Favourites</a></h4>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="manifest" href="/js/pwa.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <link rel="apple-touch-icon" href="/img/apple-touch.png">
+    <meta name="theme-color" content="#106eea"/>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="File Sharer">
+    <meta property="og:description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <meta property="og:image" content="/favicon.ico">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
+    <script async src="https://arc.io/widget.min.js#Wa9QgvFs"></script>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <title>File Sharer</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <%- include('../blocks/sidebar.ejs', {size: user.size, formatBytes, active: 'favourites'}) %>
+      <!-- Page Content  -->
+      <div class="container-fluid" id="content">
+        <%- include('../blocks/file-navbar.ejs', {user}) %>
+        &nbsp;
+        <div class="row">
+          <div class="col-sm-10">
+            <h4><a href="/favourites">Favourites</a></h4>
+          </div>
+        </div>
+        &nbsp
       </div>
     </div>
-  </div>
-</div>
-<script>
-  $(document).ready(function($) {
-    $(".clickable-row").click(function() {
-        window.location = $(this).data("href");
-    });
-  });
-  $(document).ready(function () {
-  var trigger = $('.hamburger'),
-      overlay = $('.overlay'),
-     isClosed = false;
-
-    trigger.click(function () {
-      hamburger_cross();
-    });
-
-    function hamburger_cross() {
-
-      if (isClosed == true) {
-        overlay.hide();
-        trigger.removeClass('is-open');
-        trigger.addClass('is-closed');
-        isClosed = false;
-      } else {
-        overlay.show();
-        trigger.removeClass('is-closed');
-        trigger.addClass('is-open');
-        isClosed = true;
-      }
-  }
-
-  $('[data-toggle="offcanvas"]').click(function () {
-        $('#wrapper').toggleClass('toggled');
-  });
-});
-  //Sorts table
-  const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
-  const comparer = (idx, asc) => (a, b) => ((v1, v2) =>
-    v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
-  )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
-
-  // Activate everytime table header is clicked
-  document.querySelectorAll('th')
-    .forEach(th => th.addEventListener('click', (() => {
-      const table = th.closest('table');
-      Array.from(table.childNodes[3].querySelectorAll('tr:nth-child(n+1)'))
-        .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
-        .forEach(tr => table.childNodes[3].appendChild(tr));
-    })));
-</script>
+  </body>
 <style>
-  img {
-    height: 340px;
+/* ---------------------------------------------------
+    SIDEBAR STYLE
+----------------------------------------------------- */
+.wrapper {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+#sidebar {
+  width: 250px;
+  background: #1992d4;
+  transition: all 0.3s;
+}
+
+#sidebar .sidebar-header {
+  color: black;
+  padding: 20px;
+}
+
+#sidebar ul.components {
+  padding: 20px 0;
+  border-bottom: 1px solid #47748b;
+}
+
+#sidebar ul p {
+  color: #fff;
+  padding: 10px;
+}
+
+#sidebar ul li a {
+  padding: 10px;
+  font-size: 1.1em;
+  display: block;
+  color: black;
+}
+#sidebar ul li a:not(.active):hover {
+  color: black;
+  background: #53A5D2;
+  border-radius: 8px;
+}
+.active {
+  background: #157cb4;
+  border-radius: 8px;
+}
+/* ---------------------------------------------------
+    CONTENT STYLE
+----------------------------------------------------- */
+#content {
+  width: 100%;
+  min-height: 100vh;
+  transition: all 0.3s;
+}
+
+/* ---------------------------------------------------
+    MEDIAQUERIES
+----------------------------------------------------- */
+@media (max-width: 1260px) {
+  #sidebar {
+    width: 70px;
   }
-  .clickable-row:hover {
-    background: grey;
-    cursor: pointer;
+  .side-text {
+    display: none
   }
-  #load-now {
-    border: 5px solid black;
+  .fas {
+    padding-left: 15px;
   }
-  #fileHover:hover {
-    cursor: pointer
+  #sidebar.active {
+    margin-left: 0;
   }
-  th:hover {
-    cursor: pointer;
-    background: grey;
+  #sidebarCollapse span {
+    display: none;
   }
-  body {
-   overflow-x: hidden;
 }
-
-/* Toggle Styles */
-
-#wrapper {
-   padding-left: 0;
+@media (max-width: 710px) {
+  .searchBar {
+    display: none;
+  }
 }
-
-#sidebar-wrapper {
-   z-index: 1000;
-   position: fixed;
-   left: 250px;
-   width: 0;
-   height: 100%;
-   margin-left: -250px;
-   overflow-y: auto;
-   background: #000;
-}
-
-#wrapper.toggled #sidebar-wrapper {
-   width: 250px;
-}
-
-#wrapper.toggled #page-content-wrapper {
-   position: absolute;
-   margin-right: -250px;
-}
-/* Sidebar Styles */
-
-.sidebar-nav {
-   position: absolute;
-   top: 0;
-   width: 250px;
-   margin: 0;
-   padding: 0;
-   list-style: none;
-}
-
-.sidebar-nav li {
-   text-indent: 20px;
-   line-height: 40px;
-}
-
-.sidebar-nav li a {
-   display: block;
-   text-decoration: none;
-   color: #999999;
-}
-
-.sidebar-nav li a:hover {
-   text-decoration: none;
-   color: #fff;
-   background: rgba(255,255,255,0.2);
-}
-
-.sidebar-nav li a:active,
-.sidebar-nav li a:focus {
-   text-decoration: none;
-}
-
-.sidebar-nav > .sidebar-brand {
-   height: 65px;
-   font-size: 18px;
-   line-height: 60px;
-}
-
-.sidebar-nav > .sidebar-brand a {
-   color: #999999;
-}
-
-.sidebar-nav > .sidebar-brand a:hover {
-   color: #fff;
-   background: none;
-}
-
-@media(min-width:993px) {
-   #wrapper {
-      padding-left: 250px;
-   }
-   #wrapper.toggled {
-      padding-left: 0;
-   }
-   #sidebar-wrapper {
-      width: 250px;
-   }
-   #wrapper.toggled #sidebar-wrapper {
-      width: 0;
-   }
-   #wrapper.toggled {
-      position: relative;
-      margin-right: 0;
-   }
-}
-
 </style>

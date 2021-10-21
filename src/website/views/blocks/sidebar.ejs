@@ -11,7 +11,7 @@
     <li <% if (active == 'recent') { %> class="active" <% }%>>
       <a href="/recent"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Recents</span></a>
     </li>
-    <li>
+    <li <% if (active == 'favourites') { %> class="active" <% }%>>
       <span class="smallFav">
         <a type="button" href="/favourites">
           <i class="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>

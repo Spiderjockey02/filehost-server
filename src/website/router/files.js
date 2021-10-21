@@ -128,9 +128,15 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 
 // upload files to user's account
 router.post('/upload', ensureAuthenticated, async (req, res) => {
-	const form = new IncomingForm({ multiples: true, allowEmptyFiles: false, maxFieldsSize: require('../../config').uploadLimit, uploadDir: location });
+	const form = new IncomingForm({
+		multiples: true,
+		allowEmptyFiles: false,
+		maxFileSize: require('../../config').uploadLimit,
+		maxFieldsSize: require('../../config').uploadLimit,
+		uploadDir: location });
+
 	// File has been uploaded (create folders if neccessary)
-	form.on('file', function(field, file) {
+	form.on('file', async function(field, file) {
 		if (!file.name) return;
 		const name = file.name.split('/');
 		name.pop();
@@ -147,8 +153,8 @@ router.post('/upload', ensureAuthenticated, async (req, res) => {
 			}
 		}
 
-
 		// Move item to new area
+		await UserSchema.findOneAndUpdate({ _id: req.user._id }, { size: (Number(req.user.size) + file.size).toString() });
 		fs.rename(file.path, `${location + req.user._id}/${file.name}`, function(err) {
 			if (err) throw err;
 		});
