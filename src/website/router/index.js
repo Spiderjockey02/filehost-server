@@ -109,10 +109,10 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 	}
 });
 
-router.get('/thumbnail/:userID', ensureAuthenticated, (req, res) => {
+router.get('/thumbnail/:userID/*', ensureAuthenticated, (req, res) => {
 	// Make sure no one else accessing their data
 	if (req.user._id == req.params.userID) {
-		const path = decodeURI(process.cwd() + '/src/website/files/thumbnails/' + req.user._id);
+		const path = decodeURI(process.cwd() + '/src/website/files/thumbnails/' + req._parsedOriginalUrl.pathname.slice(11));
 		if (fs.existsSync(path)) {
 			res.sendFile(path, (err) => {
 				if (err) console.log(err);
