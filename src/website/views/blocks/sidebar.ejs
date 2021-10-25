@@ -24,7 +24,7 @@
       <div class="collapse" id="collapseExample">
         <% for (file of user.recent.slice(0,9)) { %>
           <div style="padding-left:35px;">
-            <a class="card-text text-truncate" style="color:black;font-size:15px" href="/<%= file.name%>" data-toggle="tooltip" data-placement="right" title="<%= file.name%>">
+            <a class="card-text text-truncate" style="color:black;font-size:15px" href="/files/<%= file.name%>" data-toggle="tooltip" data-placement="right" title="<%= file.name%>">
               <i class="far fa-file"></i>
               <b><%= file.name%></b>
             </a>
