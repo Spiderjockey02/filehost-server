@@ -1,6 +1,13 @@
 <% if (typeof error != 'undefined') { %>
   <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <strong>An error has occured!</strong> <%= error %>
+    <%if (error == 'Please verify your email') { %>
+      <form action="/api/account/email" method="post">
+        <input type="hidden" class="custId" name="custId" value="<%= userID%>">
+        <strong>An error has occured!</strong> <%= error %>, or click here to resend <button type="submit" class="btn btn-link" style="padding:2px 0px">verification email</button>.
+      </form>
+    <% } else { %>
+      <strong>An error has occured!</strong> <%= error %>
+    <% } %>
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
       <span aria-hidden="true">&times;</span>
     </button>

@@ -16,7 +16,7 @@ const express = require('express'),
 router.post('/login', (req, res, next) => {
 	passport.authenticate('local', function(err, user, info) {
 		// an error occured / unsuccessful log in
-		if (!user) return res.redirect(`/login?error=${info.message}`);
+		if (!user) return res.redirect(`/login?error=${info.message}&ID=${info.ID}`);
 
 		// User logged in
 		req.logIn(user, function(err) {
@@ -62,8 +62,7 @@ router.post('/register', require('../config/RateLimit').createAccountLimiter, as
 
 	// Check if email needs verifing
 	if (require('../../config').mailService.enable) {
-		const t = await require('axios').get(`${require('../../config').mailService.domain}/verify?email=${email}&ID=${newUser._id}`);
-		console.log(t);
+		await require('axios').get(`${require('../../config').mailService.domain}/verify?email=${email}&ID=${newUser._id}`);
 	} else {
 		newUser.verified = true;
 	}
@@ -77,7 +76,7 @@ router.post('/register', require('../config/RateLimit').createAccountLimiter, as
 		return console.log(err);
 	}
 
-	// Save the new user to database + make sure folder
+	// Save the new user to database + make sure to create folder
 	try {
 		await newUser.save();
 		fs.mkdirSync(location + newUser._id);

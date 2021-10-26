@@ -31,7 +31,7 @@ router.post('/feedback', apiLimiter, async (req, res) => {
 	res.redirect('/contact-us');
 });
 
-// Delete an account
+// Edit account (delete, reset password, change tier)
 router.post('/account/:endpoint', apiLimiter, async (req, res) => {
 	const endpoint = req.params.endpoint;
 	const userID = req.body.custId;
@@ -67,6 +67,11 @@ router.post('/account/:endpoint', apiLimiter, async (req, res) => {
 			res.redirect(`/admin/users?error=${err.message}`);
 		}
 		break;
+	case 'email': {
+		const user = await UserSchema.findOne({ _id: userID });
+		await require('axios').get(`${require('../../config').mailService.domain}/verify?email=${user.email}&ID=${userID}`);
+		break;
+	}
 	default:
 		res.redirect('/admin/users?error=An error occured');
 	}

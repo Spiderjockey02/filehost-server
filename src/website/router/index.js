@@ -70,6 +70,7 @@ router.get('/login', (req, res) => {
 	res.render('navbar/login', {
 		user: req.isAuthenticated() ? req.user : null,
 		error: req.query.error,
+		userID: req.query.ID,
 	});
 });
 
