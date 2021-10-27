@@ -39,12 +39,23 @@ tr:hover > th > .hide {
 
 #ctxmenu {
 	position: fixed;
-	background: ghostwhite;
+	background: white;
 	color: black;
 	cursor: pointer;
+	border-radius: 5px;
+	border: 1px solid #e0e3e7;
 	box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
+	padding: 4px;
+	width: 197px;
 }
-
+.btn-ctx-menu {
+	width: 100%;
+	text-align: left;
+	background: white;
+}
+.btn-ctx-menu:hover {
+	background: #e0e3e7;
+}
 #ctxmenu > p {
 	padding: 0 1rem;
 	margin: 0

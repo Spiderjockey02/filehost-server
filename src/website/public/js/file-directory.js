@@ -66,8 +66,39 @@ function updateValue(id, ignore) {
 	document.getElementById(id).checked = !document.getElementById(id).checked;
 }
 
+// Copy the URL
 function copyURL(str) {
 	navigator.clipboard.writeText(str);
+	window.location = '/files?success=URL has been copied.';
+}
+
+// Allow the file to be shared with other people
+function shareFile(file) {
+	$.ajax({
+		url: '/files/share',
+		type: 'POST',
+		data: JSON.stringify({ 'path': file }),
+		dataType: 'json',
+		contentType: 'application/json',
+		complete: function(data) {
+			const resp = JSON.parse(data.responseText);
+			window.location = `/share/${document.getElementById('user_id').innerHTML}/${resp.success.id}`;
+		},
+	});
+}
+
+// download folder (turns folders to .zip)
+function downloadFolder(folder) {
+	$.ajax({
+		url: '/files/download',
+		type: 'POST',
+		data: JSON.stringify({ 'path': folder }),
+		dataType: 'json',
+		contentType: 'application/json',
+		success: function(data) {
+			console.log(data);
+		},
+	});
 }
 
 function getPosition(e) {
@@ -75,7 +106,6 @@ function getPosition(e) {
 	let posy = 0;
 
 	if (!e) e = window.event;
-
 	if (e.pageX || e.pageY) {
 		posx = e.pageX;
 		posy = e.pageY;
@@ -168,21 +198,26 @@ $(document).ready(function($) {
 				<p><a href="/">Copy to</a></p>`;
 			} else {
 				const file = e.target.parentElement.childNodes[5].outerText;
-				menu.innerHTML = `<form action="/files/share" method="post" ref='uploadForm' id='uploadForm'>
-					<input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
-					<p><button type="submit" id="imagefile" href="#">Share</button></p>
-				</form>
-				<p><a onClick="copyURL(\`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}\`)">Copy link</a></p>
+				menu.innerHTML = `
+				<button class="btn btn-ctx-menu" onClick="shareFile(\`/${window.location.pathname.slice(7)}/${file.toString()}\`)" id="imagefile"><i class="fas fa-share-alt"></i> Share</button>
+				<button class="btn btn-ctx-menu" onClick="copyURL(\`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}\`)"><i class="fas fa-copy"></i> Copy link</button>
 				<hr class="mt-2 mb-3"/>
-				<p><a href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download>Download</a></p>
+				${file.toString().includes('.') ?
+		`<a class="btn btn-ctx-menu" href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download><i class="fas fa-download"></i> Download</a>`
+		: '<button class="btn btn-ctx-menu" onClick="downloadFolder()"><i class="fas fa-download"></i> Download</button>'}
 				<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
 					<input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
-					<p><button type="submit" id="imagefile" href="#">Delete</button></p>
+					<button class="btn btn-ctx-menu" type="submit" id="imagefile"><i class="fas fa-trash"></i> Delete</button>
 				</form>
-				<p><a href="/">Move to</a></p>
-				<p><a href="/">Copy to</a></p>
-				<p><a href="/">Rename</a></p>
-				<p><a href="/">Details</a></p>`;
+				<button class="btn btn-ctx-menu"><i class="fas fa-arrows-alt"></i> Move to</button>
+				<button class="btn btn-ctx-menu"><i class="fas fa-clone"></i> Copy to</button>
+				<button class="btn btn-ctx-menu" type="button" data-toggle="modal" data-target="#exampleModalCenter"><i class="fas fa-file-signature"></i> Rename</button>
+				<button class="btn btn-ctx-menu"><i class="fas fa-ellipsis-v"></i> Details</button>`;
+				// Update delete account modal based on user ID
+				$('#exampleModalCenter').on('show.bs.modal', function() {
+					$(this).find('.modal-title').html(`Rename: ${file.toString()}`);
+					$(this).find('#renameInput').attr('value', file.toString());
+				});
 			}
 			document.body.appendChild(menu);
 			// Calculate where it will show on the screen

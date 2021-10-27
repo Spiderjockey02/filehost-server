@@ -59,6 +59,7 @@ app
 	}))
 	.use(compression())
 	.use(bodyParser.urlencoded({ extended: true }))
+	.use(bodyParser.json())
 	.use(session({
 		store:  new mStore({ checkPeriod: 86400000 }),
 		secret: 'secret',

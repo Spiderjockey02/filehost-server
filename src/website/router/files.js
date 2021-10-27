@@ -7,6 +7,8 @@ const express = require('express'),
 	fresh = require('fresh'),
 	{ IncomingForm } = require('formidable'),
 	stringSimilarity = require('string-similarity'),
+	archiver = require('archiver'),
+	p = require('path'),
 	location = process.cwd() + '/src/website/files/userContent/';
 
 // search for item
@@ -116,6 +118,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				files: files,
 				path: (URLpath == '/files' ? '/' : URLpath),
 				error: req.query.error,
+				success: req.query.success,
 				formatBytes: require('../../utils').formatBytes,
 				getFileIcon: require('../../utils').getFileIcon,
 			});
@@ -193,11 +196,10 @@ router.post('/share', ensureAuthenticated, async (req, res) => {
 	try {
 		const user = await UserSchema.findOne({ _id: req.user._id });
 		let link = randomStr(20, '12345abcde');
-
+		console.log(req);
+		console.log(req.body);
 		// Make sure item isn't already being shared
-		if (user.shared.find(item => item.path == req.body.path)) {
-			return res.redirect('/files?error=Item is already being shared');
-		}
+		if (user.shared.find(item => item.path == req.body.path)) return res.redirect('/files?error=Item is already being shared');
 
 		// Make sure no duplicate share links
 		while (user.shared.find(item => item.id == link)) {
@@ -206,10 +208,63 @@ router.post('/share', ensureAuthenticated, async (req, res) => {
 
 		user.shared.push({ id: link, path: req.body.path });
 		await user.save();
+		res.json({ success: { id: link, path: req.body.path } });
 	} catch (err) {
 		console.log(err);
+		res.json({ error: err.message });
 	}
 });
+
+// Convert folders to ZIP and send to user
+router.post('/download', ensureAuthenticated, async (req, res) => {
+	const archive = archiver('zip');
+
+	archive.on('error', function(err) {
+		res.status(500).send({ error: err.message });
+	});
+
+	// on stream closed we can end the request
+	archive.on('end', function() {
+		console.log('Archive wrote %d bytes', archive.pointer());
+	});
+
+	// set the archive name
+	res.attachment('archive-name.zip');
+
+	// this is the streaming magic
+	archive.pipe(res);
+	/*
+	addFilesFromDirectoryToZip(`${location}6155a24800a44848c9daef32`, []);
+	function addFilesFromDirectoryToZip(directoryPath, zip) {
+		console.log(directoryPath);
+		const directoryContents = fs.readdirSync(directoryPath, {
+			withFileTypes: true,
+		});
+
+		directoryContents.forEach(({ name }) => {
+			const path = `${directoryPath}/${name}`;
+			// Move file to ZIP
+			if (fs.statSync(path).isFile()) archive.file(files[i], { name: p.basename(files[i]) });
+			// Re-go through new folder
+			if (fs.statSync(path).isDirectory()) archive.directory(directories[i], directories[i].replace(__dirname + '/fixtures', ''));
+		});
+	}
+	*/
+
+	const files = [`${location}/${req.user._id}/PC.ovpn`];
+
+	for(const i in files) {
+		archive.file(files[i], { name: p.basename(files[i]) });
+	}
+	const directories = [`${location}/${req.user._id}`];
+
+	for(const i in directories) {
+		archive.directory(directories[i], directories[i].replace(`${location}/${req.user._id}`, ''));
+	}
+
+	archive.finalize();
+});
+
 
 router.post('/search', ensureAuthenticated, (req, res) => {
 	console.log(req.body);
@@ -224,6 +279,7 @@ function isFresh(req, res) {
 		'last-modified': res.getHeader('Last-Modified'),
 	});
 }
+
 
 // Create random alphanumerical string
 function randomStr(len, arr) {

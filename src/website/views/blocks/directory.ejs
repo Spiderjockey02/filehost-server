@@ -104,9 +104,28 @@
       <h4>You should upload some files here!</h4>
     </div>
   <% } %>
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Rename {{FILENAME}}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input id="renameInput" type="text" class="form-control" placeholder="{{FILENAME}}" aria-label="{{FILENAME}}">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <p id="user_id" style="display:none;"><%= user._id %></p>
-
 <style>
   .breadcrumb-item + .breadcrumb-item::before {
     content: ">";
