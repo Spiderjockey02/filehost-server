@@ -146,15 +146,16 @@ $(document).ready(function($) {
 	// Custom context menu
 	oncontextmenu = (e) => {
 		if (e.target.parentElement != null && e.target.parentElement.childNodes[5]?.className == 'text-truncate') {
+			document.getElementById('ctxmenu')?.remove();
 			// Check to see if any checkboxes were selected
 			const table = $('table tr');
 			const checkedItems = table.filter(th => table[th].childNodes[1].childNodes[1].childNodes[1].checked);
 			// Create context menu
 			const menu = document.createElement('div');
 			const user = document.getElementById('user_id').innerHTML;
-			console.log(window.location.pathname.slice(7));
+			// console.log(window.location.pathname.slice(7));
 			menu.id = 'ctxmenu';
-			menu.onmouseleave = () => ctxmenu.outerHTML = '';
+			menu.onmouseleave = () => menu.outerHTML = '';
 			e.preventDefault();
 			if (checkedItems.length >= 1) {
 				menu.innerHTML = `
