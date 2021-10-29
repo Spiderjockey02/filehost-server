@@ -88,15 +88,23 @@ function shareFile(file) {
 }
 
 // download folder (turns folders to .zip)
-function downloadFolder(folder) {
+function downloadFolder(folder, name) {
+	console.log(`name: ${name}`);
 	$.ajax({
 		url: '/files/download',
 		type: 'POST',
 		data: JSON.stringify({ 'path': folder }),
 		dataType: 'json',
 		contentType: 'application/json',
-		success: function(data) {
+		complete: function(data) {
 			console.log(data);
+			console.log(data.responseJSON.data);
+			const link = document.createElement('a');
+			link.href = `data:application/zip;base64,${data.responseJSON.data}`;
+			link.download = `${name}.zip`;
+			console.log(link);
+			document.body.appendChild(link);
+			link.click();
 		},
 	});
 }
@@ -197,26 +205,28 @@ $(document).ready(function($) {
 				<p><a href="/">Move to</a></p>
 				<p><a href="/">Copy to</a></p>`;
 			} else {
+				console.log(e.target.parentElement.childNodes[7].outerText.includes('files'));
 				const file = e.target.parentElement.childNodes[5].outerText;
 				menu.innerHTML = `
 				<button class="btn btn-ctx-menu" onClick="shareFile(\`/${window.location.pathname.slice(7)}/${file.toString()}\`)" id="imagefile"><i class="fas fa-share-alt"></i> Share</button>
 				<button class="btn btn-ctx-menu" onClick="copyURL(\`${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}\`)"><i class="fas fa-copy"></i> Copy link</button>
-				<hr class="mt-2 mb-3"/>
-				${file.toString().includes('.') ?
+				${!e.target.parentElement.childNodes[7].outerText.includes('files') ?
 		`<a class="btn btn-ctx-menu" href="${window.origin}/user-content/${user}/${window.location.pathname.slice(7)}/${file.toString()}" download><i class="fas fa-download"></i> Download</a>`
-		: '<button class="btn btn-ctx-menu" onClick="downloadFolder()"><i class="fas fa-download"></i> Download</button>'}
+		: `<button class="btn btn-ctx-menu" onClick="downloadFolder(\`${window.location.pathname.slice(7)}/${file.toString()}\`, \`${file.toString()}\`)"><i class="fas fa-download"></i> Download</button>`}
 				<form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
 					<input type="hidden" value="/${window.location.pathname.slice(7)}/${file.toString()}" name="path">
 					<button class="btn btn-ctx-menu" type="submit" id="imagefile"><i class="fas fa-trash"></i> Delete</button>
 				</form>
 				<button class="btn btn-ctx-menu"><i class="fas fa-arrows-alt"></i> Move to</button>
 				<button class="btn btn-ctx-menu"><i class="fas fa-clone"></i> Copy to</button>
-				<button class="btn btn-ctx-menu" type="button" data-toggle="modal" data-target="#exampleModalCenter"><i class="fas fa-file-signature"></i> Rename</button>
+				<button class="btn btn-ctx-menu" type="button" data-toggle="modal" data-target="#renameModel"><i class="fas fa-file-signature"></i> Rename</button>
 				<button class="btn btn-ctx-menu"><i class="fas fa-ellipsis-v"></i> Details</button>`;
 				// Update delete account modal based on user ID
-				$('#exampleModalCenter').on('show.bs.modal', function() {
+				$('#renameModel').on('show.bs.modal', function() {
 					$(this).find('.modal-title').html(`Rename: ${file.toString()}`);
 					$(this).find('#renameInput').attr('value', file.toString());
+					$(this).find('#oldName').attr('value', file.toString());
+					$(this).find('#folder').attr('value', `${window.location.pathname.slice(7) ?? '/'}`);
 				});
 			}
 			document.body.appendChild(menu);

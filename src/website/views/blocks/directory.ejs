@@ -105,7 +105,7 @@
     </div>
   <% } %>
   <!-- Modal -->
-  <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal fade" id="renameModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -114,13 +114,17 @@
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div class="modal-body">
-          <input id="renameInput" type="text" class="form-control" placeholder="{{FILENAME}}" aria-label="{{FILENAME}}">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
-        </div>
+        <form action="/files/rename" method="post">
+          <div class="modal-body">
+            <input type="hidden" id="oldName" name="oldName" value="{{FILENAME}}">
+            <input type="hidden" id="folder" name="folder" value="{{FOLDER}}">
+            <input id="renameInput" type="text" name="newName" class="form-control" placeholder="{{FILENAME}}">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

@@ -217,59 +217,84 @@ router.post('/share', ensureAuthenticated, async (req, res) => {
 
 // Convert folders to ZIP and send to user
 router.post('/download', ensureAuthenticated, async (req, res) => {
-	const archive = archiver('zip');
+	const JSZip = require('jszip');
+	const zip = new JSZip();
 
-	archive.on('error', function(err) {
-		res.status(500).send({ error: err.message });
+	zip.file(
+		'standalone.txt',
+		'I will exist inside of the zip archive, but I\'m not a real file here on the server.',
+	);
+
+	const files = dirstuff(`${location}${req.user._id}/${req.body.path}`, [], '');
+	files.forEach((file) => {
+		// console.log(`file: ${file}`);
+		// console.log(`${location}${req.user._id}/${req.body.path}${file}`);
+		zip.file(file, fs.readFileSync(`${location}${req.user._id}/${req.body.path}${file}`, 'utf-8'));
 	});
 
-	// on stream closed we can end the request
-	archive.on('end', function() {
-		console.log('Archive wrote %d bytes', archive.pointer());
-	});
+	// addFilesFromDirectoryToZip(`${location}${req.user._id}/${req.body.path}`, req.user._id, zip);
 
-	// set the archive name
-	res.attachment('archive-name.zip');
-
-	// this is the streaming magic
-	archive.pipe(res);
-	/*
-	addFilesFromDirectoryToZip(`${location}6155a24800a44848c9daef32`, []);
-	function addFilesFromDirectoryToZip(directoryPath, zip) {
-		console.log(directoryPath);
-		const directoryContents = fs.readdirSync(directoryPath, {
-			withFileTypes: true,
-		});
-
-		directoryContents.forEach(({ name }) => {
-			const path = `${directoryPath}/${name}`;
-			// Move file to ZIP
-			if (fs.statSync(path).isFile()) archive.file(files[i], { name: p.basename(files[i]) });
-			// Re-go through new folder
-			if (fs.statSync(path).isDirectory()) archive.directory(directories[i], directories[i].replace(__dirname + '/fixtures', ''));
-		});
-	}
-	*/
-
-	const files = [`${location}/${req.user._id}/PC.ovpn`];
-
-	for(const i in files) {
-		archive.file(files[i], { name: p.basename(files[i]) });
-	}
-	const directories = [`${location}/${req.user._id}`];
-
-	for(const i in directories) {
-		archive.directory(directories[i], directories[i].replace(`${location}/${req.user._id}`, ''));
-	}
-
-	archive.finalize();
+	const zipAsBase64 = await zip.generateAsync({ type: 'base64' });
+	res.json({ data: zipAsBase64 });
 });
 
+function dirstuff(directoryPath, items, parent) {
+	const directoryContents = fs.readdirSync(directoryPath, {
+		withFileTypes: true,
+	});
+	directoryContents.forEach(({ name }) => {
+		const path = `${directoryPath}/${name}`;
+		if (fs.statSync(path).isFile()) items.push(`${parent}/${name}`);
+		if (fs.statSync(path).isDirectory()) items.push(...dirstuff(path, items, `${parent}/${name}`));
+	});
+	return items;
+}
 
+
+function addFilesFromDirectoryToZip(directoryPath, userID, zip) {
+	const directoryContents = fs.readdirSync(directoryPath, {
+		withFileTypes: true,
+	});
+	console.log(directoryPath);
+	directoryContents.forEach(({ name }) => {
+		const path = `${directoryPath}/${name}`;
+		if (fs.statSync(path).isFile()) zip.file(name, fs.readFileSync(path, 'utf-8'));
+		if (fs.statSync(path).isDirectory()) addFilesFromDirectoryToZip(path, userID, zip);
+	});
+}
+
+// create search query
 router.post('/search', ensureAuthenticated, (req, res) => {
-	console.log(req.body);
 	res.redirect(`/files?search=${req.body.search}&fileType=${req.body.fileType}&dateUpdated=${req.body.dateUpdated}`);
 });
+
+// Rename file/folder
+router.post('/rename', ensureAuthenticated, (req, res) => {
+	const { folder, oldName, newName } = req.body;
+	fs.rename(`${location}${req.user._id}${folder}/${oldName}`, `${location}${req.user._id}${folder}/${newName}`, function(err) {
+		if (err) return res.json({ error: err.message });
+		res.redirect('/files?success=File successfully renamed');
+	});
+});
+
+// Move a file/folder somewhere else
+router.post('/move-to', ensureAuthenticated, (req, res) => {
+	const { oldPath, newPath } = req.body;
+	fs.rename(oldPath, newPath, function(err) {
+		if (err) return res.json({ error: err.message });
+		res.json({ success: 'File successfully moved' });
+	});
+});
+
+// copy a file/folder somewhere else
+router.post('/copy-to', ensureAuthenticated, (req, res) => {
+	const { oldPath, newPath } = req.body;
+	fs.rename(oldPath, newPath, function(err) {
+		if (err) return res.json({ error: err.message });
+		res.json({ success: 'File successfully moved' });
+	});
+});
+
 module.exports = router;
 
 // Caching
