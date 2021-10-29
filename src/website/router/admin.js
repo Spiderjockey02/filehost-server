@@ -1,5 +1,5 @@
 const express = require('express'),
-	{ UserSchema, StatSchema } = require('../../models'),
+	{ UserSchema, StatSchema, FeedbackSchema } = require('../../models'),
 	{ checkDev } = require('../config/auth'),
 	{ readdirSync } = require('fs'),
 	location = process.cwd() + '/src/website/files/userContent/',
@@ -64,6 +64,14 @@ router.get('/users', checkDev, async (req, res) => {
 	});
 });
 
+// Show all feedback from /contact-us
+router.get('/feedback', checkDev, async (req, res) => {
+	const feedback = await FeedbackSchema.find();
+	res.render('admin/feedback', {
+		user: req.isAuthenticated() ? req.user : null,
+		feedback,
+	});
+});
 module.exports = router;
 
 function getTotalSize(n, num) {
