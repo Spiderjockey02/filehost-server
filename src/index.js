@@ -85,6 +85,10 @@ app
 	.use('/social', require('./website/router/social'))
 	.use('/api', require('./website/router/api'))
 	.use('/admin', require('./website/router/admin'))
+	.use(function(error, req, res, next) {
+		res.status(500);
+		res.render('500-page', { title:'500: Internal Server Error', error: error });
+	})
 	.get('*', function(req, res) {
 		res
 			.status(404)
