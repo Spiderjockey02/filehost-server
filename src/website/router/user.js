@@ -16,7 +16,10 @@ const express = require('express'),
 router.post('/login', (req, res, next) => {
 	passport.authenticate('local', function(err, user, info) {
 		// an error occured / unsuccessful log in
-		if (!user) return res.redirect(`/login?error=${info.message}&ID=${info.ID}`);
+		if (!user) {
+			req.flash('error', info.message);
+			return res.redirect('/login');
+		}
 
 		// User logged in
 		req.logIn(user, function(err) {
@@ -42,16 +45,29 @@ router.post('/register', require('../config/RateLimit').createAccountLimiter, as
 	// check if password is more than 6 characters
 	if (password.length < 6) error = 'Password must be atleast 6 characters long!';
 
+	// save name and email in session in case of error
+	req.flash('name', name);
+	req.flash('email', email);
+
 	// If an error was found notify user
-	if (error) return res.redirect(`/signup?error=${error}&name=${name}&email=${email}`);
+	if (error) {
+		req.flash('error', error);
+		return res.redirect('/signup');
+	}
 
 	// Check if user already exists
 	const user = await UserSchema.findOne({ email: email });
-	if (user) return res.redirect(`/signup?error=Email is already registered!&name=${name}&email=${email}`);
+	if (user) {
+		req.flash('error', 'Email is already registered!');
+		return res.redirect('/signup');
+	}
 
 	// Check if email is valid
 	const resp = await validate({ email: email, validateSMTP: false });
-	if (!resp.valid) return res.redirect(`/signup?error=${resp.validators[resp.reason].reason}&name=${name}&email=${email}`);
+	if (!resp.valid) {
+		req.flash('error', resp.validators[resp.reason].reason);
+		res.redirect('/signup');
+	}
 
 	// Create new user model
 	const newUser = new UserSchema({
@@ -72,7 +88,8 @@ router.post('/register', require('../config/RateLimit').createAccountLimiter, as
 		const salt = await bcrypt.genSalt(10);
 		newUser.password = await bcrypt.hash(newUser.password, salt);
 	} catch (err) {
-		res.redirect(`/signup?error=Failed to encrypt password&name=${name}&=email=${email}`);
+		req.flash('error', 'Failed to encrypt password');
+		res.redirect('/signup');
 		return console.log(err);
 	}
 
@@ -82,13 +99,15 @@ router.post('/register', require('../config/RateLimit').createAccountLimiter, as
 		fs.mkdirSync(location + newUser._id);
 		logger.log(`New user: ${newUser.email}`);
 		if (require('../../config').mailService.enable) {
-			res.redirect('/login?error=Please check your email to verify your email');
+			req.flash('error', 'Please check your email to verify your email');
+			res.redirect('/login');
 		} else {
 			res.redirect('/files');
 		}
 	} catch (err) {
 		console.log(err);
-		res.redirect('/login?error=An error has occured');
+		req.flash('error', 'An error has occured');
+		res.redirect('/login');
 	}
 });
 
@@ -135,19 +154,17 @@ router.post('/avatar/delete', (req, res) => {
 // Show user's favourites
 router.get('/trash', ensureAuthenticated, (req, res) => {
 	res.render('user/trash', {
-		user: req.isAuthenticated() ? req.user : null,
-		formatBytes: require('../../utils').formatBytes,
+		user: req.user,
+		...require('../../utils'),
 	});
 });
 
 router.get('/dashboard', ensureAuthenticated, (req, res) => {
-	const path = location + req.user._id + '/avatar.png';
 	res.render('navbar/dashboard', {
-		user: req.isAuthenticated() ? req.user : null,
+		user: req.user,
 		option: req.query.option,
-		error: req.query.error,
-		success: req.query.success,
-		avatar: fs.existsSync(path) ? fs.readFileSync(decodeURI(path)) : undefined,
+		error: req.flash('error'),
+		success: req.flash('success'),
 		company,
 	});
 });

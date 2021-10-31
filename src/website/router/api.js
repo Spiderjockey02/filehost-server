@@ -12,11 +12,23 @@ const express = require('express'),
 router.post('/feedback', apiLimiter, async (req, res) => {
 	// Make sure email is valid
 	const { valid } = await validate({ email: req.body.email, validateSMTP: false });
-	if (!valid) return res.redirect(`/contact-us?error=Invalid email&name=${req.body.name}&email=${req.body.email}`);
+	if (!valid) {
+		req.flash('name', req.body.name);
+		req.flash('email', req.body.email);
+		req.flash('error', 'Invalid email');
+		return res.redirect('/contact-us');
+	}
 
 	// Check if they have already send a feedback within the last week
-	const feedback = await FeedbackSchema.findOne({ email: req.body.email });
-	if (feedback && Date.now() - feedback.creationDate <= 604800000) return res.redirect('/contact-us?error=You have already sent us feedback in the last week.');
+	const feedback = await FeedbackSchema.find({ email: req.body.email });
+	if (feedback[0]) {
+		// As people can send multipy feedback, find the latest feedback and check if that was over a week ago
+		const latestFeedback = feedback.reduce((prev, current) => (prev.creationDate > current.creationDate) ? prev : current);
+		if (Date.now() - latestFeedback.creationDate <= 604800000) {
+			req.flash('error', 'You have already sent us feedback in the last week.');
+			return res.redirect('/contact-us');
+		}
+	}
 
 	// Send data to mail service so person can be emailed
 	try {
@@ -25,9 +37,11 @@ router.post('/feedback', apiLimiter, async (req, res) => {
 		});
 		if (resp.error) console.log(resp.error);
 	} catch (err) {
-		res.redirect('/contact-us?error=Unable to save feedback, please try again later.');
-		logger.log(err.message, 'error');
+		req.flash('error', 'Unable to save feedback, please try again later.');
+		res.redirect('/contact-us');
+		return logger.log(err.message, 'error');
 	}
+	req.flash('success', 'Feedback successfully sent');
 	res.redirect('/contact-us');
 });
 
@@ -35,45 +49,41 @@ router.post('/feedback', apiLimiter, async (req, res) => {
 router.post('/account/:endpoint', apiLimiter, async (req, res) => {
 	const endpoint = req.params.endpoint;
 	const userID = req.body.custId;
-	switch (endpoint) {
-	case 'delete':
-		try {
+	try {
+		switch (endpoint) {
+		case 'delete':
 			// delete user from database and all their files
 			await UserSchema.findOneAndDelete({ _id: userID });
 			await fs.rmdirSync(location + userID, { recursive: true });
-			res.redirect(`/admin/users?success=Deleted ${userID}'s account`);
-		} catch (err) {
-			logger.log(err.message, 'error');
-			res.redirect(`/admin/users?error=${err.message}`);
-		}
-		break;
-	case 'reset':
-		try {
+			req.flash('success', `Deleted ${userID}'s account`);
+			res.redirect('/admin/users');
+			break;
+		case 'reset':
 			// set password to empty & email user to update password
 			await UserSchema.findOneAndUpdate({ _id: userID }, { password: '' });
-			res.redirect(`/admin/users?success=Resetted ${userID}'s account`);
-		} catch (err) {
-			logger.log(err.message, 'error');
-			res.redirect(`/admin/users?error=${err.message}`);
-		}
-		break;
-	case 'tier':
-		try {
+			req.flash('success', `${userID}'s password has been reset.`);
+			res.redirect('/admin/users');
+			break;
+		case 'tier':
 			// set password to empty & email user to update password
 			await UserSchema.findOneAndUpdate({ _id: userID }, { group: req.body.tier });
-			res.redirect(`/admin/users?success=Changed ${userID}'s tier to ${req.body.tier}.`);
-		} catch (err) {
-			logger.log(err.message, 'error');
-			res.redirect(`/admin/users?error=${err.message}`);
+			req.flash('success', `Changed ${userID}'s tier to ${req.body.tier}.`);
+			res.redirect('/admin/users');
+			break;
+		case 'email': {
+			// Send verify email to user again
+			const user = await UserSchema.findOne({ _id: userID });
+			await require('axios').get(`${require('../../config').mailService.domain}/verify?email=${user.email}&ID=${userID}`);
+			break;
 		}
-		break;
-	case 'email': {
-		const user = await UserSchema.findOne({ _id: userID });
-		await require('axios').get(`${require('../../config').mailService.domain}/verify?email=${user.email}&ID=${userID}`);
-		break;
-	}
-	default:
-		res.redirect('/admin/users?error=An error occured');
+		default:
+			req.flash('error', 'An unexpected error occured');
+			res.redirect('/admin/users');
+		}
+	} catch (err) {
+		logger.log(err.message, 'error');
+		req.flash('error', err.message);
+		res.redirect('/admin/users');
 	}
 });
 

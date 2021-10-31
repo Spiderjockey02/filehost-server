@@ -8,8 +8,12 @@ router.get('/facebook', passport.authenticate('facebook', { scope : ['public_pro
 
 // handle the callback after facebook has authenticated the user
 router.get('/facebook/callback', (req, res, next) => passport.authenticate('facebook', function(err, user) {
-	if (!user) return res.redirect(`/login?error=${err.message}`);
+	if (!user) {
+		req.flash('error', err.message);
+		res.redirect('/login');
+	}
 
+	// User successfully logged in
 	req.logIn(user, function(err) {
 		if (err) return next(err);
 		logger.log(`User logged in: ${user.name} via facebook`);
@@ -22,8 +26,12 @@ router.get('/twitter', passport.authenticate('twitter', { scope : 'email' }));
 
 // handle the callback after twitter has authenticated the user
 router.get('/twitter/callback', (req, res, next) => passport.authenticate('twitter', function(err, user) {
-	if (!user) return res.redirect(`/login?error=${err.message}`);
+	if (!user) {
+		req.flash('error', err.message);
+		res.redirect('/login');
+	}
 
+	// User successfully logged in
 	req.logIn(user, function(err) {
 		if (err) return next(err);
 		logger.log(`User logged in: ${user.name} via twitter`);
@@ -36,8 +44,12 @@ router.get('/google', passport.authenticate('google', { scope : ['profile', 'ema
 
 // the callback after google has authenticated the user
 router.get('/google/callback', (req, res, next) => passport.authenticate('google', function(err, user) {
-	if (!user) return res.redirect(`/login?error=${err.message}`);
+	if (!user) {
+		req.flash('error', err.message);
+		res.redirect('/login');
+	}
 
+	// User successfully logged in
 	req.logIn(user, function(err) {
 		if (err) return next(err);
 		logger.log(`User logged in: ${user.name} via google`);

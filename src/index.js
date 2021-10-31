@@ -15,6 +15,7 @@ const express = require('express'),
 	fs = require('fs'),
 	https = require('https'),
 	http = require('http'),
+	flash = require('connect-flash'),
 	compression = require('compression');
 require('./website/config/passport')(passport);
 
@@ -72,6 +73,7 @@ app
 		if (req.originalUrl !== '/favicon.ico') logger.connection(req, res);
 		next();
 	})
+	.use(flash())
 	.engine('html', require('ejs').renderFile)
 	.set('view engine', 'ejs')
 	.set('views', './src/website/views')
@@ -85,7 +87,7 @@ app
 	.use('/social', require('./website/router/social'))
 	.use('/api', require('./website/router/api'))
 	.use('/admin', require('./website/router/admin'))
-	.use(function(error, req, res, next) {
+	.use(function(error, req, res) {
 		res.status(500);
 		res.render('500-page', { title:'500: Internal Server Error', error: error });
 	})

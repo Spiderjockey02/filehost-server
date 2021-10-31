@@ -7,8 +7,6 @@ const express = require('express'),
 	fresh = require('fresh'),
 	{ IncomingForm } = require('formidable'),
 	stringSimilarity = require('string-similarity'),
-	archiver = require('archiver'),
-	p = require('path'),
 	location = process.cwd() + '/src/website/files/userContent/';
 
 // search for item
@@ -72,10 +70,10 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 			});
 		}
 		return res.render('user/search', {
-			user: req.isAuthenticated() ? req.user : null,
+			user: req.user,
 			query: req.query.search,
-			formatBytes: require('../../utils').formatBytes,
 			files: files.map(file => Object.assign(dirTree(decodeURI(location + file)), { url: file })),
+			...require('../../utils'),
 		});
 	}
 
@@ -107,20 +105,18 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 			}
 			// new file
 			res.render('user/file-preview', {
-				user: req.isAuthenticated() ? req.user : null,
+				user: req.user,
 				fileInfo: Object.assign(files, { mimeType: require('mime-types').lookup(files.extension) }),
 				file: req.user._id + URLpath.substring(6, URLpath.length),
 				domain: require('../../config').domain,
 			});
 		} else {
 			res.render('user/files', {
-				user: req.isAuthenticated() ? req.user : null,
-				files: files,
+				user: req.user,
 				path: (URLpath == '/files' ? '/' : URLpath),
-				error: req.query.error,
-				success: req.query.success,
-				formatBytes: require('../../utils').formatBytes,
-				getFileIcon: require('../../utils').getFileIcon,
+				error: req.flash('error'),
+				success: req.flash('success'),
+				...require('../../utils'), files,
 			});
 		}
 	} else {
@@ -165,7 +161,8 @@ router.post('/upload', ensureAuthenticated, async (req, res) => {
 
 	// log any errors that occur
 	form.on('error', function(err) {
-		res.redirect(`/files?error=${err}`);
+		req.flash('error', err);
+		res.redirect('/files');
 	});
 
 	// parse the incoming request containing the form data
@@ -179,7 +176,7 @@ router.post('/delete', ensureAuthenticated, async (req, res) => {
 	try {
 		// update user's total size
 		await UserSchema.findOneAndUpdate({ _id: req.user._id }, { size: Number(req.user.size ?? 0) - p.size });
-		// delete file
+		// delete file / folder
 		if (p.isFile()) {
 			await fs.unlinkSync(location + req.user._id + req.body.path);
 		} else {
@@ -188,27 +185,32 @@ router.post('/delete', ensureAuthenticated, async (req, res) => {
 		res.redirect('/files');
 	} catch (err) {
 		console.log(err);
-		res.redirect(`/files?error=${err.message}`);
+		req.flash('error', err.message);
+		res.redirect('/files');
 	}
 });
 
 router.post('/share', ensureAuthenticated, async (req, res) => {
 	try {
 		const user = await UserSchema.findOne({ _id: req.user._id });
-		let link = randomStr(20, '12345abcde');
-		console.log(req);
-		console.log(req.body);
-		// Make sure item isn't already being shared
-		if (user.shared.find(item => item.path == req.body.path)) return res.redirect('/files?error=Item is already being shared');
+		let link = randomStr(20, '12345abcde'),
+			path = req.body.path;
 
-		// Make sure no duplicate share links
-		while (user.shared.find(item => item.id == link)) {
-			link = randomStr(20, '12345abcde');
+		// Make sure item isn't already being shared
+		if (user.shared.find(item => item.path == req.body.path)) {
+			link = user.shared.find(item => item.path == req.body.path).id;
+			path = user.shared.find(item => item.path == req.body.path).path;
+		} else {
+			// Make sure no duplicate share links
+			while (user.shared.find(item => item.id == link)) {
+				link = randomStr(20, '12345abcde');
+			}
+			user.shared.push({ id: link, path: req.body.path });
+			await user.save();
 		}
 
-		user.shared.push({ id: link, path: req.body.path });
-		await user.save();
-		res.json({ success: { id: link, path: req.body.path } });
+		// send data back to front-end
+		res.json({ success: { id: link, path: path } });
 	} catch (err) {
 		console.log(err);
 		res.json({ error: err.message });
@@ -273,7 +275,8 @@ router.post('/rename', ensureAuthenticated, (req, res) => {
 	const { folder, oldName, newName } = req.body;
 	fs.rename(`${location}${req.user._id}${folder}/${oldName}`, `${location}${req.user._id}${folder}/${newName}`, function(err) {
 		if (err) return res.json({ error: err.message });
-		res.redirect('/files?success=File successfully renamed');
+		req.flash('success', 'File successfully renamed');
+		res.redirect('/files');
 	});
 });
 

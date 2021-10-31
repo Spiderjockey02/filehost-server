@@ -58,7 +58,8 @@ router.get('/FAQ', (req, res) => res.send('FAQ page coming soon'));
 router.get('/contact-us', (req, res) => {
 	res.render('navbar/contact-us', {
 		user: req.isAuthenticated() ? req.user : null,
-		error: req.query.error,
+		error: req.flash('error'),
+		success: req.flash('success'),
 		company,
 	});
 });
@@ -67,9 +68,10 @@ router.get('/contact-us', (req, res) => {
 router.get('/login', (req, res) => {
 	// Only access page if user isn't signed in
 	if (req.isAuthenticated()) return res.redirect('/files');
+
 	res.render('navbar/login', {
-		user: req.isAuthenticated() ? req.user : null,
-		error: req.query.error,
+		user: null,
+		error: req.flash('error'),
 		userID: req.query.ID,
 	});
 });
@@ -79,10 +81,10 @@ router.get('/signup', (req, res) => {
 	// Only access page if user isn't signed in
 	if (req.isAuthenticated()) return res.redirect('/files');
 	res.render('navbar/signup', {
-		user: req.isAuthenticated() ? req.user : null,
-		error: req.query.error,
-		name: req.query.name,
-		email: req.query.email,
+		user: null,
+		error: 	req.flash('error'),
+		name:	req.flash('name'),
+		email:	req.flash('email'),
 	});
 });
 
@@ -172,7 +174,7 @@ router.get('/share/:ID/:path*', async (req, res) => {
 router.get('/recent', ensureAuthenticated, async (req, res) => {
 	const files = await UserSchema.findOne({ email: req.user.email });
 	res.render('user/recent', {
-		user: req.isAuthenticated() ? req.user : null,
+		user: req.user,
 		files: files.recent,
 		formatBytes: require('../../utils').formatBytes,
 	});
@@ -181,7 +183,7 @@ router.get('/recent', ensureAuthenticated, async (req, res) => {
 // Show user's favourites
 router.get('/favourites', ensureAuthenticated, (req, res) => {
 	res.render('user/favourites', {
-		user: req.isAuthenticated() ? req.user : null,
+		user: req.user,
 		formatBytes: require('../../utils').formatBytes,
 	});
 });
