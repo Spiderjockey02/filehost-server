@@ -88,8 +88,12 @@ app
 	.use('/api', require('./website/router/api'))
 	.use('/admin', require('./website/router/admin'))
 	.use(function(error, req, res, next) {
+		logger.log(error.message, 'error');
 		res.status(500);
-		res.render('500-page', { title:'500: Internal Server Error', error: error });
+		res.render('500-page', {
+			user: req.isAuthenticated() ? req.user : null,
+			company: config.company,
+			title:'500: Internal Server Error', error: error });
 	})
 	.get('*', function(req, res) {
 		res
