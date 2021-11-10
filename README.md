@@ -11,7 +11,7 @@
   
 [![Discord](https://img.shields.io/discord/658113349384667198.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/8g6zUQu)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Spiderjockey02_CDN-server&metric=ncloc)](https://sonarcloud.io/dashboard?id=Spiderjockey02_CDN-server)
-[![CodeFactor](https://www.codefactor.io/repository/github/spiderjockey02/cdn-server/badge)](https://www.codefactor.io/repository/github/spiderjockey02/cdn-server)
+[![CodeFactor](https://www.codefactor.io/repository/github/spiderjockey02/filehost-server/badge)](https://www.codefactor.io/repository/github/spiderjockey02/filehost-server)
 ![Website](https://img.shields.io/website?down_color=red&down_message=offline&up_color=green&up_message=online&url=https%3A%2F%2Ffilesharer.tech%2F)
   
 </div>
