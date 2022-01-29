@@ -31,9 +31,9 @@
 ## ❓ About
 
 <div align="center"> 
-  <img src="https://github.com/Spiderjockey02/CDN-server/blob/master/docs/images/signup.png" height="250">
-  <img src="https://github.com/Spiderjockey02/CDN-server/blob/master/docs/images/file-directory.png" height="250">
-  <img src="https://github.com/Spiderjockey02/CDN-server/blob/master/docs/images/custom%20video-player.png" height="250">
+  <img src="https://github.com/Spiderjockey02/filehost-server/blob/master/docs/images/signup.png?raw=true" style="max-width:100px;">
+  <img src="https://github.com/Spiderjockey02/filehost-server/blob/master/docs/images/file-directory.png?raw=true" style="max-width:100px;">
+  <img src="https://github.com/Spiderjockey02/filehost-server/blob/master/docs/images/custom%20video-player.png?raw=true" style="max-width:100px;">
 </div>
 
 If you liked this repository, feel free to leave a star ⭐ to help promote this new web server!
