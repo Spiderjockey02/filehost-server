@@ -53,9 +53,13 @@ If you liked this repository, feel free to leave a star ⭐ to help promote this
 
 This file sharing service is in a continuous state of development. New features/updates may come at any time. Some pending ideas are:
   
-  * Add proper text based file formatting.
-  * show file icons + ability to select multiple files.
-  * Add a context menu (custom right-click menu) for interaction with files.
+  * Make sure all context menu features work (including multi-select).
+  * Create download feature allowing people to download folders + multiply item.
+  * Functional drop down search filters.
+  * Proper terms of service/privacy policy.
+  * Files are encypted on the backend, to make sure everything is secure.
+  * When a file is deleted, it's moved to trash for 7 days before actually deleted from system. (delete should probs be renamed to "move to trash")
+  * Show proper upload progress bar.
 
 ## 🖥️ My other projects
  * [Egglord](https://github.com/Spiderjockey02/Discord-Bot) - An advanced multi-purpose discord bot.
