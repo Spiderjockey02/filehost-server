@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="manifest" href="/js/pwa.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <link rel="apple-touch-icon" href="/img/apple-touch.png">
+    <meta name="theme-color" content="#106eea"/>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="File Sharer">
+    <meta property="og:description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <meta property="og:image" content="/favicon.ico">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
+    <script async src="https://arc.io/widget.min.js#Wa9QgvFs"></script>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
+    <link rel="stylesheet" href="/css/file-directory.css" type="text/css">
+    <title>File Sharer</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <%- include('./sidebar.ejs', {active: 'analytics'}) %>
+      <!-- Page Content  -->
+      <div class="container-fluid" id="content">
+        <%- include('../blocks/file-navbar.ejs', {user}) %>
+        &nbsp;
+        <h3>Analytics</h3>
+        &nbsp;
+        <div class="row">
+          <div class="col-xl-6 col-md-6 col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Data usage</h6>
+              </div>
+              <div class="card-body">
+                <div class="chart-area">
+                  <canvas id="userConnections"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-6 col-md-6 col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Data usage</h6>
+              </div>
+              <div class="card-body">
+                <div class="chart-area">
+                  <canvas id="referralLinks"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script type="text/javascript">
+    function formatBytes(bytes) {
+    	if (bytes == 0) return '0 Bytes';
+    	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+    		i = Math.floor(Math.log(bytes) / Math.log(1024));
+
+    	return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+    new Chart(document.getElementById("referralLinks"), {
+      type: 'bar',
+      data: <%- JSON.stringify(ReferLinks)%>,
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("userConnections"), {
+      type: 'line',
+      data: <%- JSON.stringify(cachedData)%>,
+      options: {
+        responsive: true,
+        scales: {
+          yAxes: {
+            ticks: {
+              callback: function(value, index, values) {
+                return formatBytes(value)
+              }
+            },
+          },
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Cloudflare caching'
+          }
+        },
+      },
+    });
+  </script>
+  <style>
+    /* ---------------------------------------------------
+    SIDEBAR STYLE
+    ----------------------------------------------------- */
+    .wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    }
+    #sidebar {
+    width: 250px;
+    background: #1992d4;
+    transition: all 0.3s;
+    }
+    #sidebar .sidebar-header {
+    color: black;
+    padding: 20px;
+    }
+    #sidebar ul.components {
+    padding: 20px 0;
+    border-bottom: 1px solid #47748b;
+    }
+    #sidebar ul p {
+    color: #fff;
+    padding: 10px;
+    }
+    #sidebar ul li a {
+    padding: 10px;
+    font-size: 1.1em;
+    display: block;
+    color: black;
+    }
+    #sidebar ul li a:not(.active):hover {
+    color: black;
+    background: #53A5D2;
+    border-radius: 8px;
+    }
+    .active {
+    background: #157cb4;
+    border-radius: 8px;
+    }
+    /* ---------------------------------------------------
+    CONTENT STYLE
+    ----------------------------------------------------- */
+    #content {
+    width: 100%;
+    min-height: 100vh;
+    transition: all 0.3s;
+    }
+  </style>

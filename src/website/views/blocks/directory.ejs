@@ -1,0 +1,273 @@
+<script src="/js/file-directory.js" charset="utf-8"></script>
+<link rel="stylesheet" href="/css/file-directory.css">
+<div class="container-fluid">
+  <%- include('../partials/message', { error })%>
+  <!--New add on-->
+  <div class="row">
+    <div class="col-md-10">
+      <nav style="--breadcrumb-divider: quote('>');font-size:18.72px;" aria-label="breadcrumb">
+        <ol class="breadcrumb" style="background-color:white;">
+          <li class="breadcrumb-item">
+            <% if (path == '/') { %>
+              <b style="color:black">Home</b>
+            <% } else { %>
+              <b><a class="directoyLink" href="/files" style="color:grey">Home</a></b>
+            <% } %>
+          </li>
+          <% for (var name of path.split('/').slice(2, path.length)) { %>
+            <li class="breadcrumb-item">
+              <% if (name !== path.split('/').slice(2, path.length).pop())  { %>
+                <b><a class="directoyLink" href=<%= `/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}` %> style="color:grey"><%= name%></a></b>
+              <% } else { %>
+                <b style="color:black"><%= name%></b>
+              <% } %>
+            </li>
+          <% } %>
+        </ol>
+      </nav>
+    </div>
+    <div class="col-md-2">
+      <div class="btn-group" style="float:right">
+        <button type="button" id="fileUpload" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">New <i class="fas fa-plus"></i></button>
+        <div class="dropdown-menu dropdown-menu-right">
+          <form action="/files/upload" method="post" encType="multipart/form-data" ref='uploadForm' id='uploadForm' >
+            <label class="dropdown-item" type="button" id="fileHover">
+              File upload<input type="file" hidden name="sampleFile" class="upload-input">
+            </label>
+            <input type="hidden" value="<%= path%>" name="path">
+            <label class="dropdown-item" type="button" id="fileHover">
+              Folder upload<input type="file" hidden name="sampleFile" webkitdirectory mozdirectory class="upload-input">
+            </label>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="#">Create folder</a>
+            <button type="submit" style="display:none;" id="imagefile"></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%- include('./recent-preview')%>
+  <table class="table" id="myTable">
+    <thead>
+      <tr>
+        <th scope="col" style="width:5%;text-align:center" class="dot">
+          <div class="form-check form-check-inline hide">
+            <input onClick="updateAll();" class="form-check-input" type="checkbox" name="exampleRadios" id="All" data-option="0">
+          </div>
+        </th>
+        <th id="Type" scope="col" style="width:5%;text-align:center">
+          <i class="far fa-file"></i>
+        </th>
+        <th id="Name" scope="col">Name <i class="bi bi-arrow-down-up"></i></th>
+        <th id="Size" scope="col">Size <i class="bi bi-arrow-down-up"></i></th>
+        <th id="Date modified" scope="col">Date modified <i class="bi bi-arrow-down-up"></i></th>
+      </tr>
+    </thead>
+    <tbody>
+      <!--Show folders first-->
+      <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
+        <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
+          <th class="dot" style="text-align:center">
+            <div class="form-check form-check-inline hide">
+              <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
+            </div>
+          </th>
+          <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
+          <th scope="row" class="text-truncate" style="min-width: 150px;">
+            <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
+            <!-- Default dropright button -->
+          </th>
+          <td data-trueValue="0"><%= file.children?.length ?? 0 %> files</td>
+          <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
+        </tr>
+      <% } %>
+      <% for (const file of files.children.filter(file => file.type == 'file')) { %>
+        <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
+          <th class="dot" style="text-align:center">
+            <div class="form-check form-check-inline hide">
+              <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
+            </div>
+          </th>
+          <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
+          <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
+          <td data-trueValue="<%= file.size%>"><%= formatBytes(file.size) %></td>
+          <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <div class="progress">
+    <div class="progress-bar upload" role="progressbar"></div>
+  </div>
+  <%if (!files.children[0]) { %>
+    <div >
+      <h4>You should upload some files here!</h4>
+    </div>
+  <% } %>
+
+  <!-- move/Copy Modal -->
+  <div class="modal fade" id="changeModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Move or Copy "{{FILENAME}}"</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form class="" action="/files/change" method="post">
+          <div class="modal-body w-100">
+            <p>Select a destination folder.</p>
+            <input class="form-input" type="text" placeholder="Search folders">
+            <div id="folderList"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Move</button>
+            <button type="submit" class="btn btn-primary">Copy</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!--Rename modal-->
+  <div class="modal fade" id="renameModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Rename {{FILENAME}}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form action="/files/rename" method="post">
+          <div class="modal-body">
+            <input type="hidden" id="oldName" name="oldName" value="{{FILENAME}}">
+            <input type="hidden" id="folder" name="folder" value="{{FOLDER}}">
+            <div class="input-group mb-3">
+              <input class="form-control" id="renameInput" type="text" name="newName" placeholder="{{FILENAME}}">
+              <div class="input-group-append">
+                <span class="input-group-text" id="renameSuffix">{{FILETYPE}}</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<!-- Delete message -->
+<div class="modal fade" id="deleteModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="DeleteTitle">Delete</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to send this item to the recycle bin?
+      </div>
+      <div class="modal-footer">
+        <form action="/files/delete" method="post" ref='uploadForm' id='uploadForm'>
+          <input type="hidden" id="deleteInput" name="path">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button class="btn btn-primary" type="submit" id="imagefile">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Copy URL message -->
+<div class="modal fade" id="copyURLModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="DeleteTitle">Link copied</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group mb-3">
+          <input type="text" id="copyURLInput" class="text-truncate" onClick="this.select();" readonly style="width:85%">
+          <div class="input-group-append">
+            <button id="copyURLBTN" class="input-group-text btn btn-primary" type="button" name="button">Copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <p>some text</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share URL message -->
+<div class="modal fade" id="shareModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="DeleteTitle">Link copied</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group mb-3">
+          <input type="text" id="shareURLInput" class="text-truncate" onClick="this.select();" readonly style="width:85%">
+          <div class="input-group-append">
+            <button id="shareURLBTN" class="input-group-text btn btn-primary" type="button" name="button">Copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <p>some text</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<p id="user_id" style="display:none;"><%= user._id %></p>
+<style>
+  .breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+  }
+  #fileUpload::after {
+    content: none;
+  }
+  .directoyLink {
+    position: relative;
+    text-decoration: none;
+  }
+  .directoyLink:hover {
+    color: #606060;
+  }
+  .directoyLink::before {
+    content: "";
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #606060;
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+  .directoyLink:hover::before {
+    transform: scaleX(1);
+  }
+  @media (max-width: 710px) {
+    th:last-child, td:last-child {
+      display:none
+    }
+  }
+</style>

@@ -1,0 +1,54 @@
+<%- include('../blocks/header', { user }) %>
+<div class="container-fluid">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
+  &nbsp;
+  <h4 style="text-align:center"><%= fileInfo.name.replace(fileInfo.extension, ' ')%></h4>
+  <% if (['.mp4', '.mov'].includes(fileInfo.extension)) { %>
+    <%- include('../partials/video-player', { video: file, domain })%>
+  <% } else if (['.png', '.gif', '.jpg'].includes(fileInfo.extension)) { %>
+    <img class="lozad center" data-src="<%= domain%>/user-content/<%=  file%>" style="max-height:65vh;max-width:95vw" />
+  <% } else if (['.html', '.js', '.css', '.jar', '.log'].includes(fileInfo.extension)) { %>
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+    <!--script src="https://unpkg.com/prettier@2.4.0/standalone.js"></script>
+    <script src="https://unpkg.com/prettier@2.4.0/parser-graphql.js"></script-->
+    <pre class="prettyprint linenums" style="max-height:400px">
+    d
+    </pre>
+  <% } else if (fileInfo.extension == '.url') { %>
+    <p><%= fileInfo.url %></p>
+    <iframe id="inlineFrameExample" src="" title="Inline Frame Example"width="300" height="200">
+    </iframe>
+  <% } %>
+  &nbsp;
+  <a class="btn btn-secondary center" href="<%= domain%>/user-content/<%=  file%>" download>Download</a>
+</div>
+&nbsp;
+<script>
+  $(document).ready(function($) {
+    const observer = lozad(); // lazy loads elements with default selector as '.lozad'
+    observer.observe();
+    // if (fileInfo.extension !== '.url') return
+    // document.querySelector("iframe").src = `https://www.youtube.com/embed/${youtube_parser("<%= fileInfo.url %>")}?`
+  })
+  function youtube_parser(url){
+    var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    var match = url.match(regExp);
+    return (match && match[7].length == 11) ? match[7] : false;
+  }
+</script>
+<style>
+  .center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+  }
+  img {
+    border: 5px solid #555;
+  }
+li.L0, li.L1, li.L2, li.L3,
+li.L5, li.L6, li.L7, li.L8 {
+  list-style-type: decimal !important;
+}
+
+</style>

@@ -1,0 +1,79 @@
+<%- include('../blocks/header', { user }) %>
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<link rel='stylesheet' href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css'>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+<link href="/css/style.css" rel="stylesheet">
+<div class="container">
+  &nbsp;
+  <%- include('../partials/message', { error })%>
+  <div class="row">
+    <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+      <div class="card border-0 rounded-3 my-5" style="box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75)" data-aos="zoom-out" data-aos-delay="100">
+        <div class="card-body p-4 p-sm-5">
+          <h5 class="card-title text-center mb-5 fw-light fs-5">Sign In</h5>
+          <form action="/user/login" method="POST">
+            <div class="form-floating mb-3">
+              <label for="floatingInput">Email address</label>
+              <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+            </div>
+            <div class="form-floating mb-3">
+              <label for="floatingPassword">Password</label>
+              <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password">
+            </div>
+              <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox"" id="rememberPasswordCheck">
+              <label class="form-check-label" name="remember_me" for="rememberPasswordCheck">Remember Me</label>
+            </div>
+            <div class="d-grid" style="padding-left:78%">
+              <button class="btn btn-primary text-uppercase fw-bold" type="submit">Login</button>
+            </div>
+            <h5 style="text-align: center">or sign in via</h5>
+            <div class="d-flex justify-content-center">
+              <a class="btn btn-google btn-login text-uppercase fw-bold" href="/auth/google">
+                <i class="fab fa-google me-2"></i>
+              </a>
+              &nbsp;
+              <a class="btn btn-facebook btn-login text-uppercase fw-bold" href="/auth/facebook">
+                <i class="fab fa-facebook-f me-2"></i>
+              </a>
+              &nbsp;
+              <a class="btn btn-twitter btn-login text-uppercase fw-bold" href="/auth/twitter">
+                <i class="fab fa-twitter"></i>
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
+<script src="https://unpkg.com/swiper@7/swiper-bundle.min.js"></script>
+<script src="/js/main.js"></script>
+<style>
+  body {
+    background: linear-gradient(to right, #30ADFD, #66C1FC);
+  }
+  .btn-login {
+    font-size: 0.9rem;
+    letter-spacing: 0.05rem;
+    padding: 0.75rem 1rem;
+  }
+  .btn-google {
+    color: white !important;
+    background-color: #ea4335;
+  }
+  .btn-facebook {
+    font-size: 1rem;
+    color: white !important;
+    background-color: #3b5998;
+    padding: 0.75rem 1.1rem;
+  }
+  .btn-twitter {
+    font-size: 1rem;
+    color: white !important;
+    background-color: #1da1f2;
+  }
+</style>

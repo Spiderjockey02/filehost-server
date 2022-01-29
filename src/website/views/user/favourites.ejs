@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="manifest" href="/js/pwa.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <link rel="apple-touch-icon" href="/img/apple-touch.png">
+    <meta name="theme-color" content="#106eea"/>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="File Sharer">
+    <meta property="og:description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <meta property="og:image" content="/favicon.ico">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
+    <script async src="https://arc.io/widget.min.js#Wa9QgvFs"></script>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <title>File Sharer</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <%- include('../blocks/sidebar.ejs', {size: user.size, formatBytes, active: 'favourites'}) %>
+      <!-- Page Content  -->
+      <div class="container-fluid" id="content">
+        <%- include('../blocks/file-navbar.ejs', {user}) %>
+        &nbsp;
+        <div class="row">
+          <div class="col-sm-10">
+            <h4><a href="/favourites">Favourites</a></h4>
+          </div>
+        </div>
+        &nbsp
+      </div>
+    </div>
+  </body>
+<style>
+/* ---------------------------------------------------
+    SIDEBAR STYLE
+----------------------------------------------------- */
+.wrapper {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+#sidebar {
+  width: 250px;
+  background: #1992d4;
+  transition: all 0.3s;
+}
+
+#sidebar .sidebar-header {
+  color: black;
+  padding: 20px;
+}
+
+#sidebar ul.components {
+  padding: 20px 0;
+  border-bottom: 1px solid #47748b;
+}
+
+#sidebar ul p {
+  color: #fff;
+  padding: 10px;
+}
+
+#sidebar ul li a {
+  padding: 10px;
+  font-size: 1.1em;
+  display: block;
+  color: black;
+}
+#sidebar ul li a:not(.active):hover {
+  color: black;
+  background: #53A5D2;
+  border-radius: 8px;
+}
+.active {
+  background: #157cb4;
+  border-radius: 8px;
+}
+/* ---------------------------------------------------
+    CONTENT STYLE
+----------------------------------------------------- */
+#content {
+  width: 100%;
+  min-height: 100vh;
+  transition: all 0.3s;
+}
+
+/* ---------------------------------------------------
+    MEDIAQUERIES
+----------------------------------------------------- */
+@media (max-width: 1260px) {
+  #sidebar {
+    width: 70px;
+  }
+  .side-text {
+    display: none
+  }
+  .fas {
+    padding-left: 15px;
+  }
+  #sidebar.active {
+    margin-left: 0;
+  }
+  #sidebarCollapse span {
+    display: none;
+  }
+}
+@media (max-width: 710px) {
+  .searchBar {
+    display: none;
+  }
+}
+</style>

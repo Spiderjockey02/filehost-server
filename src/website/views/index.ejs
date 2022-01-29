@@ -1,0 +1,252 @@
+<%- include('blocks/header', { user }) %>
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+<link href="/css/style.css" rel="stylesheet">
+
+<!-- ======= Hero Section ======= -->
+<section id="hero" class="d-flex align-items-center">
+  <div class="container" data-aos="zoom-out" data-aos-delay="100">
+    <h1>Welcome to <span><%= company.name%></span></h1>
+    <h2><%= company.slogan%></h2>
+    <div class="d-flex">
+      <a href="/signup" class="btn-get-started">Get Started</a>
+      &nbsp
+      <a href="#pricing" class="btn-get-started">Pricing</a>
+    </div>
+  </div>
+</section>
+<main id="main">
+  <!-- ======= Featured Services Section ======= -->
+  <section id="featured-services" class="featured-services">
+    <div class="container" data-aos="fade-up">
+      <div class="row">
+        <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="100">
+            <div class="icon"><i class="bi bi-chat-left-dots"></i></div>
+            <h4 class="title">Collaborate</h4>
+            <p class="description">Manage tasks, track file updates, and stay in sync with your teams and clients.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="200">
+            <div class="icon"><i class="bx bx-file"></i></div>
+            <h4 class="title">Back up and protect</h4>
+            <p class="description">If you lose your device, you won’t lose your files and photos when they’re saved in <%= company.name%>.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="300">
+            <div class="icon"><i class="bx bx-tachometer"></i></div>
+            <h4 class="title">Superior loading speeds</h4>
+            <p class="description">Access, send and recieve important files with speed.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="400">
+            <div class="icon"><i class="bx bx-world"></i></div>
+            <h4 class="title">Anywhere access</h4>
+            <p class="description">Enjoy the freedom to access, edit, and share your files on all your devices, wherever you are.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ======= Counts Section ======= -->
+  <section id="counts" class="counts">
+    <div class="container" data-aos="fade-up">
+      <div class="row">
+        <div class="col-lg-3 col-md-6">
+          <div class="count-box">
+            <i class="bi bi-emoji-smile"></i>
+            <span data-purecounter-start="0" data-purecounter-end="<%= userCount%>" data-purecounter-duration="1" class="purecounter">0</span>
+            <p>Happy users</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mt-5 mt-md-0">
+          <div class="count-box">
+            <i class="bi bi-file-earmark-text"></i>
+            <span data-purecounter-start="0" data-purecounter-end="<%= NumFiles%>" data-purecounter-duration="1" class="purecounter">0</span>
+            <p>Total files</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mt-5 mt-lg-0">
+          <div class="count-box">
+            <i class="bi bi-hdd"></i>
+            <span data-purecounter-start="0" data-purecounter-end="<%= size%>" data-purecounter-duration="1" data-purecounter-currency="true" class="purecounter-file">0</span>
+            <p>Total storage used</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mt-5 mt-lg-0">
+          <div class="count-box">
+            <i class="bi bi-people"></i>
+            <span data-purecounter-start="0" data-purecounter-end="15" data-purecounter-duration="1" class="purecounter">0</span>
+            <p>Hard Workers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ======= Pricing Section ======= -->
+  <section id="pricing" class="pricing">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h3>Check our <span>Pricing</span></h3>
+        <p>Compare <%= company.name%> cloud storage pricing and plans</p>
+      </div>
+      <div class="row">
+        <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+          <div class="box">
+            <h3>Free</h3>
+            <h4><sup>$</sup>0<span> / month</span></h4>
+            <ul>
+              <li><b>Storage only</b></li>
+              <li>5 GB</li>
+              <li></li>
+              <li><b>Services included</b></li>
+              <li>Photo album viewer</li>
+              <li class="na">Text editor</li>
+            </ul>
+            <div class="btn-wrap">
+              <a href="/signup" class="btn-buy">Sign up</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mt-4 mt-lg-0" data-aos="fade-up" data-aos-delay="200">
+          <div class="box">
+            <h3>Developer</h3>
+            <h4><sup>$</sup>5<span> / month</span></h4>
+            <ul>
+              <li><b>Storage size</b></li>
+              <li>15 GB</li>
+              <li><b>Services included</b></li>
+              <li>File editor</li>
+              <li></li>
+              <li></li>
+              <li></li>
+            </ul>
+            <div class="btn-wrap">
+              <a href="/signup" class="btn-buy">Buy Now</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mt-4 mt-md-0" data-aos="fade-up" data-aos-delay="300">
+          <div class="box featured">
+            <h3>Business</h3>
+            <h4><sup>$</sup>10<span> / month</span></h4>
+            <ul>
+              <li><b>Storage size</b></li>
+              <li>1 TB</li>
+              <li>Nulla at volutpat dola</li>
+              <li>Pharetra massa</li>
+              <li class="na">Massa ultricies mi</li>
+              <li></li>
+            </ul>
+            <div class="btn-wrap">
+              <a href="#" class="btn-buy">Buy Now</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mt-4 mt-lg-0" data-aos="fade-up" data-aos-delay="400">
+          <div class="box">
+            <span class="advanced">Advanced</span>
+            <h3>Ultimate</h3>
+            <h4><sup>$</sup>20<span> / month</span></h4>
+            <ul>
+              <li>Aida dere</li>
+              <li>Nec feugiat nisl</li>
+              <li>Nulla at volutpat dola</li>
+              <li>Pharetra massa</li>
+              <li>Massa ultricies mi</li>
+              <li></li>
+            </ul>
+            <div class="btn-wrap">
+              <a href="#" class="btn-buy">Buy Now</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ======= Frequently Asked Questions Section ======= -->
+  <section id="faq" class="faq section-bg">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h3>Frequently Asked <span>Questions</span></h3>
+        <p>Get quick and simple help on any of <%= company.name%>'s services, either use the following options or click <a href="/FAQ">here.</a></p>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-xl-10">
+          <ul class="faq-list">
+            <li>
+              <div data-toggle="collapse" class="collapsed question" href="#faq1">Can I stop my subscription anytime? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
+              <div id="faq1" class="collapse" data-parent=".faq-list">
+                <p>
+                Yes, but you will not be able to upload anymore files until you are in your limit of your new tier.
+                </p>
+              </div>
+            </li>
+            <li>
+              <div data-toggle="collapse" href="#faq2" class="collapsed question">What payment methods are supported? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
+              <div id="faq2" class="collapse" data-parent=".faq-list">
+                <p>
+                  We accept debit/credit cards and even <a href="https://www.paypal.com/">paypal</a>.
+                </p>
+              </div>
+            </li>
+            <li>
+              <div data-toggle="collapse" href="#faq3" class="collapsed question">Where can I find billing information? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
+              <div id="faq3" class="collapse" data-parent=".faq-list">
+                <p>
+                  Just simply login and go to your dashboard > Billing information and there you will see your payment history for your account.
+                </p>
+              </div>
+            </li>
+            <li>
+              <div data-toggle="collapse" href="#faq4" class="collapsed question">Does <%= company.name%> offer a Service Level Agreement (SLA)? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
+              <div id="faq4" class="collapse" data-parent=".faq-list">
+                <p>
+                  Yes, have a look <a href="/SLA">here</a>.
+                </p>
+              </div>
+            </li>
+            <li>
+              <div data-toggle="collapse" href="#faq5" class="collapsed question">How secure is my data? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
+              <div id="faq5" class="collapse" data-parent=".faq-list">
+                <p>
+                  Only you and the people you share the file to has access. All data is encrypted on our servers and we operate using HTTPS only!
+                </p>
+              </div>
+            </li>
+            <li>
+              <div data-toggle="collapse" href="#faq6" class="collapsed question">How much does <%= company.name %> Storage cost? <i class="bi bi-chevron-down icon-show"></i><i class="bi bi-chevron-up icon-close"></i></div>
+              <div id="faq6" class="collapse" data-parent=".faq-list">
+                <p>
+                  Have a look at our available plans <a href="#pricing">here</a>.
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="preloader"></div>
+<a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+<%- include('blocks/footer') %>
+
+<script src="/js/purecounter_vanilla.js"></script>
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
+<script>
+    new PureCounter({
+      selector: '.purecounter-file',
+      filesizing: true
+    });
+    new PureCounter({
+      selector: '.purecounter',
+    });
+</script>
+<script src="https://unpkg.com/swiper@7/swiper-bundle.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/pwa.js"></script>

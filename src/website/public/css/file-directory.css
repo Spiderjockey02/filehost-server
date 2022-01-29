@@ -1,0 +1,108 @@
+a {
+	color: #717171
+}
+
+input[type="checkbox"]:hover {
+	background-color: blue;
+}
+
+a:hover {
+	color: #3B3B3B
+}
+
+#load-now {
+	border: 5px solid black;
+}
+
+#fileHover:hover {
+	cursor: pointer
+}
+
+.container-fluid {
+	overflow-y: visible !important;
+}
+
+.hide {
+	display: none;
+}
+
+tr:hover > th > .hide {
+	display: block;
+	color: red;
+}
+
+
+/* Toggle Styles */
+#wrapper {
+	padding-left: 0;
+}
+
+#ctxmenu {
+	position: fixed;
+	background: white;
+	color: black;
+	cursor: pointer;
+	border-radius: 5px;
+	border: 1px solid #e0e3e7;
+	box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
+	padding: 4px;
+	width: 197px;
+}
+.btn-ctx-menu {
+	width: 100%;
+	text-align: left;
+	background: white;
+}
+.btn-ctx-menu:hover {
+	background: #e0e3e7;
+}
+#ctxmenu > p {
+	padding: 0 1rem;
+	margin: 0
+}
+
+#ctxmenu > p:hover {
+	background: black;
+	color: ghostwhite
+}
+
+#sidebar-wrapper {
+	z-index: 1000;
+	position: fixed;
+	left: 250px;
+	width: 0;
+	height: 100%;
+	margin-left: -250px;
+	overflow-y: auto;
+	background: #000;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+	width: 250px;
+}
+
+#wrapper.toggled #page-content-wrapper {
+	position: absolute;
+	margin-right: -250px;
+}
+
+@media(min-width:993px) {
+	#wrapper {
+		padding-left: 250px;
+	}
+	#wrapper.toggled {
+		padding-left: 0;
+	}
+	#sidebar-wrapper {
+		width: 250px;
+	}
+}
+
+@media(max-width:993px) {
+	.dropright {
+		display: none;
+	}
+	.dot {
+		display: none;
+	}
+}

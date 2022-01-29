@@ -1,0 +1,53 @@
+<nav id="sidebar">
+  <a href="/">
+    <div class="sidebar-header">
+      <h3><span class="side-text">File sharer</span></h3>
+    </div>
+  </a>
+  <ul class="list-unstyled components" style="align:center">
+    <li <% if (active == 'index') { %> class="active" <% }%>>
+      <a href="/admin"><i class="fas fa-folder" data-toggle="tooltip" data-placement="right" title="All files"></i><span class="side-text"> Admin</span></a>
+    </li>
+    <li <% if (active == 'users') { %> class="active" <% }%>>
+      <a href="/admin/users"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Users</span></a>
+    </li>
+    <li <% if (active == 'analytics') { %> class="active" <% }%>>
+      <a href="/admin/analytics"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Analytics</span></a>
+    </li>
+    <li <% if (active == 'feedback') { %> class="active" <% }%>>
+      <a href="/admin/feedback"><i class="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span class="side-text"> Feedback</span></a>
+    </li>
+  </ul>
+</nav>
+<style>
+  a:hover {
+  text-decoration: none;
+  }
+  .card-text:hover {
+  background-color: none;
+  }
+  .smallFav {
+  display: none;
+  }
+  @media (max-width: 1260px) {
+  .smallFav {
+  display: block
+  }
+  }
+</style>
+<script type="text/javascript">
+  //icon update
+  $('[data-toggle="collapse"]').on('click', function(){
+    console.log('boo')
+    if ($(this).attr('aria-expanded') == 'true') {
+      $(new Array($(this).find('i'))[0][1]).addClass('fa-sort-up').removeClass('fa-sort-down');
+    } else {
+      $(new Array($(this).find('i'))[0][1]).removeClass('fa-sort-up').addClass('fa-sort-down');
+    }
+  });
+
+  //Only show sidebar tooltips on small screens
+  $('.fas').on('show.bs.tooltip', function () {
+    if ($(window).width() >= 1200) return false
+  })
+</script>

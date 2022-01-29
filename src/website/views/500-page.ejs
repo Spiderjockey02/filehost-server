@@ -1,0 +1,26 @@
+<%- include('blocks/header', { user }) %>
+<div class="page-wrap d-flex flex-row align-items-center" style="background-color:#f1f6fe;height:56vh">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-12 text-center">
+        <span class="display-1 d-block">500</span>
+        <div class="mb-4 lead"><%= title%></div>
+          <a href="/" class="btn btn-link">Back to Home</a>
+        </div>
+      </div>
+  </div>
+</div>
+
+<%- include('blocks/footer') %>
+
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title><%= title%></title>
+  </head>
+  <body>
+    <%= error%>
+  </body>
+</html>

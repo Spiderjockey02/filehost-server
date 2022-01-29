@@ -1,0 +1,9 @@
+node_modules
+/src/website/files/userContent/*
+!/src/website/files/userContent/example@example.com
+/src/website/files/thumbnails/*
+!/src/website/files/thumbnails/userID
+/src/website/files/avatars/*
+!/src/website/files/avatars/index.txt
+/src/config.js
+/src/client*

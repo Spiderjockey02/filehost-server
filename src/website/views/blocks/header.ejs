@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="manifest" href="/js/pwa.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <link rel="apple-touch-icon" href="/img/apple-touch.png">
+    <meta name="theme-color" content="#106eea"/>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="File Sharer">
+    <meta property="og:description" content="Save your files to File sharer and access them from any device, anywhere. Learn more and get 5 GB of free cloud storage today.">
+    <meta property="og:image" content="/favicon.ico">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/fa3685e359.js" crossorigin="anonymous"></script>
+    <script async src="https://arc.io/widget.min.js#Wa9QgvFs"></script>
+    <title>File Sharer</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg fixed-top navbar-light" id="navBar" style="box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);background-color: white;">
+      <a class="navbar-brand btn" href="/">Home</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+        </ul>
+        <ul class="navbar-nav">
+          <% if (user) { %>
+            <li class="navbar-nav dropdown">
+              <a class="nav-item text-dark nav-link" href="" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-bell"></i>
+              </a>
+              <div class="dropdown-menu dropdown-menu-right">
+                <h6 class="dropdown-header">Notifications - 0</h6>
+                <p class="dropdown-item" href="#">You currently have no notifications.</p>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <img src="/avatar/<%= user._id%>" style="width:25px;height:25px" class="rounded-circle" alt="User avatar"> <%= user.name %>
+              </a>
+              <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item text-dark" href="/user/dashboard">Dashboard</a>
+                <a class="dropdown-item text-dark" href="/files">My files</a>
+                <% if (user.group == "Dev") { %>
+                  <a class="dropdown-item text-dark" href="/admin">Admin</a>
+                <% } %>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="/user/logout" id="logout">Logout</a>
+              </div>
+            </li>
+          <% } else { %>
+            <li class="navbar-nav">
+              <a class="nav-item text-dark nav-link" href="/login">Login</a>
+            </li>
+            <li class="navbar-nav">
+              <a class="nav-item text-dark nav-link" href="/signup">Sign up</a>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+    </nav>
+    <div style="height:50px"></div>
+<style>
+html, body {
+  height: 100%;
+}
+</style>
