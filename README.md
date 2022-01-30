@@ -21,7 +21,7 @@
   •
   <a href="#-features">Features</a>
   •
-  <a href="https://github.com/Spiderjockey02/CDN-server/blob/master/docs/INSTALLATION.md">Installation</a>
+  <a href="https://github.com/Spiderjockey02/filehost-server/blob/master/docs/INSTALLATION.md">Installation</a>
   •
   <a href="#-license">License</a>
   •
@@ -67,5 +67,5 @@ This file sharing service is in a continuous state of development. New features/
 
 ## 📖 License
 
-Released under the [Apache License 2.0](https://github.com/Spiderjockey02/CDN-server/blob/master/LICENSE) license.
+Released under the [Apache License 2.0](https://github.com/Spiderjockey02/filehost-server/blob/master/docs/LICENSE) license.
 
