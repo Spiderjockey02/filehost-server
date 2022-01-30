@@ -24,7 +24,6 @@ const config = {
 			clientID: '',
 			clientSecret: '',
 			// replace DOMAIN with the domain your wrote above
-			callbackURL: 'DOMAIN/auth/facebook/callback',
 			profileURL: '',
 			profileFields: ['id', 'email', 'name'],
 		},
