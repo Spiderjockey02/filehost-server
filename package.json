@@ -23,7 +23,7 @@
     "express-session": "^1.17.2",
     "formidable": "^1.2.2",
     "fs": "^0.0.1-security",
-    "helmet": "^4.4.1",
+    "helmet": "^5.0.2",
     "http": "^0.0.1-security",
     "jszip": "^3.7.1",
     "marked": "^3.0.4",
