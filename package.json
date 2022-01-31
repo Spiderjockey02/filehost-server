@@ -12,7 +12,7 @@
     "b64-to-blob": "^1.2.19",
     "bcrypt": "^5.0.1",
     "chalk": "^4.1.2",
-    "check-disk-space": "^3.0.1",
+    "check-disk-space": "^3.2.0",
     "compression": "^1.7.4",
     "connect-flash": "^0.1.1",
     "cors": "^2.8.5",
