@@ -33,6 +33,7 @@ if (videoWorks) {
 If the video playback is paused or ended, the video is played
 otherwise, the video is paused */
 function togglePlay() {
+	alert('Start: ' + video.buffered.start(0) + ' End: ' + video.buffered.end(0));
 	if (video.paused || video.ended) {
 		video.play();
 	} else {

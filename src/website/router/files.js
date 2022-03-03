@@ -5,7 +5,7 @@ const express = require('express'),
 	{ UserSchema } = require('../../models'),
 	fs = require('fs'),
 	fresh = require('fresh'),
-	{ IncomingForm } = require('formidable'),
+	formidable = require('formidable'),
 	stringSimilarity = require('string-similarity'),
 	location = process.cwd() + '/src/website/files/userContent/';
 
@@ -111,6 +111,12 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				domain: require('../../config').domain,
 			});
 		} else {
+			const totalPages = Math.ceil(files.children.length / 50) - 1;
+			if (files.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico'].includes(item.extension)).length / files.children.length >= 0.60) {
+				let page = req.query.page >= totalPages ? totalPages : Number(req.query.page ?? 0);
+				page = req.query.page < 0 ? 0 : page;
+				files.children = files.children.slice(page * 50, (page + 1) * 50);
+			}
 			res.render('user/files', {
 				user: req.user,
 				path: (URLpath == '/files' ? '/' : URLpath),
@@ -127,7 +133,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 
 // upload files to user's account
 router.post('/upload', ensureAuthenticated, async (req, res) => {
-	const form = new IncomingForm({
+	const form = formidable({
 		multiples: true,
 		allowEmptyFiles: false,
 		maxFileSize: require('../../config').uploadLimit,
@@ -136,8 +142,8 @@ router.post('/upload', ensureAuthenticated, async (req, res) => {
 
 	// File has been uploaded (create folders if neccessary)
 	form.on('file', async function(field, file) {
-		if (!file.name) return;
-		const name = file.name.split('/');
+		if (!file.originalFilename) return;
+		const name = file.originalFilename.split('/');
 		name.pop();
 		for (const folder of name) {
 			const newPath = name.splice(name.indexOf(folder));
@@ -145,6 +151,7 @@ router.post('/upload', ensureAuthenticated, async (req, res) => {
 				const items = [];
 				newPath.forEach((item) => {
 					items.push(item);
+					console.log(location + req.user._id + `/${items.join('/')}`);
 					if (!fs.existsSync(location + req.user._id + `/${items.join('/')}`)) {
 						fs.mkdirSync(location + req.user._id + `/${items.join('/')}`);
 					}
@@ -154,7 +161,7 @@ router.post('/upload', ensureAuthenticated, async (req, res) => {
 
 		// Move item to new area
 		await UserSchema.findOneAndUpdate({ _id: req.user._id }, { size: (Number(req.user.size) + file.size).toString() });
-		fs.rename(file.path, `${location + req.user._id}/${file.name}`, function(err) {
+		fs.rename(file.filepath, `${location + req.user._id}/${file.originalFilename}`, function(err) {
 			if (err) throw err;
 		});
 	});
@@ -252,18 +259,6 @@ function dirstuff(directoryPath, items, parent) {
 	return items;
 }
 
-
-function addFilesFromDirectoryToZip(directoryPath, userID, zip) {
-	const directoryContents = fs.readdirSync(directoryPath, {
-		withFileTypes: true,
-	});
-	console.log(directoryPath);
-	directoryContents.forEach(({ name }) => {
-		const path = `${directoryPath}/${name}`;
-		if (fs.statSync(path).isFile()) zip.file(name, fs.readFileSync(path, 'utf-8'));
-		if (fs.statSync(path).isDirectory()) addFilesFromDirectoryToZip(path, userID, zip);
-	});
-}
 
 // create search query
 router.post('/search', ensureAuthenticated, (req, res) => {

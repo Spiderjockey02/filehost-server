@@ -58,28 +58,28 @@
         <div class="col-lg-3 col-md-6">
           <div class="count-box">
             <i class="bi bi-emoji-smile"></i>
-            <span data-purecounter-start="0" data-purecounter-end="<%= userCount%>" data-purecounter-duration="1" class="purecounter">0</span>
+            <span data-purecounter-start="0" data-purecounter-end="<%= userCount%>" data-purecounter-duration="1" class="purecounter"></span>
             <p>Happy users</p>
           </div>
         </div>
         <div class="col-lg-3 col-md-6 mt-5 mt-md-0">
           <div class="count-box">
             <i class="bi bi-file-earmark-text"></i>
-            <span data-purecounter-start="0" data-purecounter-end="<%= NumFiles%>" data-purecounter-duration="1" class="purecounter">0</span>
+            <span data-purecounter-start="0" data-purecounter-end="<%= NumFiles%>" data-purecounter-duration="1" class="purecounter"></span>
             <p>Total files</p>
           </div>
         </div>
         <div class="col-lg-3 col-md-6 mt-5 mt-lg-0">
           <div class="count-box">
             <i class="bi bi-hdd"></i>
-            <span data-purecounter-start="0" data-purecounter-end="<%= size%>" data-purecounter-duration="1" data-purecounter-currency="true" class="purecounter-file">0</span>
+            <span data-purecounter-start="0" data-purecounter-end="<%= size%>" data-purecounter-duration="1" data-purecounter-currency="true" class="purecounter"></span>
             <p>Total storage used</p>
           </div>
         </div>
         <div class="col-lg-3 col-md-6 mt-5 mt-lg-0">
           <div class="count-box">
             <i class="bi bi-people"></i>
-            <span data-purecounter-start="0" data-purecounter-end="15" data-purecounter-duration="1" class="purecounter">0</span>
+            <span data-purecounter-start="0" data-purecounter-end="15" data-purecounter-duration="1" class="purecounter"></span>
             <p>Hard Workers</p>
           </div>
         </div>
@@ -235,18 +235,9 @@
 <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 <%- include('blocks/footer') %>
 
-<script src="/js/purecounter_vanilla.js"></script>
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
-<script>
-    new PureCounter({
-      selector: '.purecounter-file',
-      filesizing: true
-    });
-    new PureCounter({
-      selector: '.purecounter',
-    });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js"></script>
 <script src="https://unpkg.com/swiper@7/swiper-bundle.min.js"></script>
 <script src="/js/main.js"></script>
 <script src="/js/pwa.js"></script>

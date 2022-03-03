@@ -43,8 +43,10 @@ const config = {
 		instagramURL: 'https://instagram.com',
 		linkedinURL: 'https://linkedin.com',
 	},
-	// what URL's to play in iframes for internet shortcut files
-	frame_domains: ['https://www.youtube.com/'],
+	cloudflare: {
+		email: 'CLOUDFLARE STUFF',
+		key: 'CLOUDFLARE STUFF',
+	},
 	// Should be HTTPS or not
 	secure: true,
 	// Extra information in console for debugging issues

@@ -1,4 +1,5 @@
 <script src="/js/file-directory.js" charset="utf-8"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
 <link rel="stylesheet" href="/css/file-directory.css">
 <div class="container-fluid">
   <%- include('../partials/message', { error })%>
@@ -17,9 +18,9 @@
           <% for (var name of path.split('/').slice(2, path.length)) { %>
             <li class="breadcrumb-item">
               <% if (name !== path.split('/').slice(2, path.length).pop())  { %>
-                <b><a class="directoyLink" href=<%= `/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}` %> style="color:grey"><%= name%></a></b>
+                <b><a class="directoyLink" href="<%= `/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}` %>" style="color:grey"><%= decodeURI(name) %></a></b>
               <% } else { %>
-                <b style="color:black"><%= name%></b>
+                <b style="color:black"><%= decodeURI(name) %></b>
               <% } %>
             </li>
           <% } %>
@@ -46,56 +47,88 @@
       </div>
     </div>
   </div>
-  <%- include('./recent-preview')%>
-  <table class="table" id="myTable">
-    <thead>
-      <tr>
-        <th scope="col" style="width:5%;text-align:center" class="dot">
-          <div class="form-check form-check-inline hide">
-            <input onClick="updateAll();" class="form-check-input" type="checkbox" name="exampleRadios" id="All" data-option="0">
-          </div>
-        </th>
-        <th id="Type" scope="col" style="width:5%;text-align:center">
-          <i class="far fa-file"></i>
-        </th>
-        <th id="Name" scope="col">Name <i class="bi bi-arrow-down-up"></i></th>
-        <th id="Size" scope="col">Size <i class="bi bi-arrow-down-up"></i></th>
-        <th id="Date modified" scope="col">Date modified <i class="bi bi-arrow-down-up"></i></th>
-      </tr>
-    </thead>
-    <tbody>
-      <!--Show folders first-->
-      <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
-        <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
-          <th class="dot" style="text-align:center">
+  <%- include('./recent-preview') %>
+  <!--Photo album-->
+  <% if (files.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico'].includes(item.extension)).length / files.children.length >= 0.60) { %>
+    <div class="row justify-content-start">
+      <% for (const file of files.children.filter(file => file.type == 'file').slice(0, 50)) { %>
+        <div class="col-3" style="max-width:10%">
+          <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
+            <img class="lozad center" data-src="/thumbnail/<%= user._id %>/<%= path.substring(6, path.length) %>/<%=  file.name%>" style="width:100%;height:auto;">
+          </a>
+        </div>
+      <% } %>
+    </div>
+    <nav aria-label="Page navigation" style="padding-top:10px;">
+      <ul class="pagination justify-content-center">
+        <li class="page-item">
+          <a class="page-link" href="#" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+            <span class="sr-only">Previous</span>
+          </a>
+        </li>
+        <li class="page-item"><a class="page-link" href="#">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">2</a></li>
+        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item">
+          <a class="page-link" href="#" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+            <span class="sr-only">Next</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  <% } else { %>
+    <table class="table" id="myTable">
+      <thead>
+        <tr>
+          <th scope="col" style="width:5%;text-align:center" class="dot">
             <div class="form-check form-check-inline hide">
-              <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
+              <input onClick="updateAll();" class="form-check-input" type="checkbox" name="exampleRadios" id="All" data-option="0">
             </div>
           </th>
-          <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
-          <th scope="row" class="text-truncate" style="min-width: 150px;">
-            <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
-            <!-- Default dropright button -->
+          <th id="Type" scope="col" style="width:5%;text-align:center">
+            <i class="far fa-file"></i>
           </th>
-          <td data-trueValue="0"><%= file.children?.length ?? 0 %> files</td>
-          <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
+          <th id="Name" scope="col">Name <i class="bi bi-arrow-down-up"></i></th>
+          <th id="Size" scope="col">Size <i class="bi bi-arrow-down-up"></i></th>
+          <th id="Date modified" scope="col">Date modified <i class="bi bi-arrow-down-up"></i></th>
         </tr>
-      <% } %>
-      <% for (const file of files.children.filter(file => file.type == 'file')) { %>
-        <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
-          <th class="dot" style="text-align:center">
-            <div class="form-check form-check-inline hide">
-              <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
-            </div>
-          </th>
-          <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
-          <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
-          <td data-trueValue="<%= file.size%>"><%= formatBytes(file.size) %></td>
-          <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
-        </tr>
-      <% } %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <!--Show folders first-->
+        <% for (const file of files.children.filter(file => file.type == 'directory')) { %>
+          <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
+            <th class="dot" style="text-align:center">
+              <div class="form-check form-check-inline hide">
+                <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
+              </div>
+            </th>
+            <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
+            <th scope="row" class="text-truncate" style="min-width: 150px;">
+              <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
+              <!-- Default dropright button -->
+            </th>
+            <td data-trueValue="0"><%= file.children?.length ?? 0 %> files</td>
+            <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
+          </tr>
+        <% } %>
+        <% for (const file of files.children.filter(file => file.type == 'file')) { %>
+          <tr onClick="updateValue('<%= encodeURI(file.name) %>');">
+            <th class="dot" style="text-align:center">
+              <div class="form-check form-check-inline hide">
+                <input onClick="updateValue('<%= encodeURI(file.name) %>');" class="form-check-input" type="checkbox" name="exampleRadios" id="<%= encodeURI(file.name) %>" data-option="0">
+              </div>
+            </th>
+            <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
+            <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
+            <td data-trueValue="<%= file.size%>"><%= formatBytes(file.size) %></td>
+            <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  <% } %>
   <div class="progress">
     <div class="progress-bar upload" role="progressbar"></div>
   </div>
@@ -271,3 +304,10 @@
     }
   }
 </style>
+<script>
+  $(document).ready(function($) {
+    const observer = lozad(); // lazy loads elements with default selector as '.lozad'
+    observer.observe();
+  })
+
+</script>

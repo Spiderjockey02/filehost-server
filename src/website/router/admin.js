@@ -4,6 +4,7 @@ const express = require('express'),
 	{ readdirSync } = require('fs'),
 	location = process.cwd() + '/src/website/files/userContent/',
 	{ post } = require('axios'),
+	{ cloudflare } = require('../../config'),
 	checkDiskSpace = require('check-disk-space').default,
 	router = express.Router();
 
@@ -69,8 +70,8 @@ router.get('/analytics', checkDev, async (req, res) => {
 	const data = { 'query':'{\n  viewer {\n    zones(filter: { zoneTag: ' + zoneTag + ' }) {\n      httpRequests1dGroups(\n        orderBy: [date_ASC]\n        limit: 1000\n        filter: { date_gt: "2021-09-29" date_lt: "2021-10-05" }\n      ) {\n        date: dimensions {\n          date\n        }\n        sum {\n          cachedBytes\n          bytes\n        }\n      }\n    }\n  }\n}', 'variables':{} };
 	const response = await post('https://api.cloudflare.com/client/v4/graphql', JSON.stringify(data), {
 		headers: {
-			'X-AUTH-EMAIL': 'USERNAME',
-			'X-AUTH-KEY': 'AUTHKEY',
+			'X-AUTH-EMAIL': cloudflare.email,
+			'X-AUTH-KEY': cloudflare.key,
 		},
 	});
 	const newData = response.data.data.viewer.zones[0].httpRequests1dGroups;

@@ -6,6 +6,7 @@ const express = require('express'),
 	{ company } = require('../../config'),
 	{ logger } = require('../../utils'),
 	md = require('marked'),
+	imageThumbnail = require('image-thumbnail'),
 	router = express.Router();
 
 // Home page
@@ -101,7 +102,7 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 			if (videoRange) {
 				const parts = videoRange.replace(/bytes=/, '').split('-'),
 					start = parseInt(parts[0], 10),
-					end = parts[1] ? parseInt(parts[1], 10)	: fileSize - 1,
+					end = fileSize - 1,
 					chunksize = (end - start) + 1,
 					file = fs.createReadStream(path, { start, end });
 
@@ -109,13 +110,13 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 					'Content-Range': `bytes ${start}-${end}/${fileSize}`,
 					'Accept-Ranges': 'bytes',
 					'Content-Length': chunksize,
-					'Content-Type': 'video/webm',
+					'Content-Type': 'video/mp4',
 				});
 				file.pipe(res);
 			} else {
 				res.writeHead(200, {
 					'Content-Length': fileSize,
-					'Content-Type': 'video/webm',
+					'Content-Type': 'video/mp4',
 				});
 				fs.createReadStream(path).pipe(res);
 			}
@@ -139,7 +140,7 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 	}
 });
 
-router.get('/thumbnail/:userID/*', ensureAuthenticated, (req, res) => {
+router.get('/thumbnail/:userID/*', ensureAuthenticated, async (req, res) => {
 	// Make sure no one else accessing their data
 	if (req.user._id == req.params.userID) {
 		const path = decodeURI(process.cwd() + '/src/website/files/thumbnails/' + req._parsedOriginalUrl.pathname.slice(11));
@@ -148,7 +149,20 @@ router.get('/thumbnail/:userID/*', ensureAuthenticated, (req, res) => {
 				if (err) console.log(err);
 			});
 		} else {
-			res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
+			const options = { percentage: 25, responseType: 'base64' };
+			try {
+				const thumbnail = await imageThumbnail(decodeURI(process.cwd() + '/src/website/files/userContent/' + req._parsedOriginalUrl.pathname.slice(11)), options);
+				const img = Buffer.from(thumbnail, 'base64');
+
+				res.writeHead(200, {
+					'Content-Type': 'image/png',
+					'Content-Length': img.length,
+				});
+				res.end(img);
+			} catch (err) {
+				console.log(err);
+				res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
+			}
 		}
 	} else {
 		res.status(403)
