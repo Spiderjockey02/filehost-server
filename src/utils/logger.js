@@ -1,6 +1,7 @@
 // Dependencies
 const chalk = require('chalk'),
 	onFinished = require('on-finished'),
+	{ getIP } = require('./functions'),
 	moment = require('moment');
 
 // Logger
@@ -64,15 +65,6 @@ exports.connection = async (req, res) => {
 		});
 	});
 };
-
-// get the IP of the client
-function getIP(req) {
-	return req.ip ||
-    req._remoteAddress ||
-    (req.connection && req.connection.remoteAddress) ||
-    undefined;
-}
-
 exports.warn = (...args) => this.log(...args, 'warn');
 
 exports.error = (...args) => this.log(...args, 'error');

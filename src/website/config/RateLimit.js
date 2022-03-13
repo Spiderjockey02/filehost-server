@@ -1,4 +1,5 @@
-const RateLimit = require('express-rate-limit');
+const RateLimit = require('express-rate-limit'),
+	{ getIP } = require('../../utils/functions');
 
 // Only allow 5 accounts a day
 const createAccountLimiter = RateLimit({
@@ -10,7 +11,10 @@ const createAccountLimiter = RateLimit({
 // 100 webpages every 15 minutes
 const connectionLimiter = RateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 100,
+	max: async (request) => {
+		if (getIP(request) == '86.25.177.233') return 0;
+		else return 100;
+	},
 	message: 'You are accessing web pages too fast.',
 });
 

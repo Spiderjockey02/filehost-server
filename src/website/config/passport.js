@@ -1,6 +1,6 @@
 const User = require('../../models/user'),
 	fs = require('fs'),
-	location = process.cwd() + '/src/website/files/userContent/',
+	location = process.cwd() + '/src/website/files/userContent',
 	LocalStrategy = require('passport-local').Strategy,
 	FacebookStrategy = require('passport-facebook').Strategy,
 	TwitterStrategy = require('passport-twitter').Strategy,
