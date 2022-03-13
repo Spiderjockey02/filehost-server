@@ -44,7 +44,7 @@
             <!--Show folders first-->
             <% for (file of files) { %>
               <tr class="clickable-row" data-href="/files<%= decodeURI(`${file.path}`) %>">
-                <th scope="row" class="text-truncate" style="max-width: 150px;"><%= file.name %></th>
+                <th scope="row" class="text-truncate" style="max-width: 150px;"><a href="/files<%= file.path%>"><%= file.name %></a></th>
                 <td><%= formatBytes(file.size) %></td>
                 <td><%= file.modified?.toDateString() %></td>
               </tr>

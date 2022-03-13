@@ -23,6 +23,23 @@ function SearchHG(tree, value, path = tree.name) {
 	return foundItems;
 }
 
+function createSearchList(tree) {
+	const foundItems = []
+	if (tree.type == 'directory') {
+		for (var child of tree.children) {
+			if (child.type == 'directory') {
+				foundItems.push(...createSearchList(child))
+			} else {
+				foundItems.push(child.name)
+			}
+		}
+	} else {
+		foundItems.push(tree.name)
+	}
+
+	return foundItems
+}
+
 // Show file explorer
 router.get('/*', ensureAuthenticated, async (req, res) => {
 	// User is searching for file
@@ -85,6 +102,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
 		const files = dirTree(path);
+		await UserSchema.findOneAndUpdate({ _id: req.user._id }, { size: `${files.size}` });
 		if (files.type == 'file') {
 			// update recently viewed files
 			try {
@@ -99,10 +117,8 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 			}
 
 			// Read file from cached
-			if (isFresh(req, res)) {
-				res.statusCode = 304;
-				return res.end();
-			}
+			if (isFresh(req, res)) return res.status(304).end();
+
 			// new file
 			res.render('user/file-preview', {
 				user: req.user,
@@ -111,6 +127,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				domain: require('../../config').domain,
 			});
 		} else {
+
 			const totalPages = Math.ceil(files.children.length / 50) - 1;
 			if (files.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico'].includes(item.extension)).length / files.children.length >= 0.60) {
 				let page = req.query.page >= totalPages ? totalPages : Number(req.query.page ?? 0);
@@ -122,7 +139,10 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				path: (URLpath == '/files' ? '/' : URLpath),
 				error: req.flash('error'),
 				success: req.flash('success'),
-				...require('../../utils'), files,
+				currentPage: req.query.page ?? 1,
+				maxPage: totalPages,
+				searchList: createSearchList(files),
+				...require('../../utils'), files
 			});
 		}
 	} else {
@@ -260,6 +280,18 @@ function dirstuff(directoryPath, items, parent) {
 }
 
 
+function addFilesFromDirectoryToZip(directoryPath, userID, zip) {
+	const directoryContents = fs.readdirSync(directoryPath, {
+		withFileTypes: true,
+	});
+	console.log(directoryPath);
+	directoryContents.forEach(({ name }) => {
+		const path = `${directoryPath}/${name}`;
+		if (fs.statSync(path).isFile()) zip.file(name, fs.readFileSync(path, 'utf-8'));
+		if (fs.statSync(path).isDirectory()) addFilesFromDirectoryToZip(path, userID, zip);
+	});
+}
+
 // create search query
 router.post('/search', ensureAuthenticated, (req, res) => {
 	res.redirect(`/files?search=${req.body.search}&fileType=${req.body.fileType}&dateUpdated=${req.body.dateUpdated}`);
@@ -268,7 +300,7 @@ router.post('/search', ensureAuthenticated, (req, res) => {
 // Rename file/folder
 router.post('/rename', ensureAuthenticated, (req, res) => {
 	const { folder, oldName, newName } = req.body;
-	fs.rename(`${location}${req.user._id}${folder}/${oldName}`, `${location}${req.user._id}${folder}/${newName}`, function(err) {
+	fs.rename(`${location}${req.user._id}${folder}/${oldName}`, `${location}${req.user._id}${folder}/${newName}${require('path').extname(oldName)}`, function(err) {
 		if (err) return res.json({ error: err.message });
 		req.flash('success', 'File successfully renamed');
 		res.redirect('/files');
@@ -296,6 +328,7 @@ router.post('/copy-to', ensureAuthenticated, (req, res) => {
 router.post('/change', ensureAuthenticated, (req, res) => {
 	console.log(req.body);
 });
+
 module.exports = router;
 
 // Caching

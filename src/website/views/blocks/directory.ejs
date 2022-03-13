@@ -18,7 +18,7 @@
           <% for (var name of path.split('/').slice(2, path.length)) { %>
             <li class="breadcrumb-item">
               <% if (name !== path.split('/').slice(2, path.length).pop())  { %>
-                <b><a class="directoyLink" href="<%= `/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}` %>" style="color:grey"><%= decodeURI(name) %></a></b>
+                <b><a class="directoyLink" href=<%= `/${path.split('/').slice(1, path.split('/').indexOf(name)+1).join('/')}` %> style="color:grey"><%= decodeURI(name) %></a></b>
               <% } else { %>
                 <b style="color:black"><%= decodeURI(name) %></b>
               <% } %>
@@ -44,6 +44,8 @@
             <button type="submit" style="display:none;" id="imagefile"></button>
           </form>
         </div>
+        &nbsp;
+        <button type="button" class="btn btn-outline-secondary">New <i class="fas fa-plus"></i></button>
       </div>
     </div>
   </div>
@@ -52,9 +54,9 @@
   <% if (files.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico'].includes(item.extension)).length / files.children.length >= 0.60) { %>
     <div class="row justify-content-start">
       <% for (const file of files.children.filter(file => file.type == 'file').slice(0, 50)) { %>
-        <div class="col-3" style="max-width:10%">
+        <div class="col-sm">
           <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
-            <img class="lozad center" data-src="/thumbnail/<%= user._id %>/<%= path.substring(6, path.length) %>/<%=  file.name%>" style="width:100%;height:auto;">
+            <img class="lozad center" data-src="/thumbnail/<%= user._id %>/<%= path.substring(7, path.length) %>/<%=  file.name%>" style="max-width:200px;height:auto;" alt=<%=  file.name%>>
           </a>
         </div>
       <% } %>
@@ -62,19 +64,19 @@
     <nav aria-label="Page navigation" style="padding-top:10px;">
       <ul class="pagination justify-content-center">
         <li class="page-item">
-          <a class="page-link" href="#" aria-label="Previous">
+          <button class="page-link" href="#" aria-label="Previous" onclick="back()">
             <span aria-hidden="true">&laquo;</span>
             <span class="sr-only">Previous</span>
-          </a>
+          </button>
         </li>
-        <li class="page-item"><a class="page-link" href="#">1</a></li>
-        <li class="page-item"><a class="page-link" href="#">2</a></li>
-        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item"><button class="page-link" href="#" onclick="back()"><%= Number(currentPage) -1 %></button></li>
+        <li class="page-item"><button class="page-link" href="#"><%= currentPage %></button></li>
+        <li class="page-item"><button class="page-link" href="#" onclick="forward()"><%= Number(currentPage)+ 1 %></button></li>
         <li class="page-item">
-          <a class="page-link" href="#" aria-label="Next">
+          <button class="page-link" href="#" aria-label="Next" onclick="forward()">
             <span aria-hidden="true">&raquo;</span>
             <span class="sr-only">Next</span>
-          </a>
+          </button>
         </li>
       </ul>
     </nav>
@@ -308,6 +310,15 @@
   $(document).ready(function($) {
     const observer = lozad(); // lazy loads elements with default selector as '.lozad'
     observer.observe();
+    /* initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
+    autocomplete(document.getElementById('myInput'), <%- JSON.stringify(searchList) %>);
   })
+  function back() {
+    if (!window.location.search  || window.location.search == '?page=1') return
+    window.location.assign(`${window.location.origin}${window.location.pathname}?page=${Number(window.location.search.slice(6) || 1) - 1}`)
+  }
 
+  function forward() {
+    window.location.assign(`${window.location.origin}${window.location.pathname}?page=${Number(window.location.search.slice(6) || 1) + 1}`)
+  }
 </script>

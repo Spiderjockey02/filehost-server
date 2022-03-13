@@ -7,6 +7,7 @@ const express = require('express'),
 	{ logger } = require('../../utils'),
 	md = require('marked'),
 	imageThumbnail = require('image-thumbnail'),
+	{ spawn } = require('child_process'),
 	router = express.Router();
 
 // Home page
@@ -149,16 +150,40 @@ router.get('/thumbnail/:userID/*', ensureAuthenticated, async (req, res) => {
 				if (err) console.log(err);
 			});
 		} else {
-			const options = { percentage: 25, responseType: 'base64' };
+			const options = { width: 200, height: 250, withMetaData: true, fit: 'inside', responseType: 'base64' };
 			try {
-				const thumbnail = await imageThumbnail(decodeURI(process.cwd() + '/src/website/files/userContent/' + req._parsedOriginalUrl.pathname.slice(11)), options);
-				const img = Buffer.from(thumbnail, 'base64');
+				const thumbpath = decodeURI(process.cwd() + '/src/website/files/userContent/' + req._parsedOriginalUrl.pathname.slice(11));
+				// Create thumbnail
+				switch (require('mime-types').lookup(thumbpath).split('/')[0]) {
+				case 'image': {
+					const thumbnail = await imageThumbnail(decodeURI(process.cwd() + '/src/website/files/userContent/' + req._parsedOriginalUrl.pathname.slice(11)), options);
+					const img = Buffer.from(thumbnail, 'base64');
 
-				res.writeHead(200, {
-					'Content-Type': 'image/png',
-					'Content-Length': img.length,
-				});
-				res.end(img);
+					res.writeHead(200, {
+						'Content-Type': 'image/png',
+						'Content-Length': img.length,
+					});
+					res.end(img);
+
+					// create the folders and file
+					await fs.mkdir(path.split('/').slice(0, -1).join('/'), { recursive: true });
+					await fs.writeFile(path, img);
+					break;
+				}
+				case 'video': {
+					try {
+						await fs.mkdir(path.split('/').slice(0, -1).join('/'), { recursive: true }, (err) => console.log(err));
+
+						spawn('ffmpeg', ['-i', thumbpath, '-ss', '00:00:01.000', '-vframes', '1', path.split('.').slice(0, -1).join('')]);
+					} catch (err) {
+						console.log(err);
+						res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
+					}
+					break;
+				}
+				default:
+					res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
+				}
 			} catch (err) {
 				console.log(err);
 				res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
@@ -199,6 +224,8 @@ router.get('/share/:ID/:path*', async (req, res) => {
 		const user = await UserSchema.findOne({ _id: req.params.ID });
 		if (user) {
 			const file = user.shared.find(item => item.id == req.params.path).path;
+			console.log(file);
+			console.log(location + req.params.ID + file);
 			return res.sendFile(decodeURI(location + req.params.ID + file), (err) => {
 				if (err) return res.status(404).end('File not longer exists');
 			});
@@ -213,10 +240,10 @@ router.get('/share/:ID/:path*', async (req, res) => {
 
 // Show user's recent viewings
 router.get('/recent', ensureAuthenticated, async (req, res) => {
-	const files = await UserSchema.findOne({ email: req.user.email });
+
 	res.render('user/recent', {
 		user: req.user,
-		files: files.recent,
+		files: req.user.recent,
 		formatBytes: require('../../utils').formatBytes,
 	});
 });
@@ -227,6 +254,11 @@ router.get('/favourites', ensureAuthenticated, (req, res) => {
 		user: req.user,
 		formatBytes: require('../../utils').formatBytes,
 	});
+});
+
+router.get('/favicon.ico', (req, res) => {
+	console.log('1');
+	res.sendFile(`${process.cwd()}/src/website/assets/favicon.ico`);
 });
 
 module.exports = router;
