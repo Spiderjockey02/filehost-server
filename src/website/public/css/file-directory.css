@@ -17,7 +17,17 @@ a:hover {
 #fileHover:hover {
 	cursor: pointer
 }
+.autocomplete-items {
+  background-color: grey;
+	width: auto;
+	position: absolute;
+	z-index: 1000;
+}
 
+.autocomplete-item:hover {
+	background-color: darkgrey;
+	cursor: pointer;
+}
 .container-fluid {
 	overflow-y: visible !important;
 }
