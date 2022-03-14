@@ -59,6 +59,6 @@
   },
   "homepage": "https://github.com/Spiderjockey02/CDN-server#readme",
   "devDependencies": {
-    "eslint": "^7.32.0"
+    "eslint": "^8.11.0"
   }
 }
