@@ -19,7 +19,7 @@
     "deep-email-validator": "^0.1.18",
     "ejs": "^3.1.6",
     "express": "^4.17.1",
-    "express-rate-limit": "^5.3.0",
+    "express-rate-limit": "^6.3.0",
     "express-session": "^1.17.2",
     "formidable": "^2.0.1",
     "fs": "^0.0.1-security",
