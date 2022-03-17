@@ -49,7 +49,15 @@ video:fullscreen {
   height: 8.4px;
   margin-bottom: 10px;
 }
-progress {
+
+#buffered-amount {
+  position: absolute;
+  width: 100%;
+  height: 8.4px;
+  background-color: black;
+}
+
+.progress-bar {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -60,17 +68,31 @@ progress {
   position: absolute;
   top: 0;
 }
-progress::-webkit-progress-bar {
+
+#seek-bar {
+  background: var(--youtube-red);
+  border-radius: 2px;
+  z-index: 5;
+}
+#seek {
+  z-index: 4;
+}
+#buffer {
+  position: absolute;
+  z-index: 3;
+}
+#buffer::-webkit-progress-bar {
+  opacity: 1;
   background-color: #474545;
   border-radius: 2px;
 }
-progress::-webkit-progress-value {
-  background: var(--youtube-red);
+#buffer::-webkit-progress-value {
+  background: #202020;
   border-radius: 2px;
 }
-progress::-moz-progress-bar {
-  border: 1px solid var(--youtube-red);
-  background: var(--youtube-red);
+#buffer::-moz-progress-bar {
+  border: 1px solid #474545;
+  background-color: #474545;
 }
 .seek {
   position: absolute;

@@ -5,7 +5,7 @@ const video = document.getElementById('video'),
 	playbackIcons = document.querySelectorAll('.playback-icons use'),
 	timeElapsed = document.getElementById('time-elapsed'),
 	duration = document.getElementById('duration'),
-	progressBar = document.getElementById('progress-bar'),
+	progressBar = document.getElementById('seek-bar'),
 	seek = document.getElementById('seek'),
 	seekTooltip = document.getElementById('seek-tooltip'),
 	volumeButton = document.getElementById('volume-button'),
@@ -33,7 +33,7 @@ if (videoWorks) {
 If the video playback is paused or ended, the video is played
 otherwise, the video is paused */
 function togglePlay() {
-	alert('Start: ' + video.buffered.start(0) + ' End: ' + video.buffered.end(0));
+	// alert('Start: ' + video.buffered.start(0) + ' End: ' + video.buffered.end(0));
 	if (video.paused || video.ended) {
 		video.play();
 	} else {
@@ -62,7 +62,6 @@ function formatTime(timeInSeconds) {
 function initializeVideo() {
 	const videoDuration = video.duration;
 	seek.setAttribute('max', videoDuration);
-	progressBar.setAttribute('max', videoDuration);
 	const time = formatTime(videoDuration);
 	duration.innerText = `${time.minutes}:${time.seconds}`;
 	duration.setAttribute('datetime', `${time.minutes}m ${time.seconds}s`);
@@ -80,7 +79,7 @@ function updateTimeElapsed() {
 the current playback is by updating the progress bar */
 function updateProgress() {
 	seek.value = video.currentTime;
-	progressBar.value = video.currentTime;
+	progressBar.style.width = `${(video.currentTime / video.duration * 100) + 0.05}%`;
 }
 
 /* updateSeekTooltip uses the position of the mouse on the progress bar to
@@ -106,7 +105,7 @@ function skipAhead(event, pressed) {
 	}
 	seek.value = skipTo;
 	video.currentTime = skipTo;
-	progressBar.value = skipTo;
+	progressBar.value = `${(skipTo / video.duration * 100) + 0.05}%`;
 }
 
 /* updateVolume updates the video's volume
@@ -304,3 +303,12 @@ document.addEventListener('DOMContentLoaded', () => {
 	if (!('pictureInPictureEnabled' in document)) pipButton.classList.add('hidden');
 });
 document.addEventListener('keydown', keyboardShortcuts);
+
+
+// display TimeRanges
+video.addEventListener('progress', function() {
+	const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+	const durationTime = video.duration;
+	console.log(`Time renderd: ${bufferedEnd} out of ${durationTime}`);
+	if (durationTime > 0) document.getElementById('buffer').value = (bufferedEnd / durationTime) * 100;
+});
