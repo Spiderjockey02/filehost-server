@@ -10,6 +10,21 @@ $('tr').bind('mouseover', function() {
 	});
 });
 
+$('#fileTypeButton').on('click', function(event) {
+	console.log('hello');
+	$('#searchDropdown').toggleClass('show');
+});
+
+$('body').on('click', function(e) {
+	// console.log($('#searchDropdown').classList.contains('show'));
+	// console.log($('#searchDropdown').has(e.target).length);
+	// console.log($('.show').has(e.target).length);
+	console.log($('#searchDropdown')[0].classList.contains('show'));
+	if (!$('#searchDropdown').is(e.target) && $('#searchDropdown').has(e.target).length === 0 && !$('#searchDropdown')[0].classList.contains('show')) {
+		$('#searchDropdown').removeClass('show');
+	}
+});
+
 // Row is active (mouse is hovering or checkbox is ticked)
 function onHover(item, parent) {
 	if (parent) {
@@ -331,6 +346,7 @@ function autocomplete(inp, arr) {
 		if (!val) return false;
 
 		currentFocus = -1;
+		if ($('#searchDropdown')[0].classList.contains('show')) return;
 		/* create a DIV element that will contain the items (values):*/
 		a = document.createElement('DIV');
 		a.setAttribute('id', this.id + 'autocomplete-list');

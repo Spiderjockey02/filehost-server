@@ -94,32 +94,46 @@ router.get('/signup', (req, res) => {
 router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 	// Make sure no one else accessing their data
 	if (req.user._id == req.params.userID) {
+
+		// Read file from cached
+		if (isFresh(req, res)) return res.status(304).end();
+
 		// Send file, if it doesn't exist error
 		const path = decodeURI(location + req._parsedOriginalUrl.pathname.slice(14));
 		if (require('mime-types').lookup(path).split('/')[0] == 'video') {
-			const fileSize = fs.statSync(path).size,
-				videoRange = req.headers.range;
-
-			if (videoRange) {
-				const parts = videoRange.replace(/bytes=/, '').split('-'),
-					start = parseInt(parts[0], 10),
-					end = fileSize - 1,
-					chunksize = (end - start) + 1,
-					file = fs.createReadStream(path, { start, end });
-
-				res.writeHead(206, {
-					'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-					'Accept-Ranges': 'bytes',
-					'Content-Length': chunksize,
-					'Content-Type': 'video/mp4',
-				});
-				file.pipe(res);
-			} else {
+			const range = req.headers.range;
+			// Get video stats
+			const videoSize = fs.statSync(path).size;
+			if (!range) {
 				res.writeHead(200, {
-					'Content-Length': fileSize,
+					'Content-Length': videoSize + 1,
 					'Content-Type': 'video/mp4',
 				});
 				fs.createReadStream(path).pipe(res);
+			} else {
+				// Parse Range
+				// Example: "bytes=32324-" 1MB
+				const CHUNK_SIZE = 2 * (10 ** 6);
+				const start = Number(range.replace(/\D/g, ''));
+				const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+				// Create headers
+				const contentLength = end - start + 1;
+				const headers = {
+					'Content-Range': `bytes ${start}-${end}/${videoSize}`,
+					'Accept-Ranges': 'bytes',
+					'Content-Length': contentLength,
+					'Content-Type': 'video/mp4',
+				};
+
+				// HTTP Status 206 for Partial Content
+				res.writeHead(206, headers);
+
+				// create video read stream for this particular chunk
+				const videoStream = fs.createReadStream(path, { start, end });
+
+				// Stream the video chunk to the client
+				videoStream.pipe(res);
 			}
 		} else {
 			res.sendFile(path, (err) => {

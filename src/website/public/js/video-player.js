@@ -29,6 +29,14 @@ if (videoWorks) {
 	videoControls.classList.remove('hidden');
 }
 
+
+document.getElementById('volume-controls').addEventListener("mouseover", function() {
+	document.getElementById('volume').style.display = "block";
+})
+
+document.getElementById('volume-controls').addEventListener("mouseleave", function() {
+	document.getElementById('volume').style.display = "none";
+})
 /* togglePlay toggles the playback state of the video.
 If the video playback is paused or ended, the video is played
 otherwise, the video is paused */
@@ -36,6 +44,9 @@ function togglePlay() {
 	// alert('Start: ' + video.buffered.start(0) + ' End: ' + video.buffered.end(0));
 	if (video.paused || video.ended) {
 		video.play();
+		console.log(	document.getElementsByTagName('track')[0].track.activeCues[0])
+		document.getElementsByTagName('track')[0].track.activeCues[0].line = 50;
+		//document.getElementsByTagName('track')[0].style['padding-bottom'] = "10%"; //[0].activeCues[0].line = -4;
 	} else {
 		video.pause();
 	}
@@ -79,7 +90,7 @@ function updateTimeElapsed() {
 the current playback is by updating the progress bar */
 function updateProgress() {
 	seek.value = video.currentTime;
-	progressBar.style.width = `${(video.currentTime / video.duration * 100) + 0.05}%`;
+	progressBar.style.width = `${(video.currentTime / video.duration * 100) + 0.4}%`;
 }
 
 /* updateSeekTooltip uses the position of the mouse on the progress bar to
@@ -105,7 +116,7 @@ function skipAhead(event, pressed) {
 	}
 	seek.value = skipTo;
 	video.currentTime = skipTo;
-	progressBar.value = `${(skipTo / video.duration * 100) + 0.05}%`;
+	progressBar.value = `${(skipTo / video.duration * 100) + 0.4}%`;
 }
 
 /* updateVolume updates the video's volume
@@ -173,6 +184,11 @@ function toggleFullScreen() {
 		videoContainer.requestFullscreen();
 	}
 	updateFullscreenButton(!document.fullscreenElement);
+	hideControlsOnMobile();
+}
+
+function hideControlsOnMobile() {
+	videoControls.classList.add('hide');
 }
 
 /* updateFullscreenButton changes the icon of the full screen button
@@ -181,11 +197,9 @@ function updateFullscreenButton(toggle) {
 	fullscreenIcons.forEach((icon) => icon.classList.toggle('hidden'));
 	if (toggle) {
 		video.style['max-height'] = '100%';
-		video.style['max-width'] = '100%';
 		fullscreenButton.setAttribute('data-title', 'Exit full screen (f)');
 	} else {
 		video.style['max-height'] = '800px';
-		video.style['max-width'] = '800px';
 		fullscreenButton.setAttribute('data-title', 'Full screen (f)');
 	}
 }
@@ -209,13 +223,14 @@ async function togglePip() {
 /* hideControls hides the video controls when not in use
 if the video is paused, the controls must remain visible */
 function hideControls() {
-	if (video.paused) return;
 	videoControls.classList.add('hide');
+	settingsTab.classList.add('hide');
 }
 
 // showControls displays the video controls
 function showControls() {
 	videoControls.classList.remove('hide');
+	settingsTab.classList.remove('hide');
 }
 
 /* keyboardShortcuts executes the relevant functions for
@@ -302,13 +317,14 @@ playBack.addEventListener('input', updatePlaybackSpeed);
 document.addEventListener('DOMContentLoaded', () => {
 	if (!('pictureInPictureEnabled' in document)) pipButton.classList.add('hidden');
 });
-document.addEventListener('keydown', keyboardShortcuts);
 
+document.addEventListener('keydown', keyboardShortcuts);
 
 // display TimeRanges
 video.addEventListener('progress', function() {
-	const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+	if (video.buffered.length == 0) return;
+	const bufferedEnd = video.buffered.end((video.buffered.length - 1) < video.buffered.length ? 0 : video.buffered.length - 1);
 	const durationTime = video.duration;
-	console.log(`Time renderd: ${bufferedEnd} out of ${durationTime}`);
+	console.log(`[DEBUG] Time renderd: ${bufferedEnd} out of ${durationTime}`);
 	if (durationTime > 0) document.getElementById('buffer').value = (bufferedEnd / durationTime) * 100;
 });

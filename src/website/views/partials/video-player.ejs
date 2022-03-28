@@ -6,8 +6,9 @@
       <use href="#pause"></use>
     </svg>
   </div>
-  <video controls class="video" id="video" preload="metadata">
+  <video controls class="video" id="video" preload="metadata" poster="/thumbnail/<%=  file.split('.').slice(0, -1).join('.')%>.jpg?type=<%= file.split('.').pop()%>">
     <source src="/user-content/<%=  file%>" type="video/mp4">
+    <track label="English" kind="subtitles" srclang="en" src="/user-content/61559906963f4816657eaf92/video.vtt" default>
   </video>
   <div id="settings-tab" class="video-controls hidden">
     <div class="form-group">
@@ -30,7 +31,7 @@
             <use class="hidden" href="#pause"></use>
           </svg>
         </button>
-        <div class="volume-controls">
+        <div class="volume-controls" id="volume-controls">
           <button data-title="Mute (m)" class="volume-button" id="volume-button">
             <svg>
               <use class="hidden" href="#volume-mute"></use>
