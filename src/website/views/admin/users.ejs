@@ -128,16 +128,16 @@
                 </div>
                 <div class="mt-4 text-center small">
                   <span class="mr-2">
-                  <i class="fas fa-circle text-primary"></i> Google
+                    <i class="fas fa-circle" style="color: #ea4335"></i> Google
                   </span>
                   <span class="mr-2">
-                  <i class="fas fa-circle text-success"></i> Facebook
+                  <i class="fas fa-circle" style="color: #3b5998"></i> Facebook
                   </span>
                   <span class="mr-2">
-                  <i class="fas fa-circle text-info"></i> Twitter
+                  <i class="fas fa-circle" style="color: #1da1f2"></i> Twitter
                   </span>
                   <span class="mr-2">
-                  <i class="fas fa-circle text-info"></i> Email
+                  <i class="fas fa-circle" style="color: #99aab5"></i> Email
                   </span>
                 </div>
               </div>
@@ -180,6 +180,7 @@
           <thead>
             <tr>
               <th>ID <i class="bi bi-arrow-down-up"></i></th>
+              <th>Date <i class="bi bi-arrow-down-up"></i></th>
               <th>Name <i class="bi bi-arrow-down-up"></i></th>
               <th>Email <i class="bi bi-arrow-down-up"></i></th>
               <th>Tier <i class="bi bi-arrow-down-up"></i></th>
@@ -193,6 +194,7 @@
             <% for (const user of users) { %>
             <tr>
               <th><%= user._id %></th>
+              <th><%= user.creationDate.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric' }) %></th>
               <td><%= user.name %></td>
               <td><%= user.email ?? user.google.email%></td>
               <td><%= user.group ?? 'Free' %></td>

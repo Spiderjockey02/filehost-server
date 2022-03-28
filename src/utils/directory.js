@@ -20,7 +20,7 @@ function safeReadDirSync(path) {
 	return dirData;
 }
 
-function directoryTree(path, onEachFile, onEachDirectory) {
+function directoryTree(path, onEachFile) {
 	const name = PATH.basename(path);
 	const item = { path, name };
 	let stats;
@@ -47,13 +47,12 @@ function directoryTree(path, onEachFile, onEachDirectory) {
 			item.url = filedata.split('\n')[1].substring(4, filedata.split('\n')[1].length);
 		}
 
-		if (onEachFile) onEachFile(item, path, stats);
 	} else if (stats.isDirectory()) {
 		const dirData = safeReadDirSync(path);
 		if (dirData === null) return null;
 
 		item.children = dirData
-			.map(child => directoryTree(PATH.join(path, child), onEachFile, onEachDirectory))
+			.map(child => directoryTree(PATH.join(path, child)))
 			.filter(e => !!e);
 
 		// Get time modified for folder
@@ -65,7 +64,6 @@ function directoryTree(path, onEachFile, onEachDirectory) {
 
 		item.size = folderSize;
 		item.type = constants.DIRECTORY;
-		if (onEachDirectory) onEachDirectory(item, path, stats);
 	} else {
 		return null;
 	}

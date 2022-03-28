@@ -1,5 +1,9 @@
 const ipv4Regex = /^(?:(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])$/,
-	mimeType = require('mime-types');
+	mimeType = require('mime-types'),
+	imageThumbnail = require('image-thumbnail'),
+	fs = require('fs'),
+	fresh = require('fresh'),
+	{ spawn } = require('child_process');
 
 module.exports = {
 	// turn bytes to data string (1024 => 1KB)
@@ -81,5 +85,55 @@ module.exports = {
 		if (req.requestContext?.identity && ipv4Regex.test(req.requestContext.identity.sourceIp)) return req.requestContext.identity.sourceIp;
 
 		return undefined;
+	},
+	createThumbnail: async function(path, name, fileType) {
+		const options = { width: 200, height: 250, withMetaData: true, fit: 'inside', responseType: 'base64' };
+		try {
+			const thumbpath = decodeURI(process.cwd() + '/src/website/files/userContent/' + name);
+			// Create thumbnail
+			console.log(require('mime-types').lookup(fileType).split('/')[0])
+			switch (require('mime-types').lookup(fileType).split('/')[0]) {
+				case 'image': {
+					const thumbnail = await imageThumbnail(decodeURI(process.cwd() + '/src/website/files/userContent/' + `${name.split('.').slice(0, -1).join('.')}.${fileType}`), options);
+					const img = Buffer.from(thumbnail, 'base64');
+
+					// create the folders and file
+					await fs.mkdirSync(path.split('/').slice(0, -1).join('/'), {recursive: true});
+					await fs.writeFileSync(path, img);
+					break;
+				}
+				case 'video': {
+					// Create thumbnail from image
+					await fs.mkdirSync(path.split('/').slice(0, -1).join('/'), { recursive: true });
+					console.log(`New file: ${thumbpath.split('.').slice(0, -1).join('.')}.${fileType}`)
+					const child = spawn('ffmpeg', ['-i', `${thumbpath.split('.').slice(0, -1).join('.')}.${fileType}`, '-ss', '00:00:01.000', '-vframes', '1', `${path.split('.').slice(0, -1).join('.')}-temp.jpg`]);
+					child.stderr.on('data', (data) => {
+						console.error(`ps stderr: ${data}`);
+					});
+					await new Promise((resolve, reject) => {
+						child.on('close', resolve);
+						child.on('error', (err) => {
+							console.log(err);
+							reject();
+						});
+					});
+					// Compress thumbnail
+					const thumbnail = await imageThumbnail(`${path.split('.').slice(0, -1).join('.')}-temp.jpg`, options);
+					const img = Buffer.from(thumbnail, 'base64');
+					await fs.writeFileSync(`${path.split('.').slice(0, -1).join('.')}.jpg`, img);
+
+					// Delete temp file
+					fs.unlinkSync(`${path.split('.').slice(0, -1).join('.')}-temp.jpg`);
+				}
+			}
+		} catch (err) {
+			console.log(err);
+		}
+	},
+	isFresh: function(req, res) {
+		return fresh(req.headers, {
+			'etag': res.getHeader('ETag'),
+			'last-modified': res.getHeader('Last-Modified'),
+		});
 	},
 };

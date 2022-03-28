@@ -2,7 +2,7 @@
 const chalk = require('chalk'),
 	onFinished = require('on-finished'),
 	{ getIP } = require('./functions'),
-	moment = require('moment');
+moment = require('moment');
 
 // Logger
 exports.log = (content, type = 'log') => {

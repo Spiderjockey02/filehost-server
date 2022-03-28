@@ -4,10 +4,8 @@ const express = require('express'),
 	{ UserSchema } = require('../../models'),
 	fs = require('fs'),
 	{ company } = require('../../config'),
-	{ logger } = require('../../utils'),
+	{ logger, createThumbnail, isFresh } = require('../../utils'),
 	md = require('marked'),
-	imageThumbnail = require('image-thumbnail'),
-	{ spawn } = require('child_process'),
 	router = express.Router();
 
 // Home page
@@ -27,13 +25,13 @@ router.get('/', async (req, res) => {
 });
 
 // For web scalpers
-router.get('/robots.txt', (req, res) => res.sendFile(process.cwd() + '/src/website/assets/robots.txt'));
+router.get('/robots.txt', (req, res) => res.sendFile(`${process.cwd()}/src/website/assets/robots.txt`));
 
 // For web scalpers
-router.get('/arc-sw.js', (req, res) => res.sendFile(process.cwd() + '/src/website/public/js/arc-sw.js'));
+router.get('/arc-sw.js', (req, res) => res.sendFile(`${process.cwd()}/src/website/public/js/arc-sw.js`));
 
 // Site map
-router.get('/sitemap.xml', (req, res) => res.sendFile(process.cwd() + '/src/website/assets/sitemap.xml'));
+router.get('/sitemap.xml', (req, res) => res.sendFile(`${process.cwd()}/src/website/assets/sitemap.xml`));
 
 // Terms and conditions page
 router.get('/terms-and-conditions', (req, res) => {
@@ -158,50 +156,24 @@ router.get('/user-content/:userID/*', ensureAuthenticated, (req, res) => {
 router.get('/thumbnail/:userID/*', ensureAuthenticated, async (req, res) => {
 	// Make sure no one else accessing their data
 	if (req.user._id == req.params.userID) {
+
+		// Read file from cached first
+		if (isFresh(req, res)) return res.status(304).end();
+
+		// Check if file exists and create thumbnail
 		const path = decodeURI(process.cwd() + '/src/website/files/thumbnails/' + req._parsedOriginalUrl.pathname.slice(11));
-		if (fs.existsSync(path)) {
+
+		if (fs.existsSync(path)) return res.sendFile(path);
+
+		// Create thumbnail of file
+		try {
+			console.log(req)
+			await createThumbnail(path, req._parsedOriginalUrl.pathname.slice(11), req.query.type);
 			res.sendFile(path, (err) => {
-				if (err) console.log(err);
+				if (err) res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
 			});
-		} else {
-			const options = { width: 200, height: 250, withMetaData: true, fit: 'inside', responseType: 'base64' };
-			try {
-				const thumbpath = decodeURI(process.cwd() + '/src/website/files/userContent/' + req._parsedOriginalUrl.pathname.slice(11));
-				// Create thumbnail
-				switch (require('mime-types').lookup(thumbpath).split('/')[0]) {
-				case 'image': {
-					const thumbnail = await imageThumbnail(decodeURI(process.cwd() + '/src/website/files/userContent/' + req._parsedOriginalUrl.pathname.slice(11)), options);
-					const img = Buffer.from(thumbnail, 'base64');
-
-					res.writeHead(200, {
-						'Content-Type': 'image/png',
-						'Content-Length': img.length,
-					});
-					res.end(img);
-
-					// create the folders and file
-					await fs.mkdir(path.split('/').slice(0, -1).join('/'), { recursive: true });
-					await fs.writeFile(path, img);
-					break;
-				}
-				case 'video': {
-					try {
-						await fs.mkdir(path.split('/').slice(0, -1).join('/'), { recursive: true }, (err) => console.log(err));
-
-						spawn('ffmpeg', ['-i', thumbpath, '-ss', '00:00:01.000', '-vframes', '1', path.split('.').slice(0, -1).join('')]);
-					} catch (err) {
-						console.log(err);
-						res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
-					}
-					break;
-				}
-				default:
-					res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
-				}
-			} catch (err) {
-				console.log(err);
-				res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
-			}
+		} catch (e) {
+			res.sendFile(process.cwd() + '/src/website/public/img/file-icon.png');
 		}
 	} else {
 		res.status(403)

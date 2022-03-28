@@ -42,11 +42,21 @@
                 </div>
               </div>
             </div>
+            <div class="card shadow mb-4">
+              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">File types uploaded</h6>
+              </div>
+              <div class="card-body">
+                <div class="chart-area">
+                  <canvas id="mimeTypechart"></canvas>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="col-xl-6 col-md-6 col-lg-6 mb-4">
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Data usage</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Referral link</h6>
               </div>
               <div class="card-body">
                 <div class="chart-area">
@@ -67,6 +77,18 @@
 
     	return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
     };
+    new Chart(document.getElementById("mimeTypechart"), {
+      type: 'bar',
+      data: <%- JSON.stringify(mimeTypeChart)%>,
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
     new Chart(document.getElementById("referralLinks"), {
       type: 'bar',
       data: <%- JSON.stringify(ReferLinks)%>,
