@@ -1,4 +1,4 @@
-<div class="side-text" style="padding-bottom:20px">
+<div class="side-text container-floud" style="padding-bottom:20px;">
   <% if (path == '/') { %>
   <a type="button" data-toggle="collapse" data-target="#recentCollapse" aria-expanded="true" aria-controls="collapseExample">
     Recent files <svg height="16" viewBox="0 0 16 16" width="16" focusable="false" aria-hidden="true" role="presentation" data-toggle="tooltip" data-placement="top" title="Toggle recent">
@@ -7,10 +7,12 @@
   </a>
   <div class="collapse show" id="recentCollapse">
     <div class="d-flex justify-content-start">
-      <% for (file of user.recent.slice(0,9)) { %>
-        <a href="/files<%= file.path%>">
-          <div class="card recentIcon" style="max-width:170px;">
-            <img class="card-img-top" src="/thumbnail/<%= user._id%><%= file.path.replace(file.extension, '.png')%>" alt="Card image cap" style="height:75px;">
+      <% for (file of user.recent.reverse().slice(0,9)) { %>
+        <a href="/files<%= file.path%>" class="boo">
+          <div class="card recentIcon">
+            <div class="image-container">
+              <img class="card-img-top lozad" data-src="/thumbnail/<%= user._id%><%= file.path.replace(file.extension, '.jpg')%>?type=<%= file.extension%>" alt="Card image cap" width="200" height="200">
+            </div>
             <div class="card-body" style="border-top: 1px solid #e3e3e3;padding:0px 10px">
               <p class="text-truncate" data-toggle="tooltip" data-placement="top" title="<%= file.name%>" style="color:black"><%= file.name%></p>
             </div>
@@ -22,9 +24,39 @@
   </div>
   <% } %>
 </div>
-<style media="screen">
+<style>
+  .d-flex {
+    max-width: 84vw;
+  }
+  .d-flex a {
+    max-width: max(0px, calc((100vw - 120px)*999));
+    overflow: hidden;
+  }
   .recentIcon:hover {
     border: 0.5px solid black;
     border-radius: 4px;
   }
+  .image-container {
+    max-height: 100px;
+    overflow: hidden;
+  }
+  .image-container img {
+    max-height: initial;
+    object-position: 0 -50%;
+  }
+  .boo:not(:last-child):after {
+    content: "";
+    position: absolute;
+    width: calc(100% - 18px);
+  }
+  .boo {
+    max-width: none;
+    overflow: initial;
+  }
 </style>
+<script>
+  $(document).ready(function() {
+    const observer = lozad(); // lazy loads elements with default selector as '.lozad'
+    observer.observe();
+  })
+</script>

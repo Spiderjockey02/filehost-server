@@ -2,10 +2,16 @@
 <div class="container-fluid">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
   &nbsp;
-  <h4 style="text-align:center"><%= fileInfo.name.replace(fileInfo.extension, ' ')%></h4>
-  <% if (['.mp4', '.mov'].includes(fileInfo.extension)) { %>
-    <%- include('../partials/video-player', { video: file, domain })%>
-  <% } else if (['.png', '.gif', '.jpg', '.jpeg', '.webp'].includes(fileInfo.extension)) { %>
+  <h4 style="text-align:center" class="text-truncate"><%= fileInfo.name.replace(fileInfo.extension, ' ')%></h4>
+  <% if (fileInfo.mimeType.split('/')[0] == 'video') { %>
+    <div class="row">
+      <div class="col-sm-8">
+        <%- include('../partials/video-player', { video: file })%>
+      </div>
+      <div class="col-sm-4">
+      </div>
+    </div>
+  <% } else if (fileInfo.mimeType.split('/')[0] == 'image') { %>
     <img class="lozad center" data-src="<%= domain%>/user-content/<%=  file%>" >
   <% } else if (['.html', '.js', '.css', '.jar', '.log'].includes(fileInfo.extension)) { %>
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
@@ -20,8 +26,8 @@
 </div>
 &nbsp;
 <script>
-  $(document).ready(function($) {
-    const observer = lozad(); // lazy loads elements with default selector as '.lozad'
+  $(document).ready(function() {
+    const observer = lozad();
     observer.observe();
   })
 </script>
@@ -37,9 +43,8 @@
     max-height: 65vh;
     width:auto;
   }
-li.L0, li.L1, li.L2, li.L3,
-li.L5, li.L6, li.L7, li.L8 {
-  list-style-type: decimal !important;
-}
-
+  li.L0, li.L1, li.L2, li.L3,
+  li.L5, li.L6, li.L7, li.L8 {
+    list-style-type: decimal !important;
+  }
 </style>

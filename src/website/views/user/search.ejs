@@ -34,9 +34,10 @@
         &nbsp
         <% for (const file of files) { %>
           <div class="media" style="background-color:grey">
-            <img class="mr-3" src="/img/file-icon.png" alt="Generic placeholder image" style="padding:10px;">
+            <% console.log(file.url)%>
+            <img class="mr-3" src="<%= `/thumbnail/${file.url}` %>" alt="Generic placeholder image" style="padding:10px;">
             <div class="media-body">
-              <h5 class="mt-0"><a href="files<%= file.url.slice(24)%>"><%= file.name.split('/').shift() %></a></h5>
+              <h5 class="mt-0"><a href="/files/<%= file.url.slice(25)%>"><%= file.name.split('/').shift() %></a></h5>
               <nav style="--breadcrumb-divider: quote('>');font-size:13px;" aria-label="breadcrumb">
                 <ol class="breadcrumb" style="background-color:white;">
                   <li class="breadcrumb-item">

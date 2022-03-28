@@ -1,10 +1,9 @@
 const express = require('express'),
 	router = express.Router(),
-	{ logger, dirTree } = require('../../utils'),
+	{ logger, dirTree, isFresh } = require('../../utils'),
 	{ ensureAuthenticated } = require('../config/auth'),
 	{ UserSchema } = require('../../models'),
 	fs = require('fs'),
-	fresh = require('fresh'),
 	formidable = require('formidable'),
 	stringSimilarity = require('string-similarity'),
 	location = process.cwd() + '/src/website/files/userContent/';
@@ -24,29 +23,28 @@ function SearchHG(tree, value, path = tree.name) {
 }
 
 function createSearchList(tree) {
-	const foundItems = []
+	const foundItems = [];
 	if (tree.type == 'directory') {
-		for (var child of tree.children) {
+		for (const child of tree.children) {
 			if (child.type == 'directory') {
-				foundItems.push(...createSearchList(child))
+				foundItems.push(...createSearchList(child));
 			} else {
-				foundItems.push(child.name)
+				foundItems.push(child.name);
 			}
 		}
 	} else {
-		foundItems.push(tree.name)
+		foundItems.push(tree.name);
 	}
 
-	return foundItems
+	return foundItems;
 }
 
-// Show file explorer
-router.get('/*', ensureAuthenticated, async (req, res) => {
+router.get('/search', ensureAuthenticated, (req, res) => {
 	// User is searching for file
-	if (req.query.search) {
-		const { search, fileType, dateUpdated } = req.query;
+	if (req.query.query) {
+		const { query, fileType, dateUpdated } = req.query;
 		const tree = dirTree(decodeURI(location + req.user._id));
-		let files = SearchHG(tree, search);
+		let files = SearchHG(tree, query);
 		// Filter out files/folders
 		if (fileType && fileType !== 0) {
 			files = files.filter(item => {
@@ -88,12 +86,15 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 		}
 		return res.render('user/search', {
 			user: req.user,
-			query: req.query.search,
+			query: req.query.query,
 			files: files.map(file => Object.assign(dirTree(decodeURI(location + file)), { url: file })),
 			...require('../../utils'),
 		});
 	}
+});
 
+// Show file explorer
+router.get('/*', ensureAuthenticated, async (req, res) => {
 	const URLpath = req._parsedOriginalUrl.pathname,
 		user = req.user,
 		path = decodeURI(location + req.user._id + URLpath.substring(6, URLpath.length));
@@ -102,7 +103,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 	if (fs.existsSync(path)) {
 		// Now check if file is a folder or file
 		const files = dirTree(path);
-		await UserSchema.findOneAndUpdate({ _id: req.user._id }, { size: `${files.size}` });
+
 		if (files.type == 'file') {
 			// update recently viewed files
 			try {
@@ -127,13 +128,19 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				domain: require('../../config').domain,
 			});
 		} else {
-
 			const totalPages = Math.ceil(files.children.length / 50) - 1;
-			if (files.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico'].includes(item.extension)).length / files.children.length >= 0.60) {
+			if (files.children.filter(item => {
+				if (item.type == 'directory') return false;
+				return ['video', 'image'].includes(require('mime-types').lookup(item.extension).split('/')[0]);
+			}).length / files.children.length >= 0.60) {
+				if (req.query.page < 0) return res.redirect(`${req._parsedOriginalUrl.pathname}?page=1`);
+				if (req.query.page > totalPages) return res.redirect(`${req._parsedOriginalUrl.pathname}?page=${totalPages}`);
 				let page = req.query.page >= totalPages ? totalPages : Number(req.query.page ?? 0);
 				page = req.query.page < 0 ? 0 : page;
+				console.log(`Page: ${page}`);
 				files.children = files.children.slice(page * 50, (page + 1) * 50);
 			}
+			console.log(files);
 			res.render('user/files', {
 				user: req.user,
 				path: (URLpath == '/files' ? '/' : URLpath),
@@ -142,7 +149,7 @@ router.get('/*', ensureAuthenticated, async (req, res) => {
 				currentPage: req.query.page ?? 1,
 				maxPage: totalPages,
 				searchList: createSearchList(files),
-				...require('../../utils'), files
+				...require('../../utils'), files,
 			});
 		}
 	} else {
@@ -294,7 +301,7 @@ function addFilesFromDirectoryToZip(directoryPath, userID, zip) {
 
 // create search query
 router.post('/search', ensureAuthenticated, (req, res) => {
-	res.redirect(`/files?search=${req.body.search}&fileType=${req.body.fileType}&dateUpdated=${req.body.dateUpdated}`);
+	res.redirect(`/files/search?query=${req.body.search}&fileType=${req.body.fileType}&dateUpdated=${req.body.dateUpdated}`);
 });
 
 // Rename file/folder
@@ -330,15 +337,6 @@ router.post('/change', ensureAuthenticated, (req, res) => {
 });
 
 module.exports = router;
-
-// Caching
-function isFresh(req, res) {
-	return fresh(req.headers, {
-		'etag': res.getHeader('ETag'),
-		'last-modified': res.getHeader('Last-Modified'),
-	});
-}
-
 
 // Create random alphanumerical string
 function randomStr(len, arr) {

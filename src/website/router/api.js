@@ -47,8 +47,7 @@ router.post('/feedback', apiLimiter, async (req, res) => {
 
 // Edit account (delete, reset password, change tier)
 router.post('/account/:endpoint', apiLimiter, async (req, res) => {
-	console.log(req.body);
-	const endpoint = req.params.endpoint;
+	const { endpoint } = req.params;
 	const userID = req.body.custID;
 	try {
 		switch (endpoint) {
@@ -73,9 +72,7 @@ router.post('/account/:endpoint', apiLimiter, async (req, res) => {
 			break;
 		case 'email': {
 			// Send verify email to user again
-			console.log(userID);
 			const user = await UserSchema.findOne({ _id: userID });
-			console.log(user);
 			await require('axios').get(`${require('../../config').mailService.domain}/verify?email=${user.email}&ID=${userID}`);
 			break;
 		}

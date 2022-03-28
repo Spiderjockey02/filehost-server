@@ -56,11 +56,11 @@
             <input type="text" id="myInput" class="form-input form-control text-truncate" style="border:none;background-color:#f4f4f4" placeholder="Search files and folders" name="search" autocomplete="off">
             <div class="input-group-append" id="filter">
               <span data-toggle="tooltip" data-placement="bottom" title="Search options">
-                <button id="fileTypeButton" class="btn btn-outline-secondary dropdown-toggle" style="background-color:#f4f4f4;border-radius:0px 8px 8px 0px;border:none;color:#505762;height:38px" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button id="fileTypeButton" class="btn btn-outline-secondary dropdown-toggle" style="background-color:#f4f4f4;border-radius:0px 8px 8px 0px;border:none;color:#505762;height:38px" type="button" aria-haspopup="true" aria-expanded="false">
                   <i class="fas fa-sliders-h"></i>
                 </button>
               <span>
-              <div class="dropdown-menu p-4" style="width:100%;padding:15px;box-shadow: 1px 1px 1px 1px rgba(0,0,0,0.25)">
+              <div class="dropdown-menu p-4" style="width:100%;padding:15px;box-shadow: 1px 1px 1px 1px rgba(0,0,0,0.25)" id="searchDropdown">
                 <div class="form-group">
                   <label for="inputGroupSelect01">File type(s)</label>
                   <select class="custom-select" id="inputGroupSelect01" name="fileType">

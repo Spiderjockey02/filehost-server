@@ -51,12 +51,12 @@
   </div>
   <%- include('./recent-preview') %>
   <!--Photo album-->
-  <% if (files.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico'].includes(item.extension)).length / files.children.length >= 0.60) { %>
+  <% if (files.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico', '.mp4', '.mov'].includes(item.extension)).length / files.children.length >= 0.60) { %>
     <div class="row justify-content-start">
       <% for (const file of files.children.filter(file => file.type == 'file').slice(0, 50)) { %>
-        <div class="col-sm">
+        <div class="col-sm" style="margin-bottom: 10px;">
           <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>">
-            <img class="lozad center" data-src="/thumbnail/<%= user._id %>/<%= path.substring(7, path.length) %>/<%=  file.name%>" style="max-width:200px;height:auto;" alt=<%=  file.name%>>
+            <img class="lozad center" data-src="/thumbnail/<%= user._id %>/<%= path.substring(7, path.length) %>/<%=  file.name.split('.').slice(0, -1).join('.')%>.jpg?type=<%= file.name.split('.').pop()%>" style="width:auto;max-width:200px;height:auto;max-height:275px;" alt="<%=  file.name%>" width="200" height="230">
           </a>
         </div>
       <% } %>
@@ -107,9 +107,8 @@
               </div>
             </th>
             <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
-            <th scope="row" class="text-truncate" style="min-width: 150px;">
+            <th scope="row" class="text-truncate" style="max-width: calc( 70 * 1vw );">
               <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
-              <!-- Default dropright button -->
             </th>
             <td data-trueValue="0"><%= file.children?.length ?? 0 %> files</td>
             <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
@@ -123,7 +122,9 @@
               </div>
             </th>
             <th id="Type" scope="col" style="text-align:center"><%- getFileIcon(file) %></th>
-            <th scope="row" class="text-truncate" style="max-width: 150px;"> <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a></th>
+            <th scope="row" class="text-truncate" style="max-width: calc( 70 * 1vw );">
+              <a href="<%= decodeURI(`${path == '/' ? '/files' : path}/${file.name}`) %>"><%= file.name %></a>
+            </th>
             <td data-trueValue="<%= file.size%>"><%= formatBytes(file.size) %></td>
             <td data-trueValue="<%= file.modified.getTime()%>"><%= file.modified?.toDateString() %></td>
           </tr>
@@ -302,7 +303,11 @@
   }
   @media (max-width: 710px) {
     th:last-child, td:last-child {
-      display:none
+      display:none;
+    }
+    img {
+      max-width: 100%;
+      width: 100%;
     }
   }
 </style>

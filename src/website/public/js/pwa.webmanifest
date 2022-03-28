@@ -1,12 +1,13 @@
 {
-  "name": "Progressive Web App example",
-  "short_name": "pwa-tutorial",
-  "description": "Progressive Web App example to be used in conjuction with the article in LogRocket",
+  "name": "FileSharer - Cloud storage",
+  "short_name": "FileSharer",
+  "description": "FileSharer, The next step in cloud storage.",
   "icons": [
     {
       "src": "/../img/splash-screen.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
