@@ -11,7 +11,7 @@
     "axios": "^0.21.4",
     "b64-to-blob": "^1.2.19",
     "bcrypt": "^5.0.1",
-    "chalk": "^4.1.2",
+    "chalk": "^5.2.0",
     "check-disk-space": "^3.0.1",
     "compression": "^1.7.4",
     "connect-flash": "^0.1.1",
