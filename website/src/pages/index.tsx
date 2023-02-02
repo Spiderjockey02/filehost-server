@@ -4,13 +4,14 @@ import Footer from '../components/footer';
 import Link from 'next/link';
 import config from '../config';
 import { useSession } from 'next-auth/react';
+import Script from 'next/script';
 
 export default function Home() {
 	const { data: session, status } = useSession();
-	console.log('1', session);
-	console.log('2', status);
+
 	return (
 		<>
+			<Script src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js" strategy="worker" />
 			<NavBar />
 			<section id="hero" className="d-flex align-items-center">
 				<div className="container">
@@ -36,21 +37,21 @@ export default function Home() {
 							</div>
 							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
 								<div className="icon-box" data-aos="fade-up" data-aos-delay="200">
-									<div className="icon"><i className="bx bx-file"></i></div>
+									<div className="icon"><i className="bi bi-file-earmark-text"></i></div>
 									<h4 className="title">Back up and protect</h4>
 									<p className="description">If you lose your device, you won’t lose your files and photos when they’re saved in {config.company.name}.</p>
 								</div>
 							</div>
 							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
 								<div className="icon-box" data-aos="fade-up" data-aos-delay="300">
-									<div className="icon"><i className="bx bx-tachometer"></i></div>
+									<div className="icon"><i className="fa-solid fa-gauge"></i></div>
 									<h4 className="title">Superior loading speeds</h4>
 									<p className="description">Access, send and recieve important files with speed.</p>
 								</div>
 							</div>
 							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
 								<div className="icon-box" data-aos="fade-up" data-aos-delay="400">
-									<div className="icon"><i className="bx bx-world"></i></div>
+									<div className="icon"><i className="bi bi-globe-europe-africa"></i></div>
 									<h4 className="title">Anywhere access</h4>
 									<p className="description">Enjoy the freedom to access, edit, and share your files on all your devices, wherever you are.</p>
 								</div>
@@ -64,29 +65,29 @@ export default function Home() {
 						<div className="row">
 							<div className="col-lg-3 col-md-6">
 								<div className="count-box">
-									<i className="bi bi-emoji-smile"></i>
-									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter"></span>
+									<i className="fa-solid fa-users"></i>
+									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter">0</span>
 									<p>Happy users</p>
 								</div>
 							</div>
 							<div className="col-lg-3 col-md-6 mt-5 mt-md-0">
 								<div className="count-box">
-									<i className="bi bi-file-earmark-text"></i>
-									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter"></span>
+									<i className="fa-solid fa-file"></i>
+									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter">0</span>
 									<p>Total files</p>
 								</div>
 							</div>
 							<div className="col-lg-3 col-md-6 mt-5 mt-lg-0">
 								<div className="count-box">
-									<i className="bi bi-hdd"></i>
-									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" data-purecounter-currency="true" className="purecounter-data"></span>
+									<i className="fa-solid fa-hard-drive"></i>
+									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" data-purecounter-currency="true" className="purecounter-data">0</span>
 									<p>Total storage used</p>
 								</div>
 							</div>
 							<div className="col-lg-3 col-md-6 mt-5 mt-lg-0">
 								<div className="count-box">
 									<i className="bi bi-people"></i>
-									<span data-purecounter-start="0" data-purecounter-end="15" data-purecounter-duration="1" className="purecounter"></span>
+									<span data-purecounter-start="0" data-purecounter-end="15" data-purecounter-duration="1" className="purecounter">0</span>
 									<p>Hard Workers</p>
 								</div>
 							</div>
@@ -183,56 +184,57 @@ export default function Home() {
 						</div>
 						<div className="row justify-content-center">
 							<div className="col-xl-10">
-								<ul className="faq-list">
-									<li>
-										<div data-toggle="collapse" className="collapsed question">Can I stop my subscription anytime? <i className="bi bi-chevron-down icon-show"></i><i className="bi bi-chevron-up icon-close"></i></div>
-										<div id="faq1" className="collapse" data-parent=".faq-list">
-											<p>
-                      Yes, but you will not be able to upload anymore files until you are in your limit of your new tier.
-											</p>
+								<div className="accordion" id="accordionExample">
+									<div className="accordion-item">
+										<h2 className="accordion-header" id="headingOne">
+											<button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+      									Can I stop my subscription anytime?
+											</button>
+										</h2>
+										<div id="collapseOne" className="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+											<div className="accordion-body">
+											 Yes, but you will not be able to upload anymore files until you are in your limit of your new tier.
+											</div>
 										</div>
-									</li>
-									<li>
-										<div data-toggle="collapse" className="collapsed question">What payment methods are supported? <i className="bi bi-chevron-down icon-show"></i><i className="bi bi-chevron-up icon-close"></i></div>
-										<div id="faq2" className="collapse" data-parent=".faq-list">
-											<p>
-                        We accept debit/credit cards and even <a href="https://www.paypal.com/">paypal</a>.
-											</p>
+									</div>
+									<div className="accordion-item">
+										<h2 className="accordion-header" id="headingTwo">
+											<button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+        								What payment methods are supported?
+											</button>
+										</h2>
+										<div id="collapseTwo" className="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+											<div className="accordion-body">
+												We accept debit/credit cards and even <a href="https://www.paypal.com/">paypal</a>.
+											</div>
 										</div>
-									</li>
-									<li>
-										<div data-toggle="collapse" className="collapsed question">Where can I find billing information? <i className="bi bi-chevron-down icon-show"></i><i className="bi bi-chevron-up icon-close"></i></div>
-										<div id="faq3" className="collapse" data-parent=".faq-list">
-											<p>
-                        Just simply login and go to your dashboard Billing information and there you will see your payment history for your account.
-											</p>
+									</div>
+									<div className="accordion-item">
+										<h2 className="accordion-header" id="headingThree">
+											<button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+								        Where can I find billing information?
+											</button>
+										</h2>
+										<div id="collapseThree" className="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+											<div className="accordion-body">
+												 Just simply login and go to your dashboard Billing information and there you will see your payment history for your account.
+											</div>
 										</div>
-									</li>
-									<li>
-										<div data-toggle="collapse" className="collapsed question">Does {config.company.name} offer a Service Level Agreement (SLA)? <i className="bi bi-chevron-down icon-show"></i><i className="bi bi-chevron-up icon-close"></i></div>
-										<div id="faq4" className="collapse" data-parent=".faq-list">
-											<p>
-                        Yes, have a look <Link href="/SLA">here</Link>.
-											</p>
+									</div>
+
+									<div className="accordion-item">
+										<h2 className="accordion-header" id="headingFour">
+											<button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+												Does {config.company.name} offer a Service Level Agreement (SLA)?
+											</button>
+										</h2>
+										<div id="collapseFour" className="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionExample">
+											<div className="accordion-body">
+												Yes, have a look <Link href="/SLA">here</Link>.
+											</div>
 										</div>
-									</li>
-									<li>
-										<div data-toggle="collapse" className="collapsed question">How secure is my data? <i className="bi bi-chevron-down icon-show"></i><i className="bi bi-chevron-up icon-close"></i></div>
-										<div id="faq5" className="collapse" data-parent=".faq-list">
-											<p>
-                        Only you and the people you share the file to has access. All data is encrypted on our servers and we operate using HTTPS only!
-											</p>
-										</div>
-									</li>
-									<li>
-										<div data-toggle="collapse" className="collapsed question">How much does {config.company.name} Storage cost? <i className="bi bi-chevron-down icon-show"></i><i className="bi bi-chevron-up icon-close"></i></div>
-										<div id="faq6" className="collapse" data-parent=".faq-list">
-											<p>
-                        Have a look at our available plans <Link href="#pricing">here</Link>.
-											</p>
-										</div>
-									</li>
-								</ul>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>

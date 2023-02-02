@@ -33,5 +33,4 @@ model User {
   password      String?
   image         String?
   accounts      Account[]
-  sessions      Session[]
 }

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 
 export default function FileNavBar() {
 	const { data: session } = useSession();
@@ -69,7 +70,7 @@ export default function FileNavBar() {
 							<Link className="dropdown-item text-dark" href="/user/dashboard">Dashboard</Link>
 							<Link className="dropdown-item text-dark" href="/files">My files</Link>
 							<div className="dropdown-divider"></div>
-							<a className="dropdown-item" href="/user/logout" id="logout">Logout</a>
+							<a className="dropdown-item" href="#" onClick={() => signOut()} id="logout">Logout</a>
 						</div>
 					</li>
 				</ul>

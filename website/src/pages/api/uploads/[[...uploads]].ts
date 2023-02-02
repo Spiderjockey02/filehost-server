@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse<Response>) => {
-	const refererURL = (req.headers['referer'] as string).split('files')[1];
+	const refererURL = decodeURI((req.headers['referer'] as string).split('files')[1]);
 
 	const session = await getServerSession(req, res, AuthOptions);
 	if (session) {
