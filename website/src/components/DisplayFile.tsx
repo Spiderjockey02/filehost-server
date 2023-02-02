@@ -1,6 +1,8 @@
 import type { fileItem } from '../utils/types';
 import type { ImageLoaderProps } from 'next/image';
 import VideoPlayer from './videoPlayer';
+import MimeType from 'mime-types';
+
 interface Props {
   files: fileItem
 }
@@ -13,8 +15,8 @@ export default function DisplayFile({ files }: Props) {
 
 	return (
 		<div>
-			{files.extension === '.jpg' ?
-				<img className="center" src={`http://192.168.0.14:3000/api/thumbnail/${files.name}`}
+			{(MimeType.lookup(files.name) as string).split('/')[0] == 'image' ?
+				<img className="center" src={`http://192.168.0.14:3000/api/uploads/${files.name}`}
 					alt={files.name}
 				/>
 				: <VideoPlayer files={files}/>

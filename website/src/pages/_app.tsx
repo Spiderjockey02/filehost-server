@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react';
 import 'bootstrap/dist/css/bootstrap.css';
 import { useEffect } from 'react';
 import Script from 'next/script';
+import Header from '../components/header';
 
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
 	useEffect(() => {
@@ -12,7 +13,8 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
 
 	return (
 		<SessionProvider session={session}>
-			<Script src="https://kit.fontawesome.com/fa3685e359.js" />
+			<Script src="/fontawesome.js" />
+			<Header />
 			<Component {...pageProps} />
 		</SessionProvider>
 	);

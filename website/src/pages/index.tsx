@@ -1,5 +1,4 @@
 import '@/styles/Home.module.css';
-import Header from '../components/header';
 import NavBar from '../components/navBar';
 import Footer from '../components/footer';
 import Link from 'next/link';
@@ -12,7 +11,6 @@ export default function Home() {
 	console.log('2', status);
 	return (
 		<>
-			<Header />
 			<NavBar />
 			<section id="hero" className="d-flex align-items-center">
 				<div className="container">

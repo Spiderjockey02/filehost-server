@@ -18,7 +18,7 @@ export default function DisplayFile({ files }: Props) {
 					</svg>
 				</div>
 				<video controls className="video" id="video" preload="metadata">
-					<source src={`http://192.168.0.14:3000/api/thumbnail/${files.name}`} type="video/mp4" />
+					<source src={`http://192.168.0.14:3000/api/uploads/${files.name}`} type="video/mp4" />
 				</video>
 				<div id="settings-tab" className="video-controls hidden">
 					<div className="form-group">

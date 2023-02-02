@@ -1,6 +1,22 @@
 import Link from 'next/link';
+import { formatBytes } from '../utils/functions';
+interface Props {
+	size: number
+}
 
-export default function SideBar() {
+export default function SideBar({ size }: Props) {
+
+	function getColor(num: number) {
+		if (num >= 4 * 1024 * 1024 * 1024) {
+			return 'bg-danger';
+		} else if (num >= 2.5 * 1024 * 1024 * 1024) {
+			return 'bg-warning';
+		} else {
+			return 'bg-success';
+		}
+	}
+
+
 	return (
 		<nav id="sidebar">
 			<Link href="/">
@@ -22,7 +38,7 @@ export default function SideBar() {
 						</Link>
 					</span>
 					<span className="side-text">
-						<a type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+						<a type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
 							<i className="fas fa-star"></i><span className="side-text">Favourites <i className="fas fa-sort-up" style={{ verticalAlign:'center', float:'right' }}></i></span>
 						</a>
 						<div className="collapse" id="collapseExample">
@@ -37,11 +53,13 @@ export default function SideBar() {
 				</li>
 			</ul>
 			<div className="p-2 bottom" style={{ position:'fixed', bottom:'0', height:'11%' }}>
-				<label className="side-text">1GB of 5GB used</label>
+				<label className="side-text">{formatBytes(size)} of 5GB used</label>
 				<div className="progress" style={{ width:'200px' }}>
-					<div className="progress-bar bg-danger" role="progressbar" style={{ width:'10%' }} aria-valuenow={5} aria-valuemin={0} aria-valuemax={10}></div>
+					<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
 				</div>
-				<a href="/user/trash" style={{ position:'fixed', bottom:'0', height:'4%', color:'black' }}><i className="fas fa-trash"></i> <span className="side-text">Deleted files</span></a>
+				<Link href="/user/trash" style={{ position:'fixed', bottom:'0', height:'4%', color:'black', textDecoration: 'none' }}>
+					<i className="fas fa-trash"></i> <span className="side-text">Deleted files</span>
+				</Link>
 			</div>
 		</nav>
 	);

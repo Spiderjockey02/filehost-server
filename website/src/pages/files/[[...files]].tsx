@@ -3,15 +3,17 @@ import SideBar from '../../components/sideBar';
 import Directory from '../../components/directory';
 import PhotoAlbum from '../../components/photoAlbum';
 import DisplayFile from '../../components/DisplayFile';
+import SimpleProgressBar from '../../components/SimpleProgress';
 import directoryTree from '../../utils/directory';
 import type { fileItem } from '../../utils/types';
 import type { GetServerSidePropsContext } from 'next';
-import { ChangeEvent } from 'react';
+import { ChangeEvent, useState } from 'react';
 import Link from 'next/link';
 import fs from 'fs';
 import { getServerSession } from 'next-auth/next';
 import { AuthOptions } from '../api/auth/[...nextauth]';
-import {findUser} from '../../db/prisma';
+import { findUser } from '../../db/prisma';
+import axios, { AxiosRequestConfig } from 'axios';
 
 interface Props {
 	dir: fileItem | null
@@ -20,6 +22,9 @@ interface Props {
 
 export default function Files({ dir, path = '/' }: Props) {
 
+	const [progress, setProgress] = useState(0);
+	const [remaining, setRemaining] = useState(0);
+
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
 
@@ -27,30 +32,51 @@ export default function Files({ dir, path = '/' }: Props) {
 
 		if (!fileInput.files || fileInput.files.length === 0) return alert('Files list is empty');
 
-		const selectedFile = fileInput.files[0];
+
+		const validFiles: File[] = [];
+		for (let i = 0; i < fileInput.files.length; i++) {
+			const file = fileInput.files[i];
+			validFiles.push(file);
+		}
 
 		/** Reset file input */
 		e.currentTarget.type = 'text';
 		e.currentTarget.type = 'file';
 
 		try {
+			const startAt = Date.now();
 			const formData = new FormData();
-			formData.append('media', selectedFile);
+			validFiles.forEach((file) => formData.append('media', file));
+			const options: AxiosRequestConfig = {
+				headers: { 'Content-Type': 'multipart/form-data' },
+				onUploadProgress: (progressEvent: any) => {
+					const { loaded, total } = progressEvent;
 
-			const res = await fetch('/api/upload', {
-				method: 'POST',
-				body: formData,
-			});
+					// Calculate the progress percentage
+					const percentage = (loaded * 100) / total;
+					setProgress(+percentage.toFixed(2));
 
-			const { data, error }: {
-				data: {
-					url: string | string[];
-				} | null;
-				error: string | null;
-			} = await res.json();
+					// Calculate the progress duration
+					const timeElapsed = Date.now() - startAt;
+					const uploadSpeed = loaded / timeElapsed;
+					const duration = (total - loaded) / uploadSpeed;
+					setRemaining(duration);
+				},
+			};
 
-			if (error || !data) return alert(error || 'Sorry! something went wrong.');
-			console.log('File was uploaded successfylly:', data);
+			const {
+				data: { data },
+			} = await axios.post<{
+        data: {
+          url: string | string[];
+        };
+      }>('/api/upload', formData, options);
+			console.log('data', data);
+
+			// if (error || !data) return alert(error || 'Sorry! something went wrong.');
+			alert(`File was uploaded successfully: ${data}`);
+			setProgress(0);
+			setRemaining(0);
 		} catch (error) {
 			console.error(error);
 			alert('Sorry! something went wrong.');
@@ -60,7 +86,7 @@ export default function Files({ dir, path = '/' }: Props) {
 	return (
 		<>
 			<div className="wrapper" style={{ height:'100vh' }}>
-				<SideBar />
+				<SideBar size={dir?.size ?? 0}/>
 				<div className="container-fluid">
 					<FileNavBar />
 					<div className="container-fluid">
@@ -72,7 +98,7 @@ export default function Files({ dir, path = '/' }: Props) {
 											{(path == '/') ?
 												<b style={{ color:'black' }}>Home</b>
 												: <b>
-													<Link className="directoyLink" href={"/files"} style={{ color:'grey' }}>Home</Link>
+													<Link className="directoyLink" href={'/files'} style={{ color:'grey' }}>Home</Link>
 												</b>
 											}
 					          </li>
@@ -95,7 +121,7 @@ export default function Files({ dir, path = '/' }: Props) {
 										<button type="button" className="btn btn-outline-secondary" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">New <i className="fas fa-plus"></i></button>
 										<div className="dropdown-menu dropdown-menu-right">
 											<label className="dropdown-item" id="fileHover">
-														File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} />
+														File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} multiple/>
 											</label>
 											<input type="hidden" value="test" name="path" />
 											<label className="dropdown-item" id="fileHover">
@@ -118,6 +144,7 @@ export default function Files({ dir, path = '/' }: Props) {
 									<Directory files={dir} dir={path} />
 								: <DisplayFile files={dir}/>
 						}
+						<SimpleProgressBar progress={progress} remaining={remaining} />
 					</div>
 				</div>
 			</div>
@@ -128,8 +155,8 @@ export default function Files({ dir, path = '/' }: Props) {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Get path
 	const path = [context.params?.files].flat();
-	const session = await getServerSession(context.req,context.res,AuthOptions)
-	const user = await findUser({email: session?.user?.email})
+	const session = await getServerSession(context.req, context.res, AuthOptions);
+	const user = await findUser({ email: session?.user?.email });
 	// Validate path
 	const basedPath = `${process.cwd()}/uploads/${user?.id}`;
 	if (fs.existsSync(`${basedPath}/${path.join('/')}`)) {
