@@ -59,15 +59,18 @@ function directoryTree(path:string) {
 			.filter(e => e !== null || e !== undefined) as fileItem[];
 
 		// Get time modified for folder
-		const folderModifed = item.children.sort((a, b) => {
-			if (a === null) return 0;
-			if (b === null) return 0;
-			if ((a.modified?.getTime() ?? 0) > (b.modified?.getTime() ?? 0)) return 1;
-			return -1;
-		})[0];
+		if (item.children.length == 0) {
+			item.modified = new Date(stats.birthtime).getTime();
+		} else {
+			const folderModifed = item.children.sort((a, b) => {
+				if (a === null) return 0;
+				if (b === null) return 0;
+				if ((new Date(a.modified).getTime() ?? 0) > (new Date(b.modified).getTime() ?? 0)) return 1;
+				return -1;
+			})[0];
 
-		console.log(folderModifed);
-		if (folderModifed !== null || folderModifed !== undefined) item.modified = folderModifed?.modified ?? new Date().getTime();
+			if (folderModifed !== null || folderModifed !== undefined) item.modified = folderModifed?.modified ?? new Date().getTime();
+		}
 
 		// Get total size of folder
 		const folderSize = getNumberOfFiles(item, 0);

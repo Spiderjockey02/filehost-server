@@ -8,6 +8,40 @@ import prisma from '../../../db/prisma';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import config from '../../../config';
 
+export const AuthOptions = {
+	adapter: PrismaAdapter(prisma),
+	providers: [
+		CredentialsProvider({
+			id: 'credentials',
+			name: 'credentials',
+			credentials: {
+				email: { label: 'email', type: 'email' },
+				password: { label: 'Password', type: 'password' },
+			},
+			async authorize(credentials) {
+				if (!credentials?.email || !credentials?.password) return null;
+				const resp = await fetch(`${config.url}/api/auth/login`, {
+					method: 'post',
+					headers: {
+						'content-type': 'application/json;charset=UTF-8',
+					},
+					body: JSON.stringify({
+						password: credentials.password,
+						email: credentials.email,
+					}),
+				});
+				const data = await resp.json();
+				return (data.success) ? data.user : null;
+			},
+		}),
+	],
+	session: {
+		strategy: 'jwt',
+		maxAge: 30 * 24 * 60 * 60,
+	},
+	secret: process.env.NEXTAUTH_SECRET,
+};
+
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
 	return NextAuth(req, res, {

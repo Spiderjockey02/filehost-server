@@ -15,11 +15,22 @@ type findUser = {
 
 // Find a user by email (for login)
 export function	findUser(data: findUser) {
-	return client.user.findUnique({
-		where: {
-			email: data.email,
-		},
-	});
+  if (data.email) {
+    return client.user.findUnique({
+  		where: {
+  			email: data.email,
+  		},
+  	});
+  } else if (data.id) {
+    return client.user.findUnique({
+      where: {
+        email: data.id,
+      },
+    });
+  } else {
+    return null
+  }
+
 }
 
 type createUser = {

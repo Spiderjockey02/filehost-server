@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 
-export default function Header() {
+export default function NavBar() {
 	const { data: session, status } = useSession();
 
 	return (

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export default function FileNavBar() {
+export default function SideBar() {
 	return (
 		<nav id="sidebar">
 			<Link href="/">

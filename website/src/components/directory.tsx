@@ -7,7 +7,7 @@ interface Props {
   dir: string
 }
 
-export default function Header({ files, dir }: Props) {
+export default function Directory({ files, dir }: Props) {
 
 	return (
 		<table className="table" id="myTable">

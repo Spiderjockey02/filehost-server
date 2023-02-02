@@ -2,12 +2,14 @@ import type { NextApiRequest } from 'next';
 import { join } from 'path';
 import formidable from 'formidable';
 import { mkdir, stat } from 'fs/promises';
+import type {User} from '@prisma/client'
 
 export const FormidableError = formidable.errors.FormidableError;
 
-export const parseForm = async (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
+export const parseForm = async (req: NextApiRequest, user: User): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
 	return await new Promise(async (resolve, reject) => {
-		const uploadDir = join(process.cwd(), `/uploads/${new Intl.DateTimeFormat('en-US').format(new Date()).replace('/', '_')}`);
+
+		const uploadDir = join(process.cwd(), `/uploads/${user.id}`);
 
 		try {
 			await stat(uploadDir);
