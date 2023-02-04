@@ -1,6 +1,6 @@
 import fs from 'fs';
 import PATH from 'path';
-import { fileType, fileItem } from './types';
+import type { fileType, fileItem } from './types';
 const constants = {
 	DIRECTORY: 'directory',
 	FILE: 'file',
@@ -45,10 +45,6 @@ function directoryTree(path:string) {
 		item.extension = ext;
 		item.type = constants.FILE as fileType;
 		item.modified = stats.mtime.getTime();
-		if (item.extension == '.url') {
-			const filedata = fs.readFileSync(item.path, 'utf8');
-			item.url = filedata.split('\n')[1].substring(4, filedata.split('\n')[1].length);
-		}
 
 	} else if (stats.isDirectory()) {
 		const dirData = safeReadDirSync(path);

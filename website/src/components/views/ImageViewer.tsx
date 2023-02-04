@@ -16,11 +16,13 @@ export default function DisplayFile({ files }: Props) {
 
 	return (
 		<div>
-			{(MimeType.lookup(files.name) as string).split('/')[0] == 'image' ?
-				<Image className="center" loader={myLoader} src={files.name}
-					alt={files.name} width={100} height={100} style={{ maxHeight: '200px' }}
-				/>
-				: <VideoPlayer files={files}/>
+			{ MimeType.lookup(files.name) != false ?
+				(MimeType.lookup(files.name) as string)?.split('/')[0] == 'image' ?
+  				<Image className="center" loader={myLoader} src={files.name}
+  					alt={files.name} width={100} height={100} style={{ maxHeight: '200px' }}
+  				/>
+  				: <VideoPlayer files={files}/>
+				: <p>Stuff</p>
 			}
 		</div>
 

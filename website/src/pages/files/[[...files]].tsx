@@ -4,12 +4,10 @@ import Directory from '../../components/directory';
 import PhotoAlbum from '../../components/photoAlbum';
 import ImageViewer from '../../components/views/ImageViewer';
 import SimpleProgressBar from '../../components/SimpleProgress';
-import directoryTree from '../../utils/directory';
 import type { fileItem } from '../../utils/types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useState } from 'react';
 import Link from 'next/link';
-import fs from 'fs';
 import { getServerSession } from 'next-auth/next';
 import { AuthOptions } from '../api/auth/[...nextauth]';
 import { findUser } from '../../db/User';
@@ -22,10 +20,9 @@ interface Props {
 type viewTypeTypes = 'List' | 'Tiles';
 
 export default function Files({ dir, path = '/' }: Props) {
-
 	const [progress, setProgress] = useState(0);
 	const [remaining, setRemaining] = useState(0);
-	const [viewType, setviewType] = useState<viewTypeTypes>('Tiles');
+	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
@@ -160,11 +157,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const session = await getServerSession(context.req, context.res, AuthOptions);
 	const user = await findUser({ email: session?.user?.email as string });
 	// Validate path
-	const basedPath = `${process.cwd()}/uploads/${user?.id}`;
-	if (fs.existsSync(`${basedPath}/${path.join('/')}`)) {
-		const files = directoryTree(`${basedPath}/${path.join('/')}`);
-		return { props: { dir: files, path: path.join('/') } };
-	} else {
-		return { props: { dir: null, path: path.join('/') } };
-	}
+
+	console.log('path', path);
+	console.log('stuf', `http://localhost:9816/fetch-files/${user?.id}${path ? `/${path.join('_')}` : ''}`);
+	const { data } = await axios.get(`http://localhost:9816/fetch-files/${user?.id}${path ? `/${path.join('_')}` : ''}`);
+	console.log(data);
+	return { props: { dir: data.files, path: path.join('/') } };
+
 }

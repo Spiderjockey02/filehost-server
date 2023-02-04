@@ -10,6 +10,21 @@ const nextConfig = {
 	images: {
 	 domains: ['mdbcdn.b-cdn.net'],
 	},
+	rewrites: async () => {
+		return [
+		 {
+				source: '/avatar/:id',
+				destination: 'http://localhost:9816/avatar/:id',
+		 },
+		 {
+				source: '/thumbnail/:id',
+				destination: 'http://localhost:9816/thumbnail/:id/:path',
+		 },
+	 ];
+	},
+	experimental: {
+		largePageDataBytes: 128 * 100000,
+	},
 };
 
 module.exports = nextConfig;

@@ -11,7 +11,8 @@ interface Props {
 export default function PhotoAlbum({ files, dir }: Props) {
 
 	const myLoader = ({ src }: ImageLoaderProps) => {
-		return `http://192.168.0.14:3000/api/thumbnail/${src}`;
+		console.log(`/thumbnail/${src}`);
+		return `http://192.168.0.14:3000/thumbnail/${src}`;
 	};
 
 	return (

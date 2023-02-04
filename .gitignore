@@ -41,4 +41,4 @@ yarn-error.log*
 #custom
 */prisma/migrations
 */*/config.ts
-*/uploads
+storage-service/src/uploads/content/*
