@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcrypt';
-import { findUser } from '../../../db/prisma';
+import { findUser } from '../../../db/User';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 	const { password, email } = req.body;

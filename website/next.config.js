@@ -7,6 +7,9 @@ const nextConfig = {
 
 		return config;
 	},
+	images: {
+	 domains: ['mdbcdn.b-cdn.net'],
+	},
 };
 
 module.exports = nextConfig;

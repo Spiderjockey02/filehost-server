@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createUser } from '../../../db/prisma';
+import { createUser } from '../../../db/User';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 	// Only post request

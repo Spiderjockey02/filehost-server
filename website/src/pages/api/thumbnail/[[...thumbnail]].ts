@@ -16,7 +16,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<Response>) => {
 	if (session) {
 		const user = await findUser({ email: session.user?.email as string });
 		const fileType = MimeType.lookup(fileName);
-		if(fileType == false) return;
+		if (fileType == false) return;
 
 		switch (fileType.split('/')[0]) {
 			case 'image': {
@@ -31,8 +31,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<Response>) => {
 					return res.status(200).end(readStream);
 				} else {
 					const child = spawn('ffmpeg',
-						['-i',
-							`${path.join(`${process.cwd()}/uploads/${user?.id}`, refererURL, fileName)}`, '-ss', '00:00:01.000', '-vframes', '1',
+						['-i', `${path.join(`${process.cwd()}/uploads/${user?.id}`, refererURL, fileName)}`,
+							'-ss', '00:00:01.000', '-vframes', '1',
 							`${path.join(`${process.cwd()}/uploads/${user?.id}`, refererURL, fileName)}-temp.jpg`,
 						]);
 

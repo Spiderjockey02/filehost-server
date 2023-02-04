@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { parseForm, FormidableError } from '../../utils/parse-form';
 import { getServerSession } from 'next-auth/next';
 import { AuthOptions } from '../api/auth/[...nextauth]';
-import { findUser } from '../../db/prisma';
+import { findUser } from '../../db/User';
 type Response = {
 	data: {
 		url: string | string[];

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { formatBytes } from '../utils/functions';
+import { formatBytes } from '../../utils/functions';
+import config from '../../config';
 interface Props {
 	size: number
 }
@@ -21,7 +22,7 @@ export default function SideBar({ size }: Props) {
 		<nav id="sidebar">
 			<Link href="/">
 				<div className="sidebar-header">
-					<h3><span className="side-text">File sharer</span></h3>
+					<h3><span className="side-text">{config.company.name}</span></h3>
 				</div>
 			</Link>
 			<ul className="list-unstyled components" style={{ verticalAlign:'center' }}>

@@ -1,13 +1,16 @@
 import '@/styles/Home.module.css';
-import NavBar from '../components/navBar';
+import NavBar from '../components/navbars/home-navbar';
 import Footer from '../components/footer';
 import Link from 'next/link';
 import config from '../config';
-import { useSession } from 'next-auth/react';
 import Script from 'next/script';
+import { fetchAllUsers } from '../db/User';
 
-export default function Home() {
-	const { data: session, status } = useSession();
+interface Props {
+	totalUserCount: number
+}
+
+export default function Home({ totalUserCount }: Props) {
 
 	return (
 		<>
@@ -66,7 +69,7 @@ export default function Home() {
 							<div className="col-lg-3 col-md-6">
 								<div className="count-box">
 									<i className="fa-solid fa-users"></i>
-									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter">0</span>
+									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter">{totalUserCount}</span>
 									<p>Happy users</p>
 								</div>
 							</div>
@@ -243,4 +246,9 @@ export default function Home() {
 			<Footer />
 		</>
 	);
+}
+
+export async function getServerSideProps() {
+	const totalUsers = await fetchAllUsers();
+	return { props: { totalUserCount: totalUsers?.length ?? 0 } };
 }

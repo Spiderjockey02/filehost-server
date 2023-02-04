@@ -3,7 +3,7 @@ import type { BaseSyntheticEvent } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import type { SignInResponse } from 'next-auth/react';
-
+import Link from 'next/link';
 type resCode = 'Signin' | 'OAuthSignin' | 'OAuthCallback' |'OAuthCreateAccount' |'EmailCreateAccount' |'Callback' |'OAuthAccountNotLinked' |'EmailSignin' |'CredentialsSignin' |'default'
 
 const errorsCodes = {
@@ -26,7 +26,6 @@ type ErrorTypes = {
 
 export default function SignIn() {
 	const [errors, setErrors] = useState<ErrorTypes[]>([]);
-	const [disabled, setDisabled] = useState(false);
 	const router = useRouter();
 
 	const handleSubmit = async (event: BaseSyntheticEvent) => {
@@ -42,7 +41,6 @@ export default function SignIn() {
 		// Show errors if there are any
 		if (err.length !== 0) return setErrors(err);
 		// Try and sign in the user
-		console.log(window.location.search.split('='));
 		const res = await signIn('credentials', {
 			redirect: false,
 			email: email,
@@ -50,7 +48,7 @@ export default function SignIn() {
 			callbackUrl: `${window.location.search.split('=')[1]}`,
 		}) as SignInResponse;
 
-		console.log('asdsadads', res);
+
 		// Show errors if any
 		if (res.error) return setErrors([{ type: 'email', error: errorsCodes[res.error as resCode] }]);
 
@@ -58,10 +56,6 @@ export default function SignIn() {
 		router.push(res.url as string);
 	};
 
-	const checkInput = async (event: BaseSyntheticEvent) => {
-		const input = event.target.value;
-		setDisabled(input.length >= 1);
-	};
 
 	return (
 		<section className="vh-100" style={{ 'backgroundColor': '#eee' }}>
@@ -81,7 +75,7 @@ export default function SignIn() {
 														<label className="form-label text-danger" htmlFor="email">Email -{errors.find(i => i.type == 'email')?.error}</label>
 														: <label className="form-label" htmlFor="email">Email</label>
 													}
-													<input type="text" id="email" className="form-control" name="email" onChange={checkInput}/>
+													<input type="text" id="email" className="form-control" name="email"/>
 												</div>
 											</div>
 
@@ -93,14 +87,14 @@ export default function SignIn() {
 														: <label className="form-label" htmlFor="password">Password</label>
 													}
 													<input type="password" id="password" className="form-control" name="password" />
-													<a href={disabled ? '/forgot-password' : '#'} className={disabled ? '' : 'disable-tag'}>Forgot your password?</a>
+													<Link href='/forgot-password'>Forgot your password?</Link>
 												</div>
 											</div>
 
 											<div className="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
 												<button type="submit" className="btn btn-primary btn-lg">Login</button>
 											</div>
-											<p>Need an account? <a href="/register">Register</a></p>
+											<p>Need an account? <Link href="/register">Register</Link></p>
 										</form>
 									</div>
 								</div>

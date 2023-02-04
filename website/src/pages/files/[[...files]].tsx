@@ -1,8 +1,8 @@
-import FileNavBar from '../../components/file-navBar';
-import SideBar from '../../components/sideBar';
+import FileNavBar from '../../components/navbars/file-navBar';
+import SideBar from '../../components/navbars/sideBar';
 import Directory from '../../components/directory';
 import PhotoAlbum from '../../components/photoAlbum';
-import DisplayFile from '../../components/DisplayFile';
+import ImageViewer from '../../components/views/ImageViewer';
 import SimpleProgressBar from '../../components/SimpleProgress';
 import directoryTree from '../../utils/directory';
 import type { fileItem } from '../../utils/types';
@@ -12,9 +12,8 @@ import Link from 'next/link';
 import fs from 'fs';
 import { getServerSession } from 'next-auth/next';
 import { AuthOptions } from '../api/auth/[...nextauth]';
-import { findUser } from '../../db/prisma';
+import { findUser } from '../../db/User';
 import axios, { AxiosRequestConfig } from 'axios';
-
 interface Props {
 	dir: fileItem | null
 	path: string
@@ -145,7 +144,7 @@ export default function Files({ dir, path = '/' }: Props) {
 								viewType == 'List' ?
 									<PhotoAlbum files={dir.children.filter(file => file.type == 'file').slice(0, 50)} dir={path} /> :
 									<Directory files={dir} dir={path} />
-								: <DisplayFile files={dir}/>
+								: <ImageViewer files={dir}/>
 						}
 						<SimpleProgressBar progress={progress} remaining={remaining} />
 					</div>

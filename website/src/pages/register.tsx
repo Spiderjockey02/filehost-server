@@ -4,7 +4,8 @@ import { useRouter } from 'next/router';
 import type { BaseSyntheticEvent } from 'react';
 const REGEX = /^[-a-z0-9~!$%^&*_=+}{'?]+(\.[-a-z0-9~!$%^&*_=+}{'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i;
 import config from '../config';
-
+import Link from 'next/link';
+import Image from 'next/image';
 type ErrorTypes = {
  type: 'username' | 'email' | 'password' | 'age'
  error: string
@@ -194,11 +195,11 @@ export default function Register() {
 												<button type="submit" className="btn btn-primary btn-lg" disabled={disabled}>Register</button>
 											</div>
 										</form>
-										<p>Already have an account? <a href="/login">Click here</a></p>
+										<p>Already have an account? <Link href="/login">Click here</Link></p>
 									</div>
 									<div className="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
-										<img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-registration/draw1.webp"
-											className="img-fluid" alt="Sample image" />
+										<Image src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-registration/draw1.webp"
+											className="img-fluid" alt="Sample image" width={530} height={280}/>
 									</div>
 								</div>
 							</div>
