@@ -20,10 +20,13 @@ interface Props {
 	path: string
 }
 
+type viewTypeTypes = 'List' | 'Tiles';
+
 export default function Files({ dir, path = '/' }: Props) {
 
 	const [progress, setProgress] = useState(0);
 	const [remaining, setRemaining] = useState(0);
+	const [viewType, setviewType] = useState<viewTypeTypes>('Tiles');
 
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
@@ -73,7 +76,6 @@ export default function Files({ dir, path = '/' }: Props) {
       }>('/api/upload', formData, options);
 			console.log('data', data);
 
-			// if (error || !data) return alert(error || 'Sorry! something went wrong.');
 			alert(`File was uploaded successfully: ${data}`);
 			setProgress(0);
 			setRemaining(0);
@@ -87,7 +89,7 @@ export default function Files({ dir, path = '/' }: Props) {
 		<>
 			<div className="wrapper" style={{ height:'100vh' }}>
 				<SideBar size={dir?.size ?? 0}/>
-				<div className="container-fluid">
+				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
 					<FileNavBar />
 					<div className="container-fluid">
 						<div className="row">
@@ -136,10 +138,11 @@ export default function Files({ dir, path = '/' }: Props) {
 								}
 							</div>
 						</div>
+						<button onClick={() => setviewType(viewType == 'List' ? 'Tiles' : 'List')}>Change</button>
 						{dir == null ?
 							<p>This folder is empty</p>
 							: (dir.children?.length >= 1) ?
-								dir.children.filter(item => ['.png', '.jpg', '.jpeg', '.ico', '.mp4', '.mov'].includes(item.extension)).length / dir.children.length >= 0.60 ?
+								viewType == 'List' ?
 									<PhotoAlbum files={dir.children.filter(file => file.type == 'file').slice(0, 50)} dir={path} /> :
 									<Directory files={dir} dir={path} />
 								: <DisplayFile files={dir}/>
@@ -156,7 +159,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Get path
 	const path = [context.params?.files].flat();
 	const session = await getServerSession(context.req, context.res, AuthOptions);
-	const user = await findUser({ email: session?.user?.email });
+	const user = await findUser({ email: session?.user?.email as string });
 	// Validate path
 	const basedPath = `${process.cwd()}/uploads/${user?.id}`;
 	if (fs.existsSync(`${basedPath}/${path.join('/')}`)) {
