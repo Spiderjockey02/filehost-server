@@ -2,17 +2,19 @@ import type { fileItem } from '../utils/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { ImageLoaderProps } from 'next/image';
-
+import { useSession } from 'next-auth/react';
 interface Props {
   files: fileItem[]
   dir: string
 }
 
 export default function PhotoAlbum({ files, dir }: Props) {
+	const { data: session, status } = useSession({ required: true });
+
+	if (status == 'loading') return null;
 
 	const myLoader = ({ src }: ImageLoaderProps) => {
-		console.log(`/thumbnail/${src}`);
-		return `http://192.168.0.14:3000/thumbnail/${src}`;
+		return `/thumbnail/${session?.user.id}/${dir}/${src}`;
 	};
 
 	return (

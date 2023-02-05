@@ -1,5 +1,6 @@
 import type { Request } from 'express';
-
+import imageThumbnail from 'image-thumbnail';
+import fs from 'fs';
 const ipv4Regex = /^(?:(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])$/;
 
 export function getIP(req: Request) {
@@ -37,4 +38,10 @@ export function getIP(req: Request) {
 	}
 
 	return undefined;
+}
+
+export async function createThumbnail(path: string) {
+	const thumbnail = await imageThumbnail(path, { responseType: 'buffer', width: 200, height: 250 });
+	fs.writeFileSync(`${process.cwd()}/src/uploads/name.png`, thumbnail);
+
 }

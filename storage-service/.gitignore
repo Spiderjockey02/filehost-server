@@ -1,0 +1,11 @@
+# Logs
+src/utils/logs
+
+# Prisma
+prisma/migrations/
+
+# Uploaded content
+src/uploads/*
+!src/uploads/*/README.md
+!src/uploads/avatars/default-avatar.webp
+!src/uploads/thumbnails/missing-file-icon.png

@@ -22,7 +22,7 @@ type viewTypeTypes = 'List' | 'Tiles';
 export default function Files({ dir, path = '/' }: Props) {
 	const [progress, setProgress] = useState(0);
 	const [remaining, setRemaining] = useState(0);
-	const [viewType, setviewType] = useState<viewTypeTypes>('List');
+	const [viewType, setviewType] = useState<viewTypeTypes>('Tiles');
 
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
@@ -100,30 +100,31 @@ export default function Files({ dir, path = '/' }: Props) {
 												</b>
 											}
 					          </li>
-										{path.split('/').map(name => (
+										{path.split('/').length >= 1 ?
+										 path.split('/').map(name => (
 											 <li className="breadcrumb-item" key={name}>
 											 {(name !== path.split('/').pop() ?
 											  	<b>
-														<Link className="directoyLink" href={`/files/${path.split('/').slice(0, path.split('/').indexOf(name) + 1).join('/')}`} style={{ color:'grey' }}>{name}</Link>
-													</b>
-													: <b style={{ color:'black' }}>{name}</b>
+															<Link className="directoyLink" href={`/files/${path.split('/').slice(0, path.split('/').indexOf(name) + 1).join('/')}`} style={{ color:'grey' }}>{name}</Link>
+														</b>
+														: <b style={{ color:'black' }}>{name}</b>
 										 		)}
 											 </li>
-										))}
+											)) : <> </>}
 					        </ol>
 	      				</nav>
 							</div>
 							<div className="col-md-2">
 								{(dir?.children?.length ?? 0) >= 1 &&
-									<div className="btn-group" role="group" style={{ float:'right' }}>
+									<div className="btn-group" role="group" style={{ float: 'right' }}>
 										<button type="button" className="btn btn-outline-secondary" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">New <i className="fas fa-plus"></i></button>
 										<div className="dropdown-menu dropdown-menu-right">
 											<label className="dropdown-item" id="fileHover">
-														File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} multiple/>
+												File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} multiple/>
 											</label>
 											<input type="hidden" value="test" name="path" />
 											<label className="dropdown-item" id="fileHover">
-													Folder upload<input type="file" hidden name="sampleFile" className="upload-input" />
+												Folder upload<input type="file" hidden name="sampleFile" className="upload-input" />
 											</label>
 											<div className="dropdown-divider"></div>
 											<a className="dropdown-item" href="#">Create folder</a>
@@ -134,11 +135,11 @@ export default function Files({ dir, path = '/' }: Props) {
 								}
 							</div>
 						</div>
-						<button onClick={() => setviewType(viewType == 'List' ? 'Tiles' : 'List')}>Change</button>
+						<button onClick={() => setviewType(viewType == 'List' ? 'Tiles' : 'List')}>Change from {viewType}</button>
 						{dir == null ?
 							<p>This folder is empty</p>
 							: (dir.children?.length >= 1) ?
-								viewType == 'List' ?
+								viewType == 'Tiles' ?
 									<PhotoAlbum files={dir.children.filter(file => file.type == 'file').slice(0, 50)} dir={path} /> :
 									<Directory files={dir} dir={path} />
 								: <ImageViewer files={dir}/>
@@ -157,11 +158,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const session = await getServerSession(context.req, context.res, AuthOptions);
 	const user = await findUser({ email: session?.user?.email as string });
 	// Validate path
-
-	console.log('path', path);
-	console.log('stuf', `http://localhost:9816/fetch-files/${user?.id}${path ? `/${path.join('_')}` : ''}`);
-	const { data } = await axios.get(`http://localhost:9816/fetch-files/${user?.id}${path ? `/${path.join('_')}` : ''}`);
-	console.log(data);
-	return { props: { dir: data.files, path: path.join('/') } };
-
+	try {
+		const { data } = await axios.get(`http://localhost:9816/fetch-files/${user?.id}${path ? `/${path.join('_')}` : ''}`);
+		return { props: { dir: data.files, path: path.join('/') } };
+	} catch (err) {
+		return { props: { dir: null, path: '/' } };
+	}
 }

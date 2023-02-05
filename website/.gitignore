@@ -1,0 +1,3 @@
+# Prisma
+prisma/migrations/
+src/config.ts

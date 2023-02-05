@@ -1,4 +1,8 @@
-/** @type {import('next').NextConfig} */
+// @ts-check
+
+/**
+  * @type {import('next').NextConfig}
+**/
 const nextConfig = {
 	reactStrictMode: true,
 	webpack5: true,
@@ -13,12 +17,16 @@ const nextConfig = {
 	rewrites: async () => {
 		return [
 		 {
-				source: '/avatar/:id',
-				destination: 'http://localhost:9816/avatar/:id',
+				source: '/avatar/:userId',
+				destination: 'http://localhost:9816/avatar/:userId',
 		 },
 		 {
-				source: '/thumbnail/:id',
-				destination: 'http://localhost:9816/thumbnail/:id/:path',
+				source: '/thumbnail/:userId/:path*',
+				destination: 'http://localhost:9816/thumbnail/:userId/:path*',
+		 },
+		 {
+			 source: '/content/:userId/:path',
+			 destination: 'http://localhost:9816/content/:userId/:path',
 		 },
 	 ];
 	},
