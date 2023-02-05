@@ -6,10 +6,11 @@ import Image from 'next/image';
 
 interface Props {
   files: fileItem
+  dir: string
 }
 
 
-export default function DisplayFile({ files }: Props) {
+export default function DisplayFile({ files, dir }: Props) {
 	const myLoader = ({ src, width, quality }: ImageLoaderProps) => {
 		return `http://192.168.0.14:3000/api/uploads/${src}`;
 	};
@@ -21,7 +22,7 @@ export default function DisplayFile({ files }: Props) {
   				<Image className="center" loader={myLoader} src={files.name}
   					alt={files.name} width={100} height={100} style={{ maxHeight: '200px' }}
   				/>
-  				: <VideoPlayer files={files}/>
+  				: <VideoPlayer files={files} dir={dir}/>
 				: <p>Stuff</p>
 			}
 		</div>

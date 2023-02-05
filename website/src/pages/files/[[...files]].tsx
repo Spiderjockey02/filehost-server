@@ -142,7 +142,7 @@ export default function Files({ dir, path = '/' }: Props) {
 								viewType == 'Tiles' ?
 									<PhotoAlbum files={dir.children.filter(file => file.type == 'file').slice(0, 50)} dir={path} /> :
 									<Directory files={dir} dir={path} />
-								: <ImageViewer files={dir}/>
+								: <ImageViewer files={dir} dir={path}/>
 						}
 						<SimpleProgressBar progress={progress} remaining={remaining} />
 					</div>
@@ -159,7 +159,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const user = await findUser({ email: session?.user?.email as string });
 	// Validate path
 	try {
-		const { data } = await axios.get(`http://localhost:9816/fetch-files/${user?.id}${path ? `/${path.join('_')}` : ''}`);
+		const { data } = await axios.get(`http://localhost:9816/fetch-files/${user?.id}${path ? `/${path.join('/')}` : ''}`);
 		return { props: { dir: data.files, path: path.join('/') } };
 	} catch (err) {
 		return { props: { dir: null, path: '/' } };

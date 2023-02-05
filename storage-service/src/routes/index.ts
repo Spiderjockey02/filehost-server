@@ -21,13 +21,13 @@ export default function() {
 		res.sendFile(`${PATHS.AVATAR}/${fs.existsSync(`${PATHS.AVATAR}/${userid}.webp`) ? userid : 'default-avatar'}.webp`);
 	});
 
-	router.get('/fetch-files/:userid/:path?', (req, res) => {
+	router.get('/fetch-files/:userid/:path(*)', (req, res) => {
 		const userid = req.params.userid,
 			path = req.params.path;
 
 
-		if (fs.existsSync(`${PATHS.CONTENT}/${userid}${path ? `/${path.replace('_', '/')}` : ''}`)) {
-			res.json({ files: directoryTree(`${PATHS.CONTENT}/${userid}${path ? `/${path.replace('_', '/')}` : ''}`) });
+		if (fs.existsSync(`${PATHS.CONTENT}/${userid}${path ? `/${path}` : ''}`)) {
+			res.json({ files: directoryTree(`${PATHS.CONTENT}/${userid}${path ? `/${path}` : ''}`) });
 		} else {
 			res.json({ files: null });
 		}
@@ -41,12 +41,11 @@ export default function() {
 		if (fileType !== false) {
 			switch (fileType.split('/')[0]) {
 				case 'image': {
-					createThumbnail(`${PATHS.CONTENT}/${userId}/${path}`);
-					if (fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${path}.webp`)) {
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${path}.webp`);
+					if (fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`)) {
+						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`);
 					} else {
-						createThumbnail(`${PATHS.CONTENT}/${userId}/${path}`);
-						return res.sendFile(`${PATHS.CONTENT}/${userId}/${path}`);
+						createThumbnail(`${PATHS.CONTENT}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}`);
+						return res.sendFile(`${PATHS.CONTENT}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}`);
 					}
 				}
 				case 'video': {
@@ -75,8 +74,11 @@ export default function() {
 		return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
 	});
 
-	router.post('/upload', () => {
-		// Upload new file
+	router.get('/content/:userid/:path(*)', (req, res) => {
+		const userId = req.params.userid as string;
+		const path = req.params.path as string;
+		res.sendFile(`${PATHS.CONTENT}/${userId}/${path}`);
 	});
+
 	return router;
 }

@@ -25,8 +25,8 @@ const nextConfig = {
 				destination: 'http://localhost:9816/thumbnail/:userId/:path*',
 		 },
 		 {
-			 source: '/content/:userId/:path',
-			 destination: 'http://localhost:9816/content/:userId/:path',
+			 source: '/content/:userId/:path*',
+			 destination: 'http://localhost:9816/content/:userId/:path*',
 		 },
 	 ];
 	},
