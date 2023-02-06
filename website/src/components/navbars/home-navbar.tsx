@@ -1,6 +1,7 @@
 import { signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { User } from '@prisma/client';
 
 export default function NavBar() {
 	const { data: session, status } = useSession();
@@ -28,7 +29,7 @@ export default function NavBar() {
 							</li>
 							<li className="nav-item dropdown">
 								<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-									<Image src={`/avatar/${session.user?.id}`} width={25} height={25} className="rounded-circle" alt="User avatar" /> {session.user?.name}
+									<Image src={`/avatar/${(session.user as User).id}`} width={25} height={25} className="rounded-circle" alt="User avatar" /> {session.user?.name}
 								</a>
 								<div className="dropdown-menu dropdown-menu-end">
 									<Link className="dropdown-item text-dark" href="/user/dashboard">Dashboard</Link>

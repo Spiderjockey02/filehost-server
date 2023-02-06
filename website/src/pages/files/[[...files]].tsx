@@ -9,7 +9,7 @@ import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useState } from 'react';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
-import { AuthOptions } from '../api/auth/[...nextauth]';
+import { AuthOption } from '../api/auth/[...nextauth]';
 import { findUser } from '../../db/User';
 import axios, { AxiosRequestConfig } from 'axios';
 interface Props {
@@ -22,7 +22,7 @@ type viewTypeTypes = 'List' | 'Tiles';
 export default function Files({ dir, path = '/' }: Props) {
 	const [progress, setProgress] = useState(0);
 	const [remaining, setRemaining] = useState(0);
-	const [viewType, setviewType] = useState<viewTypeTypes>('Tiles');
+	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
@@ -130,12 +130,17 @@ export default function Files({ dir, path = '/' }: Props) {
 											<a className="dropdown-item" href="#">Create folder</a>
 											<button type="submit" style={{ display:'none' }} id="imagefile"></button>
 										</div>
-										<button type="button" className="btn btn-outline-secondary">New <i className="fas fa-plus"></i></button>
+										<button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+    										Change view
+										</button>
+										<ul className="dropdown-menu">
+											<li><a onClick={() => setviewType('Tiles')} className="dropdown-item" href="#">Tiles</a></li>
+											<li><a onClick={() => setviewType('List')} className="dropdown-item" href="#">List</a></li>
+										</ul>
 									</div>
 								}
 							</div>
 						</div>
-						<button onClick={() => setviewType(viewType == 'List' ? 'Tiles' : 'List')}>Change from {viewType}</button>
 						{dir == null ?
 							<p>This folder is empty</p>
 							: (dir.children?.length >= 1) ?
@@ -155,7 +160,7 @@ export default function Files({ dir, path = '/' }: Props) {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Get path
 	const path = [context.params?.files].flat();
-	const session = await getServerSession(context.req, context.res, AuthOptions);
+	const session = await getServerSession(context.req, context.res, AuthOption);
 	const user = await findUser({ email: session?.user?.email as string });
 	// Validate path
 	try {

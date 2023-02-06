@@ -11,7 +11,7 @@ interface Props {
 
 
 export default function DisplayFile({ files, dir }: Props) {
-	const myLoader = ({ src, width, quality }: ImageLoaderProps) => {
+	const myLoader = ({ src }: ImageLoaderProps) => {
 		return `http://192.168.0.14:3000/api/uploads/${src}`;
 	};
 
@@ -22,7 +22,7 @@ export default function DisplayFile({ files, dir }: Props) {
   				<Image className="center" loader={myLoader} src={files.name}
   					alt={files.name} width={100} height={100} style={{ maxHeight: '200px' }}
   				/>
-  				: <VideoPlayer files={files} dir={dir}/>
+  				: <VideoPlayer dir={dir}/>
 				: <p>Stuff</p>
 			}
 		</div>

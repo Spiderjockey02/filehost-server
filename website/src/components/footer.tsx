@@ -48,7 +48,7 @@ export default function Footer() {
 			</div>
 			<div className="container py-4">
 				<div className="copyright">
-      &copy; Copyright <strong><span>{config.company.name}</span></strong>. All Rights Reserved
+      		&copy; Copyright <strong><span>{config.company.name}</span></strong>. All Rights Reserved
 				</div>
 			</div>
 		</footer>

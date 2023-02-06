@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { ImageLoaderProps } from 'next/image';
 import { useSession } from 'next-auth/react';
+import type { User } from '@prisma/client';
 interface Props {
   files: fileItem[]
   dir: string
@@ -10,13 +11,10 @@ interface Props {
 
 export default function PhotoAlbum({ files, dir }: Props) {
 	const { data: session, status } = useSession({ required: true });
-
 	if (status == 'loading') return null;
 
-	const myLoader = ({ src }: ImageLoaderProps) => {
-		return `/thumbnail/${session?.user.id}/${dir}/${src}`;
-	};
 
+	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${(session.user as User).id}/${dir}/${src}`;
 	return (
 		<div className="row justify-content-between">
 			{files.map(_ => (

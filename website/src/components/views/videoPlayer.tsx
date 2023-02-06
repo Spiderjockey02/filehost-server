@@ -1,28 +1,134 @@
-import type { fileItem } from '../../utils/types';
 import { useSession } from 'next-auth/react';
+import type { User } from '@prisma/client';
+import { useRef } from 'react';
 interface Props {
-  files: fileItem
   dir: string
 }
 
-
-export default function DisplayFile({ files, dir }: Props) {
+export default function DisplayFile({ dir }: Props) {
+	// get session
 	const { data: session, status } = useSession({ required: true });
 
-	if (status == 'loading') return null;
+	const video = useRef<HTMLVideoElement>(null);
+	const videoContainer = useRef<HTMLDivElement>(null);
+	const duration = useRef<HTMLTimeElement>(null);
+	const seek = useRef<HTMLInputElement>(null);
+	const timeElapsed = useRef<HTMLTimeElement>(null);
+	const progressBar = useRef<HTMLDivElement>(null);
+	const playbackAnimation = useRef<HTMLDivElement>(null);
+	const seekTooltip = useRef<HTMLDivElement>(null);
+	const buffer = useRef<HTMLProgressElement>(null);
+	const volume = useRef<HTMLInputElement>(null);
 
+	function formatTime(timeInSeconds: number) {
+		const result = new Date(timeInSeconds * 1000).toISOString().substr(11, 8);
+		return {
+			minutes: result.substr(3, 2),
+			seconds: result.substr(6, 2),
+		};
+	}
+
+	function initVideo() {
+		const videoDuration = (video.current as HTMLVideoElement).duration;
+		seek.current?.setAttribute('max', `${videoDuration}`);
+		const time = formatTime(videoDuration);
+		(duration.current as HTMLTimeElement).innerText = `${time.minutes}:${time.seconds}`;
+		(duration.current as HTMLTimeElement).setAttribute('datetime', `${time.minutes}m ${time.seconds}s`);
+	}
+
+	function skipAhead(event: any, pressed = false) {
+		const skipTo = (pressed) ? event : (event.target.dataset.seek ?? event.target.value);
+		(seek.current as HTMLInputElement).value = skipTo;
+		(video.current as HTMLVideoElement).currentTime = skipTo;
+	}
+
+	function clickedVideo() {
+		togglePlay();
+
+		// Animate
+		(playbackAnimation.current as HTMLDivElement).animate(
+			[
+				{ opacity: 1, transform: 'scale(1)' },
+				{ opacity: 0, transform: 'scale(1.3)' },
+			],
+			{ duration: 500 },
+		);
+	}
+
+	function timeUpdate() {
+		const time = formatTime((video.current as HTMLVideoElement).currentTime);
+		(timeElapsed.current as HTMLTimeElement).innerText = `${time.minutes}:${time.seconds}`;
+		(timeElapsed.current as HTMLTimeElement).setAttribute('datetime', `${time.minutes}m ${time.seconds}s`);
+
+		(seek.current as HTMLInputElement).value = `${(video.current as HTMLVideoElement).currentTime}`;
+		(progressBar.current as HTMLDivElement).style.width = `${((video.current as HTMLVideoElement).currentTime / (video.current as HTMLVideoElement).duration * 100) + 0.4}%`;
+	}
+
+	function updateSeekTooltip(event: any) {
+		const skipTo = (event.offsetX / (event.target as HTMLDivElement).clientWidth) * Number((event.target as HTMLDivElement).getAttribute('max'));
+		(seek.current as HTMLInputElement).setAttribute('data-seek', `${skipTo}`);
+		const t = formatTime(skipTo);
+		(seekTooltip.current as HTMLDivElement).textContent = `${t.minutes}:${t.seconds}`;
+		const rect = (video.current as HTMLVideoElement).getBoundingClientRect();
+		(seekTooltip.current as HTMLDivElement).style.left = `${event.pageX - rect.left}px`;
+	}
+
+	function togglePlay() {
+		if (video.current == null) return;
+		if (video.current.paused || video.current.ended) {
+			video.current.play();
+		} else {
+			video.current.pause();
+		}
+	}
+
+	function toggleMute() {
+		const vid = (video.current as HTMLVideoElement);
+		const vol = (volume.current as HTMLInputElement);
+		vid.muted = !vid.muted;
+
+		if (vid.muted) {
+			vol.setAttribute('data-volume', vol.value);
+			vol.value = `${0}`;
+		} else {
+			vol.value = `${vol.dataset.volume}`;
+		}
+	}
+
+	function updateProgress() {
+		const vid = (video.current as HTMLVideoElement);
+		if (vid.buffered.length == 0) return;
+		const bufferedEnd = vid.buffered.end((vid.buffered.length - 1) < vid.buffered.length ? 0 : vid.buffered.length - 1);
+		const durationTime = vid.duration;
+		console.log(`[DEBUG] Time renderd: ${bufferedEnd} out of ${durationTime}`);
+		if (durationTime > 0) (buffer.current as HTMLProgressElement).value = (bufferedEnd / durationTime) * 100;
+	}
+
+	function toggleFullScreen() {
+		const container = (videoContainer.current as HTMLDivElement);
+		if (document.fullscreenElement) {
+			document.exitFullscreen();
+		} else {
+			container.requestFullscreen();
+		}
+		// updateFullscreenButton(!document.fullscreenElement);
+		// hideControlsOnMobile();
+	}
+
+	if (status == 'loading') return null;
 	return (
 		<>
-			<link rel="stylesheet" href="http://192.168.0.14:3000/videoplayer.module.css" />
-			<div className="video-container" id="video-container">
-				<div className="playback-animation" id="playback-animation">
+			<link rel="stylesheet" href="/videoplayer.css" />
+			<div className="video-container" id="video-container" ref={videoContainer}>
+				<div className="playback-animation" id="playback-animation" ref={playbackAnimation}>
 					<svg className="svg playback-icons">
 						<use className="hidden" href="#play-icon"></use>
 						<use href="#pause"></use>
 					</svg>
 				</div>
-				<video className="video" id="video" preload="metadata">
-					<source src={`/content/${session.user?.id}/${dir}`} type="video/mp4" />
+				<video className="video" id="video" preload="metadata" ref={video}
+					onLoadedMetadata={() => initVideo()} onTimeUpdate={() => timeUpdate()} onClick={() => clickedVideo()} onProgress={() => updateProgress()}>
+					<source src={`/content/${(session.user as User).id}/${dir}`} type="video/mp4" />
 				</video>
 				<div id="settings-tab" className="video-controls hidden">
 					<div className="form-group">
@@ -32,33 +138,33 @@ export default function DisplayFile({ files, dir }: Props) {
 				</div>
 				<div className="video-controls" id="video-controls">
 					<div className="video-progress">
-						<div className="progress-bar" id="seek-bar"></div>
-						<input className="input-range seek" id="seek" value="0" min="0" type="range" step="0.01" />
-						<progress className="progress-bar" id="buffer" value="0" max="100"></progress>
-						<div className="seek-tooltip" id="seek-tooltip">00:00</div>
+						<div className="progress-bar" id="seek-bar" ref={progressBar}></div>
+						<input className="input-range seek" id="seek" ref={seek} value="0" min="0" type="range" step="0.01" onInput={(e) => skipAhead(e)}/>
+						<progress className="progress-bar" id="buffer" value="0" max="100" ref={buffer}></progress>
+						<div className="seek-tooltip" id="seek-tooltip" ref={seekTooltip} onMouseMove={(e) => updateSeekTooltip(e)}>00:00</div>
 					</div>
 					<div className="bottom-controls">
 						<div className="left-controls">
-							<button className="button" data-title="Play (k)" id="play">
+							<button className="button" data-title="Play (k)" id="play" onClick={() => togglePlay()}>
 								<svg className="svg playback-icons">
 									<use href="#play-icon"></use>
 									<use className="hidden" href="#pause"></use>
 								</svg>
 							</button>
 							<div className="volume-controls" id="volume-controls">
-								<button className="button volume-button" data-title="Mute (m)" id="volume-button">
+								<button className="button volume-button" data-title="Mute (m)" id="volume-button" onClick={() => toggleMute()}>
 									<svg className="svg">
 										<use className="hidden" href="#volume-mute"></use>
 										<use className="hidden" href="#volume-low"></use>
 										<use href="#volume-high"></use>
 									</svg>
 								</button>
-								<input className="input-range volume" id="volume" value="1" data-mute="0.5" type="range" max="1" min="0" step="0.05" />
+								<input className="input-range volume" id="volume" value="1" data-mute="0.5" type="range" max="1" min="0" step="0.05" ref={volume}/>
 							</div>
 							<div className="time">
-								<time id="time-elapsed">00:00</time>
+								<time id="time-elapsed" ref={timeElapsed}>00:00</time>
 								<span> / </span>
-								<time id="duration">00:00</time>
+								<time id="duration" ref={duration}>00:00</time>
 							</div>
 						</div>
 						<div className="right-controls">
@@ -72,7 +178,7 @@ export default function DisplayFile({ files, dir }: Props) {
 									<use href="#gear"></use>
 								</svg>
 							</button>
-							<button data-title="Full screen (f)" className="fullscreen-button" id="fullscreen-button">
+							<button data-title="Full screen (f)" className="fullscreen-button" id="fullscreen-button" onClick={() => toggleFullScreen()}>
 								<svg className="svg">
 									<use href="#fullscreen"></use>
 									<use href="#fullscreen-exit" className="hidden"></use>

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { parseForm, FormidableError } from '../../utils/parse-form';
 import { getServerSession } from 'next-auth/next';
-import { AuthOptions } from '../api/auth/[...nextauth]';
+import { AuthOption } from '../api/auth/[...nextauth]';
 import { findUser } from '../../db/User';
 type Response = {
 	data: {
@@ -22,7 +22,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<Response>) => {
 	}
 	// Just after the "Method Not Allowed" code
 	try {
-		const session = await getServerSession(req, res, AuthOptions);
+		const session = await getServerSession(req, res, AuthOption);
 		if (session) {
 			const user = await findUser({ email: session.user?.email as string });
 			if (user) {
