@@ -46,6 +46,7 @@ export default function() {
 								`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`,
 							]);
 
+						fs.mkdirSync(`${PATHS.THUMBNAIL}/${userId}/${path.split('/').slice(0, -1)}`, { recursive: true });
 						await new Promise((resolve, reject) => {
 							child.on('close', resolve);
 							child.on('error', (err) => {
