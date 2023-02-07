@@ -164,7 +164,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const user = await findUser({ email: session?.user?.email as string });
 	// Validate path
 	try {
-		const { data } = await axios.get(`http://localhost:9816/fetch-files/${user?.id}${path ? `/${path.join('/')}` : ''}`);
+		const { data } = await axios.get(`http://localhost:9816/file/fetch/${user?.id}${path ? `/${path.join('/')}` : ''}`);
 		return { props: { dir: data.files, path: path.join('/') } };
 	} catch (err) {
 		return { props: { dir: null, path: '/' } };

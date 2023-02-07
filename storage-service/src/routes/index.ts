@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import fs from 'fs';
-import directoryTree from '../utils/directory';
 import { lookup } from 'mime-types';
 import { spawn } from 'child_process';
 import{ createThumbnail } from '../utils/functions';
@@ -21,41 +20,30 @@ export default function() {
 		res.sendFile(`${PATHS.AVATAR}/${fs.existsSync(`${PATHS.AVATAR}/${userid}.webp`) ? userid : 'default-avatar'}.webp`);
 	});
 
-	router.get('/fetch-files/:userid/:path(*)', (req, res) => {
-		const userid = req.params.userid,
-			path = req.params.path;
-
-
-		if (fs.existsSync(`${PATHS.CONTENT}/${userid}${path ? `/${path}` : ''}`)) {
-			res.json({ files: directoryTree(`${PATHS.CONTENT}/${userid}${path ? `/${path}` : ''}`) });
-		} else {
-			res.json({ files: null });
-		}
-	});
-
 	router.get('/thumbnail/:userid/:path(*)', async (req, res) => {
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
 
 		const fileType = lookup(path);
+		const fileName = path.substring(0, path.lastIndexOf('.')) || path;
 		if (fileType !== false) {
 			switch (fileType.split('/')[0]) {
 				case 'image': {
-					if (fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`)) {
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`);
+					if (fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) {
+						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
 					} else {
-						createThumbnail(`${PATHS.CONTENT}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}`);
-						return res.sendFile(`${PATHS.CONTENT}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}`);
+						await createThumbnail(`${PATHS.CONTENT}/${userId}/${path}`);
+						return res.sendFile(`${PATHS.CONTENT}/${userId}/${fileName}.jpg`);
 					}
 				}
 				case 'video': {
-					if (fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${path}.webp`)) {
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${path}.webp`);
+					if (fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) {
+						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
 					} else {
 						const child = spawn('ffmpeg',
 							['-i', `${PATHS.CONTENT}/${userId}/${path}`,
 								'-ss', '00:00:01.000', '-vframes', '1',
-								`${PATHS.THUMBNAIL}/${userId}/${path}.webp`,
+								`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`,
 							]);
 
 						await new Promise((resolve, reject) => {
@@ -65,7 +53,7 @@ export default function() {
 								reject();
 							});
 						});
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${path}.webp`);
+						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
 					}
 				}
 			}
@@ -77,7 +65,49 @@ export default function() {
 	router.get('/content/:userid/:path(*)', (req, res) => {
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
-		res.sendFile(`${PATHS.CONTENT}/${userId}/${path}`);
+
+		const fileType = lookup(path);
+		if (fileType == false) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+
+		switch(fileType.split('/')[0]) {
+			case 'image':
+				return res.sendFile(`${PATHS.CONTENT}/${userId}/${path}`);
+			case 'video': {
+				const range = req.headers.range;
+				// Get video stats
+				const videoSize = fs.statSync(`${PATHS.CONTENT}/${userId}/${path}`).size;
+				if (!range) {
+					res.writeHead(200, {
+						'Content-Length': videoSize + 1,
+						'Content-Type': 'video/mp4',
+					});
+					fs.createReadStream(`${PATHS.CONTENT}/${userId}/${path}`).pipe(res);
+				} else {
+					// Send chunks of 2MB = 2 * (10 ** 6)
+					const CHUNK_SIZE = 2 * (10 ** 6);
+					const start = Number(range.replace(/\D/g, ''));
+					const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+					// Create headers
+					const contentLength = end - start + 1;
+					const headers = {
+						'Content-Range': `bytes ${start}-${end}/${videoSize}`,
+						'Accept-Ranges': 'bytes',
+						'Content-Length': contentLength,
+						'Content-Type': 'video/mp4',
+					};
+
+					// HTTP Status 206 for Partial Content
+					res.writeHead(206, headers);
+
+					// create video read stream for this particular chunk
+					const videoStream = fs.createReadStream(`${PATHS.CONTENT}/${userId}/${path}`, { start, end });
+
+					// Stream the video chunk to the client
+					videoStream.pipe(res);
+				}
+			}
+		}
 	});
 
 	return router;

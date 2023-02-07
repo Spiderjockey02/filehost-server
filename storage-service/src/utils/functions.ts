@@ -33,11 +33,8 @@ export function getIP(req: Request) {
 	}
 
 	// Remote address checks.
-	if (req.socket && ipv4Regex.test(req.socket.remoteAddress as string)) {
-		return req.socket.remoteAddress;
-	}
-
-	return undefined;
+	if (req.socket && ipv4Regex.test(req.socket.remoteAddress as string)) return req.socket.remoteAddress;
+	return req.ip;
 }
 
 export async function createThumbnail(path: string) {

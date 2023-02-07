@@ -16,7 +16,7 @@ function safeReadDirSync(path: string) {
 			// User does not have permissions, ignore directory
 			return null;
 		} else {
-			throw ex;
+			return null;
 		}
 	}
 	return dirData;
@@ -32,7 +32,6 @@ function directoryTree(path:string) {
 		stats = fs.statSync(path);
 		lstat = fs.lstatSync(path);
 	} catch (e) {
-		console.log(e);
 		return null;
 	}
 

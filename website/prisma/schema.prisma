@@ -25,7 +25,6 @@ model Account {
 
   @@unique([provider, providerAccountId])
 }
-
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -34,7 +33,9 @@ model User {
   password      String?
   image         String?
   accounts      Account[]
+  createdAt     DateTime      @default(now()) @map("created_at")
   sessions      Session[]
+  recentFiles   Recent[]
 }
 
 model Session {
@@ -43,4 +44,19 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Recent {
+  id            String    @id   @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location      String
+  createdAt     DateTime      @default(now()) @map("created_at")
+}
+
+model Notification {
+  id           String    @id   @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Text         String
 }
