@@ -78,7 +78,6 @@ export default function Register() {
 		}
 
 		// Create the new user
-		console.log(`${config.url}/api/auth/register`);
 		const data = await fetch(`${config.url}/api/auth/register`, {
 			method: 'post',
 			headers: {

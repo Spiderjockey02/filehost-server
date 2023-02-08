@@ -7,6 +7,7 @@ import SimpleProgressBar from '../../components/SimpleProgress';
 import type { fileItem } from '../../utils/types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
 import { AuthOption } from '../api/auth/[...nextauth]';
@@ -20,15 +21,16 @@ interface Props {
 type viewTypeTypes = 'List' | 'Tiles';
 
 export default function Files({ dir, path = '/' }: Props) {
+	const { data: session, status } = useSession({ required: true });
+
 	const [progress, setProgress] = useState(0);
 	const [remaining, setRemaining] = useState(0);
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
+	if (status == 'loading') return null;
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
-
 		if (!fileInput.files) return alert('No file was chosen');
-
 		if (!fileInput.files || fileInput.files.length === 0) return alert('Files list is empty');
 
 
@@ -69,10 +71,10 @@ export default function Files({ dir, path = '/' }: Props) {
         data: {
           url: string | string[];
         };
-      }>('/api/upload', formData, options);
+      }>(`/api/files/upload/${session?.user.id}`, formData, options);
 			console.log('data', data);
 
-			alert(`File was uploaded successfully: ${data}`);
+			alert(`File was uploaded successfully: ${data.url}`);
 			setProgress(0);
 			setRemaining(0);
 		} catch (error) {
@@ -107,7 +109,7 @@ export default function Files({ dir, path = '/' }: Props) {
 											  	<b>
 															<Link className="directoyLink" href={`/files/${path.split('/').slice(0, path.split('/').indexOf(name) + 1).join('/')}`} style={{ color:'grey' }}>{name}</Link>
 														</b>
-														: <b style={{ color:'black' }}>{name}</b>
+														: <b className="d-inline-block text-truncate" style={{ color:'black', maxWidth:'100vw' }}>{name}</b>
 										 		)}
 											 </li>
 											)) : <> </>}
@@ -145,7 +147,7 @@ export default function Files({ dir, path = '/' }: Props) {
 							<p>This folder is empty</p>
 							: (dir.children?.length >= 1) ?
 								viewType == 'Tiles' ?
-									<PhotoAlbum files={dir.children.filter(file => file.type == 'file').slice(0, 50)} dir={path} /> :
+									<PhotoAlbum files={dir.children.slice(0, 50)} dir={path} /> :
 									<Directory files={dir} dir={path} />
 								: <ImageViewer files={dir} dir={path}/>
 						}

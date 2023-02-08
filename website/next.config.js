@@ -25,8 +25,20 @@ const nextConfig = {
 				destination: 'http://localhost:9816/thumbnail/:userId/:path*',
 		 },
 		 {
-			 source: '/content/:userId/:path*',
-			 destination: 'http://localhost:9816/content/:userId/:path*',
+				source: '/content/:userId/:path*',
+				destination: 'http://localhost:9816/content/:userId/:path*',
+		 },
+		 {
+				source: '/api/files/upload/:userId',
+				destination: 'http://localhost:9816/file/upload/:userId/',
+		 },
+		 {
+				source: '/api/files/rename/:userId',
+				destination: 'http://localhost:9816/file/rename/:userId/',
+		 },
+		 {
+				source: '/api/files/delete/:userId',
+				destination: 'http://localhost:9816/file/delete/:userId/',
 		 },
 	 ];
 	},

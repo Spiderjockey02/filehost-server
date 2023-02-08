@@ -1,19 +1,19 @@
-import type { NextApiRequest } from 'next';
 import { join } from 'path';
 import formidable from 'formidable';
 import { mkdir, stat } from 'fs/promises';
-import type { User } from '@prisma/client';
-
+import type { Request } from 'express';
 export const FormidableError = formidable.errors.FormidableError;
 
-export const parseForm = async (req: NextApiRequest, user: User): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
+export const parseForm = async (req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
+	// eslint-disable-next-line no-async-promise-executor
 	return await new Promise(async (resolve, reject) => {
 
-		const uploadDir = join(process.cwd(), `/uploads/${user.id}`, (req.headers['referer'] as string).split('files')[1]);
+		const uploadDir = join(`${process.cwd()}/src/uploads/content`, userId, (req.headers['referer'] as string).split('files')[1]);
 
 		try {
 			await stat(uploadDir);
 		} catch (e: any) {
+			console.log(e);
 			if (e.code === 'ENOENT') {
 				await mkdir(uploadDir, { recursive: true });
 			} else {
