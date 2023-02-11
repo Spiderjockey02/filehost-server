@@ -8,7 +8,7 @@ datasource db {
 }
 
 model account {
-  id                String  @id
+  id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -27,17 +27,17 @@ model account {
 }
 
 model recent {
-  id         String   @id
+  id         String   @id @default(cuid())
   userId     String
   location   String
   created_at DateTime @default(now())
   user       user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Recent_userId_fkey")
 
-  @@index([userId], map: "Recent_userId_fkey")
+  @@unique([userId, location], map: "Recent_userId_location_key")
 }
 
 model session {
-  id           String   @id
+  id           String   @id @default(cuid())
   sessionToken String   @unique(map: "Session_sessionToken_key")
   userId       String
   expires      DateTime
@@ -47,7 +47,7 @@ model session {
 }
 
 model user {
-  id            String    @id
+  id            String    @id @default(cuid())
   name          String?
   email         String?   @unique(map: "User_email_key")
   emailVerified DateTime?

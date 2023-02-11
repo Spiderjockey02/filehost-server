@@ -2,7 +2,8 @@ import { Router } from 'express';
 import fs from 'fs';
 import { lookup } from 'mime-types';
 import { spawn } from 'child_process';
-import{ createThumbnail } from '../utils/functions';
+import { createThumbnail } from '../utils/functions';
+import { updateUserRecentFiles } from '../db/Recent';
 const router = Router();
 
 const PATHS = {
@@ -29,17 +30,12 @@ export default function() {
 		if (fileType !== false) {
 			switch (fileType.split('/')[0]) {
 				case 'image': {
-					if (fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) {
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
-					} else {
-						await createThumbnail(`${PATHS.CONTENT}/${userId}/${path}`);
-						return res.sendFile(`${PATHS.CONTENT}/${userId}/${fileName}.jpg`);
-					}
+					// Create thumbnail if not already created
+					if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) await createThumbnail(`${PATHS.CONTENT}/${userId}/${path}`);
+					return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
 				}
 				case 'video': {
-					if (fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) {
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
-					} else {
+					if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) {
 						const child = spawn('ffmpeg',
 							['-i', `${PATHS.CONTENT}/${userId}/${path}`,
 								'-ss', '00:00:01.000', '-vframes', '1',
@@ -54,8 +50,8 @@ export default function() {
 								reject();
 							});
 						});
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
 					}
+					return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
 				}
 			}
 		}
@@ -63,13 +59,21 @@ export default function() {
 		return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
 	});
 
-	router.get('/content/:userid/:path(*)', (req, res) => {
+	router.get('/content/:userid/:path(*)', async (req, res) => {
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
 
 		const fileType = lookup(path);
 		if (fileType == false) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
 
+		// update the user's recent access files
+		try {
+			await updateUserRecentFiles({ id: userId, path });
+		} catch (err: any) {
+			console.log(err);
+		}
+
+		// Check what type of file it is, to send the relevent data
 		switch(fileType.split('/')[0]) {
 			case 'image':
 				return res.sendFile(`${PATHS.CONTENT}/${userId}/${path}`);

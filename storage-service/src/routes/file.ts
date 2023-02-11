@@ -77,9 +77,10 @@ export default function() {
 
 		archive
 			.directory(`${PATHS.CONTENT}/${userId}${path}`, false)
-			.on('error', err => console.log(err))
+			.on('error', () => res.json({ error: 'Error downloading item' }))
 			.pipe(res);
 		archive.finalize();
+
 	});
 
 	router.get('/fetch/:userId/:path(*)', (req, res) => {
@@ -96,7 +97,8 @@ export default function() {
 		const originalPath = userPath.startsWith('/') ? userPath : '/';
 
 		try {
-			await fs.rename(`${PATHS.CONTENT}/${userId}${originalPath}${oldPath}`, `${PATHS.CONTENT}/${userId}${originalPath}${newPath}.${oldPath.split('.').at(-1)}`);
+			await fs.rename(`${PATHS.CONTENT}/${userId}${originalPath}${oldPath}`,
+				`${PATHS.CONTENT}/${userId}${originalPath}${newPath}.${oldPath.split('.').at(-1)}`);
 			res.json({ success: 'Successfully renamed file' });
 		} catch (err) {
 			res.json({ error: 'Failed to rename item.' });
