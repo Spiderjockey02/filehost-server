@@ -45,7 +45,7 @@ export default function NavBar() {
 								<Link className="nav-item text-dark nav-link" href="/login">Login</Link>
 							</li>
 							<li className="navbar-nav">
-								<Link className="nav-item text-dark nav-link" href="/signup">Sign up</Link>
+								<Link className="nav-item text-dark nav-link" href="/register">Sign up</Link>
 							</li>
 						</>
 					}

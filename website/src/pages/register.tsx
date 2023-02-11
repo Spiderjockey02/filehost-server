@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import type { BaseSyntheticEvent } from 'react';
 const REGEX = /^[-a-z0-9~!$%^&*_=+}{'?]+(\.[-a-z0-9~!$%^&*_=+}{'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i;
-import config from '../config';
 import Link from 'next/link';
 import Image from 'next/image';
+import ErrorPopup from '../components/menus/Error-pop';
 type ErrorTypes = {
- type: 'username' | 'email' | 'password' | 'age'
+ type: 'username' | 'email' | 'password' | 'age' | 'misc'
  error: string
 }
 
@@ -38,26 +38,9 @@ export default function Register() {
 		// Check if an email was entered
 		if (email.length == 0) {
 			return setErrors([{ type: 'email', error: 'This field is missing' }]);
-		} else if (REGEX.test(email)) {
-			// Check if the email was valid
-			// Check if email has not been used before
-			/*
-			const res = await fetch(`${process.env.NEXT_PUBLIC_APIURL}/api/auth/check`, {
-				method: 'post',
-				headers: {
-					'content-type': 'application/json;charset=UTF-8',
-				},
-				body: JSON.stringify({
-					email,
-				}),
-			});
-			const data = await res.json();
-			if (data.found) return setErrors([{ type: 'email', error: 'This email is already in use.' }]);
-      */
-		} else {
+		} else if (!REGEX.test(email)) {
 			return setErrors([{ type: 'email', error: 'Invalid email address' }]);
 		}
-
 
 		// Make sure passwords match
 		if (password.length == 0 || password2.length == 0) {
@@ -68,7 +51,6 @@ export default function Register() {
 			return setErrors([{ type: 'password', error: 'Your password must be more than 8 characters' }]);
 		}
 
-
 		// Make sure it's a valid date of birth (for example not 30 days in February)
 		if (!isNaN(Date.parse(`${month}-${day}-${year}`))) {
 			return setErrors([{ type: 'age', error: 'Invalid date of birth' }]);
@@ -78,8 +60,8 @@ export default function Register() {
 		}
 
 		// Create the new user
-		const data = await fetch(`${config.url}/api/auth/register`, {
-			method: 'post',
+		const data = await fetch('/api/auth/register', {
+			method: 'put',
 			headers: {
 				'content-type': 'application/json;charset=UTF-8',
 			},
@@ -88,16 +70,20 @@ export default function Register() {
 			}),
 		});
 		const res = await data.json();
+
+		// Check if an error was included
+		if (res.error) return setErrors([{ type: res.error.type, error: res.error.text }]);
 		if (res.success) router.push('/login');
 	};
 
-	function changeState() {
-		return setDisabled(!disabled);
-	}
+	const changeState = () => setDisabled(!disabled);
 
 	return (
 		<section className="vh-100" style={{ 'backgroundColor': '#eee' }}>
 			<div className="container h-100">
+				{errors.find(i => i.type == 'misc') &&
+      	 <ErrorPopup text={errors.find(i => i.type == 'misc')?.error as string}/>
+				}
 				<div className="row d-flex justify-content-center align-items-center h-100">
 					<div className="col-lg-12 col-xl-11">
 						<div className="card text-black" style={{ 'borderRadius': '25px' }}>
