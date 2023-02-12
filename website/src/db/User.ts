@@ -12,6 +12,10 @@ export function	findUser(data: findUser) {
   		where: {
   			email: data.email,
   		},
+			include: {
+				recentFiles: true,
+				group: true,
+			},
   	});
 	} else if (data.id) {
 		return client.user.findUnique({

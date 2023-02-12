@@ -1,11 +1,15 @@
 import Link from 'next/link';
 import { formatBytes } from '../../utils/functions';
 import config from '../../config';
+import { useSession } from 'next-auth/react';
+import type { User } from '@prisma/client';
 interface Props {
 	size: number
 }
 
 export default function SideBar({ size }: Props) {
+	const { data: session, status } = useSession();
+	if (status == 'loading') return null;
 
 	function getColor(num: number) {
 		if (num >= 4 * 1024 * 1024 * 1024) {
@@ -27,10 +31,10 @@ export default function SideBar({ size }: Props) {
 			</Link>
 			<ul className="list-unstyled components" style={{ verticalAlign:'center' }}>
 				<li>
-					<Link href="/files"><i className="fas fa-folder" data-toggle="tooltip" data-placement="right" title="All files"></i><span className="side-text"> All files</span></Link>
+					<Link href="/files"><i className="fas fa-folder" data-bs-toggle="tooltip" data-bs-placement="right" title="All files"></i><span className="side-text"> All files</span></Link>
 				</li>
 				<li>
-					<Link href="/recent"><i className="fas fa-clock" data-toggle="tooltip" data-placement="right" title="Recents"></i><span className="side-text"> Recents</span></Link>
+					<Link href="/recent"><i className="fas fa-clock" data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"></i><span className="side-text"> Recents</span></Link>
 				</li>
 				<li>
 					<span className="smallFav">
@@ -42,19 +46,18 @@ export default function SideBar({ size }: Props) {
 						<a type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
 							<i className="fas fa-star"></i><span className="side-text">Favourites <i className="fas fa-sort-up" style={{ verticalAlign:'center', float:'right' }}></i></span>
 						</a>
-						<div className="collapse" id="collapseExample">
-							<div style={{ maxWidth:'100%' }}>
-								<Link className="card-text text-truncate" style={{ color:'black', fontSize:'15px' }} href="/files" data-toggle="tooltip" data-placement="right" title="fileNAME">
-									<i className="far fa-file"></i>
-									<b>FILENAME</b>
+						<div className="collapse" id="collapseExample" style={{ maxWidth: '200px' }}>
+							{(session?.user as User).recentFiles.map((_) => (
+								<Link key={_.location} className="card-text text-truncate" style={{ color:'black', fontSize:'15px', textDecoration: 'none' }} href={`/files/${_.location}`}>
+									<i className="far fa-file"></i> <b>{_.location.split('/').at(-1)}</b>
 								</Link>
-							</div>
+							))}
 						</div>
 					</span>
 				</li>
 			</ul>
-			<div className="p-2 bottom" style={{ position:'fixed', bottom:'0', height:'11%' }}>
-				<label className="side-text">{formatBytes(size)} of 5GB used</label>
+			<div className="p-2 bottom side-text" style={{ position:'fixed', bottom:'0', height:'11%' }}>
+				<label className="side-text">{formatBytes(size)} of {formatBytes((session?.user as User).group.maxStorageSize)} used</label>
 				<div className="progress" style={{ width:'200px' }}>
 					<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
 				</div>

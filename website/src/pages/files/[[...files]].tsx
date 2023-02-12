@@ -13,6 +13,7 @@ import { getServerSession } from 'next-auth/next';
 import { AuthOption } from '../api/auth/[...nextauth]';
 import { findUser } from '../../db/User';
 import axios, { AxiosRequestConfig } from 'axios';
+import { useRouter } from 'next/router';
 interface Props {
 	dir: fileItem | null
 	path: string
@@ -22,6 +23,7 @@ type viewTypeTypes = 'List' | 'Tiles';
 
 export default function Files({ dir, path = '/' }: Props) {
 	const { data: session, status } = useSession({ required: true });
+	const router = useRouter();
 
 	const [progress, setProgress] = useState(0);
 	const [remaining, setRemaining] = useState(0);
@@ -72,9 +74,8 @@ export default function Files({ dir, path = '/' }: Props) {
           url: string | string[];
         };
       }>(`/api/files/upload/${session?.user.id}`, formData, options);
-			console.log('data', data);
 
-			alert(`File was uploaded successfully: ${data.url}`);
+			router.reload();
 			setProgress(0);
 			setRemaining(0);
 		} catch (error) {

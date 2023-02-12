@@ -98,7 +98,7 @@ export default function DisplayFile({ dir }: Props) {
 	function updateProgress() {
 		const vid = (video.current as HTMLVideoElement);
 		if (vid.buffered.length == 0) return;
-		const bufferedEnd = vid.buffered.end((vid.buffered.length - 1) < vid.buffered.length ? 0 : vid.buffered.length - 1);
+		const bufferedEnd = vid.buffered.end(vid.buffered.length - 1);
 		const durationTime = vid.duration;
 		console.log(`[DEBUG] Time renderd: ${bufferedEnd} out of ${durationTime}`);
 		if (durationTime > 0) (buffer.current as HTMLProgressElement).value = (bufferedEnd / durationTime) * 100;

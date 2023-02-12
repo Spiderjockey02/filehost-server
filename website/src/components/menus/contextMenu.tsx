@@ -3,6 +3,7 @@ import { useOnClickOutside } from '../../utils/useOnClickOutisde';
 import { useSession } from 'next-auth/react';
 import type { User } from '@prisma/client';
 import type { BaseSyntheticEvent } from 'react';
+import { useRouter } from 'next/router';
 interface Props {
 	x: number
 	y: number
@@ -13,9 +14,19 @@ interface Props {
 export default function ContextMenu({ x, y, closeContextMenu, selected }: Props) {
 	const contextMenuRef = useRef<HTMLDivElement>(null);
 	const { data: session, status } = useSession();
-	useOnClickOutside(contextMenuRef, closeContextMenu);
+	const router = useRouter();
 
+	useOnClickOutside(contextMenuRef, closeContextMenu);
 	if (status == 'loading') return null;
+
+	function closeModal(id: string) {
+		document.getElementById(id)?.classList.remove('show');
+		document.getElementById(id)?.setAttribute('aria-hidden', 'true');
+		document.getElementById(id)?.setAttribute('style', 'display: none');
+		document.body.removeChild(document.getElementsByClassName('modal-backdrop')[0] as Node);
+		closeContextMenu();
+		router.reload();
+	}
 
 	const handleRenameSubmit = async (event: BaseSyntheticEvent) => {
 		event.preventDefault();
@@ -29,6 +40,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 			},
 			body: JSON.stringify({ oldPath, newPath }),
 		});
+		closeModal('renameModel');
 	};
 
 	const handleDeleteSubmit = async (event: BaseSyntheticEvent) => {
@@ -40,7 +52,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 			},
 			body: JSON.stringify({ path: selected }),
 		});
-
+		closeModal('deleteModel');
 	};
 
 	return (

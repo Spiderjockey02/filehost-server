@@ -18,14 +18,15 @@ export default function PhotoAlbum({ files, dir }: Props) {
 	return (
 		<div className="row justify-content-between">
 			{files.map(_ => (
-				<div className="card col-sm-2 m-2" style={{ marginBottom: '10px' }} key={_.name}>
-					<Link href={`/files${dir == '/' ? '/' : `/${dir}/`}${_.name}`}>
+				<div className="card col-sm-2 m-2 text-center" key={_.name} style={{ margin:'0px', padding: '0px' }}>
+					<Link href={`/files${dir == '/' ? '/' : `/${dir}/`}${_.name}`} style={{ textDecoration: 'none' }}>
 						<Image className="center" loader={myLoader} src={_.name}
 							style={{ width:'auto', maxWidth:'200px', height:'auto', maxHeight:'275px' }}
-							alt={_.name} width="200" height="230"
+							alt={_.name} width="200" height="275"
 						/>
 						<div className="card-body">
-							<h5 className="card-title">{_.name}</h5>
+							<h5 className="card-title text-truncate">{_.name}</h5>
+							<p>{new Date(_.modified).toDateString()}</p>
 						</div>
 					</Link>
 				</div>
