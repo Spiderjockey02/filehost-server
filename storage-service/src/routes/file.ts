@@ -13,17 +13,17 @@ export default function() {
 	// Upload a new file
 	router.post('/upload/:userId', async (req, res) => {
 		const userId = req.params.userId;
-		const { files } = await parseForm(req, userId);
 
-		const file = files.media;
-		const url = Array.isArray(file) ? file.map((f) => f.filepath) : file.filepath;
+		try {
+			// Parse and save file(s)
+			const { files } = await parseForm(req, userId);
+			const file = files.media;
+			const url = Array.isArray(file) ? file.map((f) => f.filepath) : file.filepath;
 
-		return res.status(200).json({
-			data: {
-				url,
-			},
-			error: null,
-		});
+			return res.status(200).json({ success: `File(${Array.isArray(url) ? 's' : ''}) successfully uploaded.` });
+		} catch {
+			res.status(400).json({ error: 'Failed to upload files' });
+		}
 	});
 
 	// Delete a file/folder
@@ -38,7 +38,7 @@ export default function() {
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			console.log(err);
-			res.json({ error: 'Failed to delete item.' });
+			res.status(400).json({ error: 'Failed to delete item.' });
 		}
 	});
 
@@ -50,7 +50,7 @@ export default function() {
 		try {
 			await fs.rename(`${PATHS.CONTENT}/${userId}/${newPath}`, `${PATHS.CONTENT}/${userId}/${oldPath}`);
 		} catch (err) {
-			res.json({ error: 'Failed to move item.' });
+			res.status(400).json({ error: 'Failed to move item.' });
 		}
 	});
 
@@ -63,7 +63,7 @@ export default function() {
 			await fs.copyFile(`${PATHS.CONTENT}/${userId}/${newPath}`, `${PATHS.CONTENT}/${userId}/${oldPath}`);
 			res.json({ success: 'Successfully copied file' });
 		} catch (err) {
-			res.json({ error: 'Failed to move item.' });
+			res.status(400).json({ error: 'Failed to move item.' });
 		}
 	});
 
@@ -75,7 +75,7 @@ export default function() {
 
 		archive
 			.directory(`${PATHS.CONTENT}/${userId}${path}`, false)
-			.on('error', () => res.json({ error: 'Error downloading item' }))
+			.on('error', () => res.status(400).json({ error: 'Error downloading item' }))
 			.pipe(res);
 		archive.finalize();
 
@@ -99,7 +99,7 @@ export default function() {
 				`${PATHS.CONTENT}/${userId}${originalPath}${newPath}.${oldPath.split('.').at(-1)}`);
 			res.json({ success: 'Successfully renamed file' });
 		} catch (err) {
-			res.json({ error: 'Failed to rename item.' });
+			res.status(400).json({ error: 'Failed to rename item.' });
 		}
 	});
 

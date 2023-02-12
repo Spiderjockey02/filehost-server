@@ -49,5 +49,5 @@ const app = express();
 		.use('/', (await import('./routes/index')).default())
 		.use('/file', (await import('./routes/file')).default())
 		.use('/trash', (await import('./routes/trash')).default())
-		.listen(config.port, () => Logger.log(`Started on PORT: ${config.port}`));
+		.listen(config.port, () => Logger.ready(`Started on PORT: ${config.port}`));
 })();

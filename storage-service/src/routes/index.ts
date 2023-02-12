@@ -23,10 +23,16 @@ export default function() {
 		const fileType = lookup(path);
 		const fileName = path.substring(0, path.lastIndexOf('.')) || path;
 		if (fileType !== false) {
+			// Create folder
+			if (!fs.existsSync((`${PATHS.THUMBNAIL}/${userId}/${path.split('/').slice(0, -1)}`))) {
+				fs.mkdirSync(`${PATHS.THUMBNAIL}/${userId}/${path.split('/').slice(0, -1)}`, { recursive: true });
+			}
+
+			// Create thumbnail from video, photo
 			switch (fileType.split('/')[0]) {
 				case 'image': {
 					// Create thumbnail if not already created
-					if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) await createThumbnail(`${PATHS.CONTENT}/${userId}/${path}`);
+					if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) await createThumbnail(userId, path);
 					return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
 				}
 				case 'video': {
@@ -37,7 +43,6 @@ export default function() {
 								`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`,
 							]);
 
-						fs.mkdirSync(`${PATHS.THUMBNAIL}/${userId}/${path.split('/').slice(0, -1)}`, { recursive: true });
 						await new Promise((resolve, reject) => {
 							child.on('close', resolve);
 							child.on('error', (err) => {
@@ -63,7 +68,7 @@ export default function() {
 
 		// update the user's recent access files
 		try {
-			await updateUserRecentFiles({ id: userId, path });
+			await updateUserRecentFiles({ userId, path });
 		} catch (err: any) {
 			console.log(err);
 		}

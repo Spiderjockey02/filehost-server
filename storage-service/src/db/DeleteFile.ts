@@ -27,3 +27,7 @@ export async function deleteDeleteFile(data: deleteFileProps) {
 		},
 	});
 }
+
+export async function getDeletedFiles() {
+	return client.deletefile.findMany();
+}
