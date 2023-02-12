@@ -146,7 +146,7 @@ export default function Files({ dir, path = '/' }: Props) {
 								}
 							</div>
 						</div>
-						{(path.length <= 1) &&
+						{(path.length <= 1 && (session?.user as User).recentFiles.length >= 1) &&
 						<RecentTab files={(session?.user as User).recentFiles}/>
 						}
 						{dir == null ?
