@@ -4,6 +4,8 @@ import Directory from '../../components/directory';
 import PhotoAlbum from '../../components/photoAlbum';
 import ImageViewer from '../../components/views/ImageViewer';
 import SimpleProgressBar from '../../components/SimpleProgress';
+import RecentTab from '../../components/navbars/recent';
+import type { User } from '@prisma/client';
 import type { fileItem } from '../../utils/types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useState } from 'react';
@@ -96,7 +98,7 @@ export default function Files({ dir, path = '/' }: Props) {
 								<nav style={{ fontSize:'18.72px' }} aria-label="breadcrumb">
 					        <ol className="breadcrumb" style={{ backgroundColor:'white' }}>
 					          <li className="breadcrumb-item">
-											{(path == '/') ?
+											{(path.length <= 1) ?
 												<b style={{ color:'black' }}>Home</b>
 												: <b>
 													<Link className="directoyLink" href={'/files'} style={{ color:'grey' }}>Home</Link>
@@ -144,6 +146,9 @@ export default function Files({ dir, path = '/' }: Props) {
 								}
 							</div>
 						</div>
+						{(path.length <= 1) &&
+						<RecentTab files={(session?.user as User).recentFiles}/>
+						}
 						{dir == null ?
 							<p>This folder is empty</p>
 							: (dir.children?.length >= 1) ?
