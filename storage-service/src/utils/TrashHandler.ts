@@ -1,7 +1,7 @@
 import type { deletefile } from '@prisma/client';
 import { PATHS } from '../utils/types';
 import fs from 'fs/promises';
-import { addDeleteFile, deleteDeleteFile } from '../db/DeleteFile';
+import { addDeleteFile, deleteDeleteFile, getDeletedFiles } from '../db/DeleteFile';
 
 export default class TrashHandler {
 	public files: Array<deletefile>;
@@ -10,7 +10,8 @@ export default class TrashHandler {
 		this.init();
 	}
 
-	init() {
+	async init() {
+		this.files = await getDeletedFiles();
 		setInterval(() => {
 			for (const file of this.files) {
 				if (file.DeleteFileAt <= new Date()) this.deleteFile(file);
