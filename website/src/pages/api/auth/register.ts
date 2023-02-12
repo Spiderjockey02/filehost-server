@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 	if (isEmailAlreadyBeingUsed) error = { type: 'email', text: 'Email already being used' };
 
 	// If an error was found notify user
-	if (error) return res.json({ error });
+	if (Object.keys(error).length == 1) return res.json({ error });
 
 	// Encrypt password (Dont save raw password to database)
 	let Hashpassword;
