@@ -36,6 +36,8 @@ model User {
   createdAt     DateTime      @default(now()) @map("created_at")
   sessions      Session[]
   recentFiles   Recent[]
+  groupId       String?
+  group         Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
 }
 
 model Session {
@@ -53,4 +55,18 @@ model Recent {
   location      String
   createdAt     DateTime   @default(now()) @map("created_at")
   @@unique([userId, location])
+}
+
+model Group {
+  id              String    @id     @default(cuid())
+  name            String    @unique
+  users           User[]
+  maxStorageSize  String @default("5368709120")
+}
+
+model DeleteFile {
+  id            String    @id     @default(cuid())
+  userId        String
+  location      String
+  DeleteFileAt  DateTime
 }

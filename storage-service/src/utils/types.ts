@@ -13,3 +13,10 @@ export type fileItem = {
   children: fileItem[]
   url: string
 }
+
+export const PATHS = {
+	AVATAR: `${process.cwd()}/src/uploads/avatars`,
+	THUMBNAIL: `${process.cwd()}/src/uploads/thumbnails`,
+	CONTENT: `${process.cwd()}/src/uploads/content`,
+	TRASH: `${process.cwd()}/src/uploads/trash`,
+};

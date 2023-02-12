@@ -4,13 +4,8 @@ import { lookup } from 'mime-types';
 import { spawn } from 'child_process';
 import { createThumbnail } from '../utils/functions';
 import { updateUserRecentFiles } from '../db/Recent';
+import { PATHS } from '../utils/types';
 const router = Router();
-
-const PATHS = {
-	AVATAR: `${process.cwd()}/src/uploads/avatars`,
-	THUMBNAIL: `${process.cwd()}/src/uploads/thumbnails`,
-	CONTENT: `${process.cwd()}/src/uploads/content`,
-};
 
 export default function() {
 

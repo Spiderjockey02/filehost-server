@@ -54,7 +54,25 @@ model user {
   image         String?
   password      String?
   created_at    DateTime  @default(now())
+  groupId       String?
   account       account[]
   recent        recent[]
   session       session[]
+  group         group?    @relation(fields: [groupId], references: [id], onDelete: Cascade, map: "User_groupId_fkey")
+
+  @@index([groupId], map: "User_groupId_fkey")
+}
+
+model group {
+  id             String @id @default(cuid())
+  name           String @unique(map: "Group_name_key")
+  maxStorageSize String @default("5368709120")
+  user           user[]
+}
+
+model deletefile {
+  id           String   @id @default(cuid())
+  userId       String
+  location     String
+  DeleteFileAt DateTime
 }

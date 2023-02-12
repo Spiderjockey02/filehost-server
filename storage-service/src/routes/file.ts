@@ -4,13 +4,10 @@ import fs from 'fs/promises';
 import archiver from 'archiver';
 import directoryTree from '../utils/directory';
 import { parseForm } from '../utils/parse-form';
+import { PATHS } from '../utils/types';
+import TrashHandler from '../utils/TrashHandler';
+const trash = new TrashHandler();
 const router = Router();
-
-const PATHS = {
-	AVATAR: `${process.cwd()}/src/uploads/avatars`,
-	THUMBNAIL: `${process.cwd()}/src/uploads/thumbnails`,
-	CONTENT: `${process.cwd()}/src/uploads/content`,
-};
 
 export default function() {
 	// Upload a new file
@@ -37,9 +34,10 @@ export default function() {
 		const originalPath = userPath.startsWith('/') ? userPath : '/';
 
 		try {
-			await fs.rm(`${PATHS.CONTENT}/${userId}${originalPath}${path}`, { recursive: true, force: true });
+			await trash.addFile(userId, originalPath, path);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
+			console.log(err);
 			res.json({ error: 'Failed to delete item.' });
 		}
 	});
