@@ -5,15 +5,13 @@ import Objects from '../recognise/objects';
 import Geo from '../recognise/geo';
 
 export default class RecogniseHandler {
-	public Face: null;
-	public queue: Array<string>;
-	public analyseLandmarks: Landmarks;
-	public analyseNSFW: NSFW;
-	public analyseFace: Face;
-	public analyseObjects: Objects;
-	public analyseGeo: Geo;
+	private queue: Array<string>;
+	private analyseLandmarks: Landmarks;
+	private analyseNSFW: NSFW;
+	private analyseFace: Face;
+	private analyseObjects: Objects;
+	private analyseGeo: Geo;
 	constructor() {
-		this.Face = null;
 		this.analyseLandmarks = new Landmarks();
 		this.analyseNSFW = new NSFW();
 		this.analyseFace = new Face();
@@ -24,19 +22,25 @@ export default class RecogniseHandler {
 		this.init();
 	}
 
-	async init() {
-		for (const item of this.queue) {
-			const res = await Promise.all([this.analyseObjects.run(item)]);
-			console.log(res);
+	private async init() {
+		for (const path of this.queue) {
+			// Analyse image through all systems
+			const [landmark, nsfw, face, objects, geo] = await Promise.all([this.analyseLandmarks.run(path), this.analyseNSFW.run(path),
+				this.analyseFace.run(path), this.analyseObjects.run(path), this.analyseGeo.run(path)]);
 
-			const index = this.queue.indexOf(item);
+			console.log({ landmark, nsfw, face, objects, geo });
+			const index = this.queue.indexOf(path);
 			if (index > -1) this.queue.splice(index, 1);
 		}
 
 		setTimeout(() => this.init(), 1000);
 	}
 
-	addToQueue(path: string) {
-		this.queue.push(path);
+	public addToQueue(path: string | Array<string>) {
+		if (Array.isArray(path)) {
+			this.queue.push(...path);
+		} else {
+			this.queue.push(path);
+		}
 	}
 }

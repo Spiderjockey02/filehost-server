@@ -1,5 +1,6 @@
 import EfficientNet from './EfficientModel';
 import { Logger } from '../utils/Logger';
+import mimeType from 'mime-types';
 
 // Types
 type landmarkNames = 'landmarks_africa' | 'landmarks_asia' | 'landmarks_europe'| 'landmarks_north_america' | 'landmarks_south_america'| 'landmarks_oceania';
@@ -15,6 +16,10 @@ export default class Landmarks {
 	*/
 	async run(path: string) {
 		Logger.debug(`Checking for landmarks in file: ${path}.`);
+
+		const fileType = mimeType.lookup(path);
+		if (fileType == false || fileType.split('/')[0] !== 'image' || fileType == 'image/webp') return [];
+
 		const imgSize = 321;
 		const minInput = 0;
 		const models = ['landmarks_africa', 'landmarks_asia', 'landmarks_europe', 'landmarks_north_america', 'landmarks_south_america', 'landmarks_oceania'];

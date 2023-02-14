@@ -6,12 +6,8 @@ import { getUsers, createUser, addUserToGroup } from './db/User';
 import { getGroups, createGroup } from './db/Group';
 import bcrypt from 'bcrypt';
 const app = express();
-import RecogniseHandler from './utils/RecogniseHandler';
 
 (async () => {
-	const Recognise = new RecogniseHandler();
-	Recognise.addToQueue('C:\\Users\\benja\\Downloads\\Chicago_Transit_Authority_Brown_Line_train.jpg');
-
 	// Create an admin account
 	const users = await getUsers();
 	let user;
@@ -53,6 +49,6 @@ import RecogniseHandler from './utils/RecogniseHandler';
 		.use('/', (await import('./routes/index')).default())
 		.use('/file', (await import('./routes/file')).default())
 		.use('/trash', (await import('./routes/trash')).default())
-		// .use('/api', (await import('./routes/api')).default())
+		.use('/api', (await import('./routes/api')).default())
 		.listen(config.port, () => Logger.ready(`Started on PORT: ${config.port}`));
 })();

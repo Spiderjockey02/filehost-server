@@ -15,11 +15,10 @@ export default class Landmarks {
 		try {
 			// Only allow images to be analysed
 			const fileType = mimeType.lookup(path);
-			if (fileType == false || fileType.split('/')[0] !== 'image' || ['image/gif', 'image/apng'].includes(fileType)) return [];
+			if (fileType == false || fileType.split('/')[0] !== 'image') return [];
 
 			// Get the GPS data from the file
 			const metadata = await exifer(fs.readFileSync(path), { tags: { gps } });
-			console.log(metadata);
 			if (metadata.GPSAltitude && metadata.GPSLongitude) {
 				const lat = this.convertDMSToDD(metadata.GPSLatitude, metadata.GPSLatitudeRef);
 				const long = this.convertDMSToDD(metadata.GPSLongitude, metadata.GPSLongitudeRef);
@@ -28,8 +27,8 @@ export default class Landmarks {
 			} else {
 				return [];
 			}
-		} catch (e) {
-			console.log(e);
+		} catch (e: unknown) {
+			Logger.error(`GEO: ${JSON.stringify(e)}`);
 			return [];
 		}
 	}

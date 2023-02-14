@@ -1,16 +1,24 @@
 import config from '../config';
 import Jimp from 'jimp';
-import type { GraphModel } from '@tensorflow/tfjs-node';
+import type { Jimp as JimpClass } from '@jimp/core';
+import type { GraphModel, Tensor, Rank } from '@tensorflow/tfjs-node';
 const NUM_OF_CHANNELS = 3;
 const getTF = async () => await import(`@tensorflow/tfjs-node${config.useGPU ? '-gpu' : ''}`);
+
+interface Options {
+	topK: number
+	softmax: boolean
+}
+
+type LabelEnum = { [key: number]: string }
 
 class EfficientModel {
 	public modelPath: string;
 	public imageSize: number;
 	public inputMin: number;
-	public labels: string;
+	public labels: LabelEnum;
 	public model: GraphModel | null;
-	constructor(modelPath: string, imageSize: number, inputMin: number, labels: any) {
+	constructor(modelPath: string, imageSize: number, inputMin: number, labels: LabelEnum) {
 		this.modelPath = modelPath;
 		this.imageSize = imageSize;
 		this.inputMin = inputMin;
@@ -18,7 +26,7 @@ class EfficientModel {
 		this.model = null;
 	}
 
-	static async create(modelURL: string, imgSize:number, inputMin:number, labels: any) {
+	static async create(modelURL: string, imgSize: number, inputMin: number, labels: LabelEnum) {
 		const model = new EfficientModel(modelURL, imgSize, inputMin, labels);
 		await model.load();
 		return model;
@@ -29,11 +37,11 @@ class EfficientModel {
 		this.model = await tf.loadGraphModel(this.modelPath);
 	}
 
-	predict(tensor: any) {
+	predict(tensor: Tensor<Rank>) {
 		return this.model?.predict(tensor);
 	}
 
-	async inference(imgPath: any, options: any) {
+	async inference(imgPath: string, options: Options) {
 		const tf = await getTF();
 		const { topK = 3 } = options || {};
 		const inputMax = 1;
@@ -76,11 +84,11 @@ class EfficientModel {
 		return prediction;
 	}
 
-	async createTensor(image: any) {
+	async createTensor(image: JimpClass) {
 		const tf = await getTF();
 		const values = new Float32Array(image.bitmap.width * image.bitmap.height * NUM_OF_CHANNELS);
 		let i = 0;
-		image.scan(0, 0, image.bitmap.width, image.bitmap.height, (x: any, y: any) => {
+		image.scan(0, 0, image.bitmap.width, image.bitmap.height, (x, y) => {
 			const pixel = Jimp.intToRGBA(image.getPixelColor(x, y));
 			values[i * NUM_OF_CHANNELS + 0] = pixel.r;
 			values[i * NUM_OF_CHANNELS + 1] = pixel.g;
@@ -103,7 +111,7 @@ class EfficientModel {
  * @param topK
  * @param labels
  */
-function getTopKClasses(values: (Uint8Array | Float32Array | Int32Array), topK: number, labels: any) {
+function getTopKClasses(values: (Uint8Array | Float32Array | Int32Array), topK: number, labels: LabelEnum) {
 	const valuesAndIndices = [];
 	for (let i = 0; i < values.length; i++) {
 		valuesAndIndices.push({ value: values[i], index: i });
