@@ -83,8 +83,8 @@ export default function() {
 				const videoSize = fs.statSync(`${PATHS.CONTENT}/${userId}/${path}`).size;
 				if (!range) {
 					res.writeHead(200, {
-						'Content-Length': videoSize + 1,
-						'Content-Type': 'video/mp4',
+						'content-length': videoSize + 1,
+						'content-type': 'video/mp4',
 					});
 					fs.createReadStream(`${PATHS.CONTENT}/${userId}/${path}`).pipe(res);
 				} else {
@@ -96,10 +96,11 @@ export default function() {
 					// Create headers
 					const contentLength = end - start + 1;
 					const headers = {
-						'Content-Range': `bytes ${start}-${end}/${videoSize}`,
-						'Accept-Ranges': 'bytes',
-						'Content-Length': contentLength,
-						'Content-Type': 'video/mp4',
+						'content-range': `bytes ${start}-${end}/${videoSize}`,
+						'accept-ranges': 'bytes',
+						'content-length': contentLength,
+						'content-type': 'video/mp4',
+						'range': `bytes ${start}-${end}/${videoSize}`,
 					};
 
 					// HTTP Status 206 for Partial Content
