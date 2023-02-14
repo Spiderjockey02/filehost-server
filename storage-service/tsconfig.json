@@ -3,6 +3,7 @@
    "compilerOptions": {
      "rootDir": "./src",
      "types": ["node"],
+     "typeRoots": ["./src/types"],
      "outDir": "./dist",
      "lib": [
        "es2020"

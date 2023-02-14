@@ -29,14 +29,22 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "@exifer/gps": "^1.0.0-beta.2",
+    "@tensorflow/tfjs-node": "^3.7.0",
+    "@tensorflow/tfjs-node-gpu": "^3.7.0",
+    "@vladmandic/face-api": "^1.7.9",
     "archiver": "^5.3.1",
     "bcrypt": "^5.1.0",
     "compression": "^1.7.4",
+    "exifer": "^1.0.0-beta.2",
     "express": "^4.18.2",
     "formidable": "^2.1.1",
+    "geo-reverse": "^1.0.13",
     "image-thumbnail": "^1.0.15",
+    "jimp": "^0.22.4",
     "mime-types": "^2.1.35",
     "moment": "^2.29.4",
+    "nsfwjs": "^2.4.2",
     "on-finished": "^2.4.1",
     "simple-node-logger": "^21.8.12"
   }
