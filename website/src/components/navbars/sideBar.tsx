@@ -1,16 +1,14 @@
 import Link from 'next/link';
 import { formatBytes } from '../../utils/functions';
 import config from '../../config';
-import { useSession } from 'next-auth/react';
 import type { User } from '@prisma/client';
+
 interface Props {
 	size: number
+	user: User
 }
 
-export default function SideBar({ size }: Props) {
-	const { data: session, status } = useSession();
-	if (status == 'loading') return null;
-
+export default function SideBar({ size, user }: Props) {
 	function getColor(num: number) {
 		if (num >= 4 * 1024 * 1024 * 1024) {
 			return 'bg-danger';
@@ -47,7 +45,7 @@ export default function SideBar({ size }: Props) {
 							<i className="fas fa-star"></i><span className="side-text">Favourites <i className="fas fa-sort-up" style={{ verticalAlign:'center', float:'right' }}></i></span>
 						</a>
 						<div className="collapse" id="collapseExample" style={{ maxWidth: '200px' }}>
-							{(session?.user as User).recentFiles.map((_) => (
+							{user.recentFiles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((_) => (
 								<Link key={_.location} className="card-text text-truncate" style={{ color:'black', fontSize:'15px', textDecoration: 'none' }} href={`/files/${_.location}`}>
 									<i className="far fa-file"></i> <b>{_.location.split('/').at(-1)}</b>
 								</Link>
@@ -57,7 +55,7 @@ export default function SideBar({ size }: Props) {
 				</li>
 			</ul>
 			<div className="p-2 bottom side-text" style={{ position:'fixed', bottom:'0', height:'11%' }}>
-				<label className="side-text">{formatBytes(size)} of {formatBytes((session?.user as User).group.maxStorageSize)} used</label>
+				<label className="side-text">{formatBytes(size)} of {formatBytes(user.group.maxStorageSize)} used</label>
 				<div className="progress" style={{ width:'200px' }}>
 					<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
 				</div>

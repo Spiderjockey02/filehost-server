@@ -70,7 +70,7 @@ export default function Files({ dir, path = '/' }: Props) {
 				},
 			};
 
-			await axios.post(`/api/files/upload/${session?.user.id}`, formData, options);
+			await axios.post(`/api/files/upload/${(session?.user as User).id}`, formData, options);
 			router.reload();
 			setProgress(0);
 			setRemaining(0);
@@ -83,9 +83,9 @@ export default function Files({ dir, path = '/' }: Props) {
 	return (
 		<>
 			<div className="wrapper" style={{ height:'100vh' }}>
-				<SideBar size={dir?.size ?? 0}/>
+				<SideBar size={dir?.size ?? 0} user={session.user as User}/>
 				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
-					<FileNavBar />
+					<FileNavBar user={session.user as User}/>
 					<div className="container-fluid">
 						<div className="row">
 							<div className="col-md-10">
@@ -141,15 +141,15 @@ export default function Files({ dir, path = '/' }: Props) {
 							</div>
 						</div>
 						{(path.length <= 1 && (session.user as User).recentFiles.length >= 1) &&
-						<RecentTab files={(session?.user as User).recentFiles}/>
+						<RecentTab files={(session?.user as User).recentFiles} user={session.user as User}/>
 						}
 						{dir == null ?
 							<p>This folder is empty</p>
 							: (dir.children?.length >= 1) ?
 								viewType == 'Tiles' ?
-									<PhotoAlbum files={dir.children.slice(0, 50)} dir={path} /> :
+									<PhotoAlbum files={dir.children.slice(0, 50)} dir={path} user={session.user as User} /> :
 									<Directory files={dir} dir={path} />
-								: <ImageViewer files={dir} dir={path}/>
+								: <ImageViewer files={dir} dir={path} user={session.user as User}/>
 						}
 						<SimpleProgressBar progress={progress} remaining={remaining} />
 					</div>

@@ -1,14 +1,12 @@
-import { useSession } from 'next-auth/react';
 import type { User } from '@prisma/client';
 import { useRef } from 'react';
+import Script from 'next/script';
 interface Props {
   dir: string
+  user: User
 }
 
-export default function DisplayFile({ dir }: Props) {
-	// get session
-	const { data: session, status } = useSession({ required: true });
-
+export default function DisplayFile({ dir, user }: Props) {
 	const video = useRef<HTMLVideoElement>(null);
 	const videoContainer = useRef<HTMLDivElement>(null);
 	const duration = useRef<HTMLTimeElement>(null);
@@ -119,6 +117,7 @@ export default function DisplayFile({ dir }: Props) {
 	return (
 		<>
 			<link rel="stylesheet" href="/videoplayer.css" />
+			<Script src="https://vjs.zencdn.net/8.0.4/video.min.js"></Script>
 			<div className="video-container" id="video-container" ref={videoContainer}>
 				<div className="playback-animation" id="playback-animation" ref={playbackAnimation}>
 					<svg className="svg playback-icons">
@@ -126,9 +125,9 @@ export default function DisplayFile({ dir }: Props) {
 						<use href="#pause"></use>
 					</svg>
 				</div>
-				<video className="video" id="video" preload="metadata" ref={video}
+				<video className="video" id="my-video" preload="metadata" ref={video}
 					onLoadedMetadata={() => initVideo()} onTimeUpdate={() => timeUpdate()} onClick={() => clickedVideo()} onProgress={() => updateProgress()}>
-					<source src={`/content/${(session.user as User).id}/${dir}`} type="video/mp4" />
+					<source src={`/content/${user.id}/${dir}`} type="video/mp4" />
 				</video>
 				<div id="settings-tab" className="video-controls hidden">
 					<div className="form-group">

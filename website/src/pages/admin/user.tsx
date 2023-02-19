@@ -1,6 +1,7 @@
 import FileNavBar from '../../components/navbars/file-navBar';
 import SideBar from '../../components/navbars/sideBar';
 import { fetchAllUsers } from '../../db/User';
+import { useSession } from 'next-auth/react';
 import type { User } from '@prisma/client';
 
 interface Props {
@@ -8,12 +9,15 @@ interface Props {
 }
 
 export default function Files({ users }: Props) {
-	console.log(users);
+	// Make sure user is logged in before accessing page
+	const { data: session, status } = useSession({ required: true });
+	if (status == 'loading') return null;
+
 	return (
 		<div className="wrapper">
-			<SideBar size={0}/>
+			<SideBar size={0} user={session.user as User}/>
 		 <div className="container-fluid" id="content">
-			 <FileNavBar />
+			 <FileNavBar user={session.user as User} />
 			 &nbsp;
 			 <h3>User Information</h3>
 			 &nbsp;
