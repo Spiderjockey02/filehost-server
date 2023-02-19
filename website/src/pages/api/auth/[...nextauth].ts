@@ -1,17 +1,24 @@
 import NextAuth from 'next-auth';
 // import FacebookProvider from 'next-auth/providers/facebook';
-// import TwitterProvider from 'next-auth/providers/twitter';
+import TwitterProvider from 'next-auth/providers/twitter';
 // import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { findUser } from '../../../db/User';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '../../../db/prisma';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import config from '../../../config';
+import type { User } from '@prisma/client';
 import type { AuthOptions } from 'next-auth';
 
 export const AuthOption = {
 	adapter: PrismaAdapter(prisma),
 	providers: [
+		TwitterProvider({
+			clientId: config.twitter.consumer_key,
+			clientSecret: config.twitter.consumer_secret,
+			version: '2.0',
+		}),
 		CredentialsProvider({
 			id: 'credentials',
 			name: 'credentials',
@@ -43,11 +50,11 @@ export const AuthOption = {
 	secret: process.env.NEXTAUTH_SECRET,
 	callbacks: {
 		async jwt({ token, user }) {
-			if (typeof user !== typeof undefined) token.user = user;
+			if (typeof user !== typeof undefined) token.user = await findUser({ id: user?.id }) as User;
 			return token;
 		},
-		session({ session, token }) {
-			if (token.user !== null) session.user = token.user;
+		async session({ session, token }) {
+			if (token.user !== null) session.user = await findUser({ id: (token.user as User).id }) as User;
 			return session;
 		},
 		redirect: async ({ url, baseUrl }) =>	url.startsWith(baseUrl) ? Promise.resolve(url)	: Promise.resolve(baseUrl),
