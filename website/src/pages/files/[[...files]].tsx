@@ -16,6 +16,7 @@ import { AuthOption } from '../api/auth/[...nextauth]';
 import { findUser } from '../../db/User';
 import axios, { AxiosRequestConfig } from 'axios';
 import { useRouter } from 'next/router';
+import config from '../../config';
 interface Props {
 	dir: fileItem | null
 	path: string
@@ -54,29 +55,22 @@ export default function Files({ dir, path = '/' }: Props) {
 			validFiles.forEach((file) => formData.append('media', file));
 			const options: AxiosRequestConfig = {
 				headers: { 'Content-Type': 'multipart/form-data' },
-				onUploadProgress: (progressEvent: any) => {
+				onUploadProgress: (progressEvent) => {
 					const { loaded, total } = progressEvent;
 
 					// Calculate the progress percentage
-					const percentage = (loaded * 100) / total;
+					const percentage = (loaded * 100) / (total ?? 0);
 					setProgress(+percentage.toFixed(2));
 
 					// Calculate the progress duration
 					const timeElapsed = Date.now() - startAt;
 					const uploadSpeed = loaded / timeElapsed;
-					const duration = (total - loaded) / uploadSpeed;
+					const duration = ((total ?? 0) - loaded) / uploadSpeed;
 					setRemaining(duration);
 				},
 			};
 
-			const {
-				data: { data },
-			} = await axios.post<{
-        data: {
-          url: string | string[];
-        };
-      }>(`/api/files/upload/${session?.user.id}`, formData, options);
-
+			await axios.post(`/api/files/upload/${session?.user.id}`, formData, options);
 			router.reload();
 			setProgress(0);
 			setRemaining(0);
@@ -146,7 +140,7 @@ export default function Files({ dir, path = '/' }: Props) {
 								}
 							</div>
 						</div>
-						{(path.length <= 1 && (session?.user as User).recentFiles.length >= 1) &&
+						{(path.length <= 1 && (session.user as User).recentFiles.length >= 1) &&
 						<RecentTab files={(session?.user as User).recentFiles}/>
 						}
 						{dir == null ?
@@ -172,7 +166,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const user = await findUser({ email: session?.user?.email as string });
 	// Validate path
 	try {
-		const { data } = await axios.get(`http://localhost:9816/file/fetch/${user?.id}${path ? `/${path.join('/')}` : ''}`);
+		const { data } = await axios.get(`${config.backendURL}/api/fetch/files/${user?.id}${path ? `/${path.join('/')}` : ''}`);
 		return { props: { dir: data.files, path: path.join('/') } };
 	} catch (err) {
 		return { props: { dir: null, path: '/' } };

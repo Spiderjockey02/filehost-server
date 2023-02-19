@@ -4,7 +4,7 @@ import { lookup } from 'mime-types';
 import { spawn } from 'child_process';
 import { createThumbnail } from '../utils/functions';
 import { updateUserRecentFiles } from '../db/Recent';
-import { PATHS } from '../utils/types';
+import { PATHS } from '../utils/CONSTANTS';
 const router = Router();
 
 export default function() {
@@ -32,8 +32,13 @@ export default function() {
 			switch (fileType.split('/')[0]) {
 				case 'image': {
 					// Create thumbnail if not already created
-					if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) await createThumbnail(userId, path);
-					return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
+					try {
+						if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) await createThumbnail(userId, path);
+						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
+					} catch (err) {
+						console.log(err);
+						return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+					}
 				}
 				case 'video': {
 					if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) {

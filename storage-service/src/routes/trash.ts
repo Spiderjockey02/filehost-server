@@ -1,7 +1,7 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
 import directoryTree from '../utils/directory';
-import { PATHS } from '../utils/types';
+import { PATHS } from '../utils/CONSTANTS';
 const router = Router();
 
 export default function() {

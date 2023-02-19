@@ -4,6 +4,14 @@ export async function getGroups() {
 	return client.group.findMany();
 }
 
+export async function getGroupsWithCount() {
+	return client.group.findMany({
+		include: {
+			_count: true,
+		},
+	});
+}
+
 interface GroupNameProps {
 	name: string
 	includeUsers?: boolean

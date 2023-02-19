@@ -43,7 +43,7 @@ class EfficientModel {
 
 	async inference(imgPath: string, options: Options) {
 		const tf = await getTF();
-		const { topK = 3 } = options || {};
+		const { topK = 3 } = options;
 		const inputMax = 1;
 		const inputMin = this.inputMin;
 		const normalizationConstant = (inputMax - inputMin) / 255.0;

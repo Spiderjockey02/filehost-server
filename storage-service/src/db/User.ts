@@ -10,11 +10,27 @@ interface createUser {
 	password: string
 }
 // Create a user
-export function createUser(data: createUser) {
+export async function createUser(data: createUser) {
 	return client.user.create({
 		data: {
 			email: data.email,
 			name: data.name,
+			password: data.password,
+		},
+	});
+}
+
+interface updatePassword {
+	id: string
+	password: string
+}
+
+export async function updateUserPassword(data: updatePassword) {
+	return client.user.update({
+		where: {
+			id: data.id,
+		},
+		data: {
 			password: data.password,
 		},
 	});
@@ -36,6 +52,20 @@ export async function addUserToGroup(data: UserToGroupProps) {
 					id: data.groupId,
 				},
 			},
+		},
+	});
+}
+
+interface getUserByIdProps {
+	userId: string
+}
+export async function getUserById(data: getUserByIdProps) {
+	return client.user.findUnique({
+		where: {
+			id: data.userId,
+		},
+		include: {
+			group: true,
 		},
 	});
 }

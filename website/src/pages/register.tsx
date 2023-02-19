@@ -61,7 +61,7 @@ export default function Register() {
 
 		// Create the new user
 		const data = await fetch('/api/auth/register', {
-			method: 'put',
+			method: 'post',
 			headers: {
 				'content-type': 'application/json;charset=UTF-8',
 			},
@@ -70,7 +70,6 @@ export default function Register() {
 			}),
 		});
 		const res = await data.json();
-
 		// Check if an error was included
 		if (res.error) return setErrors([{ type: res.error.type, error: res.error.text }]);
 		if (res.success) router.push('/login');

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import PATH from 'path';
-import type { fileType, fileItem } from './types';
+import type { fileType, fileItem } from '../types';
 const constants = {
 	DIRECTORY: 'directory',
 	FILE: 'file',
@@ -11,8 +11,8 @@ function safeReadDirSync(path: string) {
 	let dirData = [];
 	try {
 		dirData = fs.readdirSync(path);
-	} catch (ex: any) {
-		if (['EACCES', 'EPERM'].includes(ex.code)) {
+	} catch (err: any) {
+		if (['EACCES', 'EPERM'].includes(err.code)) {
 			// User does not have permissions, ignore directory
 			return null;
 		} else {
@@ -26,16 +26,12 @@ function directoryTree(path:string, currentDepth = 1) {
 	const name = PATH.basename(path);
 	const item = { path, name } as fileItem;
 	let stats;
-	let lstat;
 
 	try {
 		stats = fs.statSync(path);
-		lstat = fs.lstatSync(path);
 	} catch (e) {
 		return null;
 	}
-
-	if (lstat.isSymbolicLink()) item.isSymbolicLink = true;
 
 	if (stats.isFile()) {
 		const ext = PATH.extname(path).toLowerCase();
@@ -82,7 +78,8 @@ function directoryTree(path:string, currentDepth = 1) {
 
 export default directoryTree;
 
-function getNumberOfFiles(files: fileItem, num: number) {
+export function getNumberOfFiles(files: fileItem | null, num: number) {
+	if (files == null) return 0;
 	for (const file of files.children) {
 		if (file === null) return num += 0;
 		if (file.type == 'directory') {

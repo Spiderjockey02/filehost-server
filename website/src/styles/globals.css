@@ -736,3 +736,22 @@ section {
     padding: 2px 0;
   }
 }
+
+.ctxmenu {
+  background-color: white;
+	color: black;
+	border-radius: 5px;
+	border: 1px solid #e0e3e7;
+	box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
+	padding: 4px;
+  max-width: 170px;
+}
+.btn-ctx-menu {
+  text-align: justify;
+	background: white;
+  width: 100%;
+}
+.btn-ctx-menu:hover {
+  background-color: black;
+  cursor: pointer;
+}

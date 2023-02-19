@@ -2,9 +2,8 @@
 import { Router } from 'express';
 import fs from 'fs/promises';
 import archiver from 'archiver';
-import directoryTree from '../utils/directory';
 import { parseForm } from '../utils/parse-form';
-import { PATHS } from '../utils/types';
+import { PATHS } from '../utils/CONSTANTS';
 import TrashHandler from '../utils/TrashHandler';
 const trash = new TrashHandler();
 const router = Router();
@@ -21,8 +20,9 @@ export default function() {
 			const url = Array.isArray(file) ? file.map((f) => f.filepath) : file.filepath;
 
 			return res.status(200).json({ success: `File(${Array.isArray(url) ? 's' : ''}) successfully uploaded.` });
-		} catch {
-			res.status(400).json({ error: 'Failed to upload files' });
+		} catch (err) {
+			console.log(err);
+			res.json({ error: 'Failed to upload file' });
 		}
 	});
 
@@ -49,6 +49,7 @@ export default function() {
 
 		try {
 			await fs.rename(`${PATHS.CONTENT}/${userId}/${newPath}`, `${PATHS.CONTENT}/${userId}/${oldPath}`);
+			res.json({ success: 'Successfully moved item' });
 		} catch (err) {
 			res.status(400).json({ error: 'Failed to move item.' });
 		}
@@ -78,14 +79,6 @@ export default function() {
 			.on('error', () => res.status(400).json({ error: 'Error downloading item' }))
 			.pipe(res);
 		archive.finalize();
-
-	});
-
-	router.get('/fetch/:userId/:path(*)', (req, res) => {
-		const userid = req.params.userId;
-		const path = req.params.path as string;
-
-		res.json({ files: directoryTree(`${PATHS.CONTENT}/${userid}${path ? `/${path}` : ''}`) });
 	});
 
 	router.post('/rename/:userId', async (req, res) => {
@@ -97,7 +90,7 @@ export default function() {
 		try {
 			await fs.rename(`${PATHS.CONTENT}/${userId}${originalPath}${oldPath}`,
 				`${PATHS.CONTENT}/${userId}${originalPath}${newPath}.${oldPath.split('.').at(-1)}`);
-			res.json({ success: 'Successfully renamed file' });
+			res.json({ success: 'Successfully renamed item' });
 		} catch (err) {
 			res.status(400).json({ error: 'Failed to rename item.' });
 		}

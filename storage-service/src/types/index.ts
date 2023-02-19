@@ -1,3 +1,5 @@
+import type { Request, Response } from 'express';
+
 export type loggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
 
 export type fileType = 'file' | 'directory'
@@ -5,7 +7,6 @@ export type fileType = 'file' | 'directory'
 export type fileItem = {
   path: string
   name: string
-  isSymbolicLink: boolean
   size: number
   extension: string
   type: fileType
@@ -14,9 +15,5 @@ export type fileItem = {
   url: string
 }
 
-export const PATHS = {
-	AVATAR: `${process.cwd()}/src/uploads/avatars`,
-	THUMBNAIL: `${process.cwd()}/src/uploads/thumbnails`,
-	CONTENT: `${process.cwd()}/src/uploads/content`,
-	TRASH: `${process.cwd()}/src/uploads/trash`,
-};
+export type customRequest = Request & { _startTime: number, _endTime: undefined | number }
+export type customResponse = Response & { _startTime: number, _endTime: undefined | number }

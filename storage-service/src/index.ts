@@ -4,6 +4,7 @@ import config from './config';
 import compression from 'compression';
 import { getUsers, createUser, addUserToGroup } from './db/User';
 import { getGroups, createGroup } from './db/Group';
+import type { customRequest, customResponse } from './types';
 import bcrypt from 'bcrypt';
 const app = express();
 
@@ -42,7 +43,7 @@ const app = express();
 	app
 		.use(compression())
 		.use((req, res, next) => {
-			if (req.originalUrl !== '/favicon.ico') Logger.connection(req, res);
+			if (req.originalUrl !== '/favicon.ico') Logger.connection(req as customRequest, res as customResponse);
 			next();
 		})
 		.use(express.json())
@@ -50,5 +51,7 @@ const app = express();
 		.use('/file', (await import('./routes/file')).default())
 		.use('/trash', (await import('./routes/trash')).default())
 		.use('/api', (await import('./routes/api')).default())
+		.use('/api/admin', (await import('./routes/api/admin')).default())
+		.use('/api/user', (await import('./routes/api/user')).default())
 		.listen(config.port, () => Logger.ready(`Started on PORT: ${config.port}`));
 })();

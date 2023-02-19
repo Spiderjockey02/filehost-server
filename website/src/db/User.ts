@@ -20,7 +20,11 @@ export function	findUser(data: findUser) {
 	} else if (data.id) {
 		return client.user.findUnique({
 			where: {
-				email: data.id,
+				id: data.id,
+			},
+			include: {
+				recentFiles: true,
+				group: true,
 			},
 		});
 	} else {
@@ -41,6 +45,11 @@ export function createUser(data: createUser) {
 			email: data.email,
 			name: data.name,
 			password: data.password,
+			group: {
+				connect: {
+					name: 'Free',
+				},
+			},
 		},
 	});
 }
