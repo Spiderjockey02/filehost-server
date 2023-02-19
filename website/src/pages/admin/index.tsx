@@ -3,7 +3,6 @@ import SideBar from '../../components/navbars/sideBar';
 import config from '../../config';
 import { formatBytes } from '../../utils/functions';
 import { useSession } from 'next-auth/react';
-import type { User } from '@prisma/client';
 import axios from 'axios';
 
 interface Props {
@@ -25,9 +24,9 @@ export default function Files({ data }: Props) {
 
 	return (
 		<div className="wrapper">
-			<SideBar size={0} user={session.user as User}/>
+			<SideBar size={0} user={session.user}/>
 	      <div className="container-fluid" id="content">
-				<FileNavBar user={session.user as User}/>
+				<FileNavBar user={session.user}/>
 	        <div id="accordion">
 	          <div className="card">
 	            <div className="card-header" id="headingOne">

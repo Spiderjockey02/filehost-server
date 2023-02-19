@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
-import type { User } from '@prisma/client';
+import type { User } from '../../utils/types';
 
 interface Props {
 	user: User

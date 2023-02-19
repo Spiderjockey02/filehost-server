@@ -1,7 +1,7 @@
 import { signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { User } from '@prisma/client';
+import type { User } from '../../utils/types';
 
 export default function NavBar() {
 	const { data: session, status } = useSession();

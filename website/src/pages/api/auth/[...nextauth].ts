@@ -1,14 +1,12 @@
 import NextAuth from 'next-auth';
-// import FacebookProvider from 'next-auth/providers/facebook';
 import TwitterProvider from 'next-auth/providers/twitter';
-// import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { findUser } from '../../../db/User';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '../../../db/prisma';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import config from '../../../config';
-import type { User } from '@prisma/client';
+import type { User } from '../../../utils/types';
 import type { AuthOptions } from 'next-auth';
 
 export const AuthOption = {

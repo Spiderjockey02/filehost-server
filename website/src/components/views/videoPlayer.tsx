@@ -1,4 +1,4 @@
-import type { User } from '@prisma/client';
+import type { User } from '../../utils/types';
 import { useRef } from 'react';
 import Script from 'next/script';
 interface Props {

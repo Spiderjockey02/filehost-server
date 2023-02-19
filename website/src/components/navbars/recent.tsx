@@ -1,6 +1,6 @@
 import type { Recent } from '@prisma/client';
 import Image from 'next/image';
-import type { User } from '@prisma/client';
+import type { User } from '../../utils/types';
 import Link from 'next/link';
 interface Props {
 	files: Array<Recent>

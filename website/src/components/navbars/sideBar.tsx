@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { formatBytes } from '../../utils/functions';
 import config from '../../config';
-import type { User } from '@prisma/client';
-
+import type { User } from '../../utils/types';
 interface Props {
 	size: number
 	user: User
@@ -55,7 +54,7 @@ export default function SideBar({ size, user }: Props) {
 				</li>
 			</ul>
 			<div className="p-2 bottom side-text" style={{ position:'fixed', bottom:'0', height:'11%' }}>
-				<label className="side-text">{formatBytes(size)} of {formatBytes(user.group.maxStorageSize)} used</label>
+				<label className="side-text">{formatBytes(size)} of {formatBytes(Number(user.group?.maxStorageSize ?? 0))} used</label>
 				<div className="progress" style={{ width:'200px' }}>
 					<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
 				</div>

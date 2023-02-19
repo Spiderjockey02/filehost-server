@@ -5,7 +5,6 @@ import PhotoAlbum from '../../components/photoAlbum';
 import ImageViewer from '../../components/views/ImageViewer';
 import SimpleProgressBar from '../../components/SimpleProgress';
 import RecentTab from '../../components/navbars/recent';
-import type { User } from '@prisma/client';
 import type { fileItem } from '../../utils/types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useState } from 'react';
@@ -70,7 +69,7 @@ export default function Files({ dir, path = '/' }: Props) {
 				},
 			};
 
-			await axios.post(`/api/files/upload/${(session?.user as User).id}`, formData, options);
+			await axios.post(`/api/files/upload/${session?.user.id}`, formData, options);
 			router.reload();
 			setProgress(0);
 			setRemaining(0);
@@ -83,9 +82,9 @@ export default function Files({ dir, path = '/' }: Props) {
 	return (
 		<>
 			<div className="wrapper" style={{ height:'100vh' }}>
-				<SideBar size={dir?.size ?? 0} user={session.user as User}/>
+				<SideBar size={dir?.size ?? 0} user={session.user}/>
 				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
-					<FileNavBar user={session.user as User}/>
+					<FileNavBar user={session.user}/>
 					<div className="container-fluid">
 						<div className="row">
 							<div className="col-md-10">
@@ -140,16 +139,16 @@ export default function Files({ dir, path = '/' }: Props) {
 								}
 							</div>
 						</div>
-						{(path.length <= 1 && (session.user as User).recentFiles.length >= 1) &&
-						<RecentTab files={(session?.user as User).recentFiles} user={session.user as User}/>
+						{(path.length <= 1 && session.user.recentFiles.length >= 1) &&
+						<RecentTab files={session?.user.recentFiles} user={session.user}/>
 						}
 						{dir == null ?
 							<p>This folder is empty</p>
 							: (dir.children?.length >= 1) ?
 								viewType == 'Tiles' ?
-									<PhotoAlbum files={dir.children.slice(0, 50)} dir={path} user={session.user as User} /> :
+									<PhotoAlbum files={dir.children.slice(0, 50)} dir={path} user={session.user} /> :
 									<Directory files={dir} dir={path} />
-								: <ImageViewer files={dir} dir={path} user={session.user as User}/>
+								: <ImageViewer files={dir} dir={path} user={session.user}/>
 						}
 						<SimpleProgressBar progress={progress} remaining={remaining} />
 					</div>

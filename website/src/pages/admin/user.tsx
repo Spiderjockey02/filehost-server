@@ -2,7 +2,7 @@ import FileNavBar from '../../components/navbars/file-navBar';
 import SideBar from '../../components/navbars/sideBar';
 import { fetchAllUsers } from '../../db/User';
 import { useSession } from 'next-auth/react';
-import type { User } from '@prisma/client';
+import type { User } from '../../utils/types';
 
 interface Props {
 	users: Array<User>
@@ -15,9 +15,9 @@ export default function Files({ users }: Props) {
 
 	return (
 		<div className="wrapper">
-			<SideBar size={0} user={session.user as User}/>
+			<SideBar size={0} user={session.user}/>
 		 <div className="container-fluid" id="content">
-			 <FileNavBar user={session.user as User} />
+			 <FileNavBar user={session.user} />
 			 &nbsp;
 			 <h3>User Information</h3>
 			 &nbsp;
