@@ -587,6 +587,12 @@ section {
   }
 }
 
+@media (min-width:710px) {
+  .mobile-btn {
+    display: none;
+  }
+}
+
 #footer {
   background: #fff;
   padding: 0 0 30px 0;

@@ -8,7 +8,7 @@ export default function NavBar() {
 
 	return (
 		<nav className="navbar navbar-expand-lg fixed-top navbar-light" id="navBar" style={{ boxShadow: '0px 2px 5px 0px rgba(0,0,0,0.75)', backgroundColor: 'white' }}>
-			<a className="navbar-brand btn" href="/">Home</a>
+			<Link className="navbar-brand btn" href="/">Home</Link>
 			<button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 				<span className="navbar-toggler-icon"></span>
 			</button>
@@ -32,7 +32,7 @@ export default function NavBar() {
 									<Image src={`/avatar/${(session.user as User).id}`} width={25} height={25} className="rounded-circle" alt="User avatar" /> {session.user?.name}
 								</a>
 								<div className="dropdown-menu dropdown-menu-end">
-									<Link className="dropdown-item text-dark" href="/user/dashboard">Dashboard</Link>
+									<Link className="dropdown-item text-dark" href="/settings">Settings</Link>
 									<Link className="dropdown-item text-dark" href="/files">My files</Link>
 									<div className="dropdown-divider"></div>
 									<a className="dropdown-item" href="#" onClick={() => signOut()} id="logout">Logout</a>

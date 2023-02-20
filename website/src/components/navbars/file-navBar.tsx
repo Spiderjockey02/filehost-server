@@ -70,7 +70,7 @@ export default function FileNavBar({ user }: Props) {
 							<Image src={`/avatar/${user.id}`} width={25} height={25} className="rounded-circle" alt="User avatar" />{user.name}
 						</a>
 						<div className="dropdown-menu dropdown-menu-end">
-							<Link className="dropdown-item text-dark" href="/user/dashboard">Dashboard</Link>
+							<Link className="dropdown-item text-dark" href="/settings">Settings</Link>
 							<Link className="dropdown-item text-dark" href="/files">My files</Link>
 							<div className="dropdown-divider"></div>
 							<a className="dropdown-item" href="#" onClick={() => signOut()} id="logout">Logout</a>

@@ -29,7 +29,7 @@ export default function Footer() {
 						<div className="col-lg-3 col-md-6 footer-links">
 							<h4>Our Services</h4>
 							<ul>
-								<li><i className="bi bi-chevron-right"></i> <a href="/">Cloud storage</a></li>
+								<li><i className="bi bi-chevron-right"></i> <Link href="/">Cloud storage</Link></li>
 								<li><i className="bi bi-chevron-right"></i> <a href="https://discord.gg/8g6zUQu">Discord bot</a></li>
 							</ul>
 						</div>

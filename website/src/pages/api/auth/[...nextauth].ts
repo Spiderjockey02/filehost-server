@@ -47,7 +47,7 @@ export const AuthOption = {
 	callbacks: {
 		async jwt({ token, user }) {
 			if (typeof user !== typeof undefined) {
-				const r = await axios.get(`${config.backendURL}/api/auth/session`, {
+				const r = await axios.post(`${config.backendURL}/api/auth/session/add`, {
 					data: {
 						id: user?.id,
 					},

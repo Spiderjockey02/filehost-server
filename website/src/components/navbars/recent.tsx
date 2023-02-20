@@ -9,7 +9,7 @@ interface Props {
 
 export default function Recent({ files, user }: Props) {
 	return (
-		<>
+		<div className="recent-tab">
 			<a type="button" data-bs-toggle="collapse" data-bs-target="#recentCollapse" aria-expanded="true" aria-controls="collapseExample">
         Recent files
 				<svg height="16" viewBox="0 0 16 16" width="16" focusable="false" aria-hidden="true" role="presentation" data-toggle="tooltip" data-placement="top">
@@ -19,20 +19,20 @@ export default function Recent({ files, user }: Props) {
 			<div className="collapse show" id="recentCollapse">
 				<div className="d-flex justify-content-start" style={{ overflowX: 'hidden' }}>
 					{files.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(f => (
-						<Link href={`/files/${f.location}`} className="boo" key={f.location}>
+						<Link href={`/files/${f.location}`} className="boo" key={f.location} style={{ maxWidth:'150px', padding:'10px' }}>
 							<div className="card recentIcon">
-								<div className="image-container">
-									<Image className="card-img-top lozad" src={`/thumbnail/${user.id}/${f.location}`} alt="Recent file accessed"
-										style={{ width:'auto', maxWidth:'200px', height:'auto', maxHeight:'200px' }} width="200" height="200" />
+								<div className="image-container" style={{ minHeight: '210px' }}>
+									<Image className="card-img-top" src={`/thumbnail/${user.id}/${f.location}`} alt="Recent file accessed"
+										style={{ width:'100%', height:'auto', maxHeight:'300px' }} width="200" height="200" />
 								</div>
 								<div className="card-body" style={{ borderTop: '1px solid #e3e3e3', padding:'0px 10px' }}>
-									<p className="text-truncate" data-toggle="tooltip" data-placement="top" title="<%= file.name%>">{f.location.split('/').at(-1)}</p>
+									<p className="text-truncate text-center" data-toggle="tooltip" data-placement="top" title={f.location.split('/').at(-1)}>{f.location.split('/').at(-1)}</p>
 								</div>
 							</div>
 						</Link>
 					))}
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }
