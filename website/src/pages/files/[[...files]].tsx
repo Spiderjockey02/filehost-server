@@ -3,8 +3,8 @@ import SideBar from '../../components/navbars/sideBar';
 import Directory from '../../components/directory';
 import PhotoAlbum from '../../components/photoAlbum';
 import ImageViewer from '../../components/views/ImageViewer';
-import SimpleProgressBar from '../../components/SimpleProgress';
 import RecentTab from '../../components/navbars/recent';
+import Toast from '../../components/menus/Toast';
 import type { fileItem } from '../../utils/types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useState } from 'react';
@@ -28,6 +28,7 @@ export default function Files({ dir, path = '/' }: Props) {
 
 	const [progress, setProgress] = useState(0);
 	const [remaining, setRemaining] = useState(0);
+	const [filename, setFilename] = useState('');
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
 	if (status == 'loading') return null;
@@ -50,7 +51,13 @@ export default function Files({ dir, path = '/' }: Props) {
 		try {
 			const startAt = Date.now();
 			const formData = new FormData();
-			validFiles.forEach((file) => formData.append('media', file));
+
+			// add files to request
+			for (const file of validFiles) {
+				formData.append('media', file);
+				setFilename(file.name);
+			}
+
 			const options: AxiosRequestConfig = {
 				headers: { 'Content-Type': 'multipart/form-data' },
 				onUploadProgress: (progressEvent) => {
@@ -80,6 +87,7 @@ export default function Files({ dir, path = '/' }: Props) {
 
 	return (
 		<>
+			<Toast percentage={progress} filename={filename} show={progress > 0}/>
 			<div className="wrapper" style={{ height:'100vh' }}>
 				<SideBar size={dir?.size ?? 0} user={session.user}/>
 				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
@@ -149,7 +157,6 @@ export default function Files({ dir, path = '/' }: Props) {
 									<Directory files={dir} dir={path} />
 								: <ImageViewer files={dir} dir={path} user={session.user}/>
 						}
-						<SimpleProgressBar progress={progress} remaining={remaining} />
 					</div>
 				</div>
 			</div>
