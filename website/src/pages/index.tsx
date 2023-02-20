@@ -4,7 +4,6 @@ import Footer from '../components/footer';
 import Link from 'next/link';
 import config from '../config';
 import Script from 'next/script';
-import { fetchAllUsers } from '../db/User';
 
 interface Props {
 	totalUserCount: number
@@ -249,6 +248,6 @@ export default function Home({ totalUserCount }: Props) {
 }
 
 export async function getServerSideProps() {
-	const totalUsers = await fetchAllUsers();
+	const totalUsers = [ ];
 	return { props: { totalUserCount: totalUsers?.length ?? 0 } };
 }

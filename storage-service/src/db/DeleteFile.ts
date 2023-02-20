@@ -7,7 +7,7 @@ interface addFileProps {
 }
 
 export async function addDeleteFile(data: addFileProps) {
-	return client.deletefile.create({
+	return client.deleteFile.create({
 		data: {
 			userId: data.userId,
 			location: data.location,
@@ -21,7 +21,7 @@ interface deleteFileProps {
 }
 
 export async function deleteDeleteFile(data: deleteFileProps) {
-	return client.deletefile.delete({
+	return client.deleteFile.delete({
 		where: {
 			id: data.id,
 		},
@@ -29,5 +29,5 @@ export async function deleteDeleteFile(data: deleteFileProps) {
 }
 
 export async function getDeletedFiles() {
-	return client.deletefile.findMany();
+	return client.deleteFile.findMany();
 }

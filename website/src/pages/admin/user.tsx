@@ -1,6 +1,5 @@
 import FileNavBar from '../../components/navbars/file-navBar';
 import SideBar from '../../components/navbars/sideBar';
-import { fetchAllUsers } from '../../db/User';
 import { useSession } from 'next-auth/react';
 import type { User } from '../../utils/types';
 

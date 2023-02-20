@@ -1,4 +1,3 @@
-import NextAuth from 'next-auth';
 import { User } from '../utils/types';
 declare module 'next-auth' {
   /**

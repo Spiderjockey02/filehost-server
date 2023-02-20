@@ -1,4 +1,4 @@
-import type { deletefile } from '@prisma/client';
+import type { DeleteFile } from '@prisma/client';
 import { PATHS } from './CONSTANTS';
 import fs from 'fs/promises';
 import { Logger } from '../utils/Logger';
@@ -8,7 +8,7 @@ import { getRecentFilebyPath, deleteRecentFileById } from '../db/Recent';
 const HOUR_IN_TIME = 60 * 60 * 1000;
 
 export default class TrashHandler {
-	public files: Array<deletefile>;
+	public files: Array<DeleteFile>;
 	constructor() {
 		this.files = [];
 		this.init();
@@ -36,7 +36,7 @@ export default class TrashHandler {
 			Logger.error(JSON.stringify(err));
 		}
 	}
-	async deleteFile(file: deletefile) {
+	async deleteFile(file: DeleteFile) {
 		Logger.debug(`Deleting file: ${file.location}.`);
 		try {
 			const recentFile = await getRecentFilebyPath({ userId: file.userId, path: `/${file.location}` });

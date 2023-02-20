@@ -4,6 +4,39 @@ export async function getUsers() {
 	return client.user.findMany();
 }
 
+type findUser = {
+	email?: string
+	id?: string
+}
+
+// Find a user by email (for login)
+export function	findUser(data: findUser) {
+	if (data.email) {
+		return client.user.findUnique({
+			where: {
+				email: data.email,
+			},
+			include: {
+				recentFiles: true,
+				group: true,
+			},
+		});
+	} else if (data.id) {
+		return client.user.findUnique({
+			where: {
+				id: data.id,
+			},
+			include: {
+				recentFiles: true,
+				group: true,
+			},
+		});
+	} else {
+		return null;
+	}
+}
+
+
 interface createUser {
 	email: string
 	name: string
@@ -16,6 +49,11 @@ export async function createUser(data: createUser) {
 			email: data.email,
 			name: data.name,
 			password: data.password,
+			group: {
+				connect: {
+					name: 'Free',
+				},
+			},
 		},
 	});
 }

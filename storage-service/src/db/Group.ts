@@ -23,7 +23,7 @@ export async function getGroupByName(data: GroupNameProps) {
 			name: data.name,
 		},
 		include: {
-			user: data.includeUsers ?? false,
+			users: data.includeUsers ?? false,
 		},
 	});
 }

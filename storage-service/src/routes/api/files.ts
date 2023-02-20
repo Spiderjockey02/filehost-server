@@ -2,9 +2,9 @@
 import { Router } from 'express';
 import fs from 'fs/promises';
 import archiver from 'archiver';
-import { parseForm } from '../utils/parse-form';
-import { PATHS } from '../utils/CONSTANTS';
-import TrashHandler from '../utils/TrashHandler';
+import { parseForm } from '../../utils/parse-form';
+import { PATHS } from '../../utils/CONSTANTS';
+import TrashHandler from '../../utils/TrashHandler';
 const trash = new TrashHandler();
 const router = Router();
 

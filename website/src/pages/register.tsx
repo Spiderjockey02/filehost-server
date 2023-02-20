@@ -6,6 +6,8 @@ const REGEX = /^[-a-z0-9~!$%^&*_=+}{'?]+(\.[-a-z0-9~!$%^&*_=+}{'?]+)*@([a-z0-9_]
 import Link from 'next/link';
 import Image from 'next/image';
 import ErrorPopup from '../components/menus/Error-pop';
+import config from 'src/config';
+import axios from 'axios';
 type ErrorTypes = {
  type: 'username' | 'email' | 'password' | 'age' | 'misc'
  error: string
@@ -52,27 +54,27 @@ export default function Register() {
 		}
 
 		// Make sure it's a valid date of birth (for example not 30 days in February)
-		if (!isNaN(Date.parse(`${month}-${day}-${year}`))) {
+		if (typeof Date.parse(`${month} ${day} ${year}`) !== 'number') {
 			return setErrors([{ type: 'age', error: 'Invalid date of birth' }]);
 		} else if (year >= (new Date().getFullYear() - 13)) {
 			// Make sure the user isn't younger than 13 years old.
 			return setErrors([{ type: 'age', error: 'You are too young to use this website.' }]);
 		}
+		console.log('errors', errors);
 
 		// Create the new user
-		const data = await fetch('/api/auth/register', {
-			method: 'post',
+		const { data } = await axios.post(`${config.backendURL}/api/auth/register`, {
 			headers: {
-				'content-type': 'application/json;charset=UTF-8',
+				'Access-Control-Allow-Origin': 'http://192.168.0.14:3000',
 			},
-			body: JSON.stringify({
+			data: {
 				username, email, password, password2: password,
-			}),
+			},
 		});
-		const res = await data.json();
+
 		// Check if an error was included
-		if (res.error) return setErrors([{ type: res.error.type, error: res.error.text }]);
-		if (res.success) router.push('/login');
+		if (data.error) return setErrors([{ type: data.error.type, error: data.error.text }]);
+		if (data.success) router.push('/login');
 	};
 
 	const changeState = () => setDisabled(!disabled);

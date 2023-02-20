@@ -16,7 +16,7 @@ export async function updateUserRecentFiles(data: usersRecentFilesArgs) {
 	if (usersRecents.find(i => i.location == data.path && i.userId == data.userId)) {
 		await updateRecentFile(data);
 	} else if (usersRecents.length == 10) {
-		const deleteRecent = usersRecents.sort((a, b) => a.created_at.getTime() - b.created_at.getTime())[0];
+		const deleteRecent = usersRecents.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
 		await deleteRecentFileById({ id: deleteRecent.id });
 		await addRecentFile(data);
 	} else {
@@ -76,7 +76,7 @@ export async function getRecentFilebyPath(data: usersRecentFilesArgs) {
 export async function updateRecentFile(data: usersRecentFilesArgs) {
 	return client.recent.update({
 		data: {
-			created_at: new Date(),
+			createdAt: new Date(),
 		},
 		where: {
 			userId_location: {

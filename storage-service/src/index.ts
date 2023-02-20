@@ -5,7 +5,10 @@ import compression from 'compression';
 import { getUsers, createUser, addUserToGroup } from './db/User';
 import { getGroups, createGroup } from './db/Group';
 import type { customRequest, customResponse } from './types';
+import { generateRoutes } from './utils/functions';
 import bcrypt from 'bcrypt';
+import { join } from 'path';
+import cors from 'cors';
 const app = express();
 
 (async () => {
@@ -40,18 +43,24 @@ const app = express();
 		}
 	}
 
+	// Get all endpoints
+	const endpoints = generateRoutes(join(__dirname, './', 'routes')).filter(e => e.route !== '/index');
+	console.log(endpoints);
+	// Add endpoints to app
 	app
+		.use(cors({
+			origin: 'http://192.168.0.14:3000',
+		}))
 		.use(compression())
 		.use((req, res, next) => {
 			if (req.originalUrl !== '/favicon.ico') Logger.connection(req as customRequest, res as customResponse);
 			next();
 		})
 		.use(express.json())
-		.use('/', (await import('./routes/index')).default())
-		.use('/file', (await import('./routes/file')).default())
-		.use('/trash', (await import('./routes/trash')).default())
-		.use('/api', (await import('./routes/api')).default())
-		.use('/api/admin', (await import('./routes/api/admin')).default())
-		.use('/api/user', (await import('./routes/api/user')).default())
-		.listen(config.port, () => Logger.ready(`Started on PORT: ${config.port}`));
+		.use('/', (await import('./routes/index')).default());
+
+	for (const endpoint of endpoints) {
+		app.use(endpoint.route, (await import(endpoint.path)).default());
+	}
+	app.listen(config.port, () => Logger.ready(`Started on PORT: ${config.port}`));
 })();

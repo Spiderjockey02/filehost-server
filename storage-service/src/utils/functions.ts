@@ -1,8 +1,47 @@
 import type { Request } from 'express';
 import imageThumbnail from 'image-thumbnail';
 import fs from 'fs';
-import { PATHS } from './types';
-const ipv4Regex = /^(?:(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])$/;
+import { PATHS, ipv4Regex } from './CONSTANTS';
+import { getCsrfToken } from 'next-auth/react';
+import { readdirSync, statSync } from 'fs';
+import { join, parse, sep } from 'path';
+// import type { AuthOptions } from 'next-auth';
+
+interface FileOptions {
+	path: string,
+	route: string,
+}
+
+export function generateRoutes(directory: string) {
+	const seperator = '/';
+	const results: FileOptions[] = [];
+	for(const path of searchDirectory(directory)) {
+		const { dir, name } = parse(path);
+		const basePath = directory.split(sep).pop() as string;
+		const dirIndex = dir.indexOf(basePath);
+		const directoryRoute = dir.slice(dirIndex).split(sep).join(seperator).toString().replace(basePath, !basePath.startsWith(seperator) ? '' : seperator);
+		results.push({ path, route: `${validateDynamicRoute(directoryRoute)}${validateDynamicRoute(name, true)}` });
+	}
+	return results;
+}
+
+export function validateDynamicRoute(context: string, isFile = false) {
+	const seperator = '/';
+	const dynamicRouteValidator = /(?<=\[).+?(?=\])/gi;
+	const validate = (dynamicRouteValidator.exec(context));
+	if(!validate) return isFile ? `${seperator}${context}` : context;
+	return context.replace(`[${validate[0]}]`, isFile ? `${seperator}:${validate[0]}` : `:${validate[0]}`);
+}
+
+export function searchDirectory(directory: string, files: string[] = []) {
+	for(const file of readdirSync(directory)) {
+		const path = join(directory, file);
+		const is = statSync(path);
+		if(is.isFile()) files.push(path);
+		if(is.isDirectory()) files = files.concat(searchDirectory(path));
+	}
+	return files;
+}
 
 export function getIP(req: Request) {
 	if (req.headers) {
@@ -41,4 +80,18 @@ export function getIP(req: Request) {
 export async function createThumbnail(userId: string, path: string) {
 	const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, { responseType: 'buffer', width: 200, height: 250 });
 	fs.writeFileSync(`${PATHS.THUMBNAIL}/${userId}/${path.split('.')[0]}.jpg`, thumbnail);
+}
+
+export async function getUser(req: Request) {
+	/*
+	const authOptions = {
+		session: {
+			strategy: 'jwt',
+			maxAge: 30 * 24 * 60 * 60,
+		},
+		secret: 'JHLSDHLFSFDSDIUBFSL UBLSIUF RI7B34L7I46B7IBLI7BBG7OIWBV74IV7BI64VB74647B3VB7346VB4376V4B7W6',
+	} as AuthOptions;
+	*/
+	const session = await getCsrfToken(req as any);
+	return session;
 }

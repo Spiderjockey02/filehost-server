@@ -12,7 +12,6 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
 import { AuthOption } from '../api/auth/[...nextauth]';
-import { findUser } from '../../db/User';
 import axios, { AxiosRequestConfig } from 'axios';
 import { useRouter } from 'next/router';
 import config from '../../config';
@@ -162,10 +161,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Get path
 	const path = [context.params?.files].flat();
 	const session = await getServerSession(context.req, context.res, AuthOption);
-	const user = await findUser({ email: session?.user?.email as string });
+	if (session == null) return;
+
 	// Validate path
 	try {
-		const { data } = await axios.get(`${config.backendURL}/api/fetch/files/${user?.id}${path ? `/${path.join('/')}` : ''}`);
+		const { data } = await axios.get(`${config.backendURL}/api/fetch/files/${session.user.id}${path ? `/${path.join('/')}` : ''}`);
 		return { props: { dir: data.files, path: path.join('/') } };
 	} catch (err) {
 		return { props: { dir: null, path: '/' } };

@@ -1,16 +1,13 @@
 import NextAuth from 'next-auth';
 import TwitterProvider from 'next-auth/providers/twitter';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { findUser } from '../../../db/User';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import prisma from '../../../db/prisma';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import config from '../../../config';
 import type { User } from '../../../utils/types';
 import type { AuthOptions } from 'next-auth';
+import axios from 'axios';
 
 export const AuthOption = {
-	adapter: PrismaAdapter(prisma),
 	providers: [
 		TwitterProvider({
 			clientId: config.twitter.consumer_key,
@@ -26,7 +23,7 @@ export const AuthOption = {
 			},
 			async authorize(credentials) {
 				if (!credentials?.email || !credentials?.password) return null;
-				const resp = await fetch(`${config.url}/api/auth/login`, {
+				const resp = await fetch(`${config.backendURL}/api/auth/login`, {
 					method: 'post',
 					headers: {
 						'content-type': 'application/json;charset=UTF-8',
@@ -37,6 +34,7 @@ export const AuthOption = {
 					}),
 				});
 				const data = await resp.json();
+				console.log('data', data);
 				return (data.success) ? data.user : null;
 			},
 		}),
@@ -48,11 +46,19 @@ export const AuthOption = {
 	secret: process.env.NEXTAUTH_SECRET,
 	callbacks: {
 		async jwt({ token, user }) {
-			if (typeof user !== typeof undefined) token.user = await findUser({ id: user?.id }) as User;
+			if (typeof user !== typeof undefined) {
+				const r = await axios.get(`${config.backendURL}/api/auth/session`, {
+					data: {
+						id: user?.id,
+					},
+				});
+				console.log('r', r);
+				token.user = user;
+			}
 			return token;
 		},
 		async session({ session, token }) {
-			if (token.user !== null) session.user = await findUser({ id: (token.user as User).id }) as User;
+			if (token.user !== null) session.user = token.user as User;
 			return session;
 		},
 		redirect: async ({ url, baseUrl }) =>	url.startsWith(baseUrl) ? Promise.resolve(url)	: Promise.resolve(baseUrl),

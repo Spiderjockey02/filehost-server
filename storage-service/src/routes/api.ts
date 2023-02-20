@@ -23,8 +23,11 @@ export default function() {
 		res.json({ files: directoryTree(`${PATHS.TRASH}/${userid}${path ? `/${path}` : ''}`) });
 	});
 
-	router.post('/analyse', (req, res) => {
-		const { path } = req.body;
+	router.get('/analyse', (req, res) => {
+		let path = req.query.path as string;
+		if (!path) {
+			path = req.body.path as string;
+		}
 		Recognise.addToQueue(path);
 		res.json({ success: 'Successfully added to queue' });
 	});

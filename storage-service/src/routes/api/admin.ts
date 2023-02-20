@@ -35,16 +35,11 @@ export default function() {
 					total: (await getUsers()).length,
 					groups: (await getGroupsWithCount()).map(g => ({
 						name: g.name,
-						userCount: g._count.user,
+						userCount: g._count.users,
 					})),
 				},
 			});
 		});
-	});
-
-
-	router.get('/user', (req, res) => {
-
 	});
 	return router;
 }
