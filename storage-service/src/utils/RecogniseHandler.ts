@@ -3,6 +3,8 @@ import NSFW from '../recognise/nsfw';
 import Face from '../recognise/face';
 import Objects from '../recognise/objects';
 import Geo from '../recognise/geo';
+import { createAnalyse } from '../db/Analyse';
+import { PATHS } from './CONSTANTS';
 
 export default class RecogniseHandler {
 	private queue: Array<string>;
@@ -29,6 +31,15 @@ export default class RecogniseHandler {
 				this.analyseFace.run(path), this.analyseObjects.run(path), this.analyseGeo.run(path)]);
 
 			console.log({ landmark, nsfw, face, objects, geo });
+			// Save to database
+			const userId = path.replace(PATHS.CONTENT, '').split('/')[1];
+			const location = path.replace(PATHS.CONTENT, '').split('/').slice(2).join('/');
+
+			await createAnalyse({ location, userId, landmark: JSON.stringify(landmark),
+				nsfw: JSON.stringify(nsfw), face: JSON.stringify(face), objects: JSON.stringify(objects), geo: JSON.stringify(geo),
+			});
+
+			// Remove from queue
 			const index = this.queue.indexOf(path);
 			if (index > -1) this.queue.splice(index, 1);
 		}

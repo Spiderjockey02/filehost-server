@@ -6,7 +6,7 @@ const usersRecentlyUpdatedSession = <Array<string>>[];
 
 export default function() {
 	router.post('/add', async (req, res) => {
-		const user = await findUser({ id: req.body.id });
+		const user = await findUser({ id: req.body.data.id });
 		if (user) {
 			res.json({ success: 'Id is correct' });
 			usersRecentlyUpdatedSession.push(user.id);

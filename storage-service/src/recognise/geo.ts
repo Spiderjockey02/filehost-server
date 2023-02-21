@@ -23,7 +23,7 @@ export default class Landmarks {
 				const lat = this.convertDMSToDD(metadata.GPSLatitude, metadata.GPSLatitudeRef);
 				const long = this.convertDMSToDD(metadata.GPSLongitude, metadata.GPSLongitudeRef);
 				const countries = geoReverse.country(lat, long, 'en');
-				return countries.map(c => c.name);
+				return countries.map(c => ({ name: c.name, lat, long }));
 			} else {
 				return [];
 			}

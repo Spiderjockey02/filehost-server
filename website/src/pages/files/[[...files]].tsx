@@ -18,11 +18,18 @@ import config from '../../config';
 interface Props {
 	dir: fileItem | null
 	path: string
+	analysed?: {
+		landmark: Array<string>
+		nsfw: Array<string>
+		face: Array<string>
+		objects: Array<string>
+		geo: Array<string>
+	}
 }
 
 type viewTypeTypes = 'List' | 'Tiles';
 
-export default function Files({ dir, path = '/' }: Props) {
+export default function Files({ dir, path = '/', analysed }: Props) {
 	const { data: session, status } = useSession({ required: true });
 	const router = useRouter();
 
@@ -155,7 +162,7 @@ export default function Files({ dir, path = '/' }: Props) {
 								viewType == 'Tiles' ?
 									<PhotoAlbum files={dir.children.slice(0, 50)} dir={path} user={session.user} /> :
 									<Directory files={dir} dir={path} />
-								: <ImageViewer files={dir} dir={path} user={session.user}/>
+								: <ImageViewer files={dir} dir={path} user={session.user} analysed={analysed}/>
 						}
 					</div>
 				</div>
@@ -173,7 +180,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Validate path
 	try {
 		const { data } = await axios.get(`${config.backendURL}/api/fetch/files/${session.user.id}${path ? `/${path.join('/')}` : ''}`);
-		return { props: { dir: data.files, path: path.join('/') } };
+		if (data.files.children !== undefined) {
+			return { props: { dir: data.files, path: path.join('/') } };
+		} else {
+			const { data: analysed } = await axios.get(`${config.backendURL}/api/anaylse-fetch?userId=${session.user.id}&path=${path.join('/')}`);
+			return { props: { dir: data.files, path: path.join('/'), analysed } };
+		}
 	} catch (err) {
 		return { props: { dir: null, path: '/' } };
 	}
