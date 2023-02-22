@@ -37,6 +37,7 @@ model User {
   recentFiles   Recent[]
   deleteFiles   DeleteFile[]
   AnalysedFiles Analysed[]
+  Notifications Notification[]
   groupId       String?
   group         Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   totalStorageSize  String @default("0")
@@ -87,4 +88,12 @@ model Analysed {
   geo         Json?
 
   @@unique([userId, location])
+}
+
+model Notification {
+  id          String    @id             @default(cuid())
+  createdAt   DateTime  @default(now())
+  text        String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

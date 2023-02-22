@@ -1,11 +1,11 @@
-import type { Request } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import imageThumbnail from 'image-thumbnail';
-import fs from 'fs';
+import fs, { readdirSync, statSync } from 'fs';
 import { PATHS, ipv4Regex } from './CONSTANTS';
 import { getCsrfToken } from 'next-auth/react';
-import { readdirSync, statSync } from 'fs';
 import { join, parse, sep } from 'path';
 import emailValidate from 'deep-email-validator';
+import { fetchUserbyParam } from '../db/User';
 // import type { AuthOptions } from 'next-auth';
 
 interface FileOptions {
@@ -79,8 +79,9 @@ export function getIP(req: Request) {
 }
 
 export async function createThumbnail(userId: string, path: string) {
+	console.log(`${PATHS.CONTENT}/${userId}/${path}`);
 	const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, { responseType: 'buffer', width: 200, height: 250 });
-	fs.writeFileSync(`${PATHS.THUMBNAIL}/${userId}/${path.split('.')[0]}.jpg`, thumbnail);
+	fs.writeFileSync(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`, thumbnail);
 }
 
 export async function getUser(req: Request) {
@@ -100,4 +101,13 @@ export async function getUser(req: Request) {
 export async function validateEmail(email: string) {
 	const resp = await emailValidate(email);
 	return resp.reason;
+}
+
+export async function checkAdmin(req: Request, res: Response, next: NextFunction) {
+	console.log(req);
+	const userId = req.body.userId;
+	const user = await fetchUserbyParam({ id: userId });
+
+	if(user?.group?.name == 'Admin') return next();
+	res.status(401).json({ error: 'You are not authorised to access this endpoint' });
 }

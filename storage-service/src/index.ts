@@ -2,8 +2,8 @@ import express from 'express';
 import { Logger } from './utils/Logger';
 import config from './config';
 import compression from 'compression';
-import { getUsers, createUser, addUserToGroup } from './db/User';
-import { getGroups, createGroup } from './db/Group';
+import { fetchAllUsers, createUser, addUserToGroup } from './db/User';
+import { fetchAllGroups, createGroup } from './db/Group';
 import type { customRequest, customResponse } from './types';
 import { generateRoutes } from './utils/functions';
 import bcrypt from 'bcrypt';
@@ -13,7 +13,7 @@ const app = express();
 
 (async () => {
 	// Create an admin account
-	const users = await getUsers();
+	const users = await fetchAllUsers();
 	let user;
 	if (users.length == 0) {
 		try {
@@ -29,7 +29,7 @@ const app = express();
 	}
 
 	// Create 2 groups for normal users and admin
-	const groups = await getGroups();
+	const groups = await fetchAllGroups();
 	if (groups.length == 0) {
 		try {
 			await createGroup({ name: 'Free' });
@@ -45,7 +45,7 @@ const app = express();
 
 	// Get all endpoints
 	const endpoints = generateRoutes(join(__dirname, './', 'routes')).filter(e => e.route !== '/index');
-	console.log(endpoints);
+
 	// Add endpoints to app
 	app
 		.use(cors({

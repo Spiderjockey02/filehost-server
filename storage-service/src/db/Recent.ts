@@ -1,4 +1,6 @@
 import client from './prisma';
+import type { IdParam } from '../types';
+import { Logger } from '../utils/Logger';
 
 interface usersRecentFilesArgs {
   userId: string
@@ -6,6 +8,7 @@ interface usersRecentFilesArgs {
 }
 
 export async function updateUserRecentFiles(data: usersRecentFilesArgs) {
+	Logger.debug(`[DATABASE] Updated recent file list of user: ${data.userId}.`);
 	const usersRecents = await client.recent.findMany({
 		where: {
 			userId: data.userId,
@@ -26,11 +29,8 @@ export async function updateUserRecentFiles(data: usersRecentFilesArgs) {
 	return usersRecents;
 }
 
-interface deleteRecentFileIDArgs {
-  id: string
-}
-
-export async function deleteRecentFileById(data: deleteRecentFileIDArgs) {
+export async function deleteRecentFileById(data: IdParam) {
+	Logger.debug(`[DATABASE] Deleted recent file by id: ${data.id}.`);
 	return client.recent.delete({
 		where: {
 			id: data.id,
@@ -73,7 +73,7 @@ export async function getRecentFilebyPath(data: usersRecentFilesArgs) {
 	});
 }
 
-export async function updateRecentFile(data: usersRecentFilesArgs) {
+async function updateRecentFile(data: usersRecentFilesArgs) {
 	return client.recent.update({
 		data: {
 			createdAt: new Date(),

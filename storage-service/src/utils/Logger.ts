@@ -1,10 +1,9 @@
 import chalk from 'chalk';
 import moment from 'moment';
 import { createRollingFileLogger } from 'simple-node-logger';
-import type { customRequest, customResponse } from '../types';
+import type { loggerTypes, customRequest, customResponse } from '../types';
 import onFinished from 'on-finished';
 import { getIP } from './functions';
-import type { loggerTypes } from '../types';
 const log = createRollingFileLogger({
 	logDirectory: './src/utils/logs',
 	fileNamePattern: 'roll-<DATE>.log',

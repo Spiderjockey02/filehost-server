@@ -1,39 +1,44 @@
 import client from './prisma';
+import { Logger } from '../utils/Logger';
 
-export async function getUsers() {
-	return client.user.findMany();
+interface GetUsers {
+	group?: boolean
+	recent?: boolean
+	delete?: boolean
+	analyse?: boolean
 }
 
-type findUser = {
+export async function fetchAllUsers(data: GetUsers = {}) {
+	Logger.debug('[DATABASE] Fetched all users.');
+	return client.user.findMany({
+		include: {
+			group: data.group,
+			recentFiles: data.recent,
+			deleteFiles: data.delete,
+			AnalysedFiles: data.analyse,
+		},
+	});
+}
+
+type fetchUserbyParam = {
 	email?: string
 	id?: string
 }
 
 // Find a user by email (for login)
-export function	findUser(data: findUser) {
-	if (data.email) {
-		return client.user.findUnique({
-			where: {
-				email: data.email,
-			},
-			include: {
-				recentFiles: true,
-				group: true,
-			},
-		});
-	} else if (data.id) {
-		return client.user.findUnique({
-			where: {
-				id: data.id,
-			},
-			include: {
-				recentFiles: true,
-				group: true,
-			},
-		});
-	} else {
-		return null;
-	}
+export function	fetchUserbyParam(data: fetchUserbyParam) {
+	Logger.debug(`[DATABASE] Fetched user by: ${data.id ?? data.email}`);
+	return client.user.findUnique({
+		where: {
+			email: data.email,
+			id: data.id,
+		},
+		include: {
+			recentFiles: true,
+			group: true,
+			Notifications: true,
+		},
+	});
 }
 
 
@@ -44,6 +49,7 @@ interface createUser {
 }
 // Create a user
 export async function createUser(data: createUser) {
+	Logger.debug(`[DATABASE] Created new user: ${data.name}.`);
 	return client.user.create({
 		data: {
 			email: data.email,
@@ -58,18 +64,21 @@ export async function createUser(data: createUser) {
 	});
 }
 
-interface updatePassword {
+interface updateUser {
 	id: string
-	password: string
+	password?: string
+	email?: string
 }
 
-export async function updateUserPassword(data: updatePassword) {
+export async function updateUser(data: updateUser) {
+	Logger.debug(`[DATABASE] Updated new user: ${data.id}.`);
 	return client.user.update({
 		where: {
 			id: data.id,
 		},
 		data: {
 			password: data.password,
+			email: data.email,
 		},
 	});
 }
@@ -80,6 +89,7 @@ interface UserToGroupProps {
 }
 
 export async function addUserToGroup(data: UserToGroupProps) {
+	Logger.debug(`[DATABASE] Added user ${data.userId} to group: ${data.groupId}.`);
 	return client.user.update({
 		where: {
 			id: data.userId,
@@ -90,20 +100,6 @@ export async function addUserToGroup(data: UserToGroupProps) {
 					id: data.groupId,
 				},
 			},
-		},
-	});
-}
-
-interface getUserByIdProps {
-	userId: string
-}
-export async function getUserById(data: getUserByIdProps) {
-	return client.user.findUnique({
-		where: {
-			id: data.userId,
-		},
-		include: {
-			group: true,
 		},
 	});
 }

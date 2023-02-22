@@ -1,8 +1,4 @@
-import Landmarks from '../recognise/landmarks';
-import NSFW from '../recognise/nsfw';
-import Face from '../recognise/face';
-import Objects from '../recognise/objects';
-import Geo from '../recognise/geo';
+import { Landmarks, NSFW, Face, Objects, Geo } from '../recognise';
 import { createAnalyse } from '../db/Analyse';
 import { PATHS } from './CONSTANTS';
 

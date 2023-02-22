@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { createUser, findUser } from '../../../db/User';
+import { createUser, fetchUserbyParam } from '../../../db/User';
+import { createNotification } from '../../../db/Notification';
 import { validateEmail } from '../../../utils/functions';
 const router = Router();
 
@@ -29,14 +30,14 @@ export default function() {
 		if (password.length <= 8) error = { type: 'password', text: 'Password must be atleast 8 characters long!' };
 
 		// Check if email already is being used
-		const isEmailAlreadyBeingUsed = await findUser({ email: email });
+		const isEmailAlreadyBeingUsed = await fetchUserbyParam({ email });
 		if (isEmailAlreadyBeingUsed !== null) error = { type: 'email', text: 'Email already being used.' };
 
 		const isEmailValid = await validateEmail(email);
 		if (!isEmailValid) error = { type: 'email', text: 'Email is invalid.' };
 
 		// If an error was found notify user
-		if (error.type !== null) return res.json({ error });
+		if (error.type !== null) return res.status(400).json({ error });
 
 		// Encrypt password (Dont save raw password to database)
 		let Hashpassword;
@@ -50,7 +51,8 @@ export default function() {
 
 		// Save the new user to database + make sure to create folder
 		try {
-			await createUser({ email, name: username, password: Hashpassword });
+			const user = await createUser({ email, name: username, password: Hashpassword });
+			await createNotification({ userId: user.id, text: 'Please remember to verify your email.' });
 			res.json({ success: 'User successfully created' });
 		} catch (err) {
 			console.log(err);

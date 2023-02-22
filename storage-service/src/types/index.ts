@@ -1,9 +1,7 @@
 import type { Request, Response } from 'express';
 
-export type loggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
-
+// Files
 export type fileType = 'file' | 'directory'
-
 export type fileItem = {
   path: string
   name: string
@@ -15,5 +13,12 @@ export type fileItem = {
   url: string
 }
 
+// For logger
+export type loggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
 export type customRequest = Request & { _startTime: number, _endTime: undefined | number }
 export type customResponse = Response & { _startTime: number, _endTime: undefined | number }
+
+// Prisma
+export interface IdParam {
+  id: string
+}

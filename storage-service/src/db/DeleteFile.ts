@@ -1,4 +1,6 @@
 import client from './prisma';
+import type { IdParam } from '../types';
+import { Logger } from '../utils/Logger';
 
 interface addFileProps {
 	userId: string
@@ -7,6 +9,7 @@ interface addFileProps {
 }
 
 export async function addDeleteFile(data: addFileProps) {
+	Logger.debug(`[DATABASE] Delete file for ${data.location}.`);
 	return client.deleteFile.create({
 		data: {
 			userId: data.userId,
@@ -16,11 +19,8 @@ export async function addDeleteFile(data: addFileProps) {
 	});
 }
 
-interface deleteFileProps {
-	id: string
-}
-
-export async function deleteDeleteFile(data: deleteFileProps) {
+export async function deleteDeleteFile(data: IdParam) {
+	Logger.debug(`[DATABASE] Delete file for ${data.id}.`);
 	return client.deleteFile.delete({
 		where: {
 			id: data.id,
@@ -28,6 +28,7 @@ export async function deleteDeleteFile(data: deleteFileProps) {
 	});
 }
 
-export async function getDeletedFiles() {
+export async function fetchAllDeleteFiles() {
+	Logger.debug('[DATABASE] Fetch all pending to deleted files.');
 	return client.deleteFile.findMany();
 }

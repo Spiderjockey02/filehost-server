@@ -1,7 +1,8 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { updateUserPassword } from '../../db/User';
+import { updateUser } from '../../db/User';
+import { validateEmail } from '../../utils/functions';
 const router = Router();
 
 export default function() {
@@ -27,11 +28,28 @@ export default function() {
 		try {
 			const salt = await bcrypt.genSalt(10);
 			const hashedPwd = await bcrypt.hash(password, salt);
-			await updateUserPassword({ id: userId, password: hashedPwd });
-			res.json({ success: 'Successfully updated password' });
+			await updateUser({ id: userId, password: hashedPwd });
+			res.json({ success: 'Successfully updated password.' });
 		} catch (err) {
 			console.log(err);
-			res.json({ error: 'Failed to update password' });
+			res.json({ error: 'Failed to update password.' });
+		}
+	});
+
+	router.post('/:userId/change-email', async (req, res) => {
+		const userId = req.params.userId;
+		const { email } = req.body;
+
+		const isEmailValid = await validateEmail(email);
+		if (!isEmailValid) return res.json({ error: 'Invalid email.' });
+
+		try {
+			// Update user's email
+			await updateUser({ id: userId, email });
+			res.json({ success: 'Successfully updated email.' });
+		} catch (err) {
+			console.log(err);
+			res.json({ error: 'Failed to update email.' });
 		}
 	});
 

@@ -34,7 +34,7 @@ export default function() {
 		const originalPath = userPath.startsWith('/') ? userPath : '/';
 
 		try {
-			await trash.addFile(userId, originalPath, path);
+			await trash.addFileToPending(userId, originalPath, path);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			console.log(err);

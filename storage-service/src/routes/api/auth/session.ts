@@ -1,12 +1,14 @@
 import { Router } from 'express';
-import { findUser } from '../../../db/User';
+import { fetchUserbyParam } from '../../../db/User';
 const router = Router();
 
 const usersRecentlyUpdatedSession = <Array<string>>[];
 
 export default function() {
 	router.post('/add', async (req, res) => {
-		const user = await findUser({ id: req.body.data.id });
+		console.log(req.body);
+
+		const user = await fetchUserbyParam({ id: req.body.data.id });
 		if (user) {
 			res.json({ success: 'Id is correct' });
 			usersRecentlyUpdatedSession.push(user.id);

@@ -1,15 +1,18 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
-import { getUsers } from '../../db/User';
-import { getGroupsWithCount } from '../../db/Group';
+import { fetchAllUsers } from '../../db/User';
+import { fetchAllGroups } from '../../db/Group';
 import directoryTree, { getNumberOfFiles } from '../../utils/directory';
+import { checkAdmin } from '../../utils/functions';
 import { exec } from 'node:child_process';
 import os from 'os';
 const router = Router();
 
+type data = { [key: string]: boolean}
+
 export default function() {
 
-	router.get('/stats', async (_req, res) => {
+	router.get('/stats', checkAdmin, async (_req, res) => {
 		exec('wmic logicaldisk get size,freespace,caption', async function(_error, stdout) {
 			// Get and parse storage information
 			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
@@ -32,8 +35,8 @@ export default function() {
 					avg: os.loadavg(),
 				},
 				users: {
-					total: (await getUsers()).length,
-					groups: (await getGroupsWithCount()).map(g => ({
+					total: (await fetchAllUsers()).length,
+					groups: (await fetchAllGroups()).map(g => ({
 						name: g.name,
 						userCount: g._count.users,
 					})),
@@ -41,5 +44,22 @@ export default function() {
 			});
 		});
 	});
+
+	router.get('/users', checkAdmin, async (req, res) => {
+		const filters = (req.query.filters as string).split(',');
+		const parsedFilters: data = {};
+
+		// Parse the filters and validate them
+		if (Array.isArray(filters)) {
+			for (const filter of filters) {
+				if (['group', 'recent', 'delete', 'analyse'].includes(filter)) parsedFilters[filter] = true;
+			}
+		}
+
+		// Fetch the database
+		const users = await fetchAllUsers(parsedFilters);
+		res.json({ users });
+	});
+
 	return router;
 }

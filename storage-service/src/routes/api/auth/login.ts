@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { findUser } from '../../../db/User';
+import { fetchUserbyParam } from '../../../db/User';
 const router = Router();
 
 export default function() {
@@ -8,7 +8,7 @@ export default function() {
 		const { password, email } = req.body;
 
 		try {
-			const user = await findUser({ email });
+			const user = await fetchUserbyParam({ email });
 			if (!user) return res.status(401).json({ error: 'Missing user' });
 			const isMatch = await bcrypt.compare(password, user.password as string);
 			if (isMatch) {
