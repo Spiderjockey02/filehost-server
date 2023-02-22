@@ -2,15 +2,33 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import type { User } from '../../utils/types';
-
+import axios from 'axios';
+import config from 'src/config';
+import { useState } from 'react';
 interface Props {
 	user: User
 }
 
+interface AutoComplete {
+	name: string
+	path: string
+}
+
 export default function FileNavBar({ user }: Props) {
+	const [text, setText] = useState<Array<AutoComplete>>([]);
+
+	async function autoComplete(e: any) {
+		const search = e.target.value as string;
+		if (search) {
+			const { data } = await axios.get(`${config.backendURL}/api/files/search/${user.id}?search=${search}`);
+			setText(data.query);
+		} else {
+			setText([]);
+		}
+	}
 
 	function deleteNotification(id:string) {
-		alert(user.Notifications.find(i => i.id == id).text);
+		alert(user.Notifications.find(i => i.id == id)?.text);
 	}
 
 	return (
@@ -24,7 +42,16 @@ export default function FileNavBar({ user }: Props) {
 									<div className="input-group-prepend">
 										<button id="searchIconBtn" type="submit" className="input-group-text" style={{ backgroundColor:'#f4f4f4', border:'none', borderRadius:'8px 0px 0px 8px', height:'40px' }} data-toggle="tooltip" data-placement="bottom" title="Search"><i className="fas fa-search"></i></button>
 									</div>
-									<input type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="search" autoComplete="off" />
+									<input onChange={(e) => autoComplete(e)} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="search" autoComplete="off" />
+									{text.length >= 1 && (
+										<div className="autocomplete-items">
+											{text.map((_) => (
+												<div key={_.name}>
+													<a href={`/files/${_.path}`}>{_.name}</a>
+												</div>
+											))}
+										</div>
+									)}
 									<div className="input-group-append" id="filter">
 										<div className="dropup-center dropdown">
 											<button className="btn btn-outline-secondary dropdown-toggle" style={{ backgroundColor:'#f4f4f4', borderRadius:'0px 8px 8px 0px', border:'none', color:'#505762', height:'40px' }} type="button" data-bs-toggle="dropdown" aria-expanded="false">

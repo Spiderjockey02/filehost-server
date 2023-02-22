@@ -5,6 +5,8 @@ import archiver from 'archiver';
 import { parseForm } from '../../utils/parse-form';
 import { PATHS } from '../../utils/CONSTANTS';
 import TrashHandler from '../../utils/TrashHandler';
+import directoryTree from '../../utils/directory';
+import type { fileItem } from '../../types';
 const trash = new TrashHandler();
 const router = Router();
 
@@ -81,6 +83,8 @@ export default function() {
 		archive.finalize();
 	});
 
+
+	// Rename a file/folder
 	router.post('/rename/:userId', async (req, res) => {
 		const userId = req.params.userId;
 		const { oldPath, newPath } = req.body;
@@ -96,5 +100,31 @@ export default function() {
 		}
 	});
 
+	router.get('/search/:userId', async (req, res) => {
+		const userId = req.params.userId;
+		const srch = req.query.search as string;
+		const files = directoryTree(`${PATHS.CONTENT}/${userId}`, 100)?.children;
+
+		res.json({ query: search(files, srch).map((i) => ({ ...i, path: i.path.split(userId)[1] })) });
+	});
+
 	return router;
+}
+
+interface srchQuery {
+	path: string
+	name: string
+}
+
+function search(files: Array<fileItem> | undefined, text: string, arr: Array<srchQuery> = []) {
+	if (files == undefined) return arr;
+	for (const i of files) {
+		if (i.type == 'file') {
+			if (i.name.startsWith(text)) arr.push({ path: i.path.replace(`${PATHS.CONTENT}`, 's'), name: i.name });
+		} else {
+			arr.push(...search(i.children, text, []));
+		}
+	}
+
+	return arr;
 }

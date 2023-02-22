@@ -6,7 +6,6 @@ const constants = {
 	FILE: 'file',
 };
 
-const depth = 2;
 function safeReadDirSync(path: string) {
 	let dirData = [];
 	try {
@@ -22,7 +21,7 @@ function safeReadDirSync(path: string) {
 	return dirData;
 }
 
-function directoryTree(path:string, currentDepth = 1) {
+function directoryTree(path:string, depth = 1) {
 	const name = PATH.basename(path);
 	const item = { path, name } as fileItem;
 	let stats;
@@ -46,9 +45,9 @@ function directoryTree(path:string, currentDepth = 1) {
 		if (dirData === null) return null;
 		item.children = [];
 
-		if (currentDepth <= depth) {
+		if (depth >= 0) {
 			item.children = dirData
-				.map(child => directoryTree(PATH.join(path, child), currentDepth + 1))
+				.map(child => directoryTree(PATH.join(path, child), depth - 1))
 				.filter(e => e !== null || e !== undefined) as fileItem[];
 
 			// Get time modified for folder
