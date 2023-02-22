@@ -18,4 +18,4 @@ const userWithPosts = Prisma.validator<Prisma.UserArgs>()({
 });
 
 
-export type User = Prisma.UserGetPayload<typeof userWithPosts>
+export type User = Prisma.UserGetPayload<typeof userWithPosts> & {Notifications: Array<Notification>}

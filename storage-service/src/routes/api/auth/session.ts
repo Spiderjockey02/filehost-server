@@ -5,12 +5,12 @@ const router = Router();
 const usersRecentlyUpdatedSession = <Array<string>>[];
 
 export default function() {
-	router.post('/add', async (req, res) => {
+	router.post('/verify', async (req, res) => {
 		console.log(req.body);
 
 		const user = await fetchUserbyParam({ id: req.body.data.id });
 		if (user) {
-			res.json({ success: 'Id is correct' });
+			res.json({ success: 'Id is correct', user });
 			usersRecentlyUpdatedSession.push(user.id);
 
 			// Remove after user ID 10 seconds
@@ -22,14 +22,5 @@ export default function() {
 		}
 	});
 
-	router.get('/check', (req, res) => {
-		const userId = req.body.id;
-		if (usersRecentlyUpdatedSession.includes(userId)) {
-			res.json({ success: 'Id is correct' });
-		} else {
-			res.status(403).json({ error: 'Invalid ID' });
-		}
-
-	});
 	return router;
 }

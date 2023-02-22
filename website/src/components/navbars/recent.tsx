@@ -17,13 +17,13 @@ export default function Recent({ files, user }: Props) {
 				</svg>
 			</a>
 			<div className="collapse show" id="recentCollapse">
-				<div className="d-flex justify-content-start" style={{ overflowX: 'hidden' }}>
+				<div className="row h-100" style={{ overflowY: 'hidden', maxHeight: '285px' }}>
 					{files.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(f => (
-						<Link href={`/files/${f.location}`} className="boo" key={f.location} style={{ maxWidth:'150px', padding:'10px' }}>
+						<Link href={`/files/${f.location}`} key={f.location} className="col" style={{ maxWidth:'150px', padding:'10px' }}>
 							<div className="card recentIcon">
 								<div className="image-container" style={{ minHeight: '210px' }}>
 									<Image className="card-img-top" src={`/thumbnail/${user.id}/${f.location}`} alt="Recent file accessed"
-										style={{ width:'100%', height:'auto', maxHeight:'300px' }} width="200" height="200" />
+										style={{ width:'100%', height:'auto', maxHeight:'220px' }} width="200" height="200" />
 								</div>
 								<div className="card-body" style={{ borderTop: '1px solid #e3e3e3', padding:'0px 10px' }}>
 									<p className="text-truncate text-center" data-toggle="tooltip" data-placement="top" title={f.location.split('/').at(-1)}>{f.location.split('/').at(-1)}</p>

@@ -9,6 +9,10 @@ interface Props {
 
 export default function FileNavBar({ user }: Props) {
 
+	function deleteNotification(id:string) {
+		alert(user.Notifications.find(i => i.id == id).text);
+	}
+
 	return (
 		<nav className="navbar navbar-expand">
 			<div className="navbar-collapse w-100 dual-collapse2">
@@ -56,12 +60,20 @@ export default function FileNavBar({ user }: Props) {
 				<ul className="navbar-nav ml-auto">
 					<li className="nav-item">
 						<div className="dropdown mr-1" id="notifications">
-							<a className="nav-link" href="" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								<i className="fas fa-bell" id="notifIcons"></i>
-							</a>
+							<button className="btn btn-outline-secondary nav-link position-relative" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								Alerts  <i className="fas fa-bell" id="notifIcons"></i>
+								{user.Notifications.length > 0 && (
+									<span className="position-absolute top-0 start-100 translate-middle badge border border-light rounded-circle bg-danger p-2"><span className="visually-hidden">unread messages</span></span>
+								)}
+							</button>
 							<div className="dropdown-menu dropdown-menu-end p-4 text-muted" style={{ width: '300px' }}>
-								<h6 className="dropdown-header">Notifications - 0</h6>
-								<p className="mb-0">You currently have no notifications.</p>
+								<h3 className="dropdown-header">Notifications - {user.Notifications.length}</h3>
+								{user.Notifications.map(_ => (
+									<p key={_.id}>{_.text} <button onClick={()=> deleteNotification(_.id)}>X</button></p>
+								))}
+								{user.Notifications.length == 0 && (
+									<p className="mb-0">You currently have no notifications.</p>
+								)}
 							</div>
 						</div>
 					</li>

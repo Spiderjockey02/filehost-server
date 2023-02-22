@@ -80,7 +80,8 @@ export function getIP(req: Request) {
 
 export async function createThumbnail(userId: string, path: string) {
 	console.log(`${PATHS.CONTENT}/${userId}/${path}`);
-	const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, { responseType: 'buffer', width: 200, height: 250 });
+	// @ts-ignore
+	const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, { responseType: 'buffer', width: 200, height: 220, fit: 'cover' });
 	fs.writeFileSync(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`, thumbnail);
 }
 

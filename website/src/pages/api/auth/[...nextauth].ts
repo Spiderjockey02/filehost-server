@@ -47,18 +47,27 @@ export const AuthOption = {
 	callbacks: {
 		async jwt({ token, user }) {
 			if (typeof user !== typeof undefined) {
-				const r = await axios.post(`${config.backendURL}/api/auth/session/add`, {
+				/*
+				const r = await axios.post(`${config.backendURL}/api/auth/session/verify`, {
 					data: {
 						id: user?.id,
 					},
 				});
-				console.log('r', r);
+				*/
 				token.user = user;
 			}
 			return token;
 		},
 		async session({ session, token }) {
-			if (token.user !== null) session.user = token.user as User;
+			if (token.user !== null) {
+				const { data } = await axios.post(`${config.backendURL}/api/auth/session/verify`, {
+					data: {
+						id: (token.user as User)?.id,
+						token,
+					},
+				});
+				session.user = data.user as User;
+			}
 			return session;
 		},
 		redirect: async ({ url, baseUrl }) =>	url.startsWith(baseUrl) ? Promise.resolve(url)	: Promise.resolve(baseUrl),

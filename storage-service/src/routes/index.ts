@@ -23,18 +23,17 @@ export default function() {
 		const fileType = lookup(path);
 		const fileName = path.substring(0, path.lastIndexOf('.')) || path;
 		if (fileType !== false) {
-			// Create folder
-			if (!fs.existsSync((`${PATHS.THUMBNAIL}/${userId}/${path.split('/').slice(0, -1)}`))) {
-				fs.mkdirSync(`${PATHS.THUMBNAIL}/${userId}/${path.split('/').slice(0, -1)}`, { recursive: true });
-			}
+			// Create folder (if needed to)
+			const folder = path.split('/').slice(0, -1).join('/');
+			if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${folder}`)) fs.mkdirSync(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
 
 			// Create thumbnail from video, photo
 			switch (fileType.split('/')[0]) {
 				case 'image': {
 					// Create thumbnail if not already created
 					try {
-						if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) await createThumbnail(userId, path);
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
+						if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${decodeURI(fileName)}.jpg`)) await createThumbnail(userId, path);
+						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${decodeURI(fileName)}.jpg`);
 					} catch (err) {
 						console.log(err);
 						return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
