@@ -5,6 +5,7 @@ import { PATHS, ipv4Regex } from './CONSTANTS';
 import { getCsrfToken } from 'next-auth/react';
 import { readdirSync, statSync } from 'fs';
 import { join, parse, sep } from 'path';
+import emailValidate from 'deep-email-validator';
 // import type { AuthOptions } from 'next-auth';
 
 interface FileOptions {
@@ -94,4 +95,9 @@ export async function getUser(req: Request) {
 	*/
 	const session = await getCsrfToken(req as any);
 	return session;
+}
+
+export async function validateEmail(email: string) {
+	const resp = await emailValidate(email);
+	return resp.reason;
 }

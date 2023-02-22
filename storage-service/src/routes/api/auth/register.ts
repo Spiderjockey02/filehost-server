@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { createUser, findUser } from '../../../db/User';
+import { validateEmail } from '../../../utils/functions';
 const router = Router();
 
 type ErrorTypes = {
@@ -29,7 +30,10 @@ export default function() {
 
 		// Check if email already is being used
 		const isEmailAlreadyBeingUsed = await findUser({ email: email });
-		if (isEmailAlreadyBeingUsed !== null) error = { type: 'email', text: 'Email already being used' };
+		if (isEmailAlreadyBeingUsed !== null) error = { type: 'email', text: 'Email already being used.' };
+
+		const isEmailValid = await validateEmail(email);
+		if (!isEmailValid) error = { type: 'email', text: 'Email is invalid.' };
 
 		// If an error was found notify user
 		if (error.type !== null) return res.json({ error });
