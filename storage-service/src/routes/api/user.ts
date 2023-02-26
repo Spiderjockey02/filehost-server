@@ -1,7 +1,7 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { updateUser } from '../../db/User';
+import { updateUser, fetchUserbyParam } from '../../db/User';
 import { validateEmail } from '../../utils/functions';
 const router = Router();
 
@@ -13,17 +13,23 @@ export default function() {
 
 	router.post('/:userId/change-password', async (req, res) => {
 		const userId = req.params.userId;
-		const { password, password2 } = req.body;
+		const { currentPassword, password, password2 } = req.body;
 
 		// Check for missing fields
-		if (!password) return res.json({ error: 'Missing field' });
-		if (!password2) return res.json({ error: 'Missing field' });
+		if (!password) return res.json({ type: 'pwd1', error: 'Missing field' });
+		if (!password2) return res.json({ type: 'pwd2', error: 'Missing field' });
 
 		// check if passwords match
-		if (password !== password2) return res.json({ error: 'Passwords dont match!' });
+		if (password !== password2) return res.json({ type: 'pwd1', error: 'The passwords do not match' });
 
 		// check if password is more than 8 characters
-		if (password?.length <= 8) return res.json({ error: 'Password must be atleast 8 characters long!' });
+		if (password?.length <= 8) return res.json({ type: 'pwd1', error: 'Your password must be more than 8 characters' });
+
+		const user = await fetchUserbyParam({ id: userId });
+		if (!user) return res.json({ type: 'misc', error: 'Invalid request' });
+
+		const isMatch = await bcrypt.compare(currentPassword, user.password as string);
+		if (!isMatch) return res.json({ type: 'current', error: 'Password is Incorrect' });
 
 		try {
 			const salt = await bcrypt.genSalt(10);
@@ -32,7 +38,7 @@ export default function() {
 			res.json({ success: 'Successfully updated password.' });
 		} catch (err) {
 			console.log(err);
-			res.json({ error: 'Failed to update password.' });
+			res.json({ type: 'misc', error: 'Failed to update password.' });
 		}
 	});
 

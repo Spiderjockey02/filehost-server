@@ -1,5 +1,3 @@
-// @ts-check
-
 /**
   * @type {import('next').NextConfig}
 **/
@@ -30,15 +28,19 @@ const nextConfig = {
 		 },
 		 {
 				source: '/api/files/upload/:userId',
-				destination: 'http://localhost:9816/file/upload/:userId/',
+				destination: 'http://localhost:9816/api/files/upload/:userId/',
 		 },
 		 {
 				source: '/api/files/rename/:userId',
-				destination: 'http://localhost:9816/file/rename/:userId/',
+				destination: 'http://localhost:9816/api/files/rename/:userId/',
 		 },
 		 {
 				source: '/api/files/delete/:userId',
-				destination: 'http://localhost:9816/file/delete/:userId/',
+				destination: 'http://localhost:9816/api/files/delete/:userId/',
+		 },
+		 {
+				source: '/api/user/:userId/change-password',
+				destination: 'http://localhost:9816/api/user/:userId/change-password',
 		 },
 	 ];
 	},
