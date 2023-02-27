@@ -4,7 +4,6 @@ import MimeType from 'mime-types';
 import Image from 'next/image';
 import type { User } from '../../types/next-auth';
 import axios from 'axios';
-import config from 'src/config';
 import { useState } from 'react';
 import SuccessPopup from '../menus/Success-pop';
 import ErrorPopup from '../menus/Error-pop';
@@ -13,6 +12,11 @@ interface Geo {
   name: string
   lat: number
   long: number
+}
+
+interface Objects {
+  className: string
+  probability: number
 }
 
 interface NSFW {
@@ -36,13 +40,13 @@ interface Props {
 
 export default function DisplayFile({ files, dir, user, analysed }: Props) {
 	const nsfw: Array<NSFW> = JSON.parse(analysed?.nsfw ?? '{}');
-	const objects: Array<string> = JSON.parse(analysed?.objects ?? '{}');
+	const objects: Array<Objects> = JSON.parse(analysed?.objects ?? '{}');
 	const geo: Array<Geo> = JSON.parse(analysed?.geo ?? '{}');
 
 	const [blur, setBlur] = useState(['Porn', 'Hentai', 'Sexy'].includes(nsfw[0]?.className) ? 10 : 0);
 	const [successmsg, setSuccessmg] = useState(null);
 	const [errormsg, setErrormg] = useState(null);
-
+	console.log(analysed);
 	async function BtnClick() {
 		setErrormg(null);
 		setSuccessmg(null);
@@ -84,7 +88,7 @@ export default function DisplayFile({ files, dir, user, analysed }: Props) {
 							<h3>NSFW: {['Porn', 'Hentai', 'Sexy'].includes(nsfw[0].className) ? 'true' : 'false'}</h3>
 						)}
 						{Array.isArray(objects) && objects.length > 0 && (
-							<h3>Tags: {objects.join(', ')}</h3>
+							<h3>Tags: {objects.map(i => i.className).join(', ')}</h3>
 						)}
 						{Array.isArray(geo) && geo.length > 0 && (
 							<h3>Location: {geo[0].lat}, {geo[0].long} ({geo[0].name})</h3>
