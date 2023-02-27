@@ -3,7 +3,6 @@ import imageThumbnail from 'image-thumbnail';
 import fs, { readdirSync, statSync } from 'fs';
 import { PATHS, ipv4Regex } from './CONSTANTS';
 import { join, parse, sep } from 'path';
-import { fetchUserbyParam } from '../db/User';
 import axios from 'axios';
 import config from '../config';
 import type { Session } from '../types';
@@ -86,11 +85,11 @@ export async function createThumbnail(userId: string, path: string) {
 }
 
 export async function checkAdmin(req: Request, res: Response, next: NextFunction) {
-	const userId = req.body.userId;
-	if (!userId) return res.status(401).json({ error: 'You are not authorised to access this endpoint' });
-	const user = await fetchUserbyParam({ id: userId });
+	const session = await getSession(req);
+	if (session == null) return res.status(401).json({ error: 'You are not authorised to access this endpoint' });
 
-	if(user?.group?.name == 'Admin') return next();
+	console.log(session.user);
+	if(session.user?.group?.name == 'Admin') return next();
 	res.status(401).json({ error: 'You are not authorised to access this endpoint' });
 }
 

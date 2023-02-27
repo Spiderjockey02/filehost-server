@@ -51,6 +51,9 @@ export const AuthOption = {
 			if (token.user !== null) session.user = token.user;
 			return session;
 		},
+		redirect: ({ url, baseUrl }) => {
+			return url.startsWith(baseUrl) ? Promise.resolve(url)	: Promise.resolve(baseUrl);
+		},
 	},
 	theme: {
 		colorScheme: 'auto',

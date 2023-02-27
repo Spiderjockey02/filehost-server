@@ -3,7 +3,7 @@ import SideBar from '../../components/navbars/sideBar';
 import { useSession } from 'next-auth/react';
 import type { User } from '../../types/next-auth';
 import { formatBytes } from '../../utils/functions';
-import config from 'src/config';
+import type { GetServerSidePropsContext } from 'next';
 import axios from 'axios';
 interface Props {
 	users: Array<User>
@@ -31,7 +31,7 @@ export default function Files({ users }: Props) {
 									 <div className="text-xs font-weight-bold text-primary text-uppercase mb-1">
 										 Users
 									 </div>
-									 <div className="h5 mb-0 font-weight-bold text-gray-800">0</div>
+									 <div className="h5 mb-0 font-weight-bold text-gray-800">{users.length}</div>
 								 </div>
 								 <div className="col-auto">
 									 <i className="fas fa-calendar fa-2x text-gray-300"></i>
@@ -218,10 +218,12 @@ export default function Files({ users }: Props) {
 	 </div>
 	);
 }
-export async function getServerSideProps() {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Validate path
 	try {
-		const { data } = await axios.get(`${config.backendURL}/api/admin/users?filters=group`);
+		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/admin/users?filters=group`, {
+			headers: { cookie: context.req.headers.cookie },
+		});
 		return { props: { users: (data.users as Array<User>).map(u => ({ ...u, createdAt: new Date(u.createdAt).getTime() })) } };
 	} catch (err) {
 		return { props: { data: null } };

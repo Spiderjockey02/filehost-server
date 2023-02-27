@@ -1,6 +1,6 @@
 import FileNavBar from '../../components/navbars/file-navBar';
 import SideBar from '../../components/navbars/sideBar';
-import config from '../../config';
+import type { GetServerSidePropsContext } from 'next';
 import { formatBytes } from '../../utils/functions';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
@@ -21,7 +21,7 @@ export default function Files({ data }: Props) {
 	// Make sure user is logged in before accessing page
 	const { data: session, status } = useSession({ required: true });
 	if (status == 'loading') return null;
-
+	console.log(data);
 	return (
 		<div className="wrapper">
 			<SideBar size={0} user={session.user}/>
@@ -156,10 +156,12 @@ export default function Files({ data }: Props) {
 	);
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Validate path
 	try {
-		const { data } = await axios.get(`${config.backendURL}/api/admin/stats`);
+		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/admin/stats`, {
+			headers: { cookie: context.req.headers.cookie },
+		});
 		return { props: { data } };
 	} catch (err) {
 		return { props: { data: null } };
