@@ -93,12 +93,23 @@ export async function checkAdmin(req: Request, res: Response, next: NextFunction
 	res.status(401).json({ error: 'You are not authorised to access this endpoint' });
 }
 
+type LabelEnum = { [key: string]: Session }
+const sessionStore: LabelEnum = {};
+
 export async function getSession(req: Request): Promise<Session | null> {
 	if (req.headers.cookie == undefined) return null;
 
+	// Check if data is from cache
+	if (sessionStore[req.headers.cookie]) {
+		const session = sessionStore[req.headers.cookie];
+		// Make sure it hasn't expired
+		if (new Date(session.expires ?? 0).getTime() <= new Date().getTime()) return session;
+	}
+
+	// Fetch from front-end
 	const { data } = await axios.get('http://192.168.0.14:3000/api/auth/session', {
 		headers: { cookie: req.headers.cookie },
 	});
-
+	sessionStore[req.headers.cookie] = data;
 	return data;
 }
