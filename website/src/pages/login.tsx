@@ -4,7 +4,10 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import type { SignInResponse } from 'next-auth/react';
 import ErrorPopup from '../components/menus/Error-pop';
+import type { GetServerSidePropsContext } from 'next';
+import { getServerSession } from 'next-auth/next';
 import Link from 'next/link';
+import { AuthOption } from './api/auth/[...nextauth]';
 type resCode = 'Signin' | 'OAuthSignin' | 'OAuthCallback' |'OAuthCreateAccount' |'EmailCreateAccount' |'Callback' |'OAuthAccountNotLinked' |'EmailSignin' |'CredentialsSignin' |'default'
 
 const errorsCodes = {
@@ -114,4 +117,20 @@ export default function SignIn() {
 			</section>
 		</>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const session = await getServerSession(context.req, context.res, AuthOption);
+
+	// Only show this page if they are not logged in
+	if (session) {
+		return {
+			redirect: {
+				destination: '/files',
+				permanent: false,
+			},
+		};
+	} else {
+		return { props: {} };
+	}
 }

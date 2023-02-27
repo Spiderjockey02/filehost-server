@@ -8,6 +8,9 @@ import Image from 'next/image';
 import ErrorPopup from '../components/menus/Error-pop';
 import config from 'src/config';
 import axios from 'axios';
+import { getServerSession } from 'next-auth/next';
+import type { GetServerSidePropsContext } from 'next';
+import { AuthOption } from './api/auth/[...nextauth]';
 type ErrorTypes = {
  type: 'username' | 'email' | 'password' | 'age' | 'misc'
  error: string
@@ -195,4 +198,20 @@ export default function Register() {
 			</div>
 		</section>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const session = await getServerSession(context.req, context.res, AuthOption);
+
+	// Only show this page if they are not logged in
+	if (session) {
+		return {
+			redirect: {
+				destination: '/files',
+				permanent: false,
+			},
+		};
+	} else {
+		return { props: {} };
+	}
 }
