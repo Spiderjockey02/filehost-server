@@ -15,6 +15,8 @@ interface RecentFiles {
 export interface User {
   id: string
   name: string
+  email: string
+  createdAt: Date
   recentFiles: RecentFiles[]
   group?: {
     id: string
@@ -22,6 +24,8 @@ export interface User {
     maxStorageSize: string
   }
   Notifications: Notification[]
+  totalStorageSize: string
+
 }
 
 

@@ -1,7 +1,7 @@
 import FileNavBar from '../../components/navbars/file-navBar';
 import SideBar from '../../components/navbars/sideBar';
 import { useSession } from 'next-auth/react';
-import type { User } from '../../utils/types';
+import type { User } from '../../types/next-auth';
 import { formatBytes } from '../../utils/functions';
 import config from 'src/config';
 import axios from 'axios';
