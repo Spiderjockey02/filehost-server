@@ -14,16 +14,15 @@ import { getServerSession } from 'next-auth/next';
 import { AuthOption } from '../api/auth/[...nextauth]';
 import axios, { AxiosRequestConfig } from 'axios';
 import { useRouter } from 'next/router';
-import config from '../../config';
 interface Props {
 	dir: fileItem | null
 	path: string
 	analysed?: {
-		landmark: Array<string>
-		nsfw: Array<string>
-		face: Array<string>
-		objects: Array<string>
-		geo: Array<string>
+		landmark: string
+		nsfw: string
+		face: string
+		objects: string
+		geo: string
 	}
 }
 
