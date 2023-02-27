@@ -21,7 +21,7 @@ export default function FileNavBar({ user }: Props) {
 	async function autoComplete(e: ChangeEvent<HTMLInputElement>) {
 		const search = e.target.value;
 		if (search) {
-			const { data } = await axios.get(`${config.backendURL}/api/files/search?search=${search}`);
+			const { data } = await axios.get(`${window.origin}/api/files/search?search=${search}`);
 			setText(data.query);
 		} else {
 			setText([]);
