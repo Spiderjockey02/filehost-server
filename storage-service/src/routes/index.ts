@@ -12,7 +12,7 @@ export default function() {
 
 	router.get('/avatar', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		// Check if the user already has an avatar, if not display default one
 		res.sendFile(`${PATHS.AVATAR}/${fs.existsSync(`${PATHS.AVATAR}/${session.user.id}.webp`) ? session.user.id : 'default-avatar'}.webp`);

@@ -12,7 +12,7 @@ const router = Router();
 export default function() {
 	router.post('/change-password', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const { currentPassword, password, password2 } = req.body;
 
@@ -45,7 +45,7 @@ export default function() {
 
 	router.post('/avatar', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		try {
 			// eslint-disable-next-line no-async-promise-executor
@@ -72,7 +72,7 @@ export default function() {
 
 	router.post('/change-email', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 		const { email } = req.body;
 
 		const isEmailValid = await emailValidate(email);

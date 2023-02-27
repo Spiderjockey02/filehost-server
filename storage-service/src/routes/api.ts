@@ -13,15 +13,15 @@ export default function() {
 
 	router.get('/fetch/files/?:path(*)', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const path = req.params.path as string;
-		res.json({ files: directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`) });
+		res.json({ files:  directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`) });
 	});
 
 	router.get('/fetch/trash/:path(*)', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const path = req.params.path as string;
 		res.json({ files: directoryTree(`${PATHS.TRASH}/${session.user.id}${path ? `/${path}` : ''}`) });
@@ -29,7 +29,7 @@ export default function() {
 
 	router.get('/analyse', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 		const path = req.query.path as string;
 
 		// Check if it has already been analysed
@@ -41,10 +41,12 @@ export default function() {
 	});
 
 	router.get('/anaylse-fetch', async (req, res) => {
-		const path = req.query.path as string;
-		const userId = req.query.userId as string;
+		const session = await getSession(req);
+		if (!session?.user) return res.json({ error: 'Invalid session' });
+
 		try {
-			const data = await fetchAnalysed({ location: path, userId: userId });
+			const path = req.query.path as string;
+			const data = await fetchAnalysed({ location: path, userId: session.user.id });
 			res.json(data);
 		} catch (err) {
 			console.log(err);

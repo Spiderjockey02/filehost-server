@@ -15,7 +15,7 @@ export default function() {
 	// Upload a new file
 	router.post('/upload', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		try {
 			// Parse and save file(s)
@@ -38,7 +38,7 @@ export default function() {
 	// Delete a file/folder
 	router.post('/delete', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const { path } = req.body;
 		const userPath = (req.headers.referer as string).split('/files')[1];
@@ -56,7 +56,7 @@ export default function() {
 	// Move a file/folder to a new directory
 	router.post('/move', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 		const { newPath, oldPath } = req.body;
 
 		try {
@@ -70,7 +70,7 @@ export default function() {
 	// Copy a file to a new directory
 	router.post('/copy', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 		const { newPath, oldPath } = req.body;
 
 		try {
@@ -84,7 +84,7 @@ export default function() {
 	// Download folder
 	router.get('/download', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 		const { path } = req.body;
 		const archive = archiver('zip', { zlib: { level: 9 } });
 
@@ -99,7 +99,7 @@ export default function() {
 	// Rename a file/folder
 	router.post('/rename', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 		const { oldPath, newPath } = req.body;
 		const userPath = (req.headers.referer as string).split('/files')[1];
 		const originalPath = userPath.startsWith('/') ? userPath : '/';
@@ -115,7 +115,7 @@ export default function() {
 
 	router.get('/search', async (req, res) => {
 		const session = await getSession(req);
-		if (!session.user) return res.json({ error: 'Invalid session' });
+		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const srch = req.query.search as string;
 		const files = directoryTree(`${PATHS.CONTENT}/${session.user.id}`, 100)?.children;

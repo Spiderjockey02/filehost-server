@@ -93,7 +93,9 @@ export async function checkAdmin(req: Request, res: Response, next: NextFunction
 	res.status(401).json({ error: 'You are not authorised to access this endpoint' });
 }
 
-export async function getSession(req: Request): Promise<Session> {
+export async function getSession(req: Request): Promise<Session | null> {
+	if (req.headers.cookie == undefined) return null;
+
 	const { data } = await axios.get('http://192.168.0.14:3000/api/auth/session', {
 		headers: { cookie: req.headers.cookie },
 	});

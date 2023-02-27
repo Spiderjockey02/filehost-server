@@ -46,7 +46,7 @@ export default function DisplayFile({ files, dir, user, analysed }: Props) {
 	async function BtnClick() {
 		setErrormg(null);
 		setSuccessmg(null);
-		const { data } = await axios.get(`${config.backendURL}/api/analyse?path=${dir}&userId=${user.id}`);
+		const { data } = await axios.get(`${window.origin}/api/analyse?path=${dir}`);
 		if (data.success) setSuccessmg(data.success);
 		setErrormg(data.error);
 	}
