@@ -5,6 +5,7 @@ import { PATHS, ipv4Regex } from './CONSTANTS';
 import { join, parse, sep } from 'path';
 import { fetchUserbyParam } from '../db/User';
 import axios from 'axios';
+import config from '../config';
 import type { Session } from '../types';
 
 interface FileOptions {
@@ -107,7 +108,7 @@ export async function getSession(req: Request): Promise<Session | null> {
 	}
 
 	// Fetch from front-end
-	const { data } = await axios.get('http://192.168.0.14:3000/api/auth/session', {
+	const { data } = await axios.get(`${config.frontendURL}/api/auth/session`, {
 		headers: { cookie: req.headers.cookie },
 	});
 	sessionStore[req.headers.cookie] = data;

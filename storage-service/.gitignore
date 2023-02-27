@@ -12,3 +12,4 @@ src/uploads/*
 
 #misc
 package-lock.json
+src/config.ts
