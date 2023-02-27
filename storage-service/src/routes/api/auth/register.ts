@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { createUser, fetchUserbyParam } from '../../../db/User';
 import { createNotification } from '../../../db/Notification';
-import { validateEmail } from '../../../utils/functions';
+import emailValidate from 'deep-email-validator';
 const router = Router();
 
 type ErrorTypes = {
@@ -33,8 +33,8 @@ export default function() {
 		const isEmailAlreadyBeingUsed = await fetchUserbyParam({ email });
 		if (isEmailAlreadyBeingUsed !== null) error = { type: 'email', text: 'Email already being used.' };
 
-		const isEmailValid = await validateEmail(email);
-		if (!isEmailValid) error = { type: 'email', text: 'Email is invalid.' };
+		const isEmailValid = await emailValidate(email);
+		if (!isEmailValid.valid) error = { type: 'email', text: 'Email is invalid.' };
 
 		// If an error was found notify user
 		if (error.type !== null) return res.status(400).json({ error });

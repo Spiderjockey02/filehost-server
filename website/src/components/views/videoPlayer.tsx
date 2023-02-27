@@ -1,4 +1,4 @@
-import type { User } from '../../utils/types';
+import type { User } from '../../types/next-auth';
 import { useRef } from 'react';
 import Script from 'next/script';
 interface Props {

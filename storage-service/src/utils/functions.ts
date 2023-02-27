@@ -2,11 +2,10 @@ import type { Request, Response, NextFunction } from 'express';
 import imageThumbnail from 'image-thumbnail';
 import fs, { readdirSync, statSync } from 'fs';
 import { PATHS, ipv4Regex } from './CONSTANTS';
-import { getCsrfToken } from 'next-auth/react';
 import { join, parse, sep } from 'path';
-import emailValidate from 'deep-email-validator';
 import { fetchUserbyParam } from '../db/User';
-// import type { AuthOptions } from 'next-auth';
+import axios from 'axios';
+import type { Session } from '../types';
 
 interface FileOptions {
 	path: string,
@@ -85,30 +84,19 @@ export async function createThumbnail(userId: string, path: string) {
 	fs.writeFileSync(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`, thumbnail);
 }
 
-export async function getUser(req: Request) {
-	/*
-	const authOptions = {
-		session: {
-			strategy: 'jwt',
-			maxAge: 30 * 24 * 60 * 60,
-		},
-		secret: 'JHLSDHLFSFDSDIUBFSL UBLSIUF RI7B34L7I46B7IBLI7BBG7OIWBV74IV7BI64VB74647B3VB7346VB4376V4B7W6',
-	} as AuthOptions;
-	*/
-	const session = await getCsrfToken(req as any);
-	return session;
-}
-
-export async function validateEmail(email: string) {
-	const resp = await emailValidate(email);
-	return resp.reason;
-}
-
 export async function checkAdmin(req: Request, res: Response, next: NextFunction) {
-	console.log(req);
 	const userId = req.body.userId;
+	if (!userId) return res.status(401).json({ error: 'You are not authorised to access this endpoint' });
 	const user = await fetchUserbyParam({ id: userId });
 
 	if(user?.group?.name == 'Admin') return next();
 	res.status(401).json({ error: 'You are not authorised to access this endpoint' });
+}
+
+export async function getSession(req: Request): Promise<Session> {
+	const { data } = await axios.get('http://192.168.0.14:3000/api/auth/session', {
+		headers: { cookie: req.headers.cookie },
+	});
+
+	return data;
 }

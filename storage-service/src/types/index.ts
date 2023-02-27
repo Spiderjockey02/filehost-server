@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 
 // Files
 export type fileType = 'file' | 'directory'
@@ -21,4 +22,14 @@ export type customResponse = Response & { _startTime: number, _endTime: undefine
 // Prisma
 export interface IdParam {
   id: string
+}
+
+const userWithPosts = Prisma.validator<Prisma.UserArgs>()({
+	include: { recentFiles: true, group: true, Notifications: true },
+});
+
+
+export interface Session {
+  user?: Prisma.UserGetPayload<typeof userWithPosts>
+  expires?: Date
 }

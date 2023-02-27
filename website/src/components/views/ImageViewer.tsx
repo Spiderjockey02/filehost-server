@@ -2,7 +2,7 @@ import type { fileItem } from '../../utils/types';
 import VideoPlayer from './videoPlayer';
 import MimeType from 'mime-types';
 import Image from 'next/image';
-import type { User } from '../../utils/types';
+import type { User } from '../../types/next-auth';
 import axios from 'axios';
 import config from 'src/config';
 import { useState } from 'react';

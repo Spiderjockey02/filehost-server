@@ -6,6 +6,7 @@ body {
   font-family: "Open Sans", sans-serif;
   color: #444444;
   height: 100vh;
+  scroll-behavior: smooth;
 }
 
 a {
@@ -548,7 +549,7 @@ section {
   background: #53A5D2;
   border-radius: 8px;
 }
-.active {
+#sidebar ul li a .active {
   background: #157cb4;
   border-radius: 8px;
 }

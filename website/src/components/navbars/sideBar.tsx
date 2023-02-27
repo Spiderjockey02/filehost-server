@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { formatBytes } from '../../utils/functions';
 import config from '../../config';
-import type { User } from '../../utils/types';
+import type { User } from '../../types/next-auth';
 interface Props {
 	size: number
 	user: User

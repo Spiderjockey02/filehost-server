@@ -1,7 +1,5 @@
 import { useRef } from 'react';
 import { useOnClickOutside } from '../../utils/useOnClickOutisde';
-import { useSession } from 'next-auth/react';
-import type { User } from '@prisma/client';
 import type { BaseSyntheticEvent } from 'react';
 import { useRouter } from 'next/router';
 interface Props {
@@ -13,12 +11,9 @@ interface Props {
 
 export default function ContextMenu({ x, y, closeContextMenu, selected }: Props) {
 	const contextMenuRef = useRef<HTMLDivElement>(null);
-	const { data: session, status } = useSession();
 	const router = useRouter();
 
 	useOnClickOutside(contextMenuRef, closeContextMenu);
-	if (status == 'loading') return null;
-
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
 		document.getElementById(id)?.setAttribute('aria-hidden', 'true');
@@ -33,7 +28,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 		const oldPath = (document.getElementById('oldPath') as HTMLInputElement).value;
 		const newPath = (document.getElementById('renameInput') as HTMLInputElement).value;
 
-		await fetch(`/api/files/rename/${(session?.user as User).id}`, {
+		await fetch('/api/files/rename', {
 			method: 'post',
 			headers: {
 				'content-type': 'application/json;charset=UTF-8',
@@ -45,7 +40,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 
 	const handleDeleteSubmit = async (event: BaseSyntheticEvent) => {
 		event.preventDefault();
-		await fetch(`/api/files/delete/${(session?.user as User).id}`, {
+		await fetch('/api/files/delete', {
 			method: 'post',
 			headers: {
 				'content-type': 'application/json;charset=UTF-8',

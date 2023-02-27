@@ -20,6 +20,41 @@ export default function Settings() {
 	const [success, setSuccess] = useState('');
 	if (status == 'loading') return null;
 
+	const onFileUploadChange = async (e: BaseSyntheticEvent) => {
+		const fileInput = e.target;
+		if (!fileInput.files) return alert('No file was chosen');
+		if (!fileInput.files || fileInput.files.length === 0) return alert('Files list is empty');
+
+		/** Reset file input */
+		e.currentTarget.type = 'text';
+		e.currentTarget.type = 'file';
+
+		try {
+			const formData = new FormData()
+				.append('media', fileInput.files[0]);
+
+			const t = await axios.post('/api/user/avatar', formData, {
+				headers: { 'Content-Type': 'multipart/form-data' },
+			});
+
+			console.log('t', t);
+		} catch (error) {
+			console.error(error);
+			alert('Sorry! something went wrong.');
+		}
+	};
+
+	const handleEmailChange = async (event: BaseSyntheticEvent) => {
+		event.preventDefault();
+		const email = (document.getElementById('email') as HTMLInputElement).value;
+
+		const { data } = await axios.post('/api/user/change-email', {
+			email,
+		});
+
+		console.log(data);
+	};
+
 	const handlePasswordChange = async (event: BaseSyntheticEvent) => {
 		event.preventDefault();
 
@@ -48,12 +83,14 @@ export default function Settings() {
 		try {
 			const { data } = await axios.post<{
           success?: string
-					error?: ErrorTypes
-      }>(`/api/user/${session.user.id}/change-password`, {
+					type?: 'current' | 'pwd1' | 'pwd2' | 'misc'
+					error?: string
+
+      }>('/api/user/change-password', {
       	password, password2, currentPassword,
       });
 			if (data.success) setSuccess(data.success);
-			if (data.error) setErrors([data]);
+			if (data.error) setErrors([data as ErrorTypes]);
 			console.log(errors);
 		} catch (err) {
 			console.log('error', err);
@@ -90,12 +127,10 @@ export default function Settings() {
 																	<Image src={`/avatar/${session?.user.id}`} width={100} height={100} className="rounded-circle" alt="User avatar" />
 																	<div className="media-body">
 																		<h5 className="mt-0" style={{ paddingBottom:'20px' }}>Avatar</h5>
-																		<form action="/user/avatar/upload" method="post" encType="multipart/form-data" id='uploadForm' >
-																			<label className="btn btn-md btn-secondary" id="fileHover">
-																			Upload<input type="file" hidden name="sampleFile" onChange={() => document.getElementById('imagefile')?.click()} />
-																			</label>
-																			<button type="submit" style={{ display:'none;' }} id="imagefile"></button>
-																		</form>
+																		<label className="dropdown-item" id="fileHover">
+																			File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} />
+																		</label>
+																		<input type="hidden" value="test" name="path" />
 																		<form action="/user/avatar/delete" method="post" encType="multipart/form-data" id='uploadForm' >
 																			<button className="btn btn-md btn-danger" type="submit" name="button">Remove</button>
 																		</form>
@@ -151,6 +186,14 @@ export default function Settings() {
 											</div>
 										</div>
 									</div>
+									<form onSubmit={handleEmailChange}>
+										<div className="d-flex flex-row align-items-center mb-4">
+											<div className="form-outline flex-fill mb-0">
+												<label className="form-label" htmlFor="email">Change email</label>
+												<input type="email" id="email" className="form-control" name="email" placeholder="john@example.com"/>
+											</div>
+										</div>
+									</form>
 								</div>
 							</div>
 						</div>

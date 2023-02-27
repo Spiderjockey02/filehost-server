@@ -82,13 +82,16 @@ export default function Files({ dir, path = '/', analysed }: Props) {
 				},
 			};
 
-			await axios.post(`/api/files/upload/${session?.user.id}`, formData, options);
+			const t = await axios.post('/api/files/upload', formData, options);
+			console.log('t', t);
 			router.reload();
 			setProgress(0);
 			setRemaining(0);
 		} catch (error) {
 			console.error(error);
 			alert('Sorry! something went wrong.');
+			setProgress(0);
+			setRemaining(0);
 		}
 	};
 
@@ -154,13 +157,13 @@ export default function Files({ dir, path = '/', analysed }: Props) {
 							</div>
 						</div>
 						{(path.length <= 1 && session.user.recentFiles.length >= 1) &&
-						<RecentTab files={session?.user.recentFiles} user={session.user}/>
+						<RecentTab user={session.user}/>
 						}
 						{dir == null ?
 							<p>This folder is empty</p>
 							: (dir.children?.length >= 1) ?
 								viewType == 'Tiles' ?
-									<PhotoAlbum files={dir.children.slice(0, 50)} dir={path} user={session.user} /> :
+									<PhotoAlbum files={dir.children} dir={path} user={session.user} /> :
 									<Directory files={dir} dir={path} />
 								: <ImageViewer files={dir} dir={path} user={session.user} analysed={analysed}/>
 						}
@@ -176,14 +179,19 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const path = [context.params?.files].flat();
 	const session = await getServerSession(context.req, context.res, AuthOption);
 	if (session == null) return;
-
 	// Validate path
 	try {
-		const { data } = await axios.get(`${config.backendURL}/api/fetch/files/${session.user.id}${path ? `/${path.join('/')}` : ''}`);
+		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/fetch/files/${path ? `/${path.join('/')}` : ''}`, {
+			headers: { cookie: context.req.headers.cookie },
+		});
+
+
 		if (data.files.children !== undefined) {
 			return { props: { dir: data.files, path: path.join('/') } };
 		} else {
-			const { data: analysed } = await axios.get(`${config.backendURL}/api/anaylse-fetch?userId=${session.user.id}&path=${path.join('/')}`);
+			const { data: analysed } = await axios.get(`${config.backendURL}/api/anaylse-fetch?userId=${session.user.id}&path=${path.join('/')}`, {
+				headers: { cookie: context.req.headers.cookie },
+			});
 			return { props: { dir: data.files, path: path.join('/'), analysed } };
 		}
 	} catch (err) {

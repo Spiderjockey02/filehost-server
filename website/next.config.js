@@ -15,8 +15,8 @@ const nextConfig = {
 	rewrites: async () => {
 		return [
 		 {
-				source: '/avatar/:userId',
-				destination: 'http://localhost:9816/avatar/:userId',
+				source: '/avatar',
+				destination: 'http://localhost:9816/avatar',
 		 },
 		 {
 				source: '/thumbnail/:userId/:path*',
@@ -27,20 +27,8 @@ const nextConfig = {
 				destination: 'http://localhost:9816/content/:userId/:path*',
 		 },
 		 {
-				source: '/api/files/upload/:userId',
-				destination: 'http://localhost:9816/api/files/upload/:userId/',
-		 },
-		 {
-				source: '/api/files/rename/:userId',
-				destination: 'http://localhost:9816/api/files/rename/:userId/',
-		 },
-		 {
-				source: '/api/files/delete/:userId',
-				destination: 'http://localhost:9816/api/files/delete/:userId/',
-		 },
-		 {
-				source: '/api/user/:userId/change-password',
-				destination: 'http://localhost:9816/api/user/:userId/change-password',
+				source: '/api/:path((?!auth).*)',
+				destination: 'http://localhost:9816/api/:path*',
 		 },
 	 ];
 	},

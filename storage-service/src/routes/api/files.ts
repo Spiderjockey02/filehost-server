@@ -6,37 +6,46 @@ import { parseForm } from '../../utils/parse-form';
 import { PATHS } from '../../utils/CONSTANTS';
 import TrashHandler from '../../utils/TrashHandler';
 import directoryTree from '../../utils/directory';
+import { getSession } from '../../utils/functions';
 import type { fileItem } from '../../types';
 const trash = new TrashHandler();
 const router = Router();
 
 export default function() {
 	// Upload a new file
-	router.post('/upload/:userId', async (req, res) => {
-		const userId = req.params.userId;
+	router.post('/upload', async (req, res) => {
+		const session = await getSession(req);
+		if (!session.user) return res.json({ error: 'Invalid session' });
 
 		try {
 			// Parse and save file(s)
-			const { files } = await parseForm(req, userId);
+			const { files } = await parseForm(req, session.user.id);
 			const file = files.media;
 			const url = Array.isArray(file) ? file.map((f) => f.filepath) : file.filepath;
 
-			return res.status(200).json({ success: `File(${Array.isArray(url) ? 's' : ''}) successfully uploaded.` });
+			return res
+				.setHeader('Content-Type', 'application/json')
+				.status(200)
+				.json({ success: `File(${Array.isArray(url) ? 's' : ''}) successfully uploaded.` });
 		} catch (err) {
-			console.log(err);
-			res.json({ error: 'Failed to upload file' });
+			console.log('erro2', err);
+			res
+				.setHeader('Content-Type', 'application/json')
+				.json({ error: 'Failed to upload file' });
 		}
 	});
 
 	// Delete a file/folder
-	router.post('/delete/:userId', async (req, res) => {
-		const userId = req.params.userId as string;
+	router.post('/delete', async (req, res) => {
+		const session = await getSession(req);
+		if (!session.user) return res.json({ error: 'Invalid session' });
+
 		const { path } = req.body;
 		const userPath = (req.headers.referer as string).split('/files')[1];
 		const originalPath = userPath.startsWith('/') ? userPath : '/';
 
 		try {
-			await trash.addFileToPending(userId, originalPath, path);
+			await trash.addFileToPending(session.user.id, originalPath, path);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			console.log(err);
@@ -45,12 +54,13 @@ export default function() {
 	});
 
 	// Move a file/folder to a new directory
-	router.post('/move/:userId', async (req, res) => {
-		const userId = req.params.userId as string;
+	router.post('/move', async (req, res) => {
+		const session = await getSession(req);
+		if (!session.user) return res.json({ error: 'Invalid session' });
 		const { newPath, oldPath } = req.body;
 
 		try {
-			await fs.rename(`${PATHS.CONTENT}/${userId}/${newPath}`, `${PATHS.CONTENT}/${userId}/${oldPath}`);
+			await fs.rename(`${PATHS.CONTENT}/${session.user.id}/${newPath}`, `${PATHS.CONTENT}/${session.user.id}/${oldPath}`);
 			res.json({ success: 'Successfully moved item' });
 		} catch (err) {
 			res.status(400).json({ error: 'Failed to move item.' });
@@ -58,12 +68,13 @@ export default function() {
 	});
 
 	// Copy a file to a new directory
-	router.post('/copy/:userId', async (req, res) => {
-		const userId = req.params.userId as string;
+	router.post('/copy', async (req, res) => {
+		const session = await getSession(req);
+		if (!session.user) return res.json({ error: 'Invalid session' });
 		const { newPath, oldPath } = req.body;
 
 		try {
-			await fs.copyFile(`${PATHS.CONTENT}/${userId}/${newPath}`, `${PATHS.CONTENT}/${userId}/${oldPath}`);
+			await fs.copyFile(`${PATHS.CONTENT}/${session.user.id}/${newPath}`, `${PATHS.CONTENT}/${session.user.id}/${oldPath}`);
 			res.json({ success: 'Successfully copied file' });
 		} catch (err) {
 			res.status(400).json({ error: 'Failed to move item.' });
@@ -71,13 +82,14 @@ export default function() {
 	});
 
 	// Download folder
-	router.get('/download/:userId', async (req, res) => {
-		const userId = req.params.userId;
+	router.get('/download', async (req, res) => {
+		const session = await getSession(req);
+		if (!session.user) return res.json({ error: 'Invalid session' });
 		const { path } = req.body;
 		const archive = archiver('zip', { zlib: { level: 9 } });
 
 		archive
-			.directory(`${PATHS.CONTENT}/${userId}${path}`, false)
+			.directory(`${PATHS.CONTENT}/${session.user.id}${path}`, false)
 			.on('error', () => res.status(400).json({ error: 'Error downloading item' }))
 			.pipe(res);
 		archive.finalize();
@@ -85,27 +97,30 @@ export default function() {
 
 
 	// Rename a file/folder
-	router.post('/rename/:userId', async (req, res) => {
-		const userId = req.params.userId;
+	router.post('/rename', async (req, res) => {
+		const session = await getSession(req);
+		if (!session.user) return res.json({ error: 'Invalid session' });
 		const { oldPath, newPath } = req.body;
 		const userPath = (req.headers.referer as string).split('/files')[1];
 		const originalPath = userPath.startsWith('/') ? userPath : '/';
 
 		try {
-			await fs.rename(`${PATHS.CONTENT}/${userId}${originalPath}${oldPath}`,
-				`${PATHS.CONTENT}/${userId}${originalPath}${newPath}.${oldPath.split('.').at(-1)}`);
+			await fs.rename(`${PATHS.CONTENT}/${session.user.id}${originalPath}${oldPath}`,
+				`${PATHS.CONTENT}/${session.user.id}${originalPath}${newPath}.${oldPath.split('.').at(-1)}`);
 			res.json({ success: 'Successfully renamed item' });
 		} catch (err) {
 			res.status(400).json({ error: 'Failed to rename item.' });
 		}
 	});
 
-	router.get('/search/:userId', async (req, res) => {
-		const userId = req.params.userId;
-		const srch = req.query.search as string;
-		const files = directoryTree(`${PATHS.CONTENT}/${userId}`, 100)?.children;
+	router.get('/search', async (req, res) => {
+		const session = await getSession(req);
+		if (!session.user) return res.json({ error: 'Invalid session' });
 
-		res.json({ query: search(files, srch).map((i) => ({ ...i, path: i.path.split(userId)[1] })) });
+		const srch = req.query.search as string;
+		const files = directoryTree(`${PATHS.CONTENT}/${session.user.id}`, 100)?.children;
+
+		res.json({ query: search(files, srch).map((i) => ({ ...i, path: i.path.split(`${session.user?.id}`)[1] })) });
 	});
 
 	return router;

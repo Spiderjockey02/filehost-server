@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
-import type { User } from '../../utils/types';
+import type { User } from '../../types/next-auth';
 import axios from 'axios';
 import config from 'src/config';
 import { useState } from 'react';
+import type { ChangeEvent, MouseEvent } from 'react';
 interface Props {
 	user: User
 }
@@ -17,17 +18,18 @@ interface AutoComplete {
 export default function FileNavBar({ user }: Props) {
 	const [text, setText] = useState<Array<AutoComplete>>([]);
 
-	async function autoComplete(e: any) {
-		const search = e.target.value as string;
+	async function autoComplete(e: ChangeEvent<HTMLInputElement>) {
+		const search = e.target.value;
 		if (search) {
-			const { data } = await axios.get(`${config.backendURL}/api/files/search/${user.id}?search=${search}`);
+			const { data } = await axios.get(`${config.backendURL}/api/files/search?search=${search}`);
 			setText(data.query);
 		} else {
 			setText([]);
 		}
 	}
 
-	function deleteNotification(id:string) {
+	function deleteNotification(e: MouseEvent<HTMLButtonElement>, id:string) {
+		e.preventDefault();
 		alert(user.Notifications.find(i => i.id == id)?.text);
 	}
 
@@ -61,7 +63,7 @@ export default function FileNavBar({ user }: Props) {
 												<div className="form-group">
 													<label htmlFor="inputGroupSelect01">File type(s)</label>
 													<select className="form-select" id="inputGroupSelect01" name="fileType">
-														<option value="0" selected>Any type</option>
+														<option value="0" defaultValue={'true'}>Any type</option>
 														<option value="1">Files</option>
 														<option value="2">Folders</option>
 													</select>
@@ -88,15 +90,18 @@ export default function FileNavBar({ user }: Props) {
 					<li className="nav-item">
 						<div className="dropdown mr-1" id="notifications">
 							<button className="btn btn-outline-secondary nav-link position-relative" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								Alerts  <i className="fas fa-bell" id="notifIcons"></i>
+								Alerts <i className="fas fa-bell" id="notifIcons"></i>
 								{user.Notifications.length > 0 && (
 									<span className="position-absolute top-0 start-100 translate-middle badge border border-light rounded-circle bg-danger p-2"><span className="visually-hidden">unread messages</span></span>
 								)}
 							</button>
-							<div className="dropdown-menu dropdown-menu-end p-4 text-muted" style={{ width: '300px' }}>
-								<h3 className="dropdown-header">Notifications - {user.Notifications.length}</h3>
+							<div className="dropdown-menu dropdown-menu-end p-1 text-muted" style={{ width: '300px', overflowY: 'scroll', maxHeight: '300px' }}>
+								<h3 className="dropdown-header" style={{ fontSize: '18px' }}>Notifications - {user.Notifications.length}</h3>
 								{user.Notifications.map(_ => (
-									<p key={_.id}>{_.text} <button onClick={()=> deleteNotification(_.id)}>X</button></p>
+									<div className="alert alert-primary alert-dismissible fade show" role="alert" key={_.id} style={{ padding: '13px' }}>
+										<span style={{ fontSize: '15px' }}>{_.text} <a href="/resend">[Resend Email]</a></span>
+										<button type="button" className="btn-close" aria-label="Close" onClick={(e)=> deleteNotification(e, _.id)}></button>
+									</div>
 								))}
 								{user.Notifications.length == 0 && (
 									<p className="mb-0">You currently have no notifications.</p>
@@ -106,7 +111,7 @@ export default function FileNavBar({ user }: Props) {
 					</li>
 					<li className="nav-item">
 						<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							<Image src={`/avatar/${user.id}`} width={25} height={25} className="rounded-circle" alt="User avatar" />{user.name}
+							<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" />{user.name}
 						</a>
 						<div className="dropdown-menu dropdown-menu-end">
 							<Link className="dropdown-item text-dark" href="/settings">Settings</Link>

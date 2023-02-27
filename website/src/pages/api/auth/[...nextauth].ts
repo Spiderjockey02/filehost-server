@@ -3,9 +3,7 @@ import TwitterProvider from 'next-auth/providers/twitter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import config from '../../../config';
-import type { User } from '../../../utils/types';
 import type { AuthOptions } from 'next-auth';
-import axios from 'axios';
 
 export const AuthOption = {
 	providers: [
@@ -46,31 +44,13 @@ export const AuthOption = {
 	secret: process.env.NEXTAUTH_SECRET,
 	callbacks: {
 		async jwt({ token, user }) {
-			if (typeof user !== typeof undefined) {
-				/*
-				const r = await axios.post(`${config.backendURL}/api/auth/session/verify`, {
-					data: {
-						id: user?.id,
-					},
-				});
-				*/
-				token.user = user;
-			}
+			if (typeof user !== typeof undefined) token.user = user;
 			return token;
 		},
 		async session({ session, token }) {
-			if (token.user !== null) {
-				const { data } = await axios.post(`${config.backendURL}/api/auth/session/verify`, {
-					data: {
-						id: (token.user as User)?.id,
-						token,
-					},
-				});
-				session.user = data.user as User;
-			}
+			if (token.user !== null) session.user = token.user;
 			return session;
 		},
-		redirect: async ({ url, baseUrl }) =>	url.startsWith(baseUrl) ? Promise.resolve(url)	: Promise.resolve(baseUrl),
 	},
 	theme: {
 		colorScheme: 'auto',
@@ -81,7 +61,7 @@ export const AuthOption = {
 		signIn: '/login',
 	},
 	// Enable debug messages in the console if you are having problems
-	debug: process.env.NODE_ENV === 'development',
+	debug: true,
 } as AuthOptions;
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {

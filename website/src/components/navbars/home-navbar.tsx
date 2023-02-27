@@ -1,7 +1,6 @@
 import { signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { User } from '../../utils/types';
 
 export default function NavBar() {
 	const { data: session, status } = useSession();
@@ -23,13 +22,13 @@ export default function NavBar() {
 									<i className="fas fa-bell"></i>
 								</a>
 								<div className="dropdown-menu dropdown-menu-end">
-									<h6 className="dropdown-header">Notifications - 0</h6>
+									<h3 className="dropdown-header">Notifications</h3>
 									<p className="dropdown-item">You currently have no notifications.</p>
 								</div>
 							</li>
 							<li className="nav-item dropdown">
 								<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-									<Image src={`/avatar/${(session.user as User).id}`} width={25} height={25} className="rounded-circle" alt="User avatar" /> {session.user?.name}
+									<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" /> {session.user?.name}
 								</a>
 								<div className="dropdown-menu dropdown-menu-end">
 									<Link className="dropdown-item text-dark" href="/settings">Settings</Link>

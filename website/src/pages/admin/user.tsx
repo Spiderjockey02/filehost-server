@@ -2,7 +2,9 @@ import FileNavBar from '../../components/navbars/file-navBar';
 import SideBar from '../../components/navbars/sideBar';
 import { useSession } from 'next-auth/react';
 import type { User } from '../../utils/types';
-
+import { formatBytes } from '../../utils/functions';
+import config from 'src/config';
+import axios from 'axios';
 interface Props {
 	users: Array<User>
 }
@@ -170,7 +172,7 @@ export default function Files({ users }: Props) {
 						 <th>Date <i className="bi bi-arrow-down-up"></i></th>
 						 <th>Name <i className="bi bi-arrow-down-up"></i></th>
 						 <th>Email <i className="bi bi-arrow-down-up"></i></th>
-						 <th>Tier <i className="bi bi-arrow-down-up"></i></th>
+						 <th>Group <i className="bi bi-arrow-down-up"></i></th>
 						 <th>Connections <i className="bi bi-arrow-down-up"></i></th>
 						 <th>filesize <i className="bi bi-arrow-down-up"></i></th>
 						 <th>Options <i className="bi bi-arrow-down-up"></i></th>
@@ -183,6 +185,9 @@ export default function Files({ users }: Props) {
 								<th>{new Date(u.createdAt).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</th>
 								<th>{u.name}</th>
 								<th>{u.email}</th>
+								<th>{u.group?.name}</th>
+								<th>{'null'}</th>
+								<th>{formatBytes(Number(u.totalStorageSize))}</th>
 							</tr>
 						))}
 				 </tbody>
@@ -216,8 +221,8 @@ export default function Files({ users }: Props) {
 export async function getServerSideProps() {
 	// Validate path
 	try {
-		const users = await fetchAllUsers();
-		return { props: { users: users.map(u => ({ ...u, createdAt: new Date(u.createdAt).getTime() })) } };
+		const { data } = await axios.get(`${config.backendURL}/api/admin/users?filters=group`);
+		return { props: { users: (data.users as Array<User>).map(u => ({ ...u, createdAt: new Date(u.createdAt).getTime() })) } };
 	} catch (err) {
 		return { props: { data: null } };
 	}

@@ -5,15 +5,17 @@ import { spawn } from 'child_process';
 import { createThumbnail } from '../utils/functions';
 import { updateUserRecentFiles } from '../db/Recent';
 import { PATHS } from '../utils/CONSTANTS';
+import { getSession } from '../utils/functions';
 const router = Router();
 
 export default function() {
 
-	router.get('/avatar/:userid', (req, res) => {
-		const userid = req.params.userid;
+	router.get('/avatar', async (req, res) => {
+		const session = await getSession(req);
+		if (!session.user) return res.json({ error: 'Invalid session' });
 
 		// Check if the user already has an avatar, if not display default one
-		res.sendFile(`${PATHS.AVATAR}/${fs.existsSync(`${PATHS.AVATAR}/${userid}.webp`) ? userid : 'default-avatar'}.webp`);
+		res.sendFile(`${PATHS.AVATAR}/${fs.existsSync(`${PATHS.AVATAR}/${session.user.id}.webp`) ? session.user.id : 'default-avatar'}.webp`);
 	});
 
 	router.get('/thumbnail/:userid/:path(*)', async (req, res) => {

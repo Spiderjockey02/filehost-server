@@ -3,6 +3,7 @@ import type { BaseSyntheticEvent } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import type { SignInResponse } from 'next-auth/react';
+import ErrorPopup from '../components/menus/Error-pop';
 import Link from 'next/link';
 type resCode = 'Signin' | 'OAuthSignin' | 'OAuthCallback' |'OAuthCreateAccount' |'EmailCreateAccount' |'Callback' |'OAuthAccountNotLinked' |'EmailSignin' |'CredentialsSignin' |'default'
 
@@ -20,7 +21,7 @@ const errorsCodes = {
 };
 
 type ErrorTypes = {
- type: | 'email' | 'password'
+ type: | 'email' | 'password' | 'misc'
  error: string
 }
 
@@ -40,17 +41,17 @@ export default function SignIn() {
 
 		// Show errors if there are any
 		if (err.length !== 0) return setErrors(err);
+
 		// Try and sign in the user
 		const res = await signIn('credentials', {
 			redirect: false,
-			email: email,
-			password: password,
 			callbackUrl: `${window.location.search.split('=')[1]}`,
+			email, password,
 		}) as SignInResponse;
 
 
 		// Show errors if any
-		if (res.error) return setErrors([{ type: 'email', error: errorsCodes[res.error as resCode] }]);
+		if (res.error) return setErrors([{ type: 'misc', error: 'Failed to login' }]);
 
 		// Move to the callback URL so user knows they are logged in
 		router.push(res.url as string);
@@ -61,6 +62,9 @@ export default function SignIn() {
 		<>
 			<section className="vh-100" style={{ 'backgroundColor': '#eee' }}>
 				<div className="container h-100">
+					{errors.length > 0 && (
+						<ErrorPopup text={errors[0].error}/>
+					)}
 					<div className="row d-flex justify-content-center align-items-center h-100">
 						<div className="col-lg-8 col-xl-7">
 							<div className="card text-black" style={{ 'borderRadius': '25px' }}>
