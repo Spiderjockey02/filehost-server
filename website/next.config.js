@@ -3,7 +3,6 @@
 **/
 const nextConfig = {
 	reactStrictMode: true,
-	webpack5: true,
 	webpack: (config) => {
 		config.resolve.fallback = { fs: false };
 
@@ -15,8 +14,8 @@ const nextConfig = {
 	rewrites: async () => {
 		return [
 		 {
-				source: '/avatar',
-				destination: 'http://localhost:9816/avatar',
+				source: '/avatar/:userId*',
+				destination: 'http://localhost:9816/avatar/:userId*',
 		 },
 		 {
 				source: '/thumbnail/:userId/:path*',

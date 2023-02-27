@@ -10,12 +10,19 @@ const router = Router();
 
 export default function() {
 
-	router.get('/avatar', async (req, res) => {
-		const session = await getSession(req);
-		if (!session?.user) return res.json({ error: 'Invalid session' });
+	router.get('/avatar/:userId?', async (req, res) => {
+
+		let userId;
+		if (req.params.userId) {
+			userId = req.params.userId;
+		} else {
+			const session = await getSession(req);
+			if (!session?.user) return res.json({ error: 'Invalid session' });
+			userId = session.user.id;
+		}
 
 		// Check if the user already has an avatar, if not display default one
-		res.sendFile(`${PATHS.AVATAR}/${fs.existsSync(`${PATHS.AVATAR}/${session.user.id}.webp`) ? session.user.id : 'default-avatar'}.webp`);
+		res.sendFile(`${PATHS.AVATAR}/${fs.existsSync(`${PATHS.AVATAR}/${userId}.webp`) ? userId : 'default-avatar'}.webp`);
 	});
 
 	router.get('/thumbnail/:userid/:path(*)', async (req, res) => {
