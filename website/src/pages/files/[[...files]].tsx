@@ -98,7 +98,7 @@ export default function Files({ dir, path = '/', analysed }: Props) {
 		<>
 			<Toast percentage={progress} filename={filename} show={progress > 0}/>
 			<div className="wrapper" style={{ height:'100vh' }}>
-				<SideBar size={dir?.size ?? 0} user={session.user}/>
+				<SideBar user={session.user}/>
 				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
 					<FileNavBar user={session.user}/>
 					<div className="container-fluid">

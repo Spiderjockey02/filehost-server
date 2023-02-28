@@ -24,7 +24,7 @@ export default function Files({ data }: Props) {
 	console.log(data);
 	return (
 		<div className="wrapper">
-			<SideBar size={0} user={session.user}/>
+			<SideBar user={session.user}/>
 	      <div className="container-fluid" id="content">
 				<FileNavBar user={session.user}/>
 	        <div id="accordion">

@@ -16,7 +16,7 @@ export default function Files({ users }: Props) {
 
 	return (
 		<div className="wrapper">
-			<SideBar size={0} user={session.user}/>
+			<SideBar user={session.user}/>
 		 <div className="container-fluid" id="content">
 			 <FileNavBar user={session.user} />
 			 &nbsp;
