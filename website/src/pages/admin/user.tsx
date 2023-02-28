@@ -226,6 +226,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		});
 		return { props: { users: (data.users as Array<User>).map(u => ({ ...u, createdAt: new Date(u.createdAt).getTime() })) } };
 	} catch (err) {
-		return { props: { data: null } };
+		return {
+			redirect: {
+				destination: '/files',
+				permanent: false,
+			},
+		};
 	}
 }

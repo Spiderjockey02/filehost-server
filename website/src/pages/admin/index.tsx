@@ -164,6 +164,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		});
 		return { props: { data } };
 	} catch (err) {
-		return { props: { data: null } };
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
 	}
 }
