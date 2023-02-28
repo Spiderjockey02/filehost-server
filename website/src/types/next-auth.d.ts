@@ -6,7 +6,7 @@ interface Notification {
   createdAt: Date
 }
 
-interface RecentFiles {
+export interface RecentFiles {
   id: string
   location: string
   createdAt: string

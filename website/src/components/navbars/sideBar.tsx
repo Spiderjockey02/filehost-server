@@ -3,11 +3,12 @@ import { formatBytes } from '../../utils/functions';
 import config from '../../config';
 import type { User } from '../../types/next-auth';
 interface Props {
-	size: number
 	user: User
 }
 
-export default function SideBar({ size, user }: Props) {
+export default function SideBar({ user }: Props) {
+	const size = Number(user.totalStorageSize) ?? 0;
+
 	function getColor(num: number) {
 		if (num >= 4 * 1024 * 1024 * 1024) {
 			return 'bg-danger';
@@ -63,9 +64,9 @@ export default function SideBar({ size, user }: Props) {
 						</li>
 					</ul>
 					<div className="p-2 bottom side-text" style={{ position:'fixed', bottom:'0', height:'11%' }}>
-						<label className="side-text">{formatBytes(size)} of {formatBytes(Number(user.group?.maxStorageSize ?? 0))} used</label>
+						<label className="side-text">{formatBytes(Number(user.totalStorageSize))} of {formatBytes(Number(user.group?.maxStorageSize ?? 0))} used</label>
 						<div className="progress" style={{ width:'200px' }}>
-							<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
+							<div className={`progress-bar ${getColor(Number(user.totalStorageSize))}`} role="progressbar" style={{ width:`${(Number(user.totalStorageSize) / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={Number(user.totalStorageSize)} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
 						</div>
 						<Link href="/trash" style={{ position:'fixed', bottom:'0', height:'4%', color:'black', textDecoration: 'none' }}>
 							<i className="fas fa-trash"></i> <span className="side-text">Deleted files</span>
@@ -103,7 +104,7 @@ export default function SideBar({ size, user }: Props) {
 				</li>
 			</ul>
 			<div className="p-2 bottom side-text" style={{ position:'fixed', bottom:'0', height:'11%' }}>
-				<label className="side-text">{formatBytes(size)} of {formatBytes(Number(user.group?.maxStorageSize ?? 0))} used</label>
+				<label className="side-text">{formatBytes(size)} of {formatBytes(size)} used</label>
 				<div className="progress" style={{ width:'200px' }}>
 					<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
 				</div>
