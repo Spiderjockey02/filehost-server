@@ -11,28 +11,39 @@ const router = Router();
 
 type data = { [key: string]: boolean}
 
+interface diskStorage {
+	free: number
+	total: number
+}
+
 export default function() {
 	router.get('/stats', checkAdmin, async (_req, res) => {
 
 		const platform = process.platform;
-		let diskData: Array<string> = [];
+		let diskData: diskStorage = { free: 0, total: 0 };
 		if (platform == 'win32') {
 			const { stdout } = await cmd('wmic logicaldisk get size,freespace,caption');
 			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
 			const filtered = parsed.filter(d => process.cwd().toUpperCase().startsWith(d[0].toUpperCase()));
-			diskData = filtered[0];
+			diskData = {
+				free: Number(filtered[0][1]),
+				total: Number(filtered[0][2]),
+			};
 		} else if (platform == 'linux') {
 			const { stdout } = await cmd('df -Pk --');
 			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
-			const filtered = parsed.filter(d => process.cwd().toUpperCase().startsWith(d[0].toUpperCase()));
-			diskData = filtered[0];
+			const filtered = parsed.filter(() => true);
+			diskData = {
+				free: Number(filtered[0][3]),
+				total: Number(filtered[0][1]),
+			};
 		}
 
 		res.json({
 			storage: {
 				totalFiles: getNumberOfFiles(directoryTree(process.cwd()), 0),
-				total: Number(diskData[2] ?? 0),
-				free: Number(diskData[1] ?? 0),
+				total: diskData.total,
+				free: diskData.free,
 			},
 			memory: {
 				total: Number((process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)),
