@@ -41,7 +41,7 @@ export default function() {
 
 		res.json({
 			storage: {
-				totalFiles: getNumberOfFiles(directoryTree(process.cwd()), 0),
+				totalFiles: getNumberOfFiles(await directoryTree(process.cwd()), 0),
 				total: diskData.total,
 				free: diskData.free,
 			},

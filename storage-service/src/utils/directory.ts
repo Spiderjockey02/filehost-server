@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import PATH from 'path';
 import type { fileType, fileItem } from '../types';
 const constants = {
@@ -6,10 +6,10 @@ const constants = {
 	FILE: 'file',
 };
 
-function safeReadDirSync(path: string) {
+async function safeReadDirSync(path: string) {
 	let dirData = [];
 	try {
-		dirData = fs.readdirSync(path);
+		dirData = await fs.readdir(path);
 	} catch (err: any) {
 		if (['EACCES', 'EPERM'].includes(err.code)) {
 			// User does not have permissions, ignore directory
@@ -21,13 +21,13 @@ function safeReadDirSync(path: string) {
 	return dirData;
 }
 
-function directoryTree(path:string, depth = 1) {
+async function directoryTree(path: string, depth = 1) {
 	const name = PATH.basename(path);
-	const item = { path, name } as fileItem;
+	const item = { name } as fileItem;
 	let stats;
 
 	try {
-		stats = fs.statSync(path);
+		stats = await fs.stat(path);
 	} catch (e) {
 		return null;
 	}
@@ -41,14 +41,14 @@ function directoryTree(path:string, depth = 1) {
 		item.modified = stats.mtime.getTime();
 
 	} else if (stats.isDirectory()) {
-		const dirData = safeReadDirSync(path);
+		const dirData = await safeReadDirSync(path);
 		if (dirData === null) return null;
 		item.children = [];
 
 		if (depth >= 0) {
-			item.children = dirData
-				.map(child => directoryTree(PATH.join(path, child), depth - 1))
-				.filter(e => e !== null || e !== undefined) as fileItem[];
+			const children = await Promise.all(dirData
+				.map(async (child) => await directoryTree(PATH.join(path, child), depth - 1)));
+			item.children = children.filter(e => e !== null || e !== undefined) as fileItem[];
 
 			// Get time modified for folder
 			if (item.children.length == 0) {

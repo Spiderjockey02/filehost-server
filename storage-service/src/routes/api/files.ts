@@ -117,7 +117,7 @@ export default function() {
 		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const srch = req.query.search as string;
-		const files = directoryTree(`${PATHS.CONTENT}/${session.user.id}`, 100)?.children;
+		const files = (await directoryTree(`${PATHS.CONTENT}/${session.user.id}`, 100))?.children;
 
 		res.json({ query: search(files, srch).map((i) => ({ ...i, path: i.path.split(`${session.user?.id}`)[1] })) });
 	});

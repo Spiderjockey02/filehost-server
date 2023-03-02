@@ -21,11 +21,11 @@ export default function() {
 
 		// Fetch from cache
 		let files;
-		if (Cache[path]) {
-			files = Cache[path];
+		if (Cache[`${session.user.id}/${path}`]) {
+			files = Cache[`${session.user.id}/${path}`];
 		} else {
-			files = directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`);
-			Cache[path] = files;
+			files = await directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`);
+			Cache[`${session.user.id}/${path}`] = files;
 		}
 
 		// Update size
@@ -41,7 +41,7 @@ export default function() {
 		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const path = req.params.path as string;
-		res.json({ files: directoryTree(`${PATHS.TRASH}/${session.user.id}${path ? `/${path}` : ''}`) });
+		res.json({ files: await directoryTree(`${PATHS.TRASH}/${session.user.id}${path ? `/${path}` : ''}`) });
 	});
 
 	router.get('/analyse', async (req, res) => {
