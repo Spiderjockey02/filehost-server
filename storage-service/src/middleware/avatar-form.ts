@@ -1,9 +1,9 @@
 import formidable from 'formidable';
 import type { Request } from 'express';
-import { PATHS } from './CONSTANTS';
+import { PATHS } from '../utils/CONSTANTS';
 export const FormidableError = formidable.errors.FormidableError;
 
-export const avatarForm = async (req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
+const avatarForm = async (req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
 	// eslint-disable-next-line no-async-promise-executor
 	return await new Promise(async (resolve, reject) => {
 		const form = formidable({
@@ -25,3 +25,5 @@ export const avatarForm = async (req: Request, userId: string): Promise<{ fields
 		});
 	});
 };
+
+export default avatarForm;

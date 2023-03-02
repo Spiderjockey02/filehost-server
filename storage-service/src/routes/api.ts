@@ -1,22 +1,39 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
-import RecogniseHandler from '../utils/RecogniseHandler';
+import { RecogniseHandler } from '../libs';
 import directoryTree from '../utils/directory';
 import { PATHS } from '../utils/CONSTANTS';
 import { fetchAnalysed } from '../db/Analyse';
-import { getSession } from '../utils/functions';
+import { getSession } from '../middleware';
+import { updateUser } from '../db/User';
+import type { dirCache } from '../types';
 const router = Router();
 
 export default function() {
 	const Recognise = new RecogniseHandler();
-
+	const Cache: dirCache = {};
 
 	router.get('/fetch/files/?:path(*)', async (req, res) => {
-		const session = await getSession(req);
+		const session = await getSession(req, res);
 		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const path = req.params.path as string;
-		res.json({ files:  directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`) });
+
+		// Fetch from cache
+		let files;
+		if (Cache[path]) {
+			files = Cache[path];
+		} else {
+			files = directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`);
+			Cache[path] = files;
+		}
+
+		// Update size
+		if (path.length == 0 && (Number(files?.size) != Number(session.user.totalStorageSize))) {
+			await updateUser({ id: session.user.id, totalStorageSize: `${Number(files?.size ?? 0)}` });
+		}
+
+		res.json({ files });
 	});
 
 	router.get('/fetch/trash/:path(*)', async (req, res) => {

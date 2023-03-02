@@ -1,5 +1,5 @@
 import type { DeleteFile } from '@prisma/client';
-import { PATHS } from './CONSTANTS';
+import { PATHS } from '../utils/CONSTANTS';
 import fs from 'fs/promises';
 import { Logger } from '../utils/Logger';
 import { addDeleteFile, deleteDeleteFile, fetchAllDeleteFiles } from '../db/DeleteFile';

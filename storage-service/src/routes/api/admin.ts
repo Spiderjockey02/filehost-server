@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { fetchAllUsers } from '../../db/User';
 import { fetchAllGroups } from '../../db/Group';
 import directoryTree, { getNumberOfFiles } from '../../utils/directory';
-import { checkAdmin } from '../../utils/functions';
+import { checkAdmin } from '../../middleware';
 import { exec } from 'node:child_process';
 import os from 'os';
 import util from 'node:util';

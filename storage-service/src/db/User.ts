@@ -68,6 +68,7 @@ interface updateUser {
 	id: string
 	password?: string
 	email?: string
+	totalStorageSize?: string
 }
 
 export async function updateUser(data: updateUser) {
@@ -79,6 +80,7 @@ export async function updateUser(data: updateUser) {
 		data: {
 			password: data.password,
 			email: data.email,
+			totalStorageSize: data.totalStorageSize,
 		},
 	});
 }

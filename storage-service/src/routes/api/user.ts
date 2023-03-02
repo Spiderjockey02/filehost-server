@@ -3,8 +3,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { updateUser, fetchUserbyParam } from '../../db/User';
 import emailValidate from 'deep-email-validator';
-import { avatarForm } from '../../utils/avatar-form';
-import { getSession } from '../../utils/functions';
+import { avatarForm, getSession } from '../../middleware';
 const router = Router();
 
 export default function() {

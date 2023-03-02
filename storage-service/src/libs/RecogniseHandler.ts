@@ -1,6 +1,6 @@
 import { Landmarks, NSFW, Face, Objects, Geo } from '../recognise';
 import { createAnalyse } from '../db/Analyse';
-import { PATHS } from './CONSTANTS';
+import { PATHS } from '../utils/CONSTANTS';
 
 export default class RecogniseHandler {
 	private queue: Array<string>;

@@ -14,6 +14,8 @@ export type fileItem = {
   url: string
 }
 
+export type dirCache = { [key: string]: fileItem | null }
+
 // For logger
 export type loggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
 export type customRequest = Request & { _startTime: number, _endTime: undefined | number }
@@ -24,12 +26,13 @@ export interface IdParam {
   id: string
 }
 
-const userWithPosts = Prisma.validator<Prisma.UserArgs>()({
+const User = Prisma.validator<Prisma.UserArgs>()({
 	include: { recentFiles: true, group: true, Notifications: true },
 });
 
+export type User = Prisma.UserGetPayload<typeof User>
 
 export interface Session {
-  user?: Prisma.UserGetPayload<typeof userWithPosts>
+  user?: User
   expires?: Date
 }

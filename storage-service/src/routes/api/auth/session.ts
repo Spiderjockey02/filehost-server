@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getSession } from '../../../utils/functions';
+import { getSession } from '../../../middleware';
 import { fetchUserbyParam } from '../../../db/User';
 const router = Router();
 

@@ -5,13 +5,12 @@ import { spawn } from 'child_process';
 import { createThumbnail } from '../utils/functions';
 import { updateUserRecentFiles } from '../db/Recent';
 import { PATHS } from '../utils/CONSTANTS';
-import { getSession } from '../utils/functions';
+import { getSession } from '../middleware';
 const router = Router();
 
 export default function() {
 
 	router.get('/avatar/:userId?', async (req, res) => {
-
 		let userId;
 		if (req.params.userId) {
 			userId = req.params.userId;
