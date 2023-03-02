@@ -14,7 +14,7 @@ export default function() {
 	const Cache: dirCache = {};
 
 	router.get('/fetch/files/?:path(*)', async (req, res) => {
-		const session = await getSession(req, res);
+		const session = await getSession(req);
 		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		const path = req.params.path as string;

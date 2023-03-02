@@ -1,15 +1,12 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ipv4Regex } from '../utils/CONSTANTS';
-import axios from 'axios';
 import config from '../config';
-import { getServerSession } from 'next-auth/next';
-import type { Session } from '../types';
-import type { NextAuthOptions } from 'next-auth';
-type LabelEnum = { [key: string]: Session }
+type LabelEnum = { [key: string]: JWT }
 const sessionStore: LabelEnum = {};
 import avatarForm from './avatar-form';
 import parseForm from './parse-form';
-
+import { decode } from 'next-auth/jwt';
+import type { JWT } from 'next-auth/jwt';
 export { avatarForm, parseForm };
 
 export function getIP(req: Request) {
@@ -46,43 +43,34 @@ export function getIP(req: Request) {
 	return req.ip;
 }
 
-export async function getSession(req: Request, res?: Response): Promise<Session | null> {
+export async function getSession(req: Request): Promise<JWT | null> {
 	if (req.headers.cookie == undefined) return null;
 
-	const options: NextAuthOptions = {
-		providers: [],
-		session: {
-			strategy: 'jwt',
-			maxAge: 30 * 24 * 60 * 60,
-		},
-		secret: 'JHLSDHLFSFDSDIUBFSL UBLSIUF RI7B34L7I46B7IBLI7BBG7OIWBV74IV7BI64VB74647B3VB7346VB4376V4B7W6',
-	};
-	if (res) {
-		const s = await getServerSession(req, res, options);
-		console.log(req.headers);
-		console.log('asdsad', s);
-	}
+	// get Session token from cookies
+	const cookies: string[] = req.headers['cookie'].split('; ');
+	const parsedcookies = cookies.map((i: string) => i.split('='));
+	const sessionToken = parsedcookies.find(i => i[0] == 'next-auth.session-token')?.[1];
+	if (!sessionToken) return null;
 
-
-	// Check if data is from cache
-	if (sessionStore[req.headers.cookie]) {
+	// Check session from cache
+	let session;
+	if (sessionStore[sessionToken]) {
 		console.log('HIT CACHE');
-		const session = sessionStore[req.headers.cookie];
+		session = sessionStore[req.headers.cookie];
 		// Make sure it hasn't expired
-		if (new Date(session.expires ?? 0).getTime() <= new Date().getTime()) return session;
+		if (new Date(session.exp).getTime() <= new Date().getTime()) return session;
+	} else {
+		console.log('NOT FROM CACHE');
+		session = await decode({ token: sessionToken, secret: config.NEXTAUTH_SECRET });
+		if (session == null) return null;
+		sessionStore[sessionToken] = session;
 	}
 
-	// Fetch from front-end
-	console.log('NOT HIT CACHE');
-	const { data } = await axios.get(`${config.frontendURL}/api/auth/session`, {
-		headers: { cookie: req.headers.cookie },
-	});
-	sessionStore[req.headers.cookie] = data;
-	return data;
+	return session;
 }
 
 export async function checkAdmin(req: Request, res: Response, next: NextFunction) {
-	const session = await getSession(req, res);
+	const session = await getSession(req);
 	if (session == null) return res.status(401).json({ error: 'You are not authorised to access this endpoint' });
 
 	console.log(session.user);
