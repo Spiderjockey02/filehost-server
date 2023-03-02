@@ -55,17 +55,14 @@ export async function getSession(req: Request): Promise<JWT | null> {
 	// Check session from cache
 	let session;
 	if (sessionStore[sessionToken]) {
-		console.log('HIT CACHE');
 		session = sessionStore[req.headers.cookie];
 		// Make sure it hasn't expired
-		if (new Date(session.exp).getTime() <= new Date().getTime()) return session;
-	} else {
-		console.log('NOT FROM CACHE');
-		session = await decode({ token: sessionToken, secret: config.NEXTAUTH_SECRET });
-		if (session == null) return null;
-		sessionStore[sessionToken] = session;
+		if (new Date(session?.exp ?? 0).getTime() <= new Date().getTime()) return session;
 	}
 
+	session = await decode({ token: sessionToken, secret: config.NEXTAUTH_SECRET });
+	if (session == null) return null;
+	sessionStore[sessionToken] = session;
 	return session;
 }
 
