@@ -3,10 +3,8 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { updateUser, fetchUserbyParam } from '../../db/User';
 import emailValidate from 'deep-email-validator';
-import formidable from 'formidable';
-import { PATHS } from '../../utils/CONSTANTS';
+import { avatarForm } from '../../utils/avatar-form';
 import { getSession } from '../../utils/functions';
-import { join } from 'path';
 const router = Router();
 
 export default function() {
@@ -48,24 +46,18 @@ export default function() {
 		if (!session?.user) return res.json({ error: 'Invalid session' });
 
 		try {
-			// eslint-disable-next-line no-async-promise-executor
-			await new Promise(async (resolve, reject) => {
-				const form = formidable({
-					uploadDir: join(PATHS.AVATAR),
-					filename: (_name, _ext, part) => {
-						return `${part.originalFilename}`;
-					},
-				});
-
-				form.parse(req, (err, fields, files) => {
-					if (err) reject(err);
-					else resolve({ fields, files });
-				});
-			});
-			res.json({ success: 'Successfully uploaded avatar' });
+			// Parse and save file(s)
+			const { files } = await avatarForm(req, session.user.id);
+			console.log('avatar files: ', files);
+			return res
+				.setHeader('Content-Type', 'application/json')
+				.status(200)
+				.json({ success: 'File successfully uploaded.' });
 		} catch (err) {
-			console.log(err);
-			res.json({ error: 'Faild to upload avatar' });
+			console.log('erro2', err);
+			res
+				.setHeader('Content-Type', 'application/json')
+				.json({ error: 'Failed to upload file' });
 		}
 	});
 

@@ -25,13 +25,9 @@ export default function Settings() {
 		if (!fileInput.files) return alert('No file was chosen');
 		if (!fileInput.files || fileInput.files.length === 0) return alert('Files list is empty');
 
-		/** Reset file input */
-		e.currentTarget.type = 'text';
-		e.currentTarget.type = 'file';
-
 		try {
-			const formData = new FormData()
-				.append('media', fileInput.files[0]);
+			const formData = new FormData();
+			formData.append('media', fileInput.files[0] as File);
 
 			const t = await axios.post('/api/user/avatar', formData, {
 				headers: { 'Content-Type': 'multipart/form-data' },
