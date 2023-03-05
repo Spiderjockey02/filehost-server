@@ -49,7 +49,12 @@ export async function getSession(req: Request): Promise<JWT | null> {
 	// get Session token from cookies
 	const cookies: string[] = req.headers['cookie'].split('; ');
 	const parsedcookies = cookies.map((i: string) => i.split('='));
-	const sessionToken = parsedcookies.find(i => i[0] == 'next-auth.session-token')?.[1];
+
+	// Get session token (Could be secure or not so check both)
+	let sessionToken = parsedcookies.find(i => i[0] == '__Secure-next-auth.session-token')?.[1];
+	if (sessionToken == null) {
+		sessionToken = parsedcookies.find(i => i[0] == 'next-auth.session-token')?.[1];
+	}
 	if (!sessionToken) return null;
 
 	// Check session from cache
