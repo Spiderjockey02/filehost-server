@@ -1,6 +1,5 @@
 import type { User } from '../../types/next-auth';
 import { useRef } from 'react';
-import Script from 'next/script';
 interface Props {
   dir: string
   user: User
@@ -17,6 +16,14 @@ export default function DisplayFile({ dir, user }: Props) {
 	const seekTooltip = useRef<HTMLDivElement>(null);
 	const buffer = useRef<HTMLProgressElement>(null);
 	const volume = useRef<HTMLInputElement>(null);
+	const fullscreenBtn = useRef<HTMLButtonElement>(null);
+	const pipButton = useRef<HTMLButtonElement>(null);
+
+	// Icons
+	const fullscreenBtns = useRef<Array<any>>([]);
+	const playBtnIcons = useRef<Array<any>>([]);
+	const volumnBtnIcons = useRef<Array<any>>([]);
+	const playIcons = useRef<Array<any>>([]);
 
 	function formatTime(timeInSeconds: number) {
 		const result = new Date(timeInSeconds * 1000).toISOString().substr(11, 8);
@@ -73,6 +80,8 @@ export default function DisplayFile({ dir, user }: Props) {
 
 	function togglePlay() {
 		if (video.current == null) return;
+		playBtnIcons.current.forEach((icon) => icon.classList.toggle('hidden'));
+		playIcons.current.forEach((icon) => icon.classList.toggle('hidden'));
 		if (video.current.paused || video.current.ended) {
 			video.current.play();
 		} else {
@@ -80,11 +89,27 @@ export default function DisplayFile({ dir, user }: Props) {
 		}
 	}
 
+	function updateVolumeIcon() {
+		const vid = (video.current as HTMLVideoElement);
+		const volumeIcons = volumnBtnIcons.current;
+		volumeIcons.forEach((icon) => icon.classList.add('hidden'));
+		// volumeButton.setAttribute('data-title', 'Mute (m)');
+
+		if (vid.muted || vid.volume === 0) {
+			volumeIcons[0].classList.remove('hidden');
+			// volumeButton.setAttribute('data-title', 'Unmute (m)');
+		} else if (vid.volume > 0 && vid.volume <= 0.5) {
+			volumeIcons[1].classList.remove('hidden');
+		} else {
+			volumeIcons[2].classList.remove('hidden');
+		}
+		(volume.current as HTMLInputElement).value = `${vid.volume}`;
+	}
+
 	function toggleMute() {
 		const vid = (video.current as HTMLVideoElement);
 		const vol = (volume.current as HTMLInputElement);
 		vid.muted = !vid.muted;
-
 		if (vid.muted) {
 			vol.setAttribute('data-volume', vol.value);
 			vol.value = `${0}`;
@@ -109,30 +134,56 @@ export default function DisplayFile({ dir, user }: Props) {
 		} else {
 			container.requestFullscreen();
 		}
-		// updateFullscreenButton(!document.fullscreenElement);
+		updateFullscreenButton(!document.fullscreenElement);
 		// hideControlsOnMobile();
+	}
+
+	async function togglePip() {
+		const vid = (video.current as HTMLVideoElement);
+		try {
+			if (vid !== document.pictureInPictureElement) {
+				(pipButton.current as HTMLButtonElement).disabled = true;
+				await vid.requestPictureInPicture();
+			} else {
+				await document.exitPictureInPicture();
+			}
+		} catch (error) {
+			console.error(error);
+		} finally {
+			(pipButton.current as HTMLButtonElement).disabled = false;
+		}
+	}
+
+	function updateFullscreenButton(toggle: boolean) {
+		fullscreenBtns.current.forEach((icon) => icon.classList.toggle('hidden'));
+		if (toggle) {
+			(video.current as HTMLVideoElement).style.maxHeight = '100%';
+			fullscreenBtn.current?.setAttribute('data-title', 'Exit full screen (f)');
+		} else {
+			(video.current as HTMLVideoElement).style.maxHeight = '800px';
+			fullscreenBtn.current?.setAttribute('data-title', 'Full screen (f)');
+		}
 	}
 
 	if (status == 'loading') return null;
 	return (
 		<>
 			<link rel="stylesheet" href="/videoplayer.css" />
-			<Script src="https://vjs.zencdn.net/8.0.4/video.min.js"></Script>
 			<div className="video-container" id="video-container" ref={videoContainer}>
 				<div className="playback-animation" id="playback-animation" ref={playbackAnimation}>
 					<svg className="svg playback-icons">
-						<use className="hidden" href="#play-icon"></use>
-						<use href="#pause"></use>
+						<use href="#pause" ref={i => playIcons.current[0] = i}></use>
+						<use className="hidden" href="#play-icon" ref={i => playIcons.current[1] = i}></use>
 					</svg>
 				</div>
 				<video className="video" id="my-video" preload="metadata" ref={video}
-					onLoadedMetadata={() => initVideo()} onTimeUpdate={() => timeUpdate()} onClick={() => clickedVideo()} onProgress={() => updateProgress()}>
+					onLoadedMetadata={() => initVideo()} onTimeUpdate={() => timeUpdate()} onClick={() => clickedVideo()} onProgress={() => updateProgress()} onVolumeChange={() => updateVolumeIcon()}>
 					<source src={`/content/${user.id}/${dir}`} type="video/mp4" />
 				</video>
 				<div id="settings-tab" className="video-controls hidden">
 					<div className="form-group">
 						<label htmlFor="formControlRange" id="textInput">Playback speed: 1.0x</label>
-						<input type="range" className="input-range form-control-range bg-dark" id="formControlRange" value="1" max="2" step="0.50" />
+						<input type="range" className="input-range form-control-range" id="formControlRange" value="1" max="2" step="0.50" />
 					</div>
 				</div>
 				<div className="video-controls" id="video-controls">
@@ -146,19 +197,19 @@ export default function DisplayFile({ dir, user }: Props) {
 						<div className="left-controls">
 							<button className="button" data-title="Play (k)" id="play" onClick={() => togglePlay()}>
 								<svg className="svg playback-icons">
-									<use href="#play-icon"></use>
-									<use className="hidden" href="#pause"></use>
+									<use href="#play-icon" ref={i => playBtnIcons.current[0] = i}></use>
+									<use className="hidden" href="#pause" ref={i => playBtnIcons.current[1] = i}></use>
 								</svg>
 							</button>
 							<div className="volume-controls" id="volume-controls">
 								<button className="button volume-button" data-title="Mute (m)" id="volume-button" onClick={() => toggleMute()}>
 									<svg className="svg">
-										<use className="hidden" href="#volume-mute"></use>
-										<use className="hidden" href="#volume-low"></use>
-										<use href="#volume-high"></use>
+										<use className="hidden" href="#volume-mute" ref={i => volumnBtnIcons.current[0] = i}></use>
+										<use className="hidden" href="#volume-low" ref={i => volumnBtnIcons.current[1] = i}></use>
+										<use href="#volume-high" ref={i => volumnBtnIcons.current[2] = i}></use>
 									</svg>
 								</button>
-								<input className="input-range volume" id="volume" value="1" data-mute="0.5" type="range" max="1" min="0" step="0.05" ref={volume}/>
+								<input className="volume" id="volume" value="1" data-mute="0.5" type="range" max="1" min="0" step="0.05" ref={volume} onInput={(i) => (video.current as HTMLVideoElement).volume = Number(i.currentTarget.value)}/>
 							</div>
 							<div className="time">
 								<time id="time-elapsed" ref={timeElapsed}>00:00</time>
@@ -167,7 +218,7 @@ export default function DisplayFile({ dir, user }: Props) {
 							</div>
 						</div>
 						<div className="right-controls">
-							<button className="button pip-button" data-title="PIP (p)" id="pip-button">
+							<button className="button pip-button" data-title="PIP (p)" id="pip-button" ref={pipButton} onClick={() => togglePip()}>
 								<svg className="svg">
 									<use href="#pip"></use>
 								</svg>
@@ -177,10 +228,10 @@ export default function DisplayFile({ dir, user }: Props) {
 									<use href="#gear"></use>
 								</svg>
 							</button>
-							<button data-title="Full screen (f)" className="fullscreen-button" id="fullscreen-button" onClick={() => toggleFullScreen()}>
+							<button data-title="Full screen (f)" className="fullscreen-button" id="fullscreen-button" ref={fullscreenBtn} onClick={() => toggleFullScreen()}>
 								<svg className="svg">
-									<use href="#fullscreen"></use>
-									<use href="#fullscreen-exit" className="hidden"></use>
+									<use href="#fullscreen" ref={i => fullscreenBtns.current[0] = i}></use>
+									<use href="#fullscreen-exit" className="hidden" ref={i => fullscreenBtns.current[1] = i}></use>
 								</svg>
 							</button>
 						</div>
