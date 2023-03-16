@@ -4,6 +4,8 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import config from '../../../config';
 import type { AuthOptions } from 'next-auth';
+import { encode } from 'next-auth/jwt';
+import axios from 'axios';
 
 export const AuthOption = {
 	providers: [
@@ -32,7 +34,6 @@ export const AuthOption = {
 					}),
 				});
 				const data = await resp.json();
-				console.log('data', data);
 				return (data.success) ? data.user : null;
 			},
 		}),
@@ -48,7 +49,15 @@ export const AuthOption = {
 			return token;
 		},
 		async session({ session, token }) {
-			if (token.user !== null) session.user = token.user;
+			if (token.user !== null) {
+				const { data } = await axios.get(`${config.backendURL}/api/auth/session/${token.sub}`, {
+					headers: {
+						'content-type': 'application/json;charset=UTF-8',
+						cookie: `next-auth.session-token=${await encode({ token, secret: process.env.NEXTAUTH_SECRET as string })};`,
+					},
+				});
+				if (data.user) session.user = data.user;
+			}
 			return session;
 		},
 		redirect: ({ url, baseUrl }) => {

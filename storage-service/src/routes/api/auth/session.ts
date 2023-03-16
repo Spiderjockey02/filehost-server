@@ -1,14 +1,15 @@
 import { Router } from 'express';
-import { getSession } from '../../../middleware';
 import { fetchUserbyParam } from '../../../db/User';
+import { getSession } from '../../../middleware';
 const router = Router();
 
 export default function() {
-	router.post('/', async (req, res) => {
+	router.get('/:userId', async (req, res) => {
 		const session = await getSession(req);
 		if (!session?.user) return res.json({ error: 'Invalid session' });
+		const userId = req.params.userId;
 
-		const user = await fetchUserbyParam({ id: session.user.id });
+		const user = await fetchUserbyParam({ id: userId });
 		res.json({ user });
 	});
 
