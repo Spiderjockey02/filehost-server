@@ -3,7 +3,8 @@ const config = {
 	domain: '',
 	port: 1500,
 	emailAuth: {
-		user: 'EMAIL ',
+		host: 'HOST ADDRESS',
+		email: 'EMAIL',
 		pass: 'EMAIL PASSWORD',
 	},
 };

@@ -7,13 +7,19 @@ const app = express();
 // Run mail service
 (async () => {
 	const smtpTransport = nodemailer.createTransport({
-		host: 'smtp.gmail.com',
-		auth: config.emailAuth,
+		host: config.emailAuth.host,
+		secure: true,
+		auth: {
+			user: config.emailAuth.email,
+			pass: config.emailAuth.pass,
+		},
 	});
 
 	// Verifying the Nodemailer Transport instance
 	smtpTransport.verify((error) => {
-		if (error) Logger.log(error?.message, 'error');
+		console.log('error', error);
+		if (error !== null) return Logger.log(error?.message, 'error');
+		Logger.debug(`Ready to send emails from: ${config.emailAuth.email}`);
 	});
 
 	app
