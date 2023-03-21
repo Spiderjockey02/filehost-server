@@ -6,12 +6,10 @@ import { PATHS } from '../utils/CONSTANTS';
 import { fetchAnalysed } from '../db/Analyse';
 import { getSession } from '../middleware';
 import { updateUser } from '../db/User';
-import type { dirCache } from '../types';
 const router = Router();
 
 export default function() {
 	const Recognise = new RecogniseHandler();
-	const Cache: dirCache = {};
 
 	router.get('/fetch/files/?:path(*)', async (req, res) => {
 		const session = await getSession(req);
@@ -20,13 +18,7 @@ export default function() {
 		const path = req.params.path as string;
 
 		// Fetch from cache
-		let files;
-		if (Cache[`${session.user.id}/${path}`]) {
-			files = Cache[`${session.user.id}/${path}`];
-		} else {
-			files = await directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`);
-			Cache[`${session.user.id}/${path}`] = files;
-		}
+		const	files = await directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`);
 
 		// Update size
 		if (path.length == 0 && (Number(files?.size) != Number(session.user.totalStorageSize))) {
@@ -69,7 +61,7 @@ export default function() {
 			console.log(err);
 			res.json({ error: err });
 		}
-
 	});
+
 	return router;
 }
