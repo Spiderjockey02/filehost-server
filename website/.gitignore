@@ -1,0 +1,4 @@
+# Prisma
+prisma/migrations/
+src/config.ts
+package-lock.json

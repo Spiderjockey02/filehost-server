@@ -1,19 +1,19 @@
 <h1 align="center">
   <br>
-  File hosting service 
+  File hosting service
   <br>
 </h1>
 
 <h3 align=center>A secure, easy-to-use file hosting service built with <a href="https://ejs.co/">ejs</a></h3>
 
 
-<div align="center"> 
-  
+<div align="center">
+
 [![Discord](https://img.shields.io/discord/658113349384667198.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/8g6zUQu)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Spiderjockey02_CDN-server&metric=ncloc)](https://sonarcloud.io/dashboard?id=Spiderjockey02_CDN-server)
 [![CodeFactor](https://www.codefactor.io/repository/github/spiderjockey02/filehost-server/badge)](https://www.codefactor.io/repository/github/spiderjockey02/filehost-server)
 ![Website](https://img.shields.io/website?down_color=red&down_message=offline&up_color=green&up_message=online&url=https%3A%2F%2Ffilesharer.tech%2F)
-  
+
 </div>
 
 <div align="center">
@@ -30,7 +30,7 @@
 
 ## ❓ About
 
-<div align="center"> 
+<div align="center">
   <img src="https://github.com/Spiderjockey02/filehost-server/blob/master/docs/images/signup.png?raw=true" style="max-width:100px;">
   <img src="https://github.com/Spiderjockey02/filehost-server/blob/master/docs/images/file-directory.png?raw=true" style="max-width:100px;">
   <img src="https://github.com/Spiderjockey02/filehost-server/blob/master/docs/images/custom%20video-player.png?raw=true" style="max-width:100px;">
@@ -52,7 +52,7 @@ If you liked this repository, feel free to leave a star ⭐ to help promote this
 ## 📝 To-Do
 
 This file sharing service is in a continuous state of development. New features/updates may come at any time. Some pending ideas are:
-  
+
   * Make sure all context menu features work (including multi-select).
   * Create download feature allowing people to download folders + multiply item.
   * Functional drop down search filters.
@@ -68,4 +68,3 @@ This file sharing service is in a continuous state of development. New features/
 ## 📖 License
 
 Released under the [Apache License 2.0](https://github.com/Spiderjockey02/filehost-server/blob/master/docs/LICENSE) license.
-
