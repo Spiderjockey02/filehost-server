@@ -1,18 +1,15 @@
 <h1 align="center">
   <br>
-    Frontend website
+    Storage Server API
   <br>
 </h1>
 
-<h3 align=center>This is the server that the users will connect to.</h3>
+<h3 align=center>The API that powers the website</h3>
 
 # ❗ Features
-
-* Displays the website to the users.
-* See recently access files.
-* Manage recently delete files.
-* Allow users to bulk upload and download files and folders.
-* Watch videos and browse photos.
+* This is where all files, folders, thumbnails etc are stored.
+* Database access is done through this API.
+* File analysis done via the recognise files (GEO, NSFW, Facial & object recognition).
 
 # ⌨️Installation
 
@@ -27,8 +24,8 @@
   <li>Run the following commands
     <ol>
       <li>npm run install</li>
-      <li>npm run build</li>
+      <li>npx prisma migrate dev --name init</li>
       <li>npm run start</li>
-      </ol>
+    </ol>
   </li>
 </ol>
