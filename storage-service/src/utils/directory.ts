@@ -23,7 +23,7 @@ async function safeReadDirSync(path: string) {
 
 async function directoryTree(path: string, depth = 1) {
 	const name = PATH.basename(path);
-	const item = { name } as fileItem;
+	const item = { path, name } as fileItem;
 	let stats;
 
 	try {
