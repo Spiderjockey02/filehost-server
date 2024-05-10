@@ -1,7 +1,6 @@
 import formidable from 'formidable';
 import type { Request } from 'express';
 import { PATHS } from '../utils/CONSTANTS';
-export const FormidableError = formidable.errors.FormidableError;
 
 const avatarForm = async (req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
 	// eslint-disable-next-line no-async-promise-executor

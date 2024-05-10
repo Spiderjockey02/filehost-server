@@ -6,7 +6,6 @@ import { fetchUserbyParam, updateUser } from '../db/User';
 import { PATHS } from '../utils/CONSTANTS';
 import config from '../config';
 import type { User } from '../types';
-export const FormidableError = formidable.errors.FormidableError;
 
 const parseForm = async (req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
 	// eslint-disable-next-line no-async-promise-executor

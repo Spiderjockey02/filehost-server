@@ -20,7 +20,8 @@ export default function() {
 			// Parse and save file(s)
 			const { files } = await parseForm(req, session.user.id);
 			const file = files.media;
-			const url = Array.isArray(file) ? file.map((f) => f.filepath) : file.filepath;
+			if (file == undefined) throw 'No files uploaded';
+			const url = file.map((f) => f.filepath);
 
 			return res
 				.setHeader('Content-Type', 'application/json')

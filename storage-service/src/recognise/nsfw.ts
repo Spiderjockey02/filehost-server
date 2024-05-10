@@ -24,10 +24,13 @@ export default class NSFW {
 
 			// Handle images and GIF differently
 			if (['image/gif', 'image/apng'].includes(fileType)) {
+				/*
 				data = await model.classifyGif(imageBuffer, {
 					topk: 1,
 					fps: 1,
 				});
+				*/
+				return [];
 			} else {
 				const tf = await getTF();
 				decodedImage = tf.node.decodeImage(imageBuffer);
