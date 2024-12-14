@@ -30,7 +30,7 @@ model User {
   name          String?
   email         String?   @unique
   emailVerified DateTime?
-  password      String?
+  password      String
   accounts      Account[]
   createdAt     DateTime      @default(now()) @map("created_at")
   sessions      Session[]
