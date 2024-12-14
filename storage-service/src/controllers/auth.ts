@@ -1,19 +1,41 @@
-import { Router } from 'express';
+import { Request, Response } from 'express';
+import { Error, Logger } from '../utils';
 import bcrypt from 'bcrypt';
-import { createUser, fetchUserbyParam } from '../../../db/User';
-import { createNotification } from '../../../db/Notification';
+import { createUser, fetchUserbyParam } from '../accessors/User';
+import { createNotification } from '../accessors/Notification';
+import { getSession } from '../middleware';
 import emailValidate from 'deep-email-validator';
-const router = Router();
 
 type ErrorTypes = {
  type: 'username' | 'email' | 'password' | 'age' | 'misc'
  text: string
 }
 
+// Endpoint: POST /api/auth/login
+export const postLogin = () => {
+	return async (req: Request, res: Response) => {
+		const { password, email } = req.body;
 
-export default function() {
-	router.post('/', async (req, res) => {
-		// Only post request
+		try {
+			const user = await fetchUserbyParam({ email });
+			if (!user) return Error.MissingAccess(res);
+			const isMatch = await bcrypt.compare(password, user.password);
+			if (isMatch) {
+				res.json({ success: 'User successfully logged in', user });
+			} else {
+				Error.MissingAccess(res, 'Password is incorrect');
+			}
+		} catch (err) {
+			Logger.error(err);
+			Error.GenericError(res, 'Failed to fetch user information.');
+		}
+	};
+};
+
+// Endpoint: POST /api/auth/register
+export const postRegister = () => {
+	return async (req: Request, res: Response) => {
+	// Only post request
 		let error = {} as ErrorTypes;
 		const { username, email, password, password2 } = req.body.data;
 
@@ -58,7 +80,22 @@ export default function() {
 			console.log(err);
 			return res.json({ error: { type: 'misc', text: 'Failed to saved user to database' } });
 		}
-	});
+	};
+};
 
-	return router;
-}
+// Endpoint: GET /api/auth/session/:userId
+export const getSessionUserId = () => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			const userId = req.params.userId;
+
+			const user = await fetchUserbyParam({ id: userId });
+			res.json({ user });
+		} catch (err) {
+			Logger.error(err);
+			Error.GenericError(res, 'Failed to fetch session information.');
+		}
+	};
+};
