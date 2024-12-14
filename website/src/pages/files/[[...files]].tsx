@@ -180,15 +180,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	if (session == null) return;
 	// Validate path
 	try {
-		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/fetch/files/${path ? `/${path.join('/')}` : ''}`, {
+		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/files/${path ? `/${path.join('/')}` : ''}`, {
 			headers: { cookie: context.req.headers.cookie },
 		});
-
 
 		if (data.files.children !== undefined) {
 			return { props: { dir: data.files, path: path.join('/') } };
 		} else {
-			const { data: analysed } = await axios.get(`${config.backendURL}/api/anaylse-fetch?userId=${session.user.id}&path=${path.join('/')}`, {
+			const { data: analysed } = await axios.get(`${process.env.NEXTAUTH_URL}/api/anaylse-fetch?userId=${session.user.id}&path=${path.join('/')}`, {
 				headers: { cookie: context.req.headers.cookie },
 			});
 			return { props: { dir: data.files, path: path.join('/'), analysed } };
