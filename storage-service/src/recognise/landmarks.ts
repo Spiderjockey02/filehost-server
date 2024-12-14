@@ -1,5 +1,5 @@
 import EfficientNet from './EfficientModel';
-import { Logger } from '../utils/Logger';
+import { Logger } from '../utils';
 import mimeType from 'mime-types';
 
 // Types

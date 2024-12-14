@@ -26,7 +26,7 @@ export interface IdParam {
   id: string
 }
 
-const User = Prisma.validator<Prisma.UserArgs>()({
+const User = Prisma.validator<Prisma.UserDefaultArgs>()({
 	include: { recentFiles: true, group: true, Notifications: true },
 });
 

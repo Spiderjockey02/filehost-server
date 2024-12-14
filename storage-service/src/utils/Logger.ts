@@ -11,8 +11,8 @@ const log = createRollingFileLogger({
 });
 
 
-export class Logger {
-	public static log(content: string, type: loggerTypes = 'log') {
+export default class Logger {
+	public static log(content: unknown, type: loggerTypes = 'log') {
 		const timestamp = `[${moment().format('HH:mm:ss:SSS')}]:`;
 		switch (type) {
 			case 'log':
@@ -48,7 +48,7 @@ export class Logger {
 	public static warn(content: string) {
 		this.log(content, 'warn');
 	}
-	public static error(content: string) {
+	public static error(content: unknown) {
 		this.log(content, 'error');
 	}
 	public static debug(content: string) {

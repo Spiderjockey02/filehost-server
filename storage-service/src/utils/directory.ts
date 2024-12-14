@@ -10,13 +10,8 @@ async function safeReadDirSync(path: string) {
 	let dirData = [];
 	try {
 		dirData = await fs.readdir(path);
-	} catch (err: any) {
-		if (['EACCES', 'EPERM'].includes(err.code)) {
-			// User does not have permissions, ignore directory
-			return null;
-		} else {
-			return null;
-		}
+	} catch {
+		return null;
 	}
 	return dirData;
 }

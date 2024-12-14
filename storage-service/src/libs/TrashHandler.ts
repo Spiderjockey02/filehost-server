@@ -1,10 +1,8 @@
 import type { DeleteFile } from '@prisma/client';
-import { PATHS } from '../utils/CONSTANTS';
+import { PATHS, Logger } from '../utils';
 import fs from 'fs/promises';
-import { Logger } from '../utils/Logger';
-import { addDeleteFile, deleteDeleteFile, fetchAllDeleteFiles } from '../db/DeleteFile';
-import { getRecentFilebyPath, deleteRecentFileById } from '../db/Recent';
-
+import { addDeleteFile, deleteDeleteFile, fetchAllDeleteFiles } from '../accessors/DeleteFile';
+import { getRecentFilebyPath, deleteRecentFileById } from '../accessors/Recent';
 const HOUR_IN_TIME = 60 * 60 * 1000;
 
 export default class TrashHandler {

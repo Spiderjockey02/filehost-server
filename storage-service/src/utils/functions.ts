@@ -41,8 +41,7 @@ export function searchDirectory(directory: string, files: string[] = []) {
 
 
 export async function createThumbnail(userId: string, path: string) {
-	console.log(`${PATHS.CONTENT}/${userId}/${path}`);
-	// @ts-ignore
+	// @ts-ignore Broken types on this package
 	const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, { responseType: 'buffer', width: 200, height: 220, fit: 'cover' });
 	fs.writeFileSync(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`, thumbnail);
 }

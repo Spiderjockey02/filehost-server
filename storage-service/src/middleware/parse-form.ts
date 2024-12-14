@@ -2,7 +2,7 @@ import { join } from 'path';
 import formidable from 'formidable';
 import { mkdir } from 'fs/promises';
 import type { Request } from 'express';
-import { fetchUserbyParam, updateUser } from '../db/User';
+import { fetchUserbyParam, updateUser } from '../accessors/User';
 import { PATHS } from '../utils/CONSTANTS';
 import config from '../config';
 import type { User } from '../types';

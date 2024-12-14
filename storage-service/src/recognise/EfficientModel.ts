@@ -1,6 +1,7 @@
 import config from '../config';
-import Jimp from 'jimp';
-import type { Jimp as JimpClass } from '@jimp/core';
+import { Jimp } from 'jimp';
+import type { JimpClass } from '@jimp/types';
+import { intToRGBA } from '@jimp/utils';
 import type { GraphModel, Tensor, Rank } from '@tensorflow/tfjs-node';
 const NUM_OF_CHANNELS = 3;
 const getTF = async () => await import(`@tensorflow/tfjs-node${config.useGPU ? '-gpu' : ''}`);
@@ -89,7 +90,7 @@ class EfficientModel {
 		const values = new Float32Array(image.bitmap.width * image.bitmap.height * NUM_OF_CHANNELS);
 		let i = 0;
 		image.scan(0, 0, image.bitmap.width, image.bitmap.height, (x, y) => {
-			const pixel = Jimp.intToRGBA(image.getPixelColor(x, y));
+			const pixel = intToRGBA(image.getPixelColor(x, y));
 			values[i * NUM_OF_CHANNELS + 0] = pixel.r;
 			values[i * NUM_OF_CHANNELS + 1] = pixel.g;
 			values[i * NUM_OF_CHANNELS + 2] = pixel.b;

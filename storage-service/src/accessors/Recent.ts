@@ -1,6 +1,6 @@
 import client from './prisma';
 import type { IdParam } from '../types';
-import { Logger } from '../utils/Logger';
+import { Logger } from '../utils';
 
 interface usersRecentFilesArgs {
   userId: string

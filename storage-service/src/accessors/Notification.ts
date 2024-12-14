@@ -1,5 +1,5 @@
 import client from './prisma';
-import { Logger } from '../utils/Logger';
+import { Logger } from '../utils';
 
 interface CreateNotification {
   text: string

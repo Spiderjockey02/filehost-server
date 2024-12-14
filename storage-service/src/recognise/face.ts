@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs-node-gpu';
 import * as faceapi from '@vladmandic/face-api/dist/face-api.node-gpu.js';
 import fs from 'fs/promises';
-import { Logger } from '../utils/Logger';
+import { Logger } from '../utils';
 import mimeType from 'mime-types';
 
 export default class Face {

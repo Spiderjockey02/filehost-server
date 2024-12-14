@@ -1,7 +1,7 @@
 import EfficientNet from './EfficientModel';
 import rules from '../assets/models/objects.json';
 import IMAGENET_CLASSES from '../assets/models/classes';
-import { Logger } from '../utils/Logger';
+import { Logger } from '../utils';
 import mimeType from 'mime-types';
 
 interface newResults {
@@ -16,7 +16,7 @@ interface Ruledata {
 	see?: string
 	categories: Array<string>
 }
-
+type data = { [key: string]: number}
 enum classesEnum { Cat = 'cat'}
 
 export default class Objects {
@@ -35,7 +35,7 @@ export default class Objects {
 			softmax: true,
 		});
 
-		const labels = [] as Array<string>;
+		const labels = new Array<string>();
 		const res = results
 			.map<newResults>(result => ({
 				probability: result.probability,
@@ -56,7 +56,42 @@ export default class Objects {
 				if (r.rule.categories) labels.push(...r.rule.categories);
 			});
 
-		return res;
+		const catProbabilities = {} as data;
+		const catThresholds = {} as data;
+		const catCount = {} as data;
+
+		res.forEach(r => {
+			if (r.rule) {
+				let categories = [];
+				if (r.rule.label) {
+					categories.push(r.rule.label);
+				}
+				if (r.rule.categories) {
+					categories = categories.concat(r.rule.categories);
+				}
+				categories.forEach((category: string) => {
+					if (!(category in catProbabilities)) catProbabilities[category] = 0;
+					if (!(category in catThresholds)) catThresholds[category] = 0;
+					if (!(category in catCount)) catCount[category] = 0;
+
+					catProbabilities[category] += r.probability ** 2;
+					catThresholds[category] = Math.max(catThresholds[category], (r.rule?.threshold ?? 0));
+					catCount[category]++;
+				});
+			}
+		});
+
+		Object.entries(catProbabilities)
+			.filter(([category, probability]) => {
+				if (catCount[category] <= 1) return false;
+
+				return probability ** (1 / 2) >= catThresholds[category];
+			})
+			.forEach(([category]) => {
+				labels.push(category);
+			});
+
+		return labels;
 	}
 
 	findRule(className: classesEnum): (Ruledata | undefined) {

@@ -3,7 +3,7 @@ import fs from 'fs';
 import exifer from 'exifer';
 import gps from '@exifer/gps';
 import mimeType from 'mime-types';
-import { Logger } from '../utils/Logger';
+import { Logger } from '../utils';
 
 export default class Landmarks {
 	/**

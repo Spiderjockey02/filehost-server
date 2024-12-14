@@ -2,7 +2,7 @@ import * as nsfwjs from 'nsfwjs';
 import fs from 'fs/promises';
 import mimeType from 'mime-types';
 import type { Tensor3D } from '@tensorflow/tfjs-node';
-import { Logger } from '../utils/Logger';
+import { Logger } from '../utils';
 import config from '../config';
 const getTF = async () => await import(`@tensorflow/tfjs-node${config.useGPU ? '-gpu' : ''}`);
 
