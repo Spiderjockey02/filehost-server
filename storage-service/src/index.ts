@@ -1,45 +1,39 @@
 import express from 'express';
-import { Logger } from './utils/Logger';
+import { Logger, generateRoutes } from './utils';
 import config from './config';
 import compression from 'compression';
-import { fetchAllUsers, createUser, addUserToGroup } from './db/User';
-import { fetchAllGroups, createGroup } from './db/Group';
+import { fetchAllUsers, createUser } from './accessors/User';
+import { fetchAllGroups, createGroup } from './accessors/Group';
 import type { customRequest, customResponse } from './types';
-import { generateRoutes } from './utils/functions';
 import bcrypt from 'bcrypt';
 import { join } from 'path';
 import cors from 'cors';
 const app = express();
 
 (async () => {
+	// Create 2 groups for normal users and admin
+	const groups = await fetchAllGroups();
+	if (groups.length == 0) {
+		try {
+			await Promise.all([createGroup({ name: 'Free' }), createGroup({ name: 'Admin' })]);
+			Logger.log('Successfully created group(s): Free, Admin.');
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
 	// Create an admin account
 	const users = await fetchAllUsers();
-	let user;
 	if (users.length == 0) {
 		try {
 			const salt = await bcrypt.genSalt(10);
 			const hashPassword = await bcrypt.hash('admin', salt);
-			user = await createUser({ email: 'test@example.com', password: hashPassword, name: 'Admin' });
+			await createUser({ email: 'test@example.com', password: hashPassword, name: 'Admin' });
 			Logger.log('Successfully created account: Admin');
 			Logger.log(`Email: ${'test@example.com'}, password: ${'admin'}`);
 		} catch (err) {
 			console.log(err);
 			Logger.error('Error creating Admin account');
-		}
-	}
-
-	// Create 2 groups for normal users and admin
-	const groups = await fetchAllGroups();
-	if (groups.length == 0) {
-		try {
-			await createGroup({ name: 'Free' });
-			const group = await createGroup({ name: 'Admin' });
-			Logger.log('Successfully created group(s): Free, Admin.');
-
-			// Link user to group
-			if (user?.id !== undefined) await addUserToGroup({ groupId: group.id, userId: user?.id });
-		} catch (err) {
-			console.log(err);
 		}
 	}
 
@@ -49,7 +43,7 @@ const app = express();
 	// Add endpoints to app
 	app
 		.use(cors({
-			origin: 'http://192.168.0.14:3000',
+			origin: config.frontendURL,
 		}))
 		.use(compression())
 		.use((req, res, next) => {
