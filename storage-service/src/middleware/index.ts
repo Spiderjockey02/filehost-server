@@ -1,13 +1,10 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ipv4Regex } from '../utils/CONSTANTS';
 import config from '../config';
-type LabelEnum = { [key: string]: JWT }
-const sessionStore: LabelEnum = {};
 import avatarForm from './avatar-form';
 import parseForm from './parse-form';
 import { decode } from 'next-auth/jwt';
 import type { JWT } from 'next-auth/jwt';
-export { avatarForm, parseForm };
 
 export function getIP(req: Request) {
 	if (req.headers) {
@@ -52,23 +49,22 @@ export async function getSession(req: Request): Promise<JWT | null> {
 
 	// Get session token (Could be secure or not so check both)
 	let sessionToken = parsedcookies.find(i => i[0] == '__Secure-next-auth.session-token')?.[1];
-	if (sessionToken == null) {
-		sessionToken = parsedcookies.find(i => i[0] == 'next-auth.session-token')?.[1];
-	}
+	if (sessionToken == null) sessionToken = parsedcookies.find(i => i[0] == 'next-auth.session-token')?.[1];
 	if (!sessionToken) return null;
 
-	// Check session from cache
-	let session;
-	if (sessionStore[sessionToken]) {
-		session = sessionStore[req.headers.cookie];
-		// Make sure it hasn't expired
-		if (new Date(session?.exp ?? 0).getTime() <= new Date().getTime()) return session;
-	}
+	try {
+		const session = await decode({ token: sessionToken, secret: config.NEXTAUTH_SECRET });
+		// Makes sure the token is valid
+		if (session == null) return null;
 
-	session = await decode({ token: sessionToken, secret: config.NEXTAUTH_SECRET });
-	if (session == null) return null;
-	sessionStore[sessionToken] = session;
-	return session;
+		// Make sure the token hasn't expired
+		if (session.exp <= (new Date().getTime() / 1000)) return null;
+
+		return session;
+	} catch (err) {
+		console.log(err);
+		return null;
+	}
 }
 
 export async function checkAdmin(req: Request, res: Response, next: NextFunction) {
@@ -79,3 +75,5 @@ export async function checkAdmin(req: Request, res: Response, next: NextFunction
 	if(session.user?.group?.name == 'Admin') return next();
 	res.status(401).json({ error: 'You are not authorised to access this endpoint' });
 }
+
+export { avatarForm, parseForm };
