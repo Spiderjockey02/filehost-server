@@ -10,22 +10,20 @@ const trash = new TrashHandler();
 // Endpoint GET /api/files
 export const getFiles = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
 
-		// Fetch from cache
-		const path = req.params.path;
-		let files = client.treeCache.get(`${session.user.id}_${path ? `/${path}` : ''}`) ?? null;
-		if (files == undefined) {
-			files = await directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`);
+			// Fetch from cache
+			const path = req.params.path;
+			const files = client.treeCache.get(`${session.user.id}_${path ? `/${path}` : ''}`)
+				?? await directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`);
+
+			res.json({ files });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch file.');
 		}
-
-		// Update size
-		if (path.length == 0 && (files?.size != session.user.totalStorageSize)) {
-			await client.userManager.update({ id: session.user.id, totalStorageSize: Number(files?.size ?? 0) });
-		}
-
-		res.json({ files });
 	};
 };
 
@@ -96,7 +94,7 @@ export const copyFile = (client: Client) => {
 			res.json({ success: 'Successfully copied file' });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to move item.');
+			Error.GenericError(res, 'Failed to copy item.');
 		}
 	};
 };
@@ -112,7 +110,7 @@ export const downloadFile = (client: Client) => {
 			.directory(`${PATHS.CONTENT}/${session.user.id}${path}`, false)
 			.on('error', (err) => {
 				client.logger.error(err);
-				Error.GenericError(res, 'Error downloading item');
+				Error.GenericError(res, 'Failed to download file.');
 			})
 			.pipe(res);
 		archive.finalize();

@@ -2,12 +2,11 @@ import { join } from 'path';
 import formidable from 'formidable';
 import { mkdir } from 'fs/promises';
 import type { Request } from 'express';
-import { fetchUserbyParam, updateUser } from '../accessors/User';
-import { PATHS } from '../utils/CONSTANTS';
+import { PATHS, Client } from '../utils';
 import config from '../config';
-import type { User } from '../types';
+import type { UserWithGroup } from '../types/database/User';
 
-const parseForm = async (req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
+const parseForm = async (client: Client, req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
 	// eslint-disable-next-line no-async-promise-executor
 	return await new Promise(async (resolve, reject) => {
 
@@ -15,14 +14,13 @@ const parseForm = async (req: Request, userId: string): Promise<{ fields: formid
 			decodeURI((req.headers['referer'] as string).slice(`${config.frontendURL}/files`.length)) : '/';
 
 		const uploadDir = join(PATHS.CONTENT, userId, path);
-
-		let user: User | null;
+		let user: UserWithGroup | null;
 		try {
-			user = await fetchUserbyParam({ id: userId });
+			user = await client.userManager.fetchbyParam({ id: userId });
 			if (!user) throw 'Missing user';
 
 			// Make sure they haven't already uploaded max storage
-			if (Number(0) >= Number(user.group?.maxStorageSize ?? 0)) throw 'Max storage reached';
+			if (user.totalStorageSize >= Number(user.group?.maxStorageSize ?? 0)) throw 'Max storage reached';
 		} catch (e: any) {
 			console.log('error', e);
 			if (e?.code === 'ENOENT') {
@@ -33,9 +31,8 @@ const parseForm = async (req: Request, userId: string): Promise<{ fields: formid
 		}
 
 		const form = formidable({
-			maxFiles: 10,
-			multiples: true,
-			maxFileSize: 1024 * 1024 * 1024 * 10,
+			allowEmptyFiles: false,
+			maxFileSize: config.maximumFileSize,
 			uploadDir,
 			filename: (_name, _ext, part) => {
 				return `${part.originalFilename}`;
@@ -44,11 +41,15 @@ const parseForm = async (req: Request, userId: string): Promise<{ fields: formid
 
 		form.parse(req, async function(err, fields, files) {
 			// Update user's total storage size
-			const size = (Array.isArray(files)) ? files.reduce((a, b) => a.size + b, 0) : files.size;
-			await updateUser({ id: userId, totalStorageSize: `${Number((user?.totalStorageSize ?? 0) + size)}` });
+			const size: number = files.media?.reduce((a, b) => a + b.size, 0) ?? 0;
+			await client.userManager.update({ id: userId, totalStorageSize: (user?.totalStorageSize ?? 0n) + BigInt(size) });
 
-			if (err) reject(err);
-			else resolve({ fields, files });
+			if (err) {
+				reject(err);
+			} else {
+				client.treeCache.delete(`${user?.id}_${path ? `/${path}` : ''}`);
+				resolve({ fields, files });
+			}
 		});
 	});
 };
