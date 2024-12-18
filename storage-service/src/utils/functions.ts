@@ -45,3 +45,9 @@ export async function createThumbnail(userId: string, path: string) {
 	const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, { responseType: 'buffer', width: 200, height: 220, fit: 'cover' });
 	fs.writeFileSync(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`, thumbnail);
 }
+
+export function sanitiseObject(obj: any) {
+	return JSON.parse(JSON.stringify(obj, (_, value) =>
+		typeof value === 'bigint' ? Number(value) : value,
+	));
+}

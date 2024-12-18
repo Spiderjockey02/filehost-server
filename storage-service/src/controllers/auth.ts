@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Client, Error } from '../utils';
+import { Client, Error, sanitiseObject } from '../utils';
 import bcrypt from 'bcrypt';
 import { createNotification } from '../accessors/Notification';
 import { getSession } from '../middleware';
@@ -20,7 +20,7 @@ export const postLogin = (client: Client) => {
 			if (!user) return Error.MissingAccess(res);
 			const isMatch = await bcrypt.compare(password, user.password);
 			if (isMatch) {
-				res.json({ success: 'User successfully logged in', user });
+				res.json({ success: 'User successfully logged in', user: sanitiseObject(user) });
 			} else {
 				Error.MissingAccess(res, 'Password is incorrect');
 			}
@@ -91,7 +91,7 @@ export const getSessionUserId = (client: Client) => {
 			const userId = req.params.userId;
 
 			const user = await client.userManager.fetchbyParam({ id: userId });
-			res.json({ user });
+			res.json({ user: sanitiseObject(user) });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch session information.');

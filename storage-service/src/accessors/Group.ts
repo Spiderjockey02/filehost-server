@@ -33,7 +33,7 @@ export async function getGroupByName(data: GroupNameProps) {
 
 interface CreateGroupProps {
 	name: string
-	maxStorageSize?: string
+	maxStorageSize?: number
 }
 
 export async function createGroup(data: CreateGroupProps) {

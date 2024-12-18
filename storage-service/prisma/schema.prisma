@@ -40,7 +40,7 @@ model User {
   Notifications Notification[]
   groupId       String?
   group         Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  totalStorageSize  Int @default(0)
+  totalStorageSize  BigInt  @default(0)
 }
 
 model Session {
@@ -64,7 +64,7 @@ model Group {
   id              String    @id     @default(cuid())
   name            String    @unique
   users           User[]
-  maxStorageSize  String @default("5368709120")
+  maxStorageSize  BigInt       @default(5368709120)
 }
 
 model DeleteFile {
