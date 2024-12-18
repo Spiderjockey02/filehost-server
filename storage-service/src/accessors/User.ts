@@ -89,6 +89,7 @@ export default class UserManager {
 					group: true,
 				},
 			});
+			if (user != null) this.cache.set(user?.id, user);
 		}
 		return user;
 	}
