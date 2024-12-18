@@ -36,7 +36,6 @@ model User {
   sessions      Session[]
   recentFiles   Recent[]
   deleteFiles   DeleteFile[]
-  AnalysedFiles Analysed[]
   Notifications Notification[]
   groupId       String?
   group         Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -73,21 +72,6 @@ model DeleteFile {
   user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   location      String
   DeleteFileAt  DateTime
-}
-
-model Analysed {
-  id          String @id @default(cuid())
-  createdAt   DateTime  @default(now())
-  location    String
-  userId      String
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  landmark    Json?
-  nsfw        Json?
-  face        Json?
-  objects     Json?
-  geo         Json?
-
-  @@unique([userId, location])
 }
 
 model Notification {

@@ -57,7 +57,6 @@ export default class UserManager {
 				group: data.group,
 				recentFiles: data.recent,
 				deleteFiles: data.delete,
-				AnalysedFiles: data.analyse,
 			},
 		});
 	}
