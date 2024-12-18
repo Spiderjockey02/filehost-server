@@ -1,107 +1,95 @@
 import client from './prisma';
-import { Logger } from '../utils';
+import { GetUsers, fetchUserbyParam, createUser, updateUser, UserToGroupProps } from '../types/database/User';
+import { LRUCache } from 'lru-cache';
+import { UserWithGroup } from 'src/types/database/User';
 
-interface GetUsers {
-	group?: boolean
-	recent?: boolean
-	delete?: boolean
-	analyse?: boolean
-}
+export default class UserManager {
+	cache: LRUCache<string, UserWithGroup>;
 
-export async function fetchAllUsers(data: GetUsers = {}) {
-	Logger.debug('[DATABASE] Fetched all users.');
-	return client.user.findMany({
-		include: {
-			group: data.group,
-			recentFiles: data.recent,
-			deleteFiles: data.delete,
-			AnalysedFiles: data.analyse,
-		},
-	});
-}
+	constructor() {
+		this.cache = new LRUCache({
+			max: 100,
+			ttl: 1000 * 60 * 60,
+		});
+	}
 
-type fetchUserbyParam = {
-	email?: string
-	id?: string
-}
-
-// Find a user by email (for login)
-export function	fetchUserbyParam(data: fetchUserbyParam) {
-	Logger.debug(`[DATABASE] Fetched user by: ${data.id ?? data.email}`);
-	return client.user.findUnique({
-		where: {
-			email: data.email,
-			id: data.id,
-		},
-		include: {
-			recentFiles: true,
-			group: true,
-			Notifications: true,
-		},
-	});
-}
-
-
-interface createUser {
-	email: string
-	name: string
-	password: string
-}
-// Create a user
-export async function createUser(data: createUser) {
-	Logger.debug(`[DATABASE] Created new user: ${data.name}.`);
-	return client.user.create({
-		data: {
-			email: data.email,
-			name: data.name,
-			password: data.password,
-			group: {
-				connect: {
-					name: 'Free',
+	async create(data: createUser) {
+		const user = await client.user.create({
+			data: {
+				email: data.email,
+				name: data.name,
+				password: data.password,
+				group: {
+					connect: {
+						name: 'Free',
+					},
 				},
 			},
-		},
-	});
-}
+			include: {
+				group: true,
+			},
+		});
+		this.cache.set(user.id, user);
+		return user;
+	}
 
-interface updateUser {
-	id: string
-	password?: string
-	email?: string
-	totalStorageSize?: string
-}
+	async update(data: updateUser) {
+		const user = await client.user.update({
+			where: {
+				id: data.id,
+			},
+			data: {
+				password: data.password,
+				email: data.email,
+				totalStorageSize: data.totalStorageSize,
+			},
+			include: {
+				group: true,
+			},
+		});
+		this.cache.set(user.id, user);
+		return user;
+	}
 
-export async function updateUser(data: updateUser) {
-	Logger.debug(`[DATABASE] Updated new user: ${data.id}.`);
-	return client.user.update({
-		where: {
-			id: data.id,
-		},
-		data: {
-			password: data.password,
-			email: data.email,
-			totalStorageSize: data.totalStorageSize,
-		},
-	});
-}
+	async fetchAll(data: GetUsers = {}) {
+		return client.user.findMany({
+			include: {
+				group: data.group,
+				recentFiles: data.recent,
+				deleteFiles: data.delete,
+				AnalysedFiles: data.analyse,
+			},
+		});
+	}
 
-interface UserToGroupProps {
-	userId: string
-	groupId: string
-}
-
-export async function addUserToGroup(data: UserToGroupProps) {
-	Logger.debug(`[DATABASE] Added user ${data.userId} to group: ${data.groupId}.`);
-	return client.user.update({
-		where: {
-			id: data.userId,
-		},
-		data: {
-			group: {
-				connect: {
-					id: data.groupId,
+	async addUserToGroup(data: UserToGroupProps) {
+		return client.user.update({
+			where: {
+				id: data.userId,
+			},
+			data: {
+				group: {
+					connect: {
+						id: data.groupId,
+					},
 				},
 			},
-		},
-	});
+		});
+	}
+
+	async fetchbyParam(data: fetchUserbyParam): Promise<UserWithGroup | null> {
+		let user = this.cache.find(u => u.id === data.id || u.email === data.email) ?? null;
+		if (user == null) {
+			user = await client.user.findUnique({
+				where: {
+					email: data.email,
+					id: data.id,
+				},
+				include: {
+					group: true,
+				},
+			});
+		}
+		return user;
+	}
 }
