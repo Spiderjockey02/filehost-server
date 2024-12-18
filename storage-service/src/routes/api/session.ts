@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { postChangeAvatar, postChangeEmail, postChangePassword } from '../../controllers/session';
+import { Client } from '../../utils';
 const router = Router();
 
-export default function() {
-	router.post('/change-password', postChangePassword());
+export default function(client: Client) {
+	router.post('/change-password', postChangePassword(client));
 
-	router.post('/change-avatar', postChangeAvatar());
+	router.post('/change-avatar', postChangeAvatar(client));
 
-	router.post('/change-email', postChangeEmail());
+	router.post('/change-email', postChangeEmail(client));
 
 	return router;
 }

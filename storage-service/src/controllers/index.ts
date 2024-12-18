@@ -4,7 +4,7 @@ import { lookup } from 'mime-types';
 import { spawn } from 'child_process';
 import { createThumbnail } from '../utils/functions';
 import { updateUserRecentFiles } from '../accessors/Recent';
-import { PATHS, Error } from '../utils';
+import { PATHS, Error, Client } from '../utils';
 import { getSession } from '../middleware';
 
 // Endpoint GET /avatar/:userId?
@@ -20,12 +20,13 @@ export const getAvatar = () => {
 		}
 
 		// Check if the user already has an avatar, if not display default one
-		res.sendFile(`${PATHS.AVATAR}/${fs.existsSync(`${PATHS.AVATAR}/${userId}.webp`) ? userId : 'default-avatar'}.webp`);
+		const avatarPath = fs.existsSync(`${PATHS.AVATAR}/${userId}.webp`) ? userId : 'default-avatar';
+		res.sendFile(`${PATHS.AVATAR}/${avatarPath}.webp`);
 	};
 };
 
 // Endpoint GET /thumbnail/:userid/:path(*)
-export const getThumbnail = () => {
+export const getThumbnail = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
@@ -45,7 +46,7 @@ export const getThumbnail = () => {
 						if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${decodeURI(fileName)}.jpg`)) await createThumbnail(userId, path);
 						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${decodeURI(fileName)}.jpg`);
 					} catch (err) {
-						console.log(err);
+						client.logger.error(err);
 						return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
 					}
 				}
@@ -63,7 +64,7 @@ export const getThumbnail = () => {
 								child.on('error', reject);
 							});
 						} catch (err) {
-							console.log(err);
+							client.logger.error(err);
 							return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
 						}
 					}
@@ -77,7 +78,7 @@ export const getThumbnail = () => {
 };
 
 // Endpoint GET /content/:userid/:path(*)
-export const getContent = () => {
+export const getContent = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
@@ -88,8 +89,8 @@ export const getContent = () => {
 		// update the user's recent access files
 		try {
 			await updateUserRecentFiles({ userId, path });
-		} catch (err: any) {
-			console.log(err);
+		} catch (err) {
+			client.logger.error(err);
 		}
 
 		// Check what type of file it is, to send the relevent data

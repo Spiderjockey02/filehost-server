@@ -1,7 +1,6 @@
 import * as tf from '@tensorflow/tfjs-node-gpu';
 import * as faceapi from '@vladmandic/face-api/dist/face-api.node-gpu.js';
 import fs from 'fs/promises';
-import { Logger } from '../utils';
 import mimeType from 'mime-types';
 
 export default class Face {
@@ -10,8 +9,6 @@ export default class Face {
 	 * @param {string} path The path to file for analyse
 	*/
 	async run(path: string) {
-		Logger.debug(`Checking for faces in file: ${path}`);
-
 		const fileType = mimeType.lookup(path);
 		if (fileType == false || fileType.split('/')[0] !== 'image' || ['image/gif', 'image/apng'].includes(fileType)) return [];
 

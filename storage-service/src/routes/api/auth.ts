@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { postLogin, postRegister, getSessionUserId } from '../../controllers/auth';
+import { Client } from '../../utils';
 const router = Router();
 
-export default function() {
-	router.post('/login', postLogin());
+export default function(client: Client) {
+	router.post('/login', postLogin(client));
 
-	router.post('/register', postRegister());
+	router.post('/register', postRegister(client));
 
-	router.get('/session/:userId', getSessionUserId());
+	router.get('/session/:userId', getSessionUserId(client));
 
 	return router;
 }

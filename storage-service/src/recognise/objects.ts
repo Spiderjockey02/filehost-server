@@ -1,7 +1,6 @@
 import EfficientNet from './EfficientModel';
 import rules from '../assets/models/objects.json';
 import IMAGENET_CLASSES from '../assets/models/classes';
-import { Logger } from '../utils';
 import mimeType from 'mime-types';
 
 interface newResults {
@@ -21,8 +20,6 @@ enum classesEnum { Cat = 'cat'}
 
 export default class Objects {
 	async run(path: string) {
-		Logger.debug(`Checking for objects in in file: ${path}`);
-
 		const fileType = mimeType.lookup(path);
 		if (fileType == false || fileType.split('/')[0] !== 'image' || fileType == 'image/webp') return [];
 

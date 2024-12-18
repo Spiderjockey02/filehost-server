@@ -1,5 +1,4 @@
 import client from './prisma';
-import { Logger } from '../utils';
 
 interface CreateNotification {
   text: string
@@ -7,7 +6,6 @@ interface CreateNotification {
 }
 
 export async function createNotification(data: CreateNotification) {
-	Logger.debug(`[DATABASE] Created new notification for ${data.userId}.`);
 	return client.notification.create({
 		data: {
 			text: data.text,

@@ -2,7 +2,6 @@ import * as nsfwjs from 'nsfwjs';
 import fs from 'fs/promises';
 import mimeType from 'mime-types';
 import type { Tensor3D } from '@tensorflow/tfjs-node';
-import { Logger } from '../utils';
 import config from '../config';
 const getTF = async () => await import(`@tensorflow/tfjs-node${config.useGPU ? '-gpu' : ''}`);
 
@@ -12,7 +11,6 @@ export default class NSFW {
 	 * @param {string} path The path to file for analyse
 	*/
 	async run(path: string) {
-		Logger.debug(`Checking NSFW content in file: ${path}`);
 		// Can only detect NSFW content from images
 		const fileType = mimeType.lookup(path);
 		if (fileType == false || fileType.split('/')[0] !== 'image') return [];
@@ -37,10 +35,8 @@ export default class NSFW {
 				data = await model.classify(decodedImage as Tensor3D);
 				decodedImage.dispose();
 			}
-			Logger.debug(`Response from checking NSFW content: ${JSON.stringify(data)}`);
 			return data.flat();
 		} catch (err) {
-			Logger.error(JSON.stringify(err));
 			return [];
 		}
 	}

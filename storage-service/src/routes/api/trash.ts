@@ -1,6 +1,6 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
-import { getTrash } from 'src/controllers/trash';
+import { getTrash } from '../../controllers/trash';
 const router = Router();
 
 export default function() {

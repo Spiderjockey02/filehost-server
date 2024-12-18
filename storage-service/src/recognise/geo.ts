@@ -3,7 +3,6 @@ import fs from 'fs';
 import exifer from 'exifer';
 import gps from '@exifer/gps';
 import mimeType from 'mime-types';
-import { Logger } from '../utils';
 
 export default class Landmarks {
 	/**
@@ -11,7 +10,6 @@ export default class Landmarks {
 	 * @param {string} path The path to file for analyse
 	*/
 	async run(path: string) {
-		Logger.debug(`Getting Geo metadata from file: ${path}`);
 		try {
 			// Only allow images to be analysed
 			const fileType = mimeType.lookup(path);
@@ -28,7 +26,6 @@ export default class Landmarks {
 				return [];
 			}
 		} catch (e: unknown) {
-			Logger.error(`GEO: ${JSON.stringify(e)}`);
 			return [];
 		}
 	}

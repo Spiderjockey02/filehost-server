@@ -1,5 +1,4 @@
 import client from './prisma';
-import { Logger } from '../utils';
 
 interface CreateAnalyse {
   location: string
@@ -12,7 +11,6 @@ interface CreateAnalyse {
 }
 
 export async function createAnalyse(data: CreateAnalyse) {
-	Logger.debug(`[DATABASE] Created analyse for ${data.location}.`);
 	return client.analysed.create({
 		data: {
 			location: data.location,
@@ -32,7 +30,6 @@ interface FetchAnalysed {
 }
 
 export async function fetchAnalysed(data: FetchAnalysed) {
-	Logger.debug(`[DATABASE] Fetched analyse for ${data.location}.`);
 	return client.analysed.findUnique({
 		where: {
 			userId_location: {

@@ -1,5 +1,4 @@
 import EfficientNet from './EfficientModel';
-import { Logger } from '../utils';
 import mimeType from 'mime-types';
 
 // Types
@@ -15,8 +14,6 @@ export default class Landmarks {
 	 * @param {string} path The path to file for analyse
 	*/
 	async run(path: string) {
-		Logger.debug(`Checking for landmarks in file: ${path}.`);
-
 		const fileType = mimeType.lookup(path);
 		if (fileType == false || fileType.split('/')[0] !== 'image' || fileType == 'image/webp') return [];
 
@@ -33,7 +30,6 @@ export default class Landmarks {
 				console.error(e);
 			}
 		}
-		Logger.debug(`Found: ${labels.flat().map(i => `${i.className} (${i.probability.toFixed(3)})`)}.`);
 		return labels;
 	}
 

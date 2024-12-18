@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { Error, Logger } from '../utils';
+import { Client, Error } from '../utils';
 import bcrypt from 'bcrypt';
-import { createUser, fetchUserbyParam } from '../accessors/User';
 import { createNotification } from '../accessors/Notification';
 import { getSession } from '../middleware';
 import emailValidate from 'deep-email-validator';
@@ -12,12 +11,12 @@ type ErrorTypes = {
 }
 
 // Endpoint: POST /api/auth/login
-export const postLogin = () => {
+export const postLogin = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const { password, email } = req.body;
 
 		try {
-			const user = await fetchUserbyParam({ email });
+			const user = await client.userManager.fetchbyParam({ email });
 			if (!user) return Error.MissingAccess(res);
 			const isMatch = await bcrypt.compare(password, user.password);
 			if (isMatch) {
@@ -26,14 +25,14 @@ export const postLogin = () => {
 				Error.MissingAccess(res, 'Password is incorrect');
 			}
 		} catch (err) {
-			Logger.error(err);
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user information.');
 		}
 	};
 };
 
 // Endpoint: POST /api/auth/register
-export const postRegister = () => {
+export const postRegister = (client: Client) => {
 	return async (req: Request, res: Response) => {
 	// Only post request
 		let error = {} as ErrorTypes;
@@ -52,7 +51,7 @@ export const postRegister = () => {
 		if (password.length <= 8) error = { type: 'password', text: 'Password must be atleast 8 characters long!' };
 
 		// Check if email already is being used
-		const isEmailAlreadyBeingUsed = await fetchUserbyParam({ email });
+		const isEmailAlreadyBeingUsed = await client.userManager.fetchbyParam({ email });
 		if (isEmailAlreadyBeingUsed !== null) error = { type: 'email', text: 'Email already being used.' };
 
 		const isEmailValid = await emailValidate(email);
@@ -67,34 +66,34 @@ export const postRegister = () => {
 			const salt = await bcrypt.genSalt(10);
 			Hashpassword = await bcrypt.hash(password, salt);
 		} catch (err) {
-			console.log(err);
+			client.logger.error(err);
 			return res.json({ error: { type: 'misc', text: 'Failed to encrypt password' } });
 		}
 
 		// Save the new user to database + make sure to create folder
 		try {
-			const user = await createUser({ email, name: username, password: Hashpassword });
+			const user = await client.userManager.create({ email, name: username, password: Hashpassword });
 			await createNotification({ userId: user.id, text: 'Please remember to verify your email.' });
 			res.json({ success: 'User successfully created' });
 		} catch (err) {
-			console.log(err);
+			client.logger.error(err);
 			return res.json({ error: { type: 'misc', text: 'Failed to saved user to database' } });
 		}
 	};
 };
 
 // Endpoint: GET /api/auth/session/:userId
-export const getSessionUserId = () => {
+export const getSessionUserId = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
 			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
 			const userId = req.params.userId;
 
-			const user = await fetchUserbyParam({ id: userId });
+			const user = await client.userManager.fetchbyParam({ id: userId });
 			res.json({ user });
 		} catch (err) {
-			Logger.error(err);
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch session information.');
 		}
 	};

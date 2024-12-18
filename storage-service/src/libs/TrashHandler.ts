@@ -1,5 +1,5 @@
 import type { DeleteFile } from '@prisma/client';
-import { PATHS, Logger } from '../utils';
+import { PATHS } from '../utils';
 import fs from 'fs/promises';
 import { addDeleteFile, deleteDeleteFile, fetchAllDeleteFiles } from '../accessors/DeleteFile';
 import { getRecentFilebyPath, deleteRecentFileById } from '../accessors/Recent';
@@ -10,14 +10,12 @@ export default class TrashHandler {
 	constructor() {
 		this.files = [];
 		this.init();
-		Logger.ready('Trash handler loaded');
 	}
 
 	async init() {
 		this.files = await fetchAllDeleteFiles();
 		setInterval(() => {
 			for (const file of this.files) {
-				Logger.debug('Checking if files need deleting..');
 				if (new Date(file.DeleteFileAt).getTime() <= new Date().getTime()) this.deleteFile(file);
 			}
 		}, HOUR_IN_TIME);
@@ -31,14 +29,13 @@ export default class TrashHandler {
 	 * @return Promise<void>
 	*/
 	async addFileToPending(userId: string, originalPath: string, name: string) {
-		Logger.debug(`Adding file to pending list: ${name}.`);
 		try {
 			await fs.mkdir(`${PATHS.TRASH}/${userId}${originalPath}`, { recursive: true });
 			await fs.rename(`${PATHS.CONTENT}/${userId}${originalPath}${name}`, `${PATHS.TRASH}/${userId}${originalPath}${name}`);
 			const file = await addDeleteFile({ userId, location: `${originalPath}${name}` });
 			this.files.push(file);
 		} catch (err) {
-			Logger.error(JSON.stringify(err));
+			console.log(err);
 		}
 	}
 
@@ -48,7 +45,6 @@ export default class TrashHandler {
 	 * @return Promise<void>
 	*/
 	private async deleteFile(file: DeleteFile) {
-		Logger.debug(`Deleting file: ${file.location}.`);
 		try {
 			const recentFile = await getRecentFilebyPath({ userId: file.userId, path: `/${file.location}` });
 			if (recentFile) await deleteRecentFileById({ id: recentFile.id });
@@ -59,7 +55,7 @@ export default class TrashHandler {
 			const index = this.files.indexOf(file);
 			if (index > -1) this.files.splice(index, 1);
 		} catch (err) {
-			Logger.error(JSON.stringify(err));
+			console.log(err);
 		}
 	}
 }

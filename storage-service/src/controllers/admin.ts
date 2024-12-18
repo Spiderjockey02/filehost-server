@@ -2,9 +2,8 @@ import { Request, Response } from 'express';
 import { exec } from 'node:child_process';
 import os from 'os';
 import util from 'node:util';
-import { fetchAllUsers } from '../accessors/User';
 import { fetchAllGroups } from '../accessors/Group';
-import { Logger, directoryTree, getNumberOfFiles, Error } from '../utils';
+import { directoryTree, getNumberOfFiles, Error, Client } from '../utils';
 const cmd = util.promisify(exec);
 
 type data = { [key: string]: boolean}
@@ -14,7 +13,7 @@ interface diskStorage {
 }
 
 // Endpoint: GET /api/admin/stats
-export const getStats = () => {
+export const getStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
 			const platform = process.platform;
@@ -52,7 +51,7 @@ export const getStats = () => {
 					avg: os.loadavg(),
 				},
 				users: {
-					total: (await fetchAllUsers()).length,
+					total: (await client.userManager.fetchAll()).length,
 					groups: (await fetchAllGroups()).map(g => ({
 						name: g.name,
 						userCount: g._count.users,
@@ -60,14 +59,14 @@ export const getStats = () => {
 				},
 			});
 		} catch (err) {
-			Logger.error(err);
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch system statistics.');
 		}
 	};
 };
 
 // Endpoint: GET /api/admin/users
-export const getUsers = () => {
+export const getUsers = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const filters = (req.query.filters as string).split(',');
@@ -81,10 +80,10 @@ export const getUsers = () => {
 			}
 
 			// Fetch the database
-			const users = await fetchAllUsers(parsedFilters);
+			const users = await client.userManager.fetchAll(parsedFilters);
 			res.json({ users });
 		} catch (err) {
-			Logger.error(err);
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of users.');
 		}
 	};
