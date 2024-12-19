@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import archiver from 'archiver';
 import { TrashHandler } from '../libs';
 import type { fileItem } from '../types';
+import path from 'node:path';
 const trash = new TrashHandler();
 
 // Endpoint GET /api/files
@@ -15,9 +16,9 @@ export const getFiles = (client: Client) => {
 			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
 
 			// Fetch from cache
-			const path = req.params.path;
-			const files = client.treeCache.get(`${session.user.id}_${path ? `/${path}` : ''}`)
-				?? await directoryTree(`${PATHS.CONTENT}/${session.user.id}${path ? `/${path}` : ''}`);
+			const filePath = req.params.path;
+			const files = client.treeCache.get(`${session.user.id}_${filePath ? `/${filePath}` : ''}`)
+				?? await directoryTree(path.join(PATHS.CONTENT, session.user.id, `${filePath ? `/${filePath}` : ''}`));
 
 			res.json({ files });
 		} catch (err) {
@@ -53,12 +54,12 @@ export const deleteFile = (client: Client) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
 
-		const { path } = req.body;
+		const { path: filePath } = req.body;
 		const userPath = (req.headers.referer as string).split('/files')[1];
 		const originalPath = userPath.startsWith('/') ? userPath : '/';
 
 		try {
-			await trash.addFileToPending(session.user.id, originalPath, path);
+			await trash.addFileToPending(session.user.id, originalPath, filePath);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			client.logger.error(err);
@@ -103,11 +104,11 @@ export const downloadFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
-		const { path } = req.body;
+		const { path: filePath } = req.body;
 		const archive = archiver('zip', { zlib: { level: 9 } });
 
 		archive
-			.directory(`${PATHS.CONTENT}/${session.user.id}${path}`, false)
+			.directory(`${PATHS.CONTENT}/${session.user.id}${filePath}`, false)
 			.on('error', (err) => {
 				client.logger.error(err);
 				Error.GenericError(res, 'Failed to download file.');
@@ -136,6 +137,40 @@ export const renameFile = (client: Client) => {
 	};
 };
 
+export const createFolder = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const session = await getSession(req);
+		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+
+		try {
+			const { folderName } = req.body;
+			if (typeof folderName !== 'string' || !folderName.trim()) return Error.IncorrectBodyValue(res, 'folderName is not a string');
+
+			// Validate and sanitise the folder name
+			const validFolderName = /^[a-zA-Z0-9 _-]+$/;
+			const santisedFolderName = path.normalize(folderName).replace(/^[/\\]+/, '');
+			if (!validFolderName.test(santisedFolderName)) return Error.IncorrectBodyValue(res, 'folderName contains invalid characters');
+
+			// Decode & santise the referer path to ensure the folder is added to the correct path
+			const userPath = decodeURI(req.headers['referer']?.split('/files')[1] || '');
+			const santisedPath = path.normalize(`${userPath}`).replace(/^[/\\]+/, '');
+			if (santisedPath.length == 0) return Error.GenericError(res, 'Invalid path detected.');
+
+			// Ensure they have not escaped their directory (directory traversal attacks)
+			const userBasePath = path.resolve(PATHS.CONTENT, session.user.id);
+			const targetPath = path.resolve(userBasePath, santisedPath, santisedFolderName);
+			if (!targetPath.startsWith(userBasePath)) return Error.GenericError(res, 'Invalid path detected.');
+
+			// Create folder
+			await fs.mkdir(targetPath);
+			res.json({ success: 'Successfully created folder.' });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to create folder.');
+		}
+	};
+};
+
 interface srchQuery {
 	path: string
 	name: string
@@ -145,7 +180,7 @@ function search(files: Array<fileItem> | undefined, text: string, arr: Array<src
 	if (files == undefined) return arr;
 	for (const i of files) {
 		if (i.type == 'file') {
-			if (i.name.startsWith(text)) arr.push({ path: i.path.replace(`${PATHS.CONTENT}`, 's'), name: i.name });
+			if (i.name.startsWith(text)) arr.push({ path: '', name: i.name });
 		} else {
 			arr.push(...search(i.children, text, []));
 		}

@@ -1,6 +1,6 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
-import { copyFile, deleteFile, downloadFile, getFiles, moveFile, postFileUpload, renameFile, searchFile } from '../../controllers/files';
+import { copyFile, createFolder, deleteFile, downloadFile, getFiles, moveFile, postFileUpload, renameFile, searchFile } from '../../controllers/files';
 import { Client } from '../../utils';
 const router = Router();
 
@@ -28,6 +28,9 @@ export default function(client: Client) {
 
 	// Search for a file
 	router.get('/search', searchFile());
+
+	// Create a new folder
+	router.post('/create-folder', createFolder(client));
 
 	return router;
 }
