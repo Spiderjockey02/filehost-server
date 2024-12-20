@@ -10,15 +10,14 @@ export default function SideBar({ user }: Props) {
 	const size = Number(user.totalStorageSize) ?? 0;
 
 	function getColor(num: number) {
-		if (num >= 4 * 1024 * 1024 * 1024) {
+		if (num >= (0.9 * user.group.maxStorageSize)) {
 			return 'bg-danger';
-		} else if (num >= 2.5 * 1024 * 1024 * 1024) {
+		} else if (num >= (0.5 * user.group.maxStorageSize)) {
 			return 'bg-warning';
 		} else {
 			return 'bg-success';
 		}
 	}
-
 
 	return (
 		<nav id="sidebar">
@@ -27,7 +26,7 @@ export default function SideBar({ user }: Props) {
 			</Link>
 			<ul className="list-unstyled components mobile-btn" style={{ verticalAlign:'center' }}>
 				<li>
-					<a className="btn" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button" aria-controls="offcanvasExample">
+					<a className="btn sidebar-btn" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button" aria-controls="offcanvasExample">
 						<i className="fa-solid fa-bars"></i>
 					</a>
 				</li>
@@ -38,80 +37,72 @@ export default function SideBar({ user }: Props) {
 					<button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 				</div>
 				<div className="offcanvas-body">
-					<ul className="list-unstyled components" style={{ verticalAlign:'center' }}>
+					<ul className="list-unstyled components">
 						<li>
-							<Link href="/files"><i className="fas fa-folder" data-bs-toggle="tooltip" data-bs-placement="right" title="All files"></i> All files</Link>
+							<Link href="/files" className='btn sidebar-btn'>
+								<i className="fas fa-folder" data-bs-toggle="tooltip" data-bs-placement="right" title="All files"></i>
+								<span> All files</span>
+							</Link>
 						</li>
 						<li>
-							<Link href="/recent"><i className="fas fa-clock" data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"></i>Recents</Link>
+							<Link href="/recent" className='btn sidebar-btn'>
+								<i className="fas fa-clock" data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"></i>
+								<span> Recents</span>
+							</Link>
 						</li>
 						<li>
-							<span className="smallFav">
-								<Link type="button" href="/favourites">
-									<i className="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>Favourites
-								</Link>
-							</span>
-							<a type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-								<i className="fas fa-star"></i>Favourites <i className="fas fa-sort-up" style={{ verticalAlign:'center', float:'right' }}></i>
-							</a>
-							<div className="collapse" id="collapseExample" style={{ maxWidth: '200px' }}>
-								{user.recentFiles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((_) => (
-									<Link key={_.location} className="card-text text-truncate" style={{ color:'black', fontSize:'15px', textDecoration: 'none' }} href={`/files/${_.location}`}>
-										<i className="far fa-file"></i> <b>{_.location.split('/').at(-1)}</b>
-									</Link>
-								))}
+							<Link href="/favourites" className='btn sidebar-btn'>
+								<i className="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>
+								<span> Favourites</span>
+							</Link>
+						</li>
+						<li style={{ position:'fixed', bottom:'0' }}>
+							<div style={{ padding: '0 10px' }}>
+								<label>{formatBytes(size)} of {formatBytes(user.group.maxStorageSize)} used</label>
+								<div className="progress" style={{ width:'200px' }}>
+									<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / user.group.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.group.maxStorageSize}></div>
+								</div>
 							</div>
+							<Link href="/trash" className='btn sidebar-btn' style={{ marginTop: '0.5rem' }}>
+								<i className="fas fa-trash"></i>
+								<span> Bin</span>
+							</Link>
 						</li>
 					</ul>
-					<div className="p-2 bottom side-text" style={{ position:'fixed', bottom:'0', height:'11%' }}>
-						<label className="side-text">{formatBytes(Number(user.totalStorageSize))} of {formatBytes(Number(user.group?.maxStorageSize ?? 0))} used</label>
-						<div className="progress" style={{ width:'200px' }}>
-							<div className={`progress-bar ${getColor(Number(user.totalStorageSize))}`} role="progressbar" style={{ width:`${(Number(user.totalStorageSize) / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={Number(user.totalStorageSize)} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
-						</div>
-						<Link href="/trash" style={{ position:'fixed', bottom:'0', height:'4%', color:'black', textDecoration: 'none' }}>
-							<i className="fas fa-trash"></i> <span className="side-text">Deleted files</span>
-						</Link>
-					</div>
 				</div>
 			</div>
-
-
-			<ul className="list-unstyled components" style={{ verticalAlign:'center' }}>
+			<ul className="list-unstyled components">
 				<li>
-					<Link href="/files"><i className="fas fa-folder" data-bs-toggle="tooltip" data-bs-placement="right" title="All files"></i><span className="side-text"> All files</span></Link>
+					<Link href="/files" className='btn sidebar-btn'>
+						<i className="fas fa-folder" data-bs-toggle="tooltip" data-bs-placement="right" title="All files"></i>
+						<span className="side-text"> All files</span>
+					</Link>
 				</li>
 				<li>
-					<Link href="/recent"><i className="fas fa-clock" data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"></i><span className="side-text"> Recents</span></Link>
+					<Link href="/recent" className='btn sidebar-btn'>
+						<i className="fas fa-clock" data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"></i>
+						<span className="side-text"> Recents</span>
+					</Link>
 				</li>
 				<li>
-					<span className="smallFav">
-						<Link type="button" href="/favourites">
-							<i className="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>
-						</Link>
-					</span>
-					<span className="side-text">
-						<a type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-							<i className="fas fa-star"></i><span className="side-text">Favourites <i className="fas fa-sort-up" style={{ verticalAlign:'center', float:'right' }}></i></span>
-						</a>
-						<div className="collapse" id="collapseExample" style={{ maxWidth: '200px' }}>
-							{user.recentFiles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((_) => (
-								<Link key={_.location} className="card-text text-truncate" style={{ color:'black', fontSize:'15px', textDecoration: 'none' }} href={`/files/${_.location}`}>
-									<i className="far fa-file"></i> <b>{_.location.split('/').at(-1)}</b>
-								</Link>
-							))}
+					<Link href="/favourites" className='btn sidebar-btn'>
+						<i className="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>
+						<span className="side-text"> Favourites</span>
+					</Link>
+				</li>
+				<li className="bottom" style={{ position:'fixed', bottom:'0' }}>
+					<div style={{ padding: '0 10px' }}>
+						<label className="side-text">{formatBytes(size)} of {formatBytes(user.group.maxStorageSize)} used</label>
+						<div className="progress side-text" style={{ width:'200px' }}>
+							<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / user.group.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.group.maxStorageSize}></div>
 						</div>
-					</span>
+					</div>
+					<Link href="/trash" className='btn sidebar-btn' style={{ marginTop: '0.5rem' }}>
+						<i className="fas fa-trash"></i>
+						<span className="side-text"> Bin</span>
+					</Link>
 				</li>
 			</ul>
-			<div className="p-2 bottom side-text" style={{ position:'fixed', bottom:'0', height:'11%' }}>
-				<label className="side-text">{formatBytes(size)} of {formatBytes(size)} used</label>
-				<div className="progress" style={{ width:'200px' }}>
-					<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / (5 * 1024 * 1024 * 1024)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={5 * 1024 * 1024 * 1024}></div>
-				</div>
-				<Link href="/trash" style={{ position:'fixed', bottom:'0', height:'4%', color:'black', textDecoration: 'none' }}>
-					<i className="fas fa-trash"></i> <span className="side-text">Deleted files</span>
-				</Link>
-			</div>
 		</nav>
 	);
 }

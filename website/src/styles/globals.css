@@ -526,6 +526,9 @@ section {
 #sidebar .sidebar-header {
   color: black;
   padding: 20px;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
 }
 
 #sidebar ul.components {
@@ -538,20 +541,29 @@ section {
   padding: 10px;
 }
 
-#sidebar ul li a {
-  padding: 10px;
-  font-size: 1.1em;
-  display: block;
-  color: black;
+.sidebar-btn {
+  padding: 10px !important;
+  font-size: 1.1em !important;
+  display: block !important;
+  color: black !important;
+  text-align: left !important;
 }
-#sidebar ul li a:not(.active):hover {
+.sidebar-btn:not(.active):hover {
   color: black;
   background: #53A5D2;
   border-radius: 8px;
 }
-#sidebar ul li a .active {
+.sidebar-btn .active {
   background: #157cb4;
   border-radius: 8px;
+}
+
+#sidebar ul .bottom {
+  width: 214px;
+}
+.offcanvas.offcanvas-start {
+  width: 250px !important;
+  background: #1992d4;
 }
 /* ---------------------------------------------------
     CONTENT STYLE
@@ -570,16 +582,22 @@ section {
     width: 70px;
   }
   .side-text {
-    display: none
-  }
-  .fas {
-    padding-left: 15px;
+    display: none !important
   }
   #sidebar.active {
     margin-left: 0;
   }
   #sidebarCollapse span {
     display: none;
+  }
+  .offcanvas-body .sidebar-btn {
+    text-align: start !important;
+  }
+  .sidebar-btn {
+    text-align: center !important;
+  }
+  #sidebar ul .bottom {
+    width: 65px;
   }
 }
 @media (max-width: 710px) {
@@ -588,7 +606,7 @@ section {
   }
 }
 
-@media (min-width:710px) {
+@media (min-width:1260px) {
   .mobile-btn {
     display: none;
   }
