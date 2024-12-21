@@ -2,9 +2,10 @@ import { join } from 'path';
 import formidable from 'formidable';
 import { mkdir } from 'fs/promises';
 import type { Request } from 'express';
-import { PATHS, Client } from '../utils';
+import { PATHS } from '../utils';
 import config from '../config';
 import type { UserWithGroup } from '../types/database/User';
+import { Client } from 'src/helpers';
 
 const parseForm = async (client: Client, req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
 	// eslint-disable-next-line no-async-promise-executor

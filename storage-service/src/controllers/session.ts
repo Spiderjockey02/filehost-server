@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { avatarForm, getSession } from '../middleware';
-import { Error, Client } from '../utils';
+import { Error } from '../utils';
 import emailValidate from 'deep-email-validator';
+import { Client } from 'src/helpers';
 
 // Endpoint: POST /api/session/change-password
 export const postChangePassword = (client: Client) => {
@@ -53,7 +54,7 @@ export const postChangeAvatar = (client: Client) => {
 				.json({ success: 'File successfully uploaded.' });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to upload file');
+			Error.GenericError(res, 'Failed to upload file.');
 		}
 	};
 };

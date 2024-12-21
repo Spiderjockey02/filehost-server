@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { PATHS, directoryTree, Error, Client } from '../utils';
+import { PATHS, directoryTree, Error } from '../utils';
 import { getSession, parseForm } from '../middleware';
 import fs from 'fs/promises';
 import archiver from 'archiver';
-import { TrashHandler } from '../libs';
+import { Client, TrashHandler } from '../helpers';
 import type { fileItem } from '../types';
 import path from 'node:path';
 const trash = new TrashHandler();

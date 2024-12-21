@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { Client, Error, sanitiseObject } from '../utils';
+import { Error, sanitiseObject } from '../utils';
 import bcrypt from 'bcrypt';
 import { createNotification } from '../accessors/Notification';
 import { getSession } from '../middleware';
 import emailValidate from 'deep-email-validator';
+import { Client } from 'src/helpers';
 
 type ErrorTypes = {
  type: 'username' | 'email' | 'password' | 'age' | 'misc'

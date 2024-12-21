@@ -3,7 +3,8 @@ import { exec } from 'node:child_process';
 import os from 'os';
 import util from 'node:util';
 import { fetchAllGroups } from '../accessors/Group';
-import { directoryTree, getNumberOfFiles, Error, Client } from '../utils';
+import { directoryTree, getNumberOfFiles, Error } from '../utils';
+import { Client } from 'src/helpers';
 const cmd = util.promisify(exec);
 
 type data = { [key: string]: boolean}

@@ -1,3 +1,4 @@
 import TrashHandler from './TrashHandler';
+import Client from './Client';
 
-export { TrashHandler };
+export { Client, TrashHandler };

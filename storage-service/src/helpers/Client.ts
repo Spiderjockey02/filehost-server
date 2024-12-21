@@ -3,7 +3,7 @@
 // Add logger here
 
 import { fileItem } from '../types';
-import Logger from './Logger';
+import Logger from '../utils/Logger';
 import UserManager from '../accessors/User';
 
 

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { checkAdmin } from '../../middleware';
 import { getStats, getUsers } from '../../controllers/admin';
-import { Client } from '../../utils';
+import { Client } from 'src/helpers';
 const router = Router();
 
 export default function(client: Client) {

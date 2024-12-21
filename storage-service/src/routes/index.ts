@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getAvatar, getThumbnail, getContent } from '../controllers';
-import { Client } from 'src/utils';
+import { Client } from 'src/helpers';
 const router = Router();
 
 export default function(client: Client) {

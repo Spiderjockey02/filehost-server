@@ -4,8 +4,9 @@ import { lookup } from 'mime-types';
 import { spawn } from 'child_process';
 import { createThumbnail } from '../utils/functions';
 import { updateUserRecentFiles } from '../accessors/Recent';
-import { PATHS, Error, Client } from '../utils';
+import { PATHS, Error } from '../utils';
 import { getSession } from '../middleware';
+import { Client } from 'src/helpers';
 
 // Endpoint GET /avatar/:userId?
 export const getAvatar = () => {

@@ -1,7 +1,7 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
 import { copyFile, createFolder, deleteFile, downloadFile, getFiles, moveFile, postFileUpload, renameFile, searchFile } from '../../controllers/files';
-import { Client } from '../../utils';
+import { Client } from 'src/helpers';
 const router = Router();
 
 export default function(client: Client) {
