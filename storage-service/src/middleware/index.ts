@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Error } from '../utils';
-import config from '../config';
 import avatarForm from './avatar-form';
 import parseForm from './parse-form';
 import { decode } from 'next-auth/jwt';
@@ -19,7 +18,7 @@ export async function getSession(req: Request): Promise<JWT | null> {
 	if (!sessionToken) return null;
 
 	try {
-		const session = await decode({ token: sessionToken, secret: config.NEXTAUTH_SECRET });
+		const session = await decode({ token: sessionToken, secret: `${process.env.NEXTAUTH_SECRET}` });
 		// Makes sure the token is valid
 		if (session == null) return null;
 

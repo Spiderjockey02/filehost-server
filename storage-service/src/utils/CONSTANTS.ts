@@ -6,3 +6,11 @@ export const PATHS = {
 };
 
 export const ipRegex = /^((\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])(\.(?!$)|$)){4}$|^(([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}|::(?:ffff:(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])(\.\d{1,3}){3})?)$/;
+
+export const CONSTANTS = {
+	// 10 GB
+	MAX_FILE_SIZE: 10737418240,
+
+	// How long files should stay in the trash before actually deleting in days
+	RETENTION_POLICY_IN_DAYS: 7,
+};

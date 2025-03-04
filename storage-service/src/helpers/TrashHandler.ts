@@ -1,9 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { PATHS } from '../utils';
+import { CONSTANTS, PATHS } from '../utils';
 import type { File } from '@prisma/client';
 import FileManager from './FileManager';
-import config from '../config';
 import cron from 'node-cron';
 
 export default class TrashHandler {
@@ -25,7 +24,7 @@ export default class TrashHandler {
 
 		// Calculate how long the file should stay in the trash before being removed
 		const dateToDelete = new Date();
-		dateToDelete.setDate(dateToDelete.getDate() + config.DeletedFileExpireDays);
+		dateToDelete.setDate(dateToDelete.getDate() + CONSTANTS.RETENTION_POLICY_IN_DAYS);
 
 		await this.fileManager.update({
 			id: file.id,

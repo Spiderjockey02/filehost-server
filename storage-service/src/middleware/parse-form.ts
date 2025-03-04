@@ -3,8 +3,7 @@ import formidable from 'formidable';
 import { mkdir } from 'fs/promises';
 import fs from 'fs';
 import type { Request } from 'express';
-import { PATHS } from '../utils';
-import config from '../config';
+import { CONSTANTS, PATHS } from '../utils';
 import type { FullUser } from '../types/database/User';
 import { Client } from 'src/helpers';
 import type { File } from '@prisma/client';
@@ -38,7 +37,7 @@ export default async (client: Client, req: Request, userId: string): Promise<{ f
 
 		const form = formidable({
 			allowEmptyFiles: false,
-			maxFileSize: config.maximumFileSize,
+			maxFileSize: CONSTANTS.MAX_FILE_SIZE,
 			uploadDir,
 			filename: (_name, _ext, part) => {
 				const baseName = part.originalFilename?.replace(/\.[^/.]+$/, '') || 'file';

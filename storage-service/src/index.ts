@@ -1,6 +1,5 @@
 import express from 'express';
 import { generateRoutes } from './utils';
-import config from './config';
 import compression from 'compression';
 import type { customRequest, customResponse } from './types';
 import bcrypt from 'bcrypt';
@@ -45,7 +44,7 @@ const client = new Client();
 	// Add endpoints to app
 	app
 		.use(cors({
-			origin: config.frontendURL,
+			origin: process.env.FRONTEND_URL,
 		}))
 		.use(compression())
 		.use((req, res, next) => {
@@ -75,5 +74,5 @@ const client = new Client();
 	for (const endpoint of endpoints) {
 		app.use(endpoint.route, (await import(endpoint.path)).default(client));
 	}
-	app.listen(config.port, () => client.logger.ready(`Started on PORT: ${config.port}`));
+	app.listen(process.env.PORT, () => client.logger.ready(`Started on PORT: ${process.env.PORT}`));
 })();

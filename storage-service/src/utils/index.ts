@@ -1,4 +1,4 @@
-import { PATHS, ipRegex } from './CONSTANTS';
+import { PATHS, ipRegex, CONSTANTS } from './CONSTANTS';
 import Logger from './Logger';
 import Error from './Error';
 import { readdirSync, statSync } from 'fs';
@@ -81,4 +81,4 @@ export function getIP(req: Request) {
 	return req.ip;
 }
 
-export { PATHS, ipRegex, Logger, Error };
+export { PATHS, ipRegex, Logger, Error, CONSTANTS };
