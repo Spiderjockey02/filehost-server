@@ -118,13 +118,13 @@ export default function FileContextMenu({ x, y, closeContextMenu, selected, show
 					<ContextMenu.Button onClick={() => handleDownload()}>
 						<FontAwesomeIcon icon={faDownload} /> Download
 					</ContextMenu.Button>
-					<ContextMenu.Button data-bs-toggle="modal" data-bs-target={`#delete_${selected[0].id}`}>
+					<ContextMenu.Button BSToggle="modal" BSTarget={`#delete_${selected[0].id}`}>
 						<FontAwesomeIcon icon={faTrash} /> Delete
 					</ContextMenu.Button>
-					<ContextMenu.Button data-bs-toggle="modal" data-bs-target={`#change_${selected[0].id}`}>
+					<ContextMenu.Button BSToggle="modal" BSTarget={`#change_${selected[0].id}`}>
 						<FontAwesomeIcon icon={faFolderOpen} /> Move / Copy to
 					</ContextMenu.Button>
-					<ContextMenu.Button data-bs-toggle="modal" data-bs-target={`#rename_${selected[0].id}`}>
+					<ContextMenu.Button BSToggle="modal" BSTarget={`#rename_${selected[0].id}`}>
 						<FontAwesomeIcon icon={faFileSignature} /> Rename
 					</ContextMenu.Button>
 					<ContextMenu.Button onClick={() => showFilePanel(selected[0].id)}>

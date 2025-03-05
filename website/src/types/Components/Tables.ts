@@ -16,10 +16,6 @@ export interface FileItemRowProps {
 
 export interface FileViewProps {
   files: fileItem[]
-  selectedFiles: fileItem[]
-  handleSelectAllToggle: () => void
-  handleCheckboxToggle: (e: MouseEvent, file: fileItem) => void
-  openContextMenu: (e: MouseEvent<HTMLTableRowElement>, selected: fileItem) => void
   setFilePanelToShow: (fileId: string) => void
   showMoreDetail?: boolean
 }
