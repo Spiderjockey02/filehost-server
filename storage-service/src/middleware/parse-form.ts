@@ -39,6 +39,16 @@ export default async (client: Client, req: Request, userId: string): Promise<{ f
 			allowEmptyFiles: false,
 			maxFileSize: CONSTANTS.MAX_FILE_SIZE,
 			uploadDir,
+			// Make sure the uploaded file's mime type is allowed
+			filter: ({ mimetype }) => {
+				if (!mimetype) return false;
+				return !CONSTANTS.DISALLOWED_MIME_TYPES.some((blocked) => {
+					// First check if it's a wildcard block
+					if (blocked.endsWith('/*')) return mimetype.startsWith(blocked.slice(0, -2));
+					return mimetype === blocked;
+				});
+			},
+			// Rename the file if it already exists
 			filename: (_name, _ext, part) => {
 				const baseName = part.originalFilename?.replace(/\.[^/.]+$/, '') || 'file';
 				const extension = part.originalFilename?.split('.').pop() || '';

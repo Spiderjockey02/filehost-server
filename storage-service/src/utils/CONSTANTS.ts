@@ -16,4 +16,7 @@ export const CONSTANTS = {
 
 	// Maximum characters for file name
 	MAX_CHARS_FILE_NAME: 32,
+
+	// What mime types are not allowed to be uploaded
+	DISALLOWED_MIME_TYPES: ['application/*', 'image/bmp'],
 };
