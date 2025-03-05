@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Error, sanitiseObject } from '../utils';
+import { CONSTANTS, Error, sanitiseObject } from '../utils';
 import { getSession, parseForm } from '../middleware';
 import { Client } from '../helpers';
 import path from 'node:path';
@@ -202,6 +202,9 @@ export const postCreateFolder = (client: Client) => {
 			const validFolderName = /^[a-zA-Z0-9 _-]+$/;
 			const santisedFolderName = path.normalize(folderName).replace(/^[/\\]+/, '');
 			if (!validFolderName.test(santisedFolderName)) return Error.IncorrectQuery(res, 'folderName contains invalid characters');
+
+			// Check if the folder name is longer than max chars
+			if (santisedFolderName.length > CONSTANTS.MAX_CHARS_FILE_NAME) return Error.IncorrectQuery(res, 'folderName is too long');
 
 			// Decode & santise the referer path to ensure the folder is added to the correct path
 			const userPath = decodeURI(req.headers['referer']?.split('/files')[1] || '/');

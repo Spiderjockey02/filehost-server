@@ -4,6 +4,7 @@ import InputField from '../Form/InputField';
 
 export default function CreateFolderModal() {
 	const [folderName, setFolderName] = useState('');
+	const [errorMsg, setErrorMsg] = useState('');
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -18,11 +19,12 @@ export default function CreateFolderModal() {
 			await axios.post('/api/files/create-folder', {
 				folderName: folderName,
 			});
+			closeModal('createFolderModal');
+			setFolderName('');
 		} catch (error) {
+			if (axios.isAxiosError(error)) return setErrorMsg(error.response?.data.error);
 			console.error(error);
 		}
-		closeModal('createFolderModal');
-		setFolderName('');
 	}
 
 	return (
@@ -35,7 +37,7 @@ export default function CreateFolderModal() {
 					</div>
 					<form onSubmit={handleFolderSubmit} method="post">
 						<div className="modal-body">
-							<InputField title='Folder name' name="folder" onChange={(e) => setFolderName(e.target.value)} />
+							<InputField title='Folder name' name="folder" onChange={(e) => setFolderName(e.target.value)} errorMsg={errorMsg} />
 						</div>
 						<div className="modal-footer">
 							<button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>

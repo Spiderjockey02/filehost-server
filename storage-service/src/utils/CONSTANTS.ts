@@ -13,4 +13,7 @@ export const CONSTANTS = {
 
 	// How long files should stay in the trash before actually deleting in days
 	RETENTION_POLICY_IN_DAYS: 7,
+
+	// Maximum characters for file name
+	MAX_CHARS_FILE_NAME: 32,
 };
