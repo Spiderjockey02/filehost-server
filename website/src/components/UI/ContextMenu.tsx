@@ -18,11 +18,13 @@ function ContextMenu({ x, y, ref, children }: Props) {
 interface ButtonProps {
   onClick?: () => void
   children: ReactNode
+	BSToggle?: string
+	BSTarget?: string
 }
 
-function Button({ onClick, children }: ButtonProps) {
+function Button({ onClick, children, BSToggle, BSTarget }: ButtonProps) {
 	return (
-		<button className="btn btn-ctx-menu" onClick={onClick}>
+		<button className="btn btn-ctx-menu" onClick={onClick} data-bs-toggle={BSToggle} data-bs-target={BSTarget}>
 			{children}
 		</button>
 	);
