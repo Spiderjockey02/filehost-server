@@ -106,8 +106,16 @@ export default async (client: Client, req: Request, userId: string): Promise<{ f
 						});
 					} else {
 						// File is uploaded to the root directory
-						const dir = await client.FileManager.getByFilePath(userId, path);
-						if (!dir) return reject('Missing parent directory');
+						let dir = await client.FileManager.getByFilePath(userId, path);
+						if (!dir) {
+							dir = await client.FileManager.create({
+								userId,
+								path: '/',
+								size: 0n,
+								type: 'DIRECTORY',
+								name: '/',
+							});
+						}
 
 						await client.FileManager.update({
 							id: dir.id,
