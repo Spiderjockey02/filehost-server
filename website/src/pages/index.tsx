@@ -239,10 +239,9 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Ho
 
 export async function getServerSideProps() {
 	try {
-		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/statistics`);
-
+		const { data } = await axios.get(`${process.env.BETTER_AUTH_URL}/api/statistics`);
 		return { props: { totalUserCount: data.totalUsers, storageUsed: data.diskData.total - data.diskData.free, totalFileCount: data.totalFileCount } };
-	} catch (err) {
+	} catch {
 		return { props: { totalUserCount: 0, storageUsed: 0, totalFileCount: 0 } };
 	}
 }

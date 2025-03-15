@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import os from 'os';
-import { Error } from '../utils';
+import { Error, sanitiseObject } from '../utils';
 import { Client } from 'src/helpers';
 
 type data = { [key: string]: boolean}
@@ -26,10 +26,10 @@ export const getStats = (client: Client) => {
 					avg: os.loadavg(),
 				},
 				users: {
-					total: await client.userManager.fetchTotalCount(),
+					total: await client.userManager.fetchTotal(),
 					groups: (await client.groupManager.fetchAll()).map(g => ({
 						name: g.name,
-						userCount: g._count.users,
+						userCount: g._count?.users ?? 0,
 					})),
 				},
 			});
@@ -56,7 +56,7 @@ export const getUsers = (client: Client) => {
 
 			// Fetch the database
 			const users = await client.userManager.fetchAll(parsedFilters);
-			res.json({ users });
+			res.json({ users: sanitiseObject(users) });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of users.');

@@ -1,5 +1,6 @@
 // Forms
 import InputField from './Form/InputField';
+import DragUploadField from './Form/DragUploadField';
 
 // Menus
 import FileContextMenu from './menus/FileContextMenu';
@@ -48,5 +49,5 @@ export { InputField, FileContextMenu, TrashContextMenu, DeleteFileModal, RenameF
 	BreadcrumbNav, FileNavBar, Footer, HomeNavbar, RecentNavbar, Sidebar, FileDetailCell, FileItemRow,
 	FileViewTable, ErrorPopup, SuccessPopup, UploadStatusToast, Row, Col, Modal, NotificationBell,
 	Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer, VideoPlayer, CreateFolderModal,
-	SearchFileModal,
+	SearchFileModal, DragUploadField,
 };

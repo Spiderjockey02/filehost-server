@@ -54,11 +54,13 @@ export const getContent = (client: Client) => {
 		}
 
 		const fileType = lookup(file.path);
-		if (fileType == false) {
+		if (fileType == false || fileType == 'application/javascript') {
 			const t = fs.readFileSync(`${PATHS.CONTENT}/${userId}/${path}`, { encoding: 'utf-8' });
 			res.type('text/plain');
 			return res.send(t);
 		}
+
+		if (fileType == 'application/pdf') return res.sendFile(`${PATHS.CONTENT}/${userId}/${path}`);
 
 		// Check what type of file it is, to send the relevent data
 		switch(fileType.split('/')[0]) {
@@ -113,7 +115,7 @@ export const getContent = (client: Client) => {
 export const getStatistics = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const [totalUsers, diskData, totalFileCount] = await Promise.all([client.userManager.fetchTotalCount(), client.FileManager.getFileSystemStatitics(), client.FileManager.fetchTotalCount()]);
+			const [totalUsers, diskData, totalFileCount] = await Promise.all([client.userManager.fetchTotal(), client.FileManager.getFileSystemStatitics(), client.FileManager.fetchTotal()]);
 
 			res.json({ totalUsers, diskData, totalFileCount });
 		} catch (error) {

@@ -39,7 +39,7 @@ export const postFileUpload = (client: Client) => {
 			return res.json({ success: 'File(s) successfully uploaded.' });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to upload file.');
+			Error.GenericError(res, `Failed to upload file due to: ${err}.`);
 		}
 	};
 };
