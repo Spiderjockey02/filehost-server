@@ -218,7 +218,7 @@ export default function Files({ users }: AdminUserPageProps) {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Validate path
 	try {
-		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/admin/users?filters=group`, {
+		const { data } = await axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users?filters=group`, {
 			headers: { cookie: context.req.headers.cookie },
 		});
 		return { props: { users: (data.users as Array<User>).map(u => ({ ...u, createdAt: new Date(u.createdAt).getTime() })) } };

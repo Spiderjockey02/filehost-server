@@ -12,15 +12,8 @@ export type fetchUserbyParam = {
 	id?: string
 }
 
-export interface createUser {
-	email: string
-	name: string
-	password: string
-}
-
 export interface updateUser {
 	id: string
-	password?: string
 	email?: string
 	totalStorageSize?: bigint
 }

@@ -1,11 +1,10 @@
 import type { Request, Response, NextFunction } from 'express';
-import { Error } from '../utils';
+import extendedClient from '../accessors/prisma';
 import avatarForm from './avatar-form';
 import parseForm from './parse-form';
-import { decode } from 'next-auth/jwt';
-import type { JWT } from 'next-auth/jwt';
+import { Error } from '../utils';
 
-export async function getSession(req: Request): Promise<JWT | null> {
+export async function getSession(req: Request) {
 	if (req.headers.cookie == undefined) return null;
 
 	// get Session token from cookies
@@ -13,18 +12,22 @@ export async function getSession(req: Request): Promise<JWT | null> {
 	const parsedcookies = cookies.map((i: string) => i.split('='));
 
 	// Get session token (Could be secure or not so check both)
-	let sessionToken = parsedcookies.find(i => i[0] == '__Secure-next-auth.session-token')?.[1];
-	if (sessionToken == null) sessionToken = parsedcookies.find(i => i[0] == 'next-auth.session-token')?.[1];
+	const sessionToken = parsedcookies.find(i => i[0] == 'better-auth.session_token')?.[1];
 	if (!sessionToken) return null;
 
 	try {
-		const session = await decode({ token: sessionToken, secret: `${process.env.NEXTAUTH_SECRET}` });
-		// Makes sure the token is valid
-		if (session == null) return null;
-
-		// Make sure the token hasn't expired
-		if (session.exp <= (new Date().getTime() / 1000)) return null;
-
+		const session = await extendedClient.session.findUnique({
+			where: {
+				token: sessionToken.split('.')[0],
+			},
+			include: {
+				user: {
+					include: {
+						group: true,
+					},
+				},
+			},
+		});
 		return session;
 	} catch (err) {
 		console.log(err);

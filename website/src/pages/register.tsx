@@ -1,14 +1,13 @@
+import { GetServerSidePropsContext } from 'next/types';
 import { ErrorPopup, InputField } from '@/components';
-import type { GetServerSidePropsContext } from 'next';
-import { AuthOption } from './api/auth/[...nextauth]';
-import { getServerSession } from 'next-auth/next';
 import type { BaseSyntheticEvent } from 'react';
 import { RegisterErrorTypes } from '@/types';
+import { authClient } from '@/auth-client';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import axios from 'axios';
+import { auth } from '@/auth';
 
 export default function Register() {
 	const [disabled, setDisabled] = useState(true);
@@ -54,18 +53,22 @@ export default function Register() {
 		}
 
 		// Create the new user
-		const { data } = await axios.post('/api/auth/register', {
-			data: {
-				username: user.username,
-				email: user.email,
-				password: user.password,
-				password2: user.password,
+		const { data, error } = await authClient.signUp.email({
+			email: user.email,
+			password: user.password,
+			name: user.username,
+			callbackURL: '/login',
+		}, {
+			onSuccess: (ctx) => {
+				console.log(ctx);
+			},
+			onError: (ctx) => {
+				// display the error message
+				console.log(ctx);
 			},
 		});
 
-		// Check if an error was included
-		if (data.error) return setErrors([{ type: data.error.type, message: data.error.text }]);
-		if (data.success) router.push('/login');
+		console.log(data, error);
 	};
 
 	const changeState = () => setDisabled(!disabled);
@@ -129,7 +132,9 @@ export default function Register() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await getServerSession(context.req, context.res, AuthOption);
+	const session = await auth.api.getSession({
+		headers: context.req.headers as any,
+	});
 
 	// Only show this page if they are not logged in
 	if (session) {

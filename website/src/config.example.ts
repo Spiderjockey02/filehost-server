@@ -1,5 +1,5 @@
 const config = {
-	url: process.env.NEXTAUTH_URL,
+	url: process.env.BETTER_AUTH_URL,
 	backendURL: '',
 	company: {
 		name: '',

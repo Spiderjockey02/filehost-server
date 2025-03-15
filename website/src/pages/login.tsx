@@ -1,15 +1,13 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
-import type { SignInResponse } from 'next-auth/react';
+import { GetServerSidePropsContext } from 'next/types';
 import { ErrorPopup, InputField } from '@/components';
-import type { GetServerSidePropsContext } from 'next';
-import { AuthOption } from './api/auth/[...nextauth]';
-import { getServerSession } from 'next-auth/next';
 import type { BaseSyntheticEvent } from 'react';
+import { authClient } from '@/auth-client';
 import { LoginErrorTypes } from '@/types';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
+import { auth } from '@/auth';
 import Link from 'next/link';
 
 export default function SignIn() {
@@ -33,25 +31,21 @@ export default function SignIn() {
 		if (err.length !== 0) return setErrors(err);
 
 		// Try and sign in the user
-		const res = await signIn('credentials', {
-			redirect: false,
-			callbackUrl: `${callbackUrl ?? window.location.search.split('=')[1]}`,
+		const { error } = await authClient.signIn.email({
+			callbackURL: `${callbackUrl ?? window.location.origin}`,
 			email: user.email,
 			password: user.password,
-		}) as SignInResponse;
+		});
 
 		// Show errors if any
-		if (res.error) {
-			if (res.error == 'Invalid username or password.') {
+		if (error) {
+			if (error.message == 'Invalid username or password.') {
 				return setErrors([
-					{ type: 'password', message: res.error }, { type: 'email', message: res.error },
+					{ type: 'password', message: error.message }, { type: 'email', message: error.message },
 				]);
 			}
 			return setErrors([{ type: 'misc', message: 'Failed to login.' }]);
 		}
-
-		// Move to the callback URL so user knows they are logged in
-		router.push(res.url as string);
 	};
 
 	return (
@@ -101,7 +95,9 @@ export default function SignIn() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await getServerSession(context.req, context.res, AuthOption);
+	const session = await auth.api.getSession({
+		headers: context.req.headers as any,
+	});
 
 	// Only show this page if they are not logged in
 	if (session) {

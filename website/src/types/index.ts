@@ -14,18 +14,6 @@ export interface RecentlyViewed {
   file: fileItem
 }
 
-export interface User {
-  id: string
-  name: string
-  email: string
-  createdAt: Date
-  languageCode: string
-  group: Group
-  notifications: Notification[]
-  recentlyViewed: RecentlyViewed[]
-  totalStorageSize: number
-}
-
 export interface Group {
   id: string
   name: string

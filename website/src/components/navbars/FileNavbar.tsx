@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FileNavBarProps } from '@/types/Components/Navbars';
 import { NotificationBell, SearchFileModal } from '@/components';
 import { useState, ChangeEvent } from 'react';
-import { signOut } from 'next-auth/react';
+import { authClient } from '@/auth-client';
 import Image from 'next/image';
 import Link from 'next/link';
 import axios from 'axios';
@@ -100,7 +100,7 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 							<Link className="dropdown-item text-dark" href="/settings">Settings</Link>
 							<Link className="dropdown-item text-dark" href="/files">My files</Link>
 							<div className="dropdown-divider"></div>
-							<a className="dropdown-item" href="#" onClick={() => signOut()} id="logout">Logout</a>
+							<a className="dropdown-item" href="#" onClick={() => authClient.signOut()} id="logout">Logout</a>
 						</div>
 					</li>
 				</ul>

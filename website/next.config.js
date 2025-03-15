@@ -24,7 +24,7 @@ const nextConfig = {
 		 {
 				source: '/api/auth/register',
 				destination: `${process.env.BACKEND_URL}/api/auth/register`,
-	 },
+	 	 },
 		 {
 				source: '/api/:path((?!auth).*)',
 				destination: `${process.env.BACKEND_URL}/api/:path*`,

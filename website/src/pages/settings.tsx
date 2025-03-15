@@ -1,14 +1,14 @@
 import { ErrorPopup, SuccessPopup, InputField } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
-import { useSession } from 'next-auth/react';
 import { SettingErrorTypes } from '@/types';
 import MainLayout from '@/layouts/main';
 import { useState } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
+import { authClient } from '@/auth-client';
 
 export default function Settings() {
-	const { data: session, status } = useSession({ required: true });
+	const { data: session } = authClient.useSession();
 	const [errors, setErrors] = useState<SettingErrorTypes[]>([]);
 	const [email, setEmail] = useState('');
 	const [success, setSuccess] = useState('');
@@ -65,12 +65,10 @@ export default function Settings() {
 		if (newPassword !== repeatNewPassword) return setErrors([{ type: 'pwd1', text: 'The passwords do not match' }]);
 
 		try {
-			const { data } = await axios.post('/api/session/change-password', {
-				currentPassword: currentPassword,
-				password: newPassword,
-				password2: repeatNewPassword,
+			await authClient.changePassword({
+				newPassword, currentPassword,
+				revokeOtherSessions: true,
 			});
-			if (data.success) setSuccess(data.success);
 		} catch {
 			setErrors([{ type: 'pwd1', text: 'asd' }]);
 		}
@@ -81,10 +79,9 @@ export default function Settings() {
 
 		if (email.length == 0) return setErrors([{ type: 'email', text: 'This field is missing.' }]);
 		try {
-			const { data } = await axios.post('/api/session/change-email', {
-				email,
+			await authClient.changeEmail({
+				newEmail: email,
 			});
-			if (data.success) setSuccess(data.success);
 		} catch (error) {
 			if (axios.isAxiosError(error)) {
 				setErrors([{ type: 'email', text: error.response?.data.error }]);
@@ -94,7 +91,12 @@ export default function Settings() {
 		}
 	};
 
-	if (status == 'loading') return null;
+	const ahjksd = async () => {
+		const t = await authClient.multiSession.listDeviceSessions();
+		console.log(t);
+	};
+
+	if (session == null) return null;
 	return (
 		<MainLayout>
 			<section className="d-flex flex-row align-items-center" style={{ 'backgroundColor': '#eee', padding: '5% 0' }}>
@@ -154,6 +156,7 @@ export default function Settings() {
 							<div className="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
 								<h3 className="mb-4">Billing Information</h3>
 								<p>Billing settings will be available here.</p>
+								<button onClick={ahjksd}>asd</button>
 							</div>
 						</div>
 					</div>

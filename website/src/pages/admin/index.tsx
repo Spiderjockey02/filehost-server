@@ -2,13 +2,13 @@ import type { GetServerSidePropsContext } from 'next';
 import type { AdminPageProps } from '@/types/pages';
 import { FileNavBar, Sidebar } from '@/components';
 import { formatBytes } from '@/utils/functions';
-import { useSession } from 'next-auth/react';
 import axios from 'axios';
+import { useTypedSession } from '@/auth-client';
 
 export default function Files({ data }: AdminPageProps) {
 	// Make sure user is logged in before accessing page
-	const { data: session, status } = useSession({ required: true });
-	if (status == 'loading') return null;
+	const { data: session } = useTypedSession();
+	if (session == null) return null;
 
 	return (
 		<div className="wrapper">
@@ -147,7 +147,7 @@ export default function Files({ data }: AdminPageProps) {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Validate path
 	try {
-		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/admin/stats`, {
+		const { data } = await axios.get(`${process.env.NEXBETTER_AUTH_URLTAUTH_URL}/api/admin/stats`, {
 			headers: { cookie: context.req.headers.cookie },
 		});
 		console.log(data);

@@ -1,5 +1,5 @@
 import client from './prisma';
-import { GetUsers, fetchUserbyParam, createUser, updateUser, UserToGroupProps } from '../types/database/User';
+import { GetUsers, fetchUserbyParam, updateUser, UserToGroupProps } from '../types/database/User';
 import { LRUCache } from 'lru-cache';
 import { FullUser } from 'src/types/database/User';
 
@@ -14,32 +14,6 @@ export default class UserManager {
 	}
 
 	/**
-	  * Creates a new user
-	  * @param {createUser} data The user data.
-		* @returns {UserWithGroup} The created user.
-	*/
-	async create(data: createUser): Promise<FullUser> {
-		const user = await client.user.create({
-			data: {
-				email: data.email,
-				name: data.name,
-				password: data.password,
-				group: {
-					connect: {
-						name: 'Free',
-					},
-				},
-			},
-			include: {
-				group: true,
-				notifications: true,
-			},
-		});
-		this.cache.set(user.id, user);
-		return user;
-	}
-
-	/**
 	  * Updates a user
 	  * @param {updateUser} data The user data.
 		* @returns {UserWithGroup} The updated user.
@@ -50,7 +24,6 @@ export default class UserManager {
 				id: data.id,
 			},
 			data: {
-				password: data.password,
 				email: data.email,
 				totalStorageSize: data.totalStorageSize,
 			},

@@ -2,7 +2,6 @@ import express from 'express';
 import { generateRoutes } from './utils';
 import compression from 'compression';
 import type { customRequest, customResponse } from './types';
-import bcrypt from 'bcrypt';
 import { join } from 'path';
 import cors from 'cors';
 import { Client } from './helpers';
@@ -19,22 +18,6 @@ const client = new Client();
 			client.logger.log('Successfully created group(s): Free, Admin.');
 		} catch (err) {
 			client.logger.error(err);
-		}
-	}
-
-	// Create an admin account
-	const users = await client.userManager.fetchAll();
-	if (users.length == 0) {
-		try {
-			const salt = await bcrypt.genSalt(10);
-			const hashPassword = await bcrypt.hash('admin', salt);
-			const user = await client.userManager.create({ email: 'test@example.com', password: hashPassword, name: 'Admin' });
-			await client.FileManager.create({ userId: user.id, path: '/', name: '/', type: 'DIRECTORY', size: 0n });
-			client.logger.log('Successfully created account: Admin');
-			client.logger.log('Email: test@example.com, password: admin');
-		} catch (err) {
-			client.logger.error(err);
-			client.logger.error('Error creating Admin account');
 		}
 	}
 

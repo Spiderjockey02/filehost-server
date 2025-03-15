@@ -3,16 +3,15 @@ import { useFile, useFileDispatch } from '@/components/fileManager';
 import BreadcrumbNav from '@/components/Navbars/BreadcrumbNav';
 import { FilePageProps, viewTypeTypes } from '@/types/pages';
 import { useCallback, useEffect, useState } from 'react';
-import { AuthOption } from '../api/auth/[...nextauth]';
 import type { GetServerSidePropsContext } from 'next';
 import type { RecentlyViewed } from '../../types';
-import { getServerSession } from 'next-auth/next';
-import { useSession } from 'next-auth/react';
+import { useTypedSession } from '@/auth-client';
 import FileLayout from '@/layouts/file';
 import axios from 'axios';
 
 export default function Files({ path = '/' }: FilePageProps) {
-	const { data: session, status } = useSession({ required: true });
+	const { data: session } = useTypedSession();
+
 	const [recents, setRecents] = useState<RecentlyViewed[]>([]);
 	const [errorMsg, setErrorMsg] = useState('');
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
@@ -44,7 +43,7 @@ export default function Files({ path = '/' }: FilePageProps) {
 		if (!path) fetchRecentlyViewedFiles();
 	}, [path, fetchFiles, fetchRecentlyViewedFiles]);
 
-	if (status == 'loading') return null;
+	if (session == null) return null;
 	return (
 		<FileLayout user={session.user}>
 			<BreadcrumbNav path={path} isFile={file?.type == 'FILE'} setviewType={setviewType} viewType={viewType} />
@@ -70,7 +69,5 @@ export default function Files({ path = '/' }: FilePageProps) {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Get path
 	const path = [context.params?.files].flat();
-	const session = await getServerSession(context.req, context.res, AuthOption);
-	if (session == null) return;
 	return { props: { path: path.join('/') } };
 }
