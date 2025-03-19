@@ -3,8 +3,11 @@ import { BaseSyntheticEvent, useState } from 'react';
 import { useFileDispatch } from '../fileManager';
 import axios from 'axios';
 
+const InputErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'red', borderLeftColor: 'red', borderBottomColor: 'red' } : {};
+const TextErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'red', borderRightColor: 'red', borderBottomColor: 'red' } : {};
 export default function RenameFileModal({ file, closeContextMenu }: FileModalProps) {
 	const [rename, setRename] = useState(file.name);
+	const [errorMsg, setErrorMsg] = useState('');
 	const dispatch = useFileDispatch();
 
 	function closeModal(id: string) {
@@ -24,7 +27,8 @@ export default function RenameFileModal({ file, closeContextMenu }: FileModalPro
 			const { data } = await axios.get(`/api/files/${window.location.pathname.replace('/files', '/')}`);
 			dispatch({ type: 'SET_FILE', payload: data.file });
 		} catch (err) {
-			console.log(err);
+			if (axios.isAxiosError(err)) return setErrorMsg(err.response?.data.error);
+			console.error(err);
 		}
 
 		closeModal(`rename_${file.id}`);
@@ -42,9 +46,10 @@ export default function RenameFileModal({ file, closeContextMenu }: FileModalPro
 						<div className="modal-body">
 							<input type="hidden" id="oldPath" name="oldPath" value={file.name} />
 							<div className="input-group mb-3">
-								<input className="form-control" id="renameInput" type="text" name="newPath" defaultValue={file.name.replace(`.${file.name.split('.').at(-1)}`, '')} onChange={(e) => setRename(e.target.value)} />
-								{file.type == 'FILE' && <span className="input-group-text" id="renameSuffix">.{file.name.split('.').at(-1)}</span>}
+								<input className="form-control" autoComplete='off' style={InputErrorStyles(errorMsg.length > 0)} id="renameInput" type="text" name="newPath" defaultValue={file.name.replace(`.${file.name.split('.').at(-1)}`, '')} onChange={(e) => setRename(e.target.value)} />
+								{file.type == 'FILE' && <span className="input-group-text" style={TextErrorStyles(errorMsg.length > 0)} id="renameSuffix">.{file.name.split('.').at(-1)}</span>}
 							</div>
+							{errorMsg && <div className="invalid-feedback" style={{ color: 'red', display: 'block' }}>{errorMsg}</div>}
 						</div>
 						<div className="modal-footer">
 							<button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>

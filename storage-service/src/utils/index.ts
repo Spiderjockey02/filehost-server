@@ -81,4 +81,14 @@ export function getIP(req: Request) {
 	return req.ip;
 }
 
+export function normalizePath(path: string) {
+	if (!path.startsWith('/')) {
+		path = '/' + path;
+	}
+	if (!path.endsWith('/')) {
+		path += '/';
+	}
+	return path;
+}
+
 export { PATHS, ipRegex, Logger, Error, CONSTANTS };

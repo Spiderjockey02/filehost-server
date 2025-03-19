@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CONSTANTS, Error, sanitiseObject } from '../utils';
+import { CONSTANTS, Error, normalizePath, sanitiseObject } from '../utils';
 import { getSession, parseForm } from '../middleware';
 import { Client } from '../helpers';
 import path from 'node:path';
@@ -177,12 +177,18 @@ export const postRenameFile = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 			const { oldName, newName } = req.body;
 			const userPath = (req.headers.referer as string).split('/files')[1];
-			const originalPath = decodeURI(userPath.startsWith('/') ? `${userPath}/` : '/');
+			const originalPath = normalizePath(decodeURI(userPath.startsWith('/') ? userPath : '/'));
 
+			// Make sure newName is a non-empty string and no more than MAX_CHARS_FILE_NAME length
+			if (typeof newName !== 'string' || newName.replace(/\.[^/.]+$/, '').length == 0) return Error.IncorrectQuery(res, 'New name must not be empty.');
+			if (newName.length > CONSTANTS.MAX_CHARS_FILE_NAME) return Error.IncorrectQuery(res, `New name must be less than ${CONSTANTS.MAX_CHARS_FILE_NAME} characters.`);
+
+			// Rename file
 			await client.FileManager.rename(session.user.id, `${originalPath}${oldName}`, newName);
 			res.json({ success: 'Successfully renamed item' });
 		} catch (err) {
 			client.logger.error(err);
+			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to rename item.');
 		}
 	};

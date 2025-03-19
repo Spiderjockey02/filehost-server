@@ -19,4 +19,7 @@ export const CONSTANTS = {
 
 	// What mime types are not allowed to be uploaded
 	DISALLOWED_MIME_TYPES: ['application/*', 'image/bmp'],
+
+	// What characters or words that not allowed in a file name
+	INVALID_CHARS_IN_FILE_NAME: ['/', '\\', '?', '%', '*', ':', '|', '"', '<', '>'],
 };

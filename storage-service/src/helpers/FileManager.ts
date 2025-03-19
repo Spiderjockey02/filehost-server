@@ -1,4 +1,4 @@
-import { Error as ErrorCL, PATHS, sanitiseObject } from '../utils';
+import { CONSTANTS, Error as ErrorCL, PATHS, sanitiseObject } from '../utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -100,12 +100,15 @@ export default class FileManager extends FileAccessor {
 
 	async rename(userId: string, filePath: string, newName: string) {
 		const file = await this.getByFilePath(userId, filePath);
-		if (file === null) throw new Error('File not found');
+		if (file === null) throw 'File not found';
 
 		// Update the file
 		const pathSegs = file.path.split('/');
 		pathSegs[pathSegs.length - 1] = newName;
 		const newPath = pathSegs.join('/');
+
+		// Make sure the new name doesn't have any invalid characters in it
+		if (CONSTANTS.INVALID_CHARS_IN_FILE_NAME.some(c => newName.includes(c))) throw 'File name includes invalid characters.';
 
 		// Will update to also support their children for path to be updated aswell (when it's a directory)
 		await this.update({ id: file.id, name: newName, path: newPath });
