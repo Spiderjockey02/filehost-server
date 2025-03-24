@@ -28,10 +28,11 @@ export type fileItem = {
   name: string
   children: fileItem[]
   createdAt: Date
-  deletedAt: Date
+  deletedAt: Date | null
   updatedAt: Date
   size: number
   type: fileType
+  parentId: string | null
   _count: {
     children: number
   }

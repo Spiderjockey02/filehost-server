@@ -2,12 +2,15 @@ import { BaseSyntheticEvent, useEffect, useRef, useState } from 'react';
 import { FileModalProps } from '@/types/Components/Modals';
 import { fileItem } from '@/types';
 import axios from 'axios';
+import { useFileDispatch } from '../fileManager';
 
 export default function UpdateLocationModal({ file, closeContextMenu }: FileModalProps) {
 	const elementRef = useRef(null);
 	const [dirs, setDirs] = useState<fileItem[]>([]);
 	const [action, setAction] = useState<'copy' | 'move' | ''>('');
 	const [selectedDestination, setSelectedDestination] = useState('');
+	const [errorMsg, setErrorMsg] = useState('');
+	const dispatch = useFileDispatch();
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -22,11 +25,14 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 
 		try {
 			await axios.post(`/api/files/${action}`, {
-				newPath: selectedDestination,
-				fileName: file.name,
+				newDirId: selectedDestination,
+				fileId: file.id,
 			});
-		} catch (error) {
-
+			const { data } = await axios.get(`/api/${window.location.pathname}`);
+			dispatch({ type: 'SET_FILE', payload: data.file });
+		} catch (err) {
+			if (axios.isAxiosError(err)) return setErrorMsg(err.response?.data.error);
+			console.log(err);
 		}
 		closeModal(`change_${file.id}`);
 	};
@@ -65,15 +71,15 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 					<form method='post' onSubmit={handleActionSubmit}>
 						<div className="modal-body w-100">
 							<p>Select a destination folder.</p>
-							{dirs.map(dir => (
+							{dirs.filter(c => !c.path.startsWith(file.path)).map(dir => (
 								<div className="form-check" key={dir.id}>
-									<input className="form-check-input" type="radio" name='destination' id={dir.id} defaultChecked={selectedDestination === dir.path}
-										onChange={() => setSelectedDestination(dir.name)} />
+									<input className="form-check-input" type="radio" name='destination' id={dir.id} onChange={() => setSelectedDestination(dir.id)} disabled={file.parentId == dir.id} />
 									<label className="form-check-label" htmlFor={dir.id}>
 										{dir.path}
 									</label>
 								</div>
 							))}
+							{errorMsg && <div className="invalid-feedback" style={{ color: 'red', display: 'block' }}>{errorMsg}</div>}
 							<input type="hidden" value={action} name="action" />
 						</div>
 						<div className="modal-footer">

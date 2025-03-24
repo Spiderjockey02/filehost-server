@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { CONSTANTS, Error, normalizePath, sanitiseObject } from '../utils';
+import { Error, sanitiseObject } from '../utils';
 import { getSession, parseForm } from '../middleware';
 import { Client } from '../helpers';
-import path from 'node:path';
 import { FileType } from '@prisma/client';
 
 // Endpoint GET /api/files
@@ -14,7 +13,7 @@ export const getFiles = (client: Client) => {
 
 			// Fetch from cache
 			const filePath = req.params.path;
-			const file = await client.FileManager.getDirectory(session.user.id, filePath || '/');
+			const file = await client.FileManager.getDirectory(session.user.id, filePath);
 
 			res.json({ file });
 		} catch (err) {
@@ -33,8 +32,7 @@ export const postFileUpload = (client: Client) => {
 
 			// Parse and save file(s)
 			const { files } = await parseForm(client, req, session.user.id);
-			const file = files.media;
-			if (file == undefined) throw 'No files uploaded';
+			if (files.media == undefined) throw 'No files uploaded';
 
 			return res.json({ success: 'File(s) successfully uploaded.' });
 		} catch (err) {
@@ -51,10 +49,8 @@ export const deleteFile = (client: Client) => {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			const { fileName } = req.body;
-			const userPath = (req.headers.referer)?.split('/files')[1] ?? '';
-
-			await client.FileManager.delete(session.user.id, `${userPath}/${fileName}`);
+			const { fileId } = req.body;
+			await client.FileManager.delete(session.user.id, fileId);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			client.logger.error(err);
@@ -93,13 +89,13 @@ export const postMoveFile = (client: Client) => {
 		try {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
-			const { newPath, fileName } = req.body;
-			const oldPath = (req.headers.referer)?.split('/files')[1] ?? '/';
+			const { newDirId, fileId } = req.body;
 
-			await client.FileManager.move(session.user.id, `${oldPath}/${fileName}`, newPath);
+			await client.FileManager.move(session.user.id, fileId, newDirId);
 			res.json({ success: 'Successfully moved item' });
 		} catch (err) {
 			client.logger.error(err);
+			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to move item.');
 		}
 	};
@@ -111,13 +107,13 @@ export const postCopyFile = (client: Client) => {
 		try {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
-			const { newPath, fileName } = req.body;
-			const oldPath = (req.headers.referer)?.split('/files')[1] ?? '';
+			const { newDirId, fileId } = req.body;
 
-			await client.FileManager.copy(session.user.id, `${oldPath}/${fileName}`, newPath);
+			await client.FileManager.copy(session.user.id, fileId, newDirId);
 			res.json({ success: 'Successfully copied file' });
 		} catch (err) {
 			client.logger.error(err);
+			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to copy item.');
 		}
 	};
@@ -175,16 +171,13 @@ export const postRenameFile = (client: Client) => {
 		try {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
-			const { oldName, newName } = req.body;
-			const userPath = (req.headers.referer as string).split('/files')[1];
-			const originalPath = normalizePath(decodeURI(userPath.startsWith('/') ? userPath : '/'));
+			const { fileId, newName } = req.body;
 
-			// Make sure newName is a non-empty string and no more than MAX_CHARS_FILE_NAME length
+			// Make sure newName is a non-empty string
 			if (typeof newName !== 'string' || newName.replace(/\.[^/.]+$/, '').length == 0) return Error.IncorrectQuery(res, 'New name must not be empty.');
-			if (newName.length > CONSTANTS.MAX_CHARS_FILE_NAME) return Error.IncorrectQuery(res, `New name must be less than ${CONSTANTS.MAX_CHARS_FILE_NAME} characters.`);
 
 			// Rename file
-			await client.FileManager.rename(session.user.id, `${originalPath}${oldName}`, newName);
+			await client.FileManager.rename(session.user.id, fileId, newName);
 			res.json({ success: 'Successfully renamed item' });
 		} catch (err) {
 			client.logger.error(err);
@@ -201,24 +194,15 @@ export const postCreateFolder = (client: Client) => {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			const { folderName } = req.body;
-			if (typeof folderName !== 'string' || !folderName.trim()) return Error.IncorrectQuery(res, 'folderName is not a string');
-
-			// Validate and sanitise the folder name
-			const validFolderName = /^[a-zA-Z0-9 _-]+$/;
-			const santisedFolderName = path.normalize(folderName).replace(/^[/\\]+/, '');
-			if (!validFolderName.test(santisedFolderName)) return Error.IncorrectQuery(res, 'folderName contains invalid characters');
-
-			// Check if the folder name is longer than max chars
-			if (santisedFolderName.length > CONSTANTS.MAX_CHARS_FILE_NAME) return Error.IncorrectQuery(res, 'folderName is too long');
+			const { parentId, folderName } = req.body;
+			if (typeof folderName !== 'string' || folderName.trim().length == 0) return Error.IncorrectQuery(res, 'Folder name is not a string.');
 
 			// Decode & santise the referer path to ensure the folder is added to the correct path
-			const userPath = decodeURI(req.headers['referer']?.split('/files')[1] || '/');
-			if (userPath.length == 0) return Error.GenericError(res, 'Invalid path detected.');
-			await client.FileManager.createDirectory(session.user.id, userPath.startsWith('/') ? userPath : `/${userPath}`, santisedFolderName);
+			await client.FileManager.createDirectory(session.user.id, parentId, folderName.trim());
 			res.json({ success: 'Successfully created folder.' });
 		} catch (err) {
 			client.logger.error(err);
+			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to create folder.');
 		}
 	};

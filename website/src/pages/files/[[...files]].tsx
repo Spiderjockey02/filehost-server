@@ -43,24 +43,23 @@ export default function Files({ path = '/' }: FilePageProps) {
 		if (!path) fetchRecentlyViewedFiles();
 	}, [path, fetchFiles, fetchRecentlyViewedFiles]);
 
-	if (session == null) return null;
+	if (session == null || file == null) return null;
 	return (
 		<FileLayout user={session.user}>
-			<BreadcrumbNav path={path} isFile={file?.type == 'FILE'} setviewType={setviewType} viewType={viewType} />
+			<BreadcrumbNav path={path} isFile={file.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={file.id} />
 			{errorMsg && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
 			{(path.length == 0 && recents.length > 0) &&
 				<RecentNavbar files={recents} />
 			}
 			<div style={{ paddingTop: '6px' }}>
-				{file ? (
-					file.type === 'FILE' ? (
-						<FileViewer file={file} userId={session.user.id} />
-					) : viewType === 'Tiles' ? (
-						<PhotoAlbum folder={file} />
-					) : (
-						<Directory folder={file} />
-					)
-				) : null}
+				{file.type === 'FILE' ? (
+					<FileViewer file={file} userId={session.user.id} />
+				) : viewType === 'Tiles' ? (
+					<PhotoAlbum folder={file} />
+				) : (
+					<Directory folder={file} />
+				)
+				}
 			</div>
 		</FileLayout>
 	);

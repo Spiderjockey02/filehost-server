@@ -96,6 +96,8 @@ model File {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
   recentlyViewedBy  RecentlyViewedFile[]
+
+  @@unique([path, userId])
 }
 
 model RecentlyViewedFile {

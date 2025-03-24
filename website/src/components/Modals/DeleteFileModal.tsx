@@ -2,8 +2,10 @@ import { FileModalProps } from '@/types/Components/Modals';
 import { BaseSyntheticEvent } from 'react';
 import Modal from '@/components/UI/Modal';
 import axios from 'axios';
+import { useFileDispatch } from '../fileManager';
 
 export default function DeleteFileModal({ file, closeContextMenu }: FileModalProps) {
+	const dispatch = useFileDispatch();
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
 		document.getElementById(id)?.setAttribute('aria-hidden', 'true');
@@ -16,8 +18,10 @@ export default function DeleteFileModal({ file, closeContextMenu }: FileModalPro
 		e.preventDefault();
 		try {
 			await axios.delete('/api/files/delete', {
-				data: { fileName: file.name },
+				data: { fileId: file.id },
 			});
+			const { data } = await axios.get(`/api/${window.location.pathname}`);
+			dispatch({ type: 'SET_FILE', payload: data.file });
 		} catch (err) {
 			console.log(err);
 		}

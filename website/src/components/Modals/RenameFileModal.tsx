@@ -5,6 +5,7 @@ import axios from 'axios';
 
 const InputErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'red', borderLeftColor: 'red', borderBottomColor: 'red' } : {};
 const TextErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'red', borderRightColor: 'red', borderBottomColor: 'red' } : {};
+
 export default function RenameFileModal({ file, closeContextMenu }: FileModalProps) {
 	const [rename, setRename] = useState(file.name);
 	const [errorMsg, setErrorMsg] = useState('');
@@ -19,12 +20,11 @@ export default function RenameFileModal({ file, closeContextMenu }: FileModalPro
 	}
 
 	const handleRenameSubmit = async (e: BaseSyntheticEvent) => {
-		const oldName = file.name;
 		e.preventDefault();
 
 		try {
-			await axios.post('/api/files/rename', { oldName, newName: file.type == 'FILE' ? `${rename}.${file.name.split('.').at(-1)}` : rename });
-			const { data } = await axios.get(`/api/files/${window.location.pathname.replace('/files', '/')}`);
+			await axios.post('/api/files/rename', { fileId: file.id, newName: `${rename}${file.type == 'FILE' ? `.${file.name.split('.').at(-1)}` : ''}` });
+			const { data } = await axios.get(`/api/${window.location.pathname}`);
 			dispatch({ type: 'SET_FILE', payload: data.file });
 		} catch (err) {
 			if (axios.isAxiosError(err)) return setErrorMsg(err.response?.data.error);
@@ -44,7 +44,6 @@ export default function RenameFileModal({ file, closeContextMenu }: FileModalPro
 					</div>
 					<form onSubmit={handleRenameSubmit} method="post">
 						<div className="modal-body">
-							<input type="hidden" id="oldPath" name="oldPath" value={file.name} />
 							<div className="input-group mb-3">
 								<input className="form-control" autoComplete='off' style={InputErrorStyles(errorMsg.length > 0)} id="renameInput" type="text" name="newPath" defaultValue={file.name.replace(`.${file.name.split('.').at(-1)}`, '')} onChange={(e) => setRename(e.target.value)} />
 								{file.type == 'FILE' && <span className="input-group-text" style={TextErrorStyles(errorMsg.length > 0)} id="renameSuffix">.{file.name.split('.').at(-1)}</span>}

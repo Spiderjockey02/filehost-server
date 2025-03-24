@@ -76,7 +76,7 @@ export default class FileAccessor {
 
 		// Update the cache on itself
 		const parentFile = await this.getById(file.parentId);
-		if (parentFile) this.cache.delete(`${file.userId}_${parentFile.path.slice(1)}`);
+		if (parentFile) this.cache.delete(`${file.userId}_${parentFile.path}`);
 		this.cache.set(`${file.userId}_${file.path}`, file);
 		return file;
 	}
@@ -115,7 +115,8 @@ export default class FileAccessor {
 		* @returns {FullFile | null} The file.
 	*/
 	async getByFilePath(userId: string, filePath: string, includeDeleted?: boolean): Promise<FullFile | null> {
-		let file = this.cache.get(`${userId}_${filePath}`) ?? null;
+		const cleanedFilePath = filePath.startsWith('/') ? filePath : `/${filePath}`;
+		let file = this.cache.get(`${userId}_${cleanedFilePath}`) ?? null;
 		if (file !== null) return file;
 
 		// Fetch from database
@@ -124,7 +125,7 @@ export default class FileAccessor {
 				userId,
 				deletedAt: includeDeleted ? undefined : null,
 				path: {
-					equals: filePath.startsWith('/') ? filePath : `/${filePath}`,
+					equals: cleanedFilePath,
 				},
 			},
 			include: {

@@ -1,10 +1,12 @@
-import { RecentlyViewed, User } from '..';
+import { User } from 'better-auth';
+import { RecentlyViewed } from '..';
 
 export type viewTypeTypes = 'List' | 'Tiles';
 
 export interface BreadcrumbNavProps {
   path: string
   isFile: boolean
+  parentId: string
 	setviewType: (viewType: 'List' | 'Tiles') => void
 	viewType: viewTypeTypes
 }

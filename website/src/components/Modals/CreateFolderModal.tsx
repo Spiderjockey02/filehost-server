@@ -1,10 +1,16 @@
-import axios from 'axios';
 import { BaseSyntheticEvent, useState } from 'react';
+import { useFileDispatch } from '../fileManager';
 import InputField from '../Form/InputField';
+import axios from 'axios';
 
-export default function CreateFolderModal() {
+interface Props {
+	parentId: string;
+}
+
+export default function CreateFolderModal({ parentId }: Props) {
 	const [folderName, setFolderName] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
+	const dispatch = useFileDispatch();
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -18,9 +24,12 @@ export default function CreateFolderModal() {
 		try {
 			await axios.post('/api/files/create-folder', {
 				folderName: folderName,
+				parentId: parentId,
 			});
 			closeModal('createFolderModal');
 			setFolderName('');
+			const { data } = await axios.get(`/api${window.location.pathname}`);
+			dispatch({ type: 'SET_FILE', payload: data.file });
 		} catch (error) {
 			if (axios.isAxiosError(error)) return setErrorMsg(error.response?.data.error);
 			console.error(error);
@@ -37,7 +46,7 @@ export default function CreateFolderModal() {
 					</div>
 					<form onSubmit={handleFolderSubmit} method="post">
 						<div className="modal-body">
-							<InputField title='Folder name' name="folder" onChange={(e) => setFolderName(e.target.value)} errorMsg={errorMsg} />
+							<InputField title='Folder name' name="folder" onChange={(e) => setFolderName(e.target.value)} errorMsg={errorMsg} autocomplete='off' />
 						</div>
 						<div className="modal-footer">
 							<button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
