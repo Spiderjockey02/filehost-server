@@ -3,12 +3,12 @@ import { useEffect, useState, useCallback, MouseEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { TrashContextMenu, FileDetailCell } from '@/components';
 import en from 'javascript-time-ago/locale/en';
-import { useSession } from 'next-auth/react';
 import Table from '@/components/UI/Table';
 import TimeAgo from 'javascript-time-ago';
 import FileLayout from '@/layouts/file';
 import { fileItem } from '@/types';
 import axios from 'axios';
+import { useTypedSession } from '@/auth-client';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -20,7 +20,7 @@ const initalContextMenu = {
 };
 
 export default function Trash() {
-	const { data: session, status } = useSession({ required: true });
+	const { data: session } = useTypedSession();
 	const [files, setFiles] = useState<fileItem[]>([]);
 	const [selected, setSelected] = useState<fileItem[]>([]);
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
@@ -104,7 +104,7 @@ export default function Trash() {
 		fetchFiles();
 	}, [fetchFiles]);
 
-	if (status == 'loading') return null;
+	if (session == null) return null;
 	return (
 		<FileLayout user={session.user}>
 			<div className="d-flex justify-content-between align-items-center mb-3">
