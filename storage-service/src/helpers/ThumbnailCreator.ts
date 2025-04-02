@@ -1,11 +1,11 @@
-import { PATHS } from '../utils';
-import fs from 'node:fs/promises';
 import imageThumbnail from 'image-thumbnail';
 import { spawn } from 'node:child_process';
-import { PDFImage } from 'pdf-image';
-import sharp from 'sharp';
-import { lookup } from 'mime-types';
 import { createCanvas } from 'canvas';
+import { PDFImage } from 'pdf-image';
+import { lookup } from 'mime-types';
+import fs from 'node:fs/promises';
+import { PATHS } from '../utils';
+import sharp from 'sharp';
 
 export default class ThumbnailCreator {
 	width: number;

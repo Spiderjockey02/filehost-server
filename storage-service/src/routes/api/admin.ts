@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { checkAdmin } from '../../middleware';
 import { getStats, getUsers } from '../../controllers/admin';
-import { Client } from 'src/helpers';
+import type Client from '../../helpers/Client';
+import { checkAdmin } from '../../middleware';
+import { Router } from 'express';
 const router = Router();
 
 export default function(client: Client) {

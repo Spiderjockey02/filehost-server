@@ -4,7 +4,7 @@ import compression from 'compression';
 import type { customRequest, customResponse } from './types';
 import { join } from 'path';
 import cors from 'cors';
-import { Client } from './helpers';
+import Client from './helpers/Client';
 const app = express();
 const client = new Client();
 

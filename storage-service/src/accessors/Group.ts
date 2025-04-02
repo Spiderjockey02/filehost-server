@@ -1,8 +1,8 @@
-import client from './prisma';
+import type { CreateGroupProps, FullGroup, getGroupsInclude, GroupNameProps } from '../types/database/Group';
 import type { IdParam } from '../types';
-import { CreateGroupProps, FullGroup, getGroupsInclude, GroupNameProps } from 'src/types/database/Group';
 import { Group } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
+import client from './prisma';
 
 export default class GroupManager {
 	cache: LRUCache<string, Group>;

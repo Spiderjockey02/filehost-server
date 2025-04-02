@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
 import { avatarForm, getSession } from '../middleware';
+import type { Request, Response } from 'express';
 import { Error, sanitiseObject } from '../utils';
-import { Client } from 'src/helpers';
+import type Client from '../helpers/Client';
 
 // Endpoint: POST /api/session/change-avatar
 export const postChangeAvatar = (client: Client) => {

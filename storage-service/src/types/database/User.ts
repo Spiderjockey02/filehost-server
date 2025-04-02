@@ -29,3 +29,5 @@ export type FullUser = Prisma.UserGetPayload<{
 		notifications: true
   }
 }>
+
+export type storageDirection = 'DECRE' | 'INCRE'

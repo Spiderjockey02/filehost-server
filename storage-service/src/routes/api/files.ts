@@ -1,7 +1,8 @@
-// For upload, delete, move etc endpoints
+import { postCopyFile, postCreateFolder, deleteFile, getDownloadFile, getFiles,
+	postMoveFile, postFileUpload, postRenameFile, getSearchFile, getAllDirectories,
+	getBulkDownload, deleteBulkFiles } from '../../controllers/files';
+import type Client from '../../helpers/Client';
 import { Router } from 'express';
-import { postCopyFile, postCreateFolder, deleteFile, getDownloadFile, getFiles, postMoveFile, postFileUpload, postRenameFile, getSearchFile, getAllDirectories, getBulkDownload, deleteBulkFiles } from '../../controllers/files';
-import { Client } from 'src/helpers';
 const router = Router();
 
 export default function(client: Client) {

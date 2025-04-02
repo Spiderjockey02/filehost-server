@@ -1,9 +1,7 @@
-import { Request, Response } from 'express';
-import { lookup } from 'mime-types';
-import fs from 'node:fs';
-import { PATHS, Error } from '../utils';
+import type { Request, Response } from 'express';
+import type Client from '../helpers/Client';
 import { getSession } from '../middleware';
-import { Client } from 'src/helpers';
+import { Error } from '../utils';
 
 // Endpoint GET /avatar/:userId?
 export const getAvatar = () => {

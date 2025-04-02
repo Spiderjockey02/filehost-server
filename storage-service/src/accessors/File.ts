@@ -1,8 +1,7 @@
-import { createFile, FullFile, updateFile, updateFilePath } from 'src/types/database/File';
-import client from './prisma';
-import { LRUCache } from 'lru-cache';
+import type { createFile, FullFile, updateFile, updateFilePath } from '../types/database/File';
 import { File, FileType } from '@prisma/client';
-import prisma from './prisma';
+import { LRUCache } from 'lru-cache';
+import client from './prisma';
 
 export default class FileAccessor {
 	cache: LRUCache<string, FullFile>;
@@ -87,7 +86,7 @@ export default class FileAccessor {
 	 * @returns {number} The number of rows updated.
 	*/
 	async updateChildsPath({ oldPath, newPath, userId }: updateFilePath): Promise<number> {
-		const updatedRows = await prisma.$executeRawUnsafe(
+		const updatedRows = await client.$executeRawUnsafe(
 			`UPDATE \`File\`
 			SET path = REPLACE(path, ?, ?)
 			WHERE path LIKE CONCAT(?, '%') 

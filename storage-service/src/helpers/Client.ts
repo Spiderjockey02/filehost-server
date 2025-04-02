@@ -1,10 +1,9 @@
-import Logger from '../utils/Logger';
-import UserManager from '../accessors/User';
-import FileManager from './FileManager';
-import GroupManager from '../accessors/Group';
-import NotificationManager from '../accessors/Notification';
 import RecentlyViewedFileManager from '../accessors/RecentlyViewedFile';
-
+import NotificationManager from '../accessors/Notification';
+import GroupManager from '../accessors/Group';
+import UserManager from '../accessors/User';
+import FileManager from './FileOperationManager';
+import Logger from '../utils/Logger';
 
 export default class Client {
 	logger: Logger;
@@ -20,6 +19,6 @@ export default class Client {
 		this.groupManager = new GroupManager();
 		this.notificationManager = new NotificationManager();
 		this.recentlyViewedFileManager = new RecentlyViewedFileManager();
-		this.FileManager = new FileManager();
+		this.FileManager = new FileManager(this);
 	}
 }

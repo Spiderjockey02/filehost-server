@@ -1,6 +1,6 @@
-import { Router } from 'express';
 import { deleteNotification, deleteResetAvatar, getRecentlyViewed, postChangeAvatar } from '../../controllers/session';
-import { Client } from 'src/helpers';
+import type Client from '../../helpers/Client';
+import { Router } from 'express';
 const router = Router();
 
 export default function(client: Client) {

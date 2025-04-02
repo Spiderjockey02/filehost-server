@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import { Error, sanitiseObject } from '../utils';
 import { getSession, parseForm } from '../middleware';
-import { Client } from '../helpers';
+import { Error, sanitiseObject } from '../utils';
+import type { Request, Response } from 'express';
+import type Client from '../helpers/Client';
 import { FileType } from '@prisma/client';
 
 // Endpoint GET /api/files

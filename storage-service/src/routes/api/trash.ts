@@ -1,7 +1,6 @@
-// For upload, delete, move etc endpoints
-import { Router } from 'express';
 import { deleteEmpty, getTrash, putRestore } from '../../controllers/trash';
-import { Client } from '../../helpers';
+import type Client from '../../helpers/Client';
+import { Router } from 'express';
 const router = Router();
 
 export default function(client: Client) {

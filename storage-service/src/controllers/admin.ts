@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import os from 'os';
 import { Error, sanitiseObject } from '../utils';
-import { Client } from 'src/helpers';
+import type { Request, Response } from 'express';
+import type Client from '../helpers/Client';
+import os from 'os';
 
 type data = { [key: string]: boolean}
 
