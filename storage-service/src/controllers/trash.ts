@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import { getSession } from '../middleware';
 import { Error, sanitiseObject } from '../utils';
-import { Client } from '../helpers';
+import type { Request, Response } from 'express';
+import type Client from '../helpers/Client';
+import { getSession } from '../middleware';
 
 // Endpoint: GET /api/trash
 export const getTrash = (client: Client) => {
