@@ -1,7 +1,6 @@
-import client from './prisma';
-import { GetUsers, fetchUserbyParam, updateUser, UserToGroupProps } from '../types/database/User';
+import type { GetUsers, fetchUserbyParam, updateUser, UserToGroupProps, FullUser, storageDirection } from '../types/database/User';
 import { LRUCache } from 'lru-cache';
-import { FullUser } from 'src/types/database/User';
+import client from './prisma';
 
 export default class UserManager {
 	cache: LRUCache<string, FullUser>;
@@ -95,6 +94,24 @@ export default class UserManager {
 			if (user != null) this.cache.set(user?.id, user);
 		}
 		return user;
+	}
+
+	async modifyStorageSize(userId: string, size: bigint, direction: storageDirection): Promise<FullUser> {
+		return client.user.update({
+			where: {
+				id: userId,
+			},
+			data: {
+				totalStorageSize: {
+					decrement: direction === 'DECRE' ? size : undefined,
+					increment: direction === 'INCRE' ? size : undefined,
+				},
+			},
+			include: {
+				group: true,
+				notifications: true,
+			},
+		});
 	}
 
 	/**
