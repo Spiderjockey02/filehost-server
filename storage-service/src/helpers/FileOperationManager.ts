@@ -1,35 +1,16 @@
-import { CONSTANTS, Error as ErrorCL, normalizePath, PATHS, sanitiseObject } from '../utils';
-import path from 'node:path';
-import fs from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import util from 'node:util';
-import { exec } from 'node:child_process';
-import type { Response } from 'express';
-import FileAccessor from '../accessors/File';
-import archiver from 'archiver';
-import TrashHandler from './TrashHandler';
-import { lookup } from 'mime-types';
+import { CONSTANTS, normalizePath, PATHS, sanitiseObject } from '../utils';
+import FileSystemManager from './FileSystemManager';
 import type { File } from '@prisma/client';
-import ThumbnailCreator from './ThumbnailCreator';
-const cmd = util.promisify(exec);
+import TrashHandler from './TrashHandler';
+import path from 'node:path';
+import Client from './Client';
 
-interface diskStorage {
-  free: number
-  total: number
-}
-export default class FileManager extends FileAccessor {
-	diskData: diskStorage;
+export default class FileManager extends FileSystemManager {
 	TrashHandler: TrashHandler;
-	ThumbnailCreator: ThumbnailCreator;
-	constructor() {
-		super();
-		this.TrashHandler = new TrashHandler(this);
-		this.ThumbnailCreator = new ThumbnailCreator();
 
-		// Fetch disk data & update every 5 minutes
-		this.diskData = { free: 0, total: 0 };
-		this._fetchDiskData();
-		setInterval(() => this._fetchDiskData(), 1000 * 60 * 10);
+	constructor(client: Client) {
+		super();
+		this.TrashHandler = new TrashHandler(client);
 	}
 
 	/**
@@ -95,16 +76,16 @@ export default class FileManager extends FileAccessor {
 
 			// Delete the old folder now it should be empty
 			const oldFolderPath = path.join(PATHS.CONTENT, userId, oldFile.path);
-			if ((await fs.readdir(oldFolderPath)).length === 0) await fs.rmdir(oldFolderPath);
+			if (await this.getNumberOfChildrenInFolder(oldFolderPath) === 0) await this.deleteFolderOnSystem(oldFolderPath);
 			return;
 		}
 
 		// Ensure the new folder structure exists on the file system
 		const newFileSystemPath = path.join(PATHS.CONTENT, userId, newFilePathInDb);
-		await fs.mkdir(path.dirname(newFileSystemPath), { recursive: true });
+		await this.createFolderOnSystem(path.dirname(newFileSystemPath), { recursive: true });
 
 		// Move the file/folder on the file system
-		await fs.rename(path.join(PATHS.CONTENT, userId, oldFile.path), newFileSystemPath);
+		await this.renameOnSystem(path.join(PATHS.CONTENT, userId, oldFile.path), newFileSystemPath);
 	}
 
 	/**
@@ -142,7 +123,7 @@ export default class FileManager extends FileAccessor {
 		// Update file in the filesystem (If it failes rollback the database changes)
 		try {
 			// Rename the file in the filesystem
-			await fs.rename(path.join(PATHS.CONTENT, userId, file.path), path.join(PATHS.CONTENT, userId, newFile.path));
+			await this.renameOnSystem(path.join(PATHS.CONTENT, userId, file.path), path.join(PATHS.CONTENT, userId, newFile.path));
 		} catch (err) {
 			// Rollback database changes on failure
 			await this.update({ id: file.id, name: file.name, path: file.path });
@@ -204,102 +185,7 @@ export default class FileManager extends FileAccessor {
 				type: 'DIRECTORY',
 			},
 		});
-		return fs.mkdir(path.join(PATHS.CONTENT, userId, parentDir.path, folderName), { recursive: true });
-	}
-
-	/**
-	  * Retrieves the file system statistics
-		* @returns {diskStorage} The disk storage data.
-	*/
-	getFileSystemStatitics(): diskStorage {
-		return this.diskData;
-	}
-
-	downloadFile(res: Response, userId: string, filePath: string) {
-		res.download(path.join(PATHS.CONTENT, userId, filePath));
-	}
-
-	async downloadDirectory(res: Response, userId: string, filePath: string) {
-		const archive = archiver('zip', { zlib: { level: 9 } });
-		res.setHeader('Content-Type', 'application/zip');
-		res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}.zip"`);
-
-		// Append directory to archive
-		archive.pipe(res);
-		archive.directory(path.join(PATHS.CONTENT, userId, filePath), false);
-
-		try {
-			await archive.finalize();
-			res.end();
-		} catch (error) {
-			ErrorCL.GenericError(res, 'Failed to create archive');
-		}
-	}
-
-	async downloadFiles(res: Response, userId: string, filePaths: string[]) {
-		const archive = archiver('zip', { zlib: { level: 9 } });
-		res.setHeader('Content-Type', 'application/zip');
-		res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
-
-		// Append files to archive
-		archive.pipe(res);
-
-		for (const filePath of filePaths) {
-			// Check if file is actually file or a folder
-			const file = await this.getByFilePath(userId, filePath);
-			if (file == null) continue;
-
-			// Append file to archive
-			if (file.type === 'FILE') {
-				archive.file(path.join(PATHS.CONTENT, userId, filePath), { name: filePath });
-			} else {
-				archive.directory(path.join(PATHS.CONTENT, userId, filePath), file.name);
-			}
-		}
-
-		try {
-			await archive.finalize();
-			res.end();
-		} catch (error) {
-			ErrorCL.GenericError(res, 'Failed to create archive');
-		}
-	}
-
-
-	async deleteAvatar(userId: string) {
-		if (existsSync(`${PATHS.AVATAR}/${userId}.webp`)) return fs.rm(`${PATHS.AVATAR}/${userId}.webp`);
-	}
-
-	async getThumbnail(res: Response, userId: string, filePath: string) {
-		const file = await this.getByFilePath(userId, filePath);
-		if (file == null) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
-
-		// Get the mimeType of the file
-		const fileType = lookup(file.path);
-		const fileName = file.name.slice(0, file.name.lastIndexOf('.'));
-		if (fileType == false) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
-
-		// Create folder (if needed to)
-		const folder = file.path.split('/').slice(0, -1).join('/');
-		if (!existsSync(`${PATHS.THUMBNAIL}/${userId}/${folder}`)) await fs.mkdir(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
-
-		if (existsSync(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`)) {
-			res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
-		} else {
-			await this.ThumbnailCreator.createThumbnail(file.userId, file.path);
-			res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
-		}
-	}
-
-	/**
-	  * Ensures the path is within the user's directory
-	  * @param {string} userId The user's ID.
-	  * @param {string} filePath How file path.
-	*/
-	_verifyTraversal(userId: string, filePath: string) {
-		const userBasePath = path.resolve(PATHS.CONTENT, userId);
-		const targetPath = path.resolve(filePath);
-		return targetPath.startsWith(userBasePath);
+		return this.createFolderOnSystem(path.join(PATHS.CONTENT, userId, parentDir.path, folderName), { recursive: true });
 	}
 
 	/**
@@ -328,13 +214,12 @@ export default class FileManager extends FileAccessor {
 
 		// Ensure the target directory exists on the filesystem
 		const newFileDir = path.join(PATHS.CONTENT, userId, newFile.path.substring(0, newFile.path.lastIndexOf('/')));
-		await fs.mkdir(newFileDir, { recursive: true });
+		await this.createFolderOnSystem(newFileDir, { recursive: true });
 
 		// Copy the actual file contents
-		await fs.copyFile(
+		await this.copyFileOnSystem(
 			path.join(PATHS.CONTENT, userId, oldFile.path),
 			path.join(PATHS.CONTENT, userId, newFile.path),
-			fs.constants.COPYFILE_EXCL,
 		);
 	}
 
@@ -363,7 +248,7 @@ export default class FileManager extends FileAccessor {
 
 		// / Create the directory on the filesystem as well
 		const newFolderPath = path.join(PATHS.CONTENT, userId, newFolder.path);
-		await fs.mkdir(newFolderPath, { recursive: true });
+		await this.createFolderOnSystem(newFolderPath, { recursive: true });
 
 		// Recursively copy files and subdirectories inside this folder
 		const children = await this.getChildrenByParentId(oldDir.id);
@@ -376,30 +261,6 @@ export default class FileManager extends FileAccessor {
 				// If it's a file, copy it
 				await this._copyFile(userId, child, newFolder);
 			}
-		}
-	}
-
-	/**
-	  * Fetches disk data
-	*/
-	async _fetchDiskData() {
-		const platform = process.platform;
-		if (platform == 'win32') {
-			const { stdout } = await cmd('wmic logicaldisk get size,freespace,caption');
-			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
-			const filtered = parsed.filter(d => process.cwd().toUpperCase().startsWith(d[0].toUpperCase()));
-			this.diskData = {
-				free: Number(filtered[0][1]),
-				total: Number(filtered[0][2]),
-			};
-		} else if (platform == 'linux') {
-			const { stdout } = await cmd('df -Pk --');
-			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
-			const filtered = parsed.filter(() => true);
-			this.diskData = {
-				free: Number(filtered[0][3]),
-				total: Number(filtered[0][1]),
-			};
 		}
 	}
 }

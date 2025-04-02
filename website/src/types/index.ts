@@ -38,6 +38,10 @@ export type fileItem = {
   }
 }
 
+export type deletedFileItem = {
+  deletedAt: Date
+} & fileItem
+
 export type LoginErrorTypes = {
   type: | 'email' | 'password' | 'misc'
   message: string
