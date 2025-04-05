@@ -9,7 +9,7 @@ type data = { [key: string]: boolean}
 export const getStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const diskData = client.FileManager.getFileSystemStatitics();
+			const diskData = client.FileManager.getFileSystemStatistics();
 
 			res.json({
 				storage: {

@@ -256,7 +256,7 @@ export default class FileSystemManager extends FileAccessor {
 	  * Retrieves the file system statistics
 		* @returns {diskStorage} The disk storage data.
 	*/
-	getFileSystemStatitics(): diskStorage {
+	getFileSystemStatistics(): diskStorage {
 		return this.diskData;
 	}
 

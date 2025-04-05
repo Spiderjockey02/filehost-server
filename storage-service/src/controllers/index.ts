@@ -55,7 +55,7 @@ export const getContent = (client: Client) => {
 export const getStatistics = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const [totalUsers, diskData, totalFileCount] = await Promise.all([client.userManager.fetchTotal(), client.FileManager.getFileSystemStatitics(), client.FileManager.fetchTotal()]);
+			const [totalUsers, diskData, totalFileCount] = await Promise.all([client.userManager.fetchTotal(), client.FileManager.getFileSystemStatistics(), client.FileManager.fetchTotal()]);
 
 			res.json({ totalUsers, diskData, totalFileCount });
 		} catch (error) {
