@@ -150,7 +150,15 @@ export default class FileSystemManager extends FileAccessor {
 	}
 
 	async renameOnSystem(oldPath: string, newPath: string) {
-		return fs.rename(oldPath, newPath);
+		try {
+			await fs.rename(oldPath, newPath);
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
+				// Handle cross-device link error
+				await this.copyFileOnSystem(oldPath, newPath);
+				await this.deleteFileOnSystem(oldPath);
+			}
+		}
 	}
 
 	async createFolderOnSystem(folderPath: string, options?: Mode | MakeDirectoryOptions | null) {
@@ -168,6 +176,10 @@ export default class FileSystemManager extends FileAccessor {
 
 	async deleteFolderOnSystem(filePath: string) {
 		return fs.rmdir(filePath, { recursive: true });
+	}
+
+	async deleteFileOnSystem(filePath: string) {
+		return fs.unlink(filePath);
 	}
 
 	sendFile(res: Response, file: File, range?: string | undefined) {

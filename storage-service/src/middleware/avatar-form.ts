@@ -1,28 +1,44 @@
-import formidable from 'formidable';
+import { CONSTANTS, PATHS } from '../utils';
 import type { Request } from 'express';
-import { PATHS } from '../utils';
+import Client from '../helpers/Client';
+import formidable from 'formidable';
+import path from 'node:path';
+import sharp from 'sharp';
 
-const avatarForm = async (req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
-	// eslint-disable-next-line no-async-promise-executor
-	return await new Promise(async (resolve, reject) => {
-		const form = formidable({
-			multiples: false,
-			maxFileSize: 1024 * 1024 * 1024 * 10,
-			uploadDir: PATHS.AVATAR,
-			filename: () => {
-				return `${userId}.webp`;
-			},
-			filter: function({ mimetype }) {
-				// keep only images
-				return mimetype?.includes('image') ?? false;
-			},
-		});
-
-		form.parse(req, async function(err, fields, files) {
-			if (err) reject(err);
-			else resolve({ fields, files });
-		});
+export default async (client: Client, req: Request, userId: string) => {
+	const form = formidable({
+		multiples: false,
+		maxFileSize: CONSTANTS.MAX_AVATAR_SIZE,
+		allowEmptyFiles: false,
+		maxFiles: 1,
+		filename: () => `${userId}.webp`,
+		filter: function({ mimetype }) {
+			// @ts-ignore Broken types for error event
+			if (!mimetype?.includes('image')) form.emit('error', 'The uploaded avatar must be an image file (e.g., JPEG, PNG, GIF).');
+			return true;
+		},
 	});
-};
 
-export default avatarForm;
+	// Parse the form data
+	const [fields, files] = await form.parse(req);
+	const file = files[Object.keys(files)[0]];
+	if (file == undefined) throw 'No file was uploaded.';
+
+	try {
+		// Now do some checks on the file
+		const metadata = await sharp(`${file[0].filepath}`, { pages: -1 }).metadata();
+		if ((metadata.width ?? 0) > 1024 || (metadata.height ?? 0) > 1024) throw 'Image dimensions must not exceed 1024x1024.';
+
+		// Check if image is animated GIF etc
+		if ((metadata.pages ?? 1) > 1) throw 'Animated images are not allowed.';
+
+		// Move to avatar directory, overwriting the old one
+		await client.FileManager.renameOnSystem(file[0].filepath, path.join(PATHS.AVATAR, `${userId}.webp`));
+
+		// Return the parsed fields and files
+		return { fields, files };
+	} catch (error) {
+		await client.FileManager.deleteFileOnSystem(file[0].filepath);
+		throw error;
+	}
+};

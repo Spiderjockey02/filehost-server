@@ -11,12 +11,15 @@ export const postChangeAvatar = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Parse and save file(s)
-			await avatarForm(req, session.user.id);
+			const { files } = await avatarForm(client, req, session.user.id);
+			if (Object.keys(files).length == 0) throw 'No files uploaded';
+
 			return res
 				.json({ success: 'Successfully uploaded user\'s avatar' });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to upload file.');
+			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
+			Error.GenericError(res, `Failed to upload avatar due to: ${err}.`);
 		}
 	};
 };
