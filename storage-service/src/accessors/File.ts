@@ -18,7 +18,7 @@ export default class FileAccessor {
     * @param {createFile} data The file data.
     * @returns {File} The created file.
   */
-	async create(data: createFile): Promise<File> {
+	async create(data: createFile): Promise<FullFile> {
 		const file = await client.file.create({
 			data: {
 				path: data.path,
@@ -28,7 +28,11 @@ export default class FileAccessor {
 				type: data.type,
 				parentId: data.parentId,
 			},
+			include: {
+				children: data.type == 'DIRECTORY',
+			},
 		});
+
 		this.cache.set(`${file.userId}_${file.path}`, file);
 		return file;
 	}

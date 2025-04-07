@@ -19,7 +19,14 @@ export default class FileManager extends FileSystemManager {
 	  * @param {string} filePath file path of the directory.
 	*/
 	async getDirectory(userId: string, filePath: string) {
-		const files = await this.getByFilePath(userId, filePath);
+		let files = await this.getByFilePath(userId, filePath);
+
+		// If it's user's first login, the directory doesn't exist so create it
+		if (files == null && filePath == '') {
+			await this.create({ userId, path: '/', size: 0n, type: 'DIRECTORY', name: '/' });
+			files = await this.getByFilePath(userId, filePath);
+		}
+
 		return sanitiseObject(files);
 	}
 
