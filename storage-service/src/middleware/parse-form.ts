@@ -1,147 +1,106 @@
-import { join } from 'path';
-import formidable from 'formidable';
-import { mkdir } from 'fs/promises';
-import fs from 'fs';
-import type { Request } from 'express';
-import { CONSTANTS, PATHS } from '../utils';
-import type { FullUser } from '../types/database/User';
-import { Client } from 'src/helpers';
+import { UserWithGroup } from 'src/types/database/User';
+import { CONSTANTS, normalizePath, PATHS } from '../utils';
+import type Client from '../helpers/Client';
 import type { File } from '@prisma/client';
+import type { Request } from 'express';
+import formidable from 'formidable';
+import path from 'node:path';
 
-export default async (client: Client, req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
-	// eslint-disable-next-line no-async-promise-executor
-	return await new Promise(async (resolve, reject) => {
+export default async (client: Client, req: Request, user: UserWithGroup) => {
+	// Make sure they haven't already uploaded past their max storage
+	if (user.totalStorageSize >= (user.group?.maxStorageSize ?? 0)) throw 'Max storage reached';
 
-		// Get the path from the referer
-		const refererPath = req.headers['referer']?.split('/files')[1] || '';
-		const path = (refererPath.length > 0) ? decodeURI(refererPath) : '/';
-
-		// Check if the path is valid
-		const uploadDir = join(PATHS.CONTENT, userId, path);
-		if (!client.FileManager._verifyTraversal(userId, uploadDir)) throw 'Invalid path';
-
-		let user: FullUser | null;
-		try {
-			user = await client.userManager.fetchbyParam({ id: userId });
-			if (!user) throw 'Missing user';
-
-			// Make sure they haven't already uploaded max storage
-			if (user.totalStorageSize >= Number(user.group?.maxStorageSize ?? 0)) throw 'Max storage reached';
-
-			// Just make sure the folder exists
-			await mkdir(uploadDir, { recursive: true });
-		} catch (e) {
-			console.log('error', e);
-			return reject(e);
-		}
-
-		const form = formidable({
-			allowEmptyFiles: false,
-			maxFileSize: CONSTANTS.MAX_FILE_SIZE,
-			uploadDir,
-			// Make sure the uploaded file's mime type is allowed
-			filter: ({ mimetype }) => {
-				if (!mimetype) return false;
-				return !CONSTANTS.DISALLOWED_MIME_TYPES.some((blocked) => {
-					// First check if it's a wildcard block
-					if (blocked.endsWith('/*')) return mimetype.startsWith(blocked.slice(0, -2));
-					return mimetype === blocked;
-				});
-			},
-			// Rename the file if it already exists
-			filename: (_name, _ext, part) => {
-				const baseName = part.originalFilename?.replace(/\.[^/.]+$/, '') || 'file';
-				const extension = part.originalFilename?.split('.').pop() || '';
-				let finalName = `${baseName}.${extension}`;
-
-				// Check if a folder of files is being uploaded
-				if (finalName.includes('/')) mkdir(`${uploadDir}/${finalName.split('/').slice(0, -1).join('/')}`, { recursive: true });
-
-				let counter = 1;
-				const MAX_ATTEMPTS = 10;
-				while (counter <= MAX_ATTEMPTS) {
-					const fullPath = join(uploadDir, finalName);
-					if (fs.existsSync(fullPath)) {
-						const newBaseName = `${baseName} (${counter})`;
-						finalName = `${newBaseName}.${extension}`;
-						counter++;
-					} else {
-						break;
-					}
-				}
-				if (counter > MAX_ATTEMPTS) throw new Error('Too many duplicate file names');
-				return finalName;
-			},
-		});
-
-		form.parse(req, async function(err, fields, files) {
-			if (err) return reject(err);
-
-			try {
-				// Update user's total storage size
-				const size: number = files.media?.reduce((a, b) => a + b.size, 0) ?? 0;
-				await client.userManager.update({ id: userId, totalStorageSize: (user?.totalStorageSize ?? 0n) + BigInt(size) });
-				for (const file of files.media ?? []) {
-					const filePath = file.newFilename;
-					const lastSlashIndex = filePath.lastIndexOf('/');
-
-					// Check if a folder was uploaded or not (etc/text.txt vs text.tst)
-					if (lastSlashIndex > -1) {
-						const folderPath = `/${filePath.substring(0, lastSlashIndex)}`;
-						const fileName = filePath.substring(lastSlashIndex + 1);
-						await ensureFolderExists(client, userId, folderPath);
-
-						// Add the file to the folder
-						const dir = await client.FileManager.getByFilePath(userId, folderPath);
-						if (!dir) return reject('Missing parent directory');
-
-						await client.FileManager.update({
-							id: dir.id,
-							children: {
-								userId,
-								name: fileName,
-								path: `${folderPath}/${fileName}`,
-								size: BigInt(file.size),
-							},
-						});
-					} else {
-						// File is uploaded to the root directory
-						let dir = await client.FileManager.getByFilePath(userId, path);
-						if (!dir) {
-							dir = await client.FileManager.create({
-								userId,
-								path: '/',
-								size: 0n,
-								type: 'DIRECTORY',
-								name: '/',
-							});
-						}
-
-						await client.FileManager.update({
-							id: dir.id,
-							children: {
-								userId,
-								name: filePath,
-								path: `${path}${filePath}`,
-								size: BigInt(file.size),
-							},
-						});
-					}
-				}
-
-				resolve({ fields, files });
-			} catch (error) {
-				console.log(error);
-				reject(error);
-			}
-		});
+	const form = formidable({
+		allowEmptyFiles: false,
+		maxFileSize: CONSTANTS.MAX_FILE_SIZE,
+		// Make sure the uploaded file's mime type is allowed
+		filter: ({ mimetype }) => {
+			if (!mimetype) return false;
+			return !CONSTANTS.DISALLOWED_MIME_TYPES.some((blocked) => {
+				// First check if it's a wildcard block
+				if (blocked.endsWith('/*')) return mimetype.startsWith(blocked.slice(0, -2));
+				return mimetype === blocked;
+			});
+		},
 	});
+
+	// Parse the form data & get the metadata
+	const [fields, files] = await form.parse(req);
+	if (fields.metadata == undefined) throw 'No metadata provided';
+	const metadata = JSON.parse(fields.metadata[0]);
+	if (metadata.parentId == undefined) throw 'No parentId provided';
+
+	for (const file of files.media ?? []) {
+		try {
+			let dir = await client.FileManager.getById(metadata.parentId);
+			if (!dir) throw 'Missing parent directory';
+
+			// Ensure the file would not bring the user over their max storage
+			if ((BigInt(file.size) + user.totalStorageSize) >= (user.group?.maxStorageSize ?? 0n)) throw 'File is too large';
+
+			// Check the file isn't already in the directory (Upload CONFLICT)
+			const existingFile = await client.FileManager.getByFilePath(user.id, `${dir.path}${file.originalFilename}`);
+			if (existingFile) throw 'File with that name already exists';
+
+			// Update user's storage size
+			await client.userManager.modifyStorageSize(user.id, BigInt(file.size), 'INCRE');
+
+			// Check if a folder was uploaded
+			const lastSlashIndex = `${file.originalFilename}`.lastIndexOf('/');
+			if (lastSlashIndex > -1) {
+				const folderPath = `/${`${file.originalFilename}`.substring(0, lastSlashIndex)}`;
+				const fileName = `${file.originalFilename}`.substring(lastSlashIndex + 1);
+				await ensureFolderExists(client, user.id, folderPath);
+
+				// Add the file to the folder
+				dir = await client.FileManager.getByFilePath(user.id, folderPath);
+				if (!dir) throw 'Missing parent directory';
+
+				await client.FileManager.update({
+					id: dir.id,
+					children: {
+						userId: user.id,
+						name: fileName,
+						path: `${folderPath}/${fileName}`,
+						size: BigInt(file.size),
+					},
+				});
+			} else {
+				dir = await client.FileManager.getByFilePath(user.id, dir.path);
+				if (!dir) {
+					dir = await client.FileManager.create({
+						userId: user.id,
+						path: '/',
+						size: 0n,
+						type: 'DIRECTORY',
+						name: '/',
+					});
+				}
+
+				await client.FileManager.update({
+					id: dir.id,
+					children: {
+						userId: user.id,
+						name: `${file.originalFilename}`,
+						path: `${normalizePath(dir.path)}${file.originalFilename}`,
+						size: BigInt(file.size),
+					},
+				});
+			}
+			await client.FileManager.renameOnSystem(file.filepath, `${path.join(PATHS.CONTENT, user.id, dir.path, `${file.originalFilename}`)}`);
+		} catch (error) {
+			// Delete the files that were uploaded
+			await client.FileManager.deleteFileOnSystem(file.filepath);
+			throw error;
+		}
+	}
+	return { fields, files };
 };
 
 // Helper function to create folders recursively
 async function ensureFolderExists(client: Client, userId: string, fullPath: string) {
 	const pathParts = fullPath.split('/');
-	let parentDir = (await client.FileManager.getByFilePath(userId, '/') as File);
+	let parentDir = await client.FileManager.getByFilePath(userId, '/') as File;
 	let currentPath = parentDir.path;
 
 	for (const part of pathParts) {

@@ -30,4 +30,10 @@ export type FullUser = Prisma.UserGetPayload<{
   }
 }>
 
+export type UserWithGroup = Prisma.UserGetPayload<{
+  include: {
+    group: true
+  }
+}>
+
 export type storageDirection = 'DECRE' | 'INCRE'

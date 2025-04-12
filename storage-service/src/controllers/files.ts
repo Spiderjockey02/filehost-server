@@ -31,8 +31,8 @@ export const postFileUpload = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Parse and save file(s)
-			const { files } = await parseForm(client, req, session.user.id);
-			if (files.media == undefined) throw 'No files uploaded';
+			const { files } = await parseForm(client, req, session.user);
+			if (Object.keys(files).length == 0) throw 'No files uploaded';
 
 			return res.json({ success: 'File(s) successfully uploaded.' });
 		} catch (err) {
