@@ -3,11 +3,11 @@ import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { GetServerSidePropsContext } from 'next/types';
 import { ErrorPopup, InputField } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
-import { authClient } from '@/auth-client';
+import { authClient } from '@/auth/client';
 import { LoginErrorTypes } from '@/types';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { auth } from '@/auth';
+import { auth } from '@/auth/server';
 import Link from 'next/link';
 
 export default function SignIn() {

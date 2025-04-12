@@ -2,6 +2,7 @@ import { faCommentDots, faEarthEurope, faFile, faGauge, faHardDrive, faUsers } f
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatBytes } from '@/utils/functions';
 import { Col, Row } from '@/components/UI/Grid';
+import { authClient } from '@/auth/client';
 import { HomePageProps } from '@/types/pages';
 import MainLayout from '@/layouts/main';
 import Script from 'next/script';
@@ -10,8 +11,10 @@ import Link from 'next/link';
 import axios from 'axios';
 
 export default function Home({ totalUserCount, storageUsed, totalFileCount }: HomePageProps) {
+	const { data } = authClient.useSession();
+
 	return (
-		<MainLayout>
+		<MainLayout user={data?.user ?? null}>
 			<Script src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js" strategy="worker" />
 			<section id="hero" className="d-flex align-items-center large-padding">
 				<div className="container">

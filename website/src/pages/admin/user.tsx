@@ -2,18 +2,18 @@ import type { AdminUserPageProps } from '@/types/pages';
 import type { GetServerSidePropsContext } from 'next';
 import { FileNavBar, Sidebar } from '@/components';
 import { formatBytes } from '@/utils/functions';
-import { useSession } from 'next-auth/react';
-import type { User } from '@/types';
+import { authClient } from '@/auth/client';
+import { User } from 'better-auth/types';
 import axios from 'axios';
 
 export default function Files({ users }: AdminUserPageProps) {
 	// Make sure user is logged in before accessing page
-	const { data: session, status } = useSession({ required: true });
-	if (status == 'loading') return null;
-
+	const { data: session } = authClient.useSession()
+	
+	if (session == null) return null;
 	return (
 		<div className="wrapper">
-			<Sidebar user={session.user}/>
+			<Sidebar user={session.user} active='files'/>
 			<div className="container-fluid" id="content">
 				<FileNavBar user={session.user} />
 				&nbsp;

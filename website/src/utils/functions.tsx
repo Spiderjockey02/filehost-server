@@ -42,3 +42,13 @@ export function getFileIcon(file: fileItem) {
 			return <FontAwesomeIcon icon={faFile} />;
 	}
 }
+
+export function getStatusColor(startVal: number, maxValue: number) {
+	if (startVal >= (0.9 * maxValue)) {
+		return 'bg-danger';
+	} else if (startVal >= (0.5 * maxValue)) {
+		return 'bg-warning';
+	} else {
+		return 'bg-success';
+	}
+}

@@ -1,16 +1,15 @@
 import { FilePanelPopup, FileViewTable } from '@/components';
 import { useCallback, useEffect, useState } from 'react';
 import { GetServerSidePropsContext } from 'next/types';
-import { AuthOption } from './api/auth/[...nextauth]';
+import { authClient } from '@/auth/client';
 import { SearchPageProps } from '@/types/pages';
-import { useSession } from 'next-auth/react';
-import { getServerSession } from 'next-auth';
 import FileLayout from '@/layouts/file';
 import { fileItem } from '@/types';
+import { auth } from '@/auth/server';
 import axios from 'axios';
 
 export default function Search({ query: { query, fileType, dateUpdated } }: SearchPageProps) {
-	const { data: session, status } = useSession({ required: true });
+	const { data: session } = authClient.useSession();
 	const [files, setFiles] = useState<fileItem[]>([]);
 	const [filePanelToShow, setFilePanelToShow] = useState('');
 
@@ -27,9 +26,9 @@ export default function Search({ query: { query, fileType, dateUpdated } }: Sear
 		fetchFiles();
 	}, [fetchFiles]);
 
-	if (status == 'loading') return null;
+	if (session == null) return null;
 	return (
-		<FileLayout user={session.user}>
+		<FileLayout user={session.user} active='files'>
 			<h4><b>Search for: {query}</b></h4>
 			{files.map((_) => (
 				filePanelToShow == _.id && <FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
@@ -40,7 +39,13 @@ export default function Search({ query: { query, fileType, dateUpdated } }: Sear
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await getServerSession(context.req, context.res, AuthOption);
+	// Last check to ensure the user is authenticated
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+	
 	if (session == null) return;
 	return { props: { query: context.query } };
 }

@@ -2,12 +2,12 @@ import { GetServerSidePropsContext } from 'next/types';
 import { ErrorPopup, InputField } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { RegisterErrorTypes } from '@/types';
-import { authClient } from '@/auth-client';
+import { authClient } from '@/auth/client';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { auth } from '@/auth';
+import { auth } from '@/auth/server';
 
 export default function Register() {
 	const [disabled, setDisabled] = useState(true);
@@ -57,6 +57,7 @@ export default function Register() {
 			email: user.email,
 			password: user.password,
 			name: user.username,
+			totalStorageSize: 0,
 			callbackURL: '/login',
 		}, {
 			onSuccess: (ctx) => {

@@ -1,22 +1,12 @@
 import { faBars, faClock, faFolder, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FileNavBarProps } from '@/types/Components/Navbars';
-import { formatBytes } from '@/utils/functions';
+import {  FileSideBarProps } from '@/types/Components/Navbars';
+import { formatBytes, getStatusColor } from '@/utils/functions';
 import Link from 'next/link';
 import config from '@/config';
 
-export default function SideBar({ user }: FileNavBarProps) {
+export default function SideBar({ user, active }: FileSideBarProps) {
 	const size = Number(user.totalStorageSize) ?? 0;
-
-	function getColor(num: number) {
-		if (num >= (0.9 * user.group.maxStorageSize)) {
-			return 'bg-danger';
-		} else if (num >= (0.5 * user.group.maxStorageSize)) {
-			return 'bg-warning';
-		} else {
-			return 'bg-success';
-		}
-	}
 
 	return (
 		<nav id="sidebar">
@@ -40,13 +30,13 @@ export default function SideBar({ user }: FileNavBarProps) {
 				<div className="offcanvas-body" style={{ padding: '0' }}>
 					<ul className="list-unstyled components">
 						<li>
-							<Link href="/files" className='btn sidebar-btn'>
+							<Link href="/files" className={`btn sidebar-btn ${active === 'files' ? 'active' : ''}`}>
 								<FontAwesomeIcon icon={faFolder} data-bs-toggle="tooltip" data-bs-placement="right" title="All files" />
 								<span> All files</span>
 							</Link>
 						</li>
 						<li>
-							<Link href="/recent" className='btn sidebar-btn'>
+							<Link href="/recent" className={`btn sidebar-btn ${active === 'recent' ? 'active' : ''}`}>
 								<FontAwesomeIcon icon={faClock} data-bs-toggle="tooltip" data-bs-placement="right" title="Recents" />
 								<span> Recents</span>
 							</Link>
@@ -55,10 +45,10 @@ export default function SideBar({ user }: FileNavBarProps) {
 							<div className='d-flex flex-column align-items-center'>
 								<label>{formatBytes(size)} of {formatBytes(user.group.maxStorageSize)} used</label>
 								<div className="progress" style={{ width:'200px' }}>
-									<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / user.group.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.group.maxStorageSize}></div>
+									<div className={`progress-bar ${getStatusColor(size, user.group.maxStorageSize)}`} role="progressbar" style={{ width:`${(size / user.group.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.group.maxStorageSize}></div>
 								</div>
 							</div>
-							<Link href="/trash" className='btn sidebar-btn' style={{ marginTop: '0.5rem' }}>
+							<Link href="/trash" className={`btn sidebar-btn ${active === 'bin' ? 'active' : ''}`} style={{ marginTop: '0.5rem' }}>
 								<FontAwesomeIcon icon={faTrash} />
 								<span> Bin</span>
 							</Link>
@@ -68,13 +58,13 @@ export default function SideBar({ user }: FileNavBarProps) {
 			</div>
 			<ul className="list-unstyled components">
 				<li>
-					<Link href="/files" className='btn sidebar-btn'>
+					<Link href="/files" className={`btn sidebar-btn ${active === 'files' ? 'active' : ''}`}>
 						<FontAwesomeIcon icon={faFolder} data-bs-toggle="tooltip" data-bs-placement="right" title="All files" />
 						<span className="side-text"> All files</span>
 					</Link>
 				</li>
 				<li>
-					<Link href="/recent" className='btn sidebar-btn'>
+					<Link href="/recent" className={`btn sidebar-btn ${active === 'recent' ? 'active' : ''}`}>
 						<FontAwesomeIcon icon={faClock} data-bs-toggle="tooltip" data-bs-placement="right" title="Recents" />
 						<span className="side-text"> Recents</span>
 					</Link>
@@ -83,10 +73,10 @@ export default function SideBar({ user }: FileNavBarProps) {
 					<div className='d-flex flex-column align-items-center'>
 						<label className="side-text">{formatBytes(size)} of {formatBytes(user.group.maxStorageSize)} used</label>
 						<div className="progress side-text" style={{ width:'200px' }}>
-							<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / user.group.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.group.maxStorageSize}></div>
+							<div className={`progress-bar ${getStatusColor(size, user.group.maxStorageSize)}`} role="progressbar" style={{ width:`${(size / user.group.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.group.maxStorageSize}></div>
 						</div>
 					</div>
-					<Link href="/trash" className='btn sidebar-btn' style={{ marginTop: '0.5rem' }}>
+					<Link href="/trash" className={`btn sidebar-btn ${active === 'bin' ? 'active' : ''}`} style={{ marginTop: '0.5rem' }}>
 						<FontAwesomeIcon icon={faTrash} />
 						<span className="side-text"> Bin</span>
 					</Link>

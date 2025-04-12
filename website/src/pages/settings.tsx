@@ -5,7 +5,7 @@ import MainLayout from '@/layouts/main';
 import { useState } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
-import { authClient } from '@/auth-client';
+import { authClient } from '@/auth/client';
 
 export default function Settings() {
 	const { data: session } = authClient.useSession();
@@ -98,7 +98,7 @@ export default function Settings() {
 
 	if (session == null) return null;
 	return (
-		<MainLayout>
+		<MainLayout user={session.user}>
 			<section className="d-flex flex-row align-items-center" style={{ 'backgroundColor': '#eee', padding: '5% 0' }}>
 				<div className="card container">
 					<div className="row" style={{ margin: '5px' }}>

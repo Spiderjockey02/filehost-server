@@ -1,14 +1,16 @@
 import { faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TrashContextMenu, FileDetailCell, Table } from '@/components';
 import { useEffect, useState, useCallback, MouseEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { TrashContextMenu, FileDetailCell } from '@/components';
+import { deletedFileItem, fileItem } from '@/types';
+import { GetServerSidePropsContext } from 'next';
 import en from 'javascript-time-ago/locale/en';
-import Table from '@/components/UI/Table';
+import { authClient } from '@/auth/client';
 import TimeAgo from 'javascript-time-ago';
 import FileLayout from '@/layouts/file';
-import { fileItem } from '@/types';
+import { auth } from '@/auth/server';
 import axios from 'axios';
-import { useTypedSession } from '@/auth-client';
+
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -20,8 +22,8 @@ const initalContextMenu = {
 };
 
 export default function Trash() {
-	const { data: session } = useTypedSession();
-	const [files, setFiles] = useState<fileItem[]>([]);
+	const { data: session } = authClient.useSession();
+	const [files, setFiles] = useState<deletedFileItem[]>([]);
 	const [selected, setSelected] = useState<fileItem[]>([]);
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
 
@@ -106,7 +108,7 @@ export default function Trash() {
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user}>
+		<FileLayout user={session.user} active='bin'>
 			<div className="d-flex justify-content-between align-items-center mb-3">
 				<nav aria-label="breadcrumb">
 					<ol className="breadcrumb bg-white mb-0">
@@ -149,4 +151,16 @@ export default function Trash() {
 			</Table>
 		</FileLayout>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	// Last check to ensure the user is authenticated
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+	if (session == null) return;
+
+	return { props: { query: context.query } };
 }

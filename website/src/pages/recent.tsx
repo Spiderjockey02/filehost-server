@@ -1,4 +1,3 @@
-import { useSession } from 'next-auth/react';
 import type { RecentlyViewed } from '@/types';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -10,6 +9,7 @@ import { faSortUp, faSortDown, faSort, faFilter } from '@fortawesome/free-solid-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Table from '@/components/UI/Table';
 import FileDetail from '@/components/Tables/FileDetailCell';
+import { authClient } from '@/auth/client';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -17,7 +17,7 @@ type sortKeyTypes = 'Name' | 'Acc_On';
 type SortOrder = 'ascn' | 'dscn';
 
 export default function Recent() {
-	const { data: session, status } = useSession({ required: true });
+	const { data: session } = authClient.useSession();
 	const [history, setHistory] = useState<RecentlyViewed[]>([]);
 	const [sortKey, setSortKey] = useState<sortKeyTypes>('Acc_On');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
@@ -90,9 +90,9 @@ export default function Recent() {
 		fetchFiles();
 	}, []);
 
-	if (status == 'loading') return null;
+	if (session == null) return null;
 	return (
-		<FileLayout user={session.user}>
+		<FileLayout user={session.user} active='recent'>
 			<div className="d-flex flex-row justify-content-between">
 				<h5><b>Recently viewed files</b></h5>
 				<div className="dropdown">

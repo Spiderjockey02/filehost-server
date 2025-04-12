@@ -1,16 +1,16 @@
-import { Directory, PhotoAlbum, FileViewer, RecentNavbar, ErrorPopup } from '@/components';
+import { Directory, PhotoAlbum, FileViewer, RecentNavbar, ErrorPopup, BreadcrumbNav } from '@/components';
 import { useFile, useFileDispatch } from '@/components/fileManager';
-import BreadcrumbNav from '@/components/Navbars/BreadcrumbNav';
 import { FilePageProps, viewTypeTypes } from '@/types/pages';
 import { useCallback, useEffect, useState } from 'react';
 import type { GetServerSidePropsContext } from 'next';
 import type { RecentlyViewed } from '../../types';
-import { useTypedSession } from '@/auth-client';
+import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
+import { auth } from '@/auth/server';
 import axios from 'axios';
 
 export default function Files({ path = '/' }: FilePageProps) {
-	const { data: session } = useTypedSession();
+	const { data: session } = authClient.useSession();
 
 	const [recents, setRecents] = useState<RecentlyViewed[]>([]);
 	const [errorMsg, setErrorMsg] = useState('');
@@ -45,7 +45,7 @@ export default function Files({ path = '/' }: FilePageProps) {
 
 	if (session == null || file == null) return null;
 	return (
-		<FileLayout user={session.user}>
+		<FileLayout user={session.user} active='files'>
 			<BreadcrumbNav path={path} isFile={file.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={file.id} />
 			{errorMsg && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
 			{(path.length == 0 && recents.length > 0) &&
@@ -66,7 +66,15 @@ export default function Files({ path = '/' }: FilePageProps) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	// Get path
+	// Last check to ensure the user is authenticated
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+	if (session == null) return;
+
+	// Get the path from the URL
 	const path = [context.params?.files].flat();
 	return { props: { path: path.join('/') } };
 }

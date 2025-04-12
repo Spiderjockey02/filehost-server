@@ -1,9 +1,12 @@
+import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import config from '@/config';
 
 export default function TermsOfService() {
+	const { data } = authClient.useSession();
+
 	return (
-		<MainLayout>
+		<MainLayout user={data?.user ?? null}>
 			<div className="container my-5">
 				<h1 className="text-center mb-4">Terms of Service</h1>
 				<p className="text-muted text-center">Effective Date: <strong>22 January 2025</strong></p>

@@ -2,17 +2,17 @@ import type { GetServerSidePropsContext } from 'next';
 import type { AdminPageProps } from '@/types/pages';
 import { FileNavBar, Sidebar } from '@/components';
 import { formatBytes } from '@/utils/functions';
+import { authClient } from '@/auth/client';
 import axios from 'axios';
-import { useTypedSession } from '@/auth-client';
 
 export default function Files({ data }: AdminPageProps) {
 	// Make sure user is logged in before accessing page
-	const { data: session } = useTypedSession();
+	const { data: session } = authClient.useSession();
+	
 	if (session == null) return null;
-
 	return (
 		<div className="wrapper">
-			<Sidebar user={session.user}/>
+			<Sidebar user={session.user} active='files' />
 	      <div className="container-fluid" id="content">
 				<FileNavBar user={session.user}/>
 	        <div id="accordion">
