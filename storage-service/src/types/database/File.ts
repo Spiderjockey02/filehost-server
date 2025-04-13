@@ -4,6 +4,7 @@ export interface createFile {
   path: string
   name: string
   size: bigint
+  mimetype: string | null
   parentId?: string
   userId: string
   type?: FileType

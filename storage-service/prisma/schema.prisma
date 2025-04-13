@@ -95,9 +95,16 @@ model File {
   parentId    String?   
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
+  mediatype   MediaType? @relation(fields: [mimetype], references: [name])
+  mimetype    String?
   recentlyViewedBy  RecentlyViewedFile[]
 
   @@unique([path, userId])
+}
+
+model MediaType {
+  name        String  @id
+  files       File[]
 }
 
 model RecentlyViewedFile {

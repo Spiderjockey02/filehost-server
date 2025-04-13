@@ -1,5 +1,5 @@
 import type { createFile, FullFile, updateFile, updateFilePath } from '../types/database/File';
-import { File, FileType } from '@prisma/client';
+import type { File, FileType } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
 
@@ -19,6 +19,8 @@ export default class FileAccessor {
     * @returns {File} The created file.
   */
 	async create(data: createFile): Promise<FullFile> {
+		if (data.mimetype !== null) await this.fetchOrCreateFileMediaType(data.mimetype);
+		
 		const file = await client.file.create({
 			data: {
 				path: data.path,
@@ -27,6 +29,7 @@ export default class FileAccessor {
 				userId: data.userId,
 				type: data.type,
 				parentId: data.parentId,
+				mimetype: data.mimetype,
 			},
 			include: {
 				children: data.type == 'DIRECTORY',
@@ -43,6 +46,8 @@ export default class FileAccessor {
     * @returns {File} The updated file.
   */
 	async update(data: updateFile): Promise<FullFile> {
+		if (data.children !== undefined && data.children.mimetype !== null) await this.fetchOrCreateFileMediaType(data.children.mimetype);
+
 		const file = await client.file.update({
 			where: {
 				id: data.id,
@@ -236,6 +241,18 @@ export default class FileAccessor {
 				},
 			},
 		});
+	}
+
+	async fetchOrCreateFileMediaType(mimeType: string) {
+		return client.mediaType.upsert({
+			where: {
+				name: mimeType,
+			},
+			create: {
+				name: mimeType,
+			},
+			update: {},
+		})
 	}
 
 	/**

@@ -5,7 +5,6 @@ import type { File } from '@prisma/client';
 import { exec } from 'node:child_process';
 import { Error, PATHS } from '../utils';
 import type { Response } from 'express';
-import { lookup } from 'mime-types';
 import fs from 'node:fs/promises';
 import archiver from 'archiver';
 import path from 'node:path';
@@ -65,19 +64,19 @@ export default class FileSystemManager extends FileAccessor {
 		if (file == null) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
 
 		// Get the mimeType of the file
-		const fileType = lookup(file.path);
 		const fileName = file.name.slice(0, file.name.lastIndexOf('.'));
-		if (fileType == false) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+		if (file.mimetype == null) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
 
 		// Create folder (if needed to)
 		const folder = file.path.split('/').slice(0, -1).join('/');
-		if (!existsSync(`${PATHS.THUMBNAIL}/${userId}/${folder}`)) await fs.mkdir(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
+		const folderPath = `${PATHS.THUMBNAIL}/${userId}/${folder}`
+		if (!existsSync(folderPath)) await fs.mkdir(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
 
-		if (existsSync(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`)) {
-			res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
+		if (existsSync(`${folderPath}/${fileName}.jpg`)) {
+			res.sendFile(`${folderPath}/${fileName}.jpg`);
 		} else {
 			await this.ThumbnailCreator.createThumbnail(file.userId, file.path);
-			res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
+			res.sendFile(`${folderPath}/${fileName}.jpg`);
 		}
 	}
 
@@ -183,17 +182,16 @@ export default class FileSystemManager extends FileAccessor {
 	}
 
 	sendFile(res: Response, file: File, range?: string | undefined) {
-		const fileType = lookup(file.path);
-		if (fileType == false || fileType == 'application/javascript') {
+		if (file.mimetype == null || file.mimetype == 'application/javascript') {
 			const t = readFileSync(`${PATHS.CONTENT}/${file.userId}/${file.path}`, { encoding: 'utf-8' });
 			res.type('text/plain');
 			return res.send(t);
 		}
 
-		if (fileType == 'application/pdf') return res.sendFile(`${PATHS.CONTENT}/${file.userId}/${file.path}`);
+		if (file.mimetype == 'application/pdf') return res.sendFile(`${PATHS.CONTENT}/${file.userId}/${file.path}`);
 
 		// Check what type of file it is, to send the relevent data
-		switch(fileType.split('/')[0]) {
+		switch(file.mimetype.split('/')[0]) {
 			case 'image':
 				return res.sendFile(`${PATHS.CONTENT}/${file.userId}/${file.path}`);
 			case 'video': {
@@ -202,7 +200,7 @@ export default class FileSystemManager extends FileAccessor {
 				if (!range) {
 					res.writeHead(200, {
 						'content-length': videoSize + 1,
-						'content-type': 'video/mp4',
+						'content-type': `${file.mimetype}`,
 					});
 					createReadStream(`${PATHS.CONTENT}/${file.userId}/${file.path}`).pipe(res);
 				} else {
@@ -217,17 +215,13 @@ export default class FileSystemManager extends FileAccessor {
 						'content-range': `bytes ${start}-${end}/${videoSize}`,
 						'accept-ranges': 'bytes',
 						'content-length': contentLength,
-						'content-type': 'video/mp4',
+						'content-type': `${file.mimetype}`,
 						'range': `bytes ${start}-${end}/${videoSize}`,
 					};
 
-					// HTTP Status 206 for Partial Content
+					// Stream content to user (use HTTP code 206 to indicate partial content)
 					res.writeHead(206, headers);
-
-					// create video read stream for this particular chunk
 					const videoStream = createReadStream(`${PATHS.CONTENT}/${file.userId}/${file.path}`, { start, end });
-
-					// Stream the video chunk to the client
 					videoStream.pipe(res);
 				}
 				break;

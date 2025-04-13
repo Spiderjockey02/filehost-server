@@ -63,6 +63,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 						name: fileName,
 						path: `${folderPath}/${fileName}`,
 						size: BigInt(file.size),
+						mimetype: file.mimetype,
 					},
 				});
 			} else {
@@ -74,6 +75,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 						size: 0n,
 						type: 'DIRECTORY',
 						name: '/',
+						mimetype: null,
 					});
 				}
 
@@ -84,6 +86,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 						name: `${file.originalFilename}`,
 						path: `${normalizePath(dir.path)}${file.originalFilename}`,
 						size: BigInt(file.size),
+						mimetype: file.mimetype,
 					},
 				});
 			}
@@ -118,6 +121,7 @@ async function ensureFolderExists(client: Client, userId: string, fullPath: stri
 					path: currentPath,
 					size: 0n,
 					type: 'DIRECTORY',
+					mimetype: null,
 				},
 			});
 		}
