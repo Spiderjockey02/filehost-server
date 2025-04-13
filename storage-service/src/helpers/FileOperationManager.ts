@@ -23,7 +23,8 @@ export default class FileManager extends FileSystemManager {
 
 		// If it's user's first login, the directory doesn't exist so create it
 		if (files == null && filePath == '') {
-			await this.create({ userId, path: '/', size: 0n, type: 'DIRECTORY', name: '/' });
+			await this.create({ userId, path: '/', size: 0n, type: 'DIRECTORY', name: '/', mimetype: null });
+			await this.createFolderOnSystem(path.join(PATHS.CONTENT, userId, '/'), { recursive: true });
 			files = await this.getByFilePath(userId, filePath);
 		}
 
@@ -190,6 +191,7 @@ export default class FileManager extends FileSystemManager {
 				path: `${normalizePath(parentDir.path)}${folderName}`,
 				size: 0n,
 				type: 'DIRECTORY',
+				mimetype: null,
 			},
 		});
 		return this.createFolderOnSystem(path.join(PATHS.CONTENT, userId, parentDir.path, folderName), { recursive: true });
@@ -217,6 +219,7 @@ export default class FileManager extends FileSystemManager {
 			userId: oldFile.userId,
 			type: oldFile.type,
 			parentId: newDir.id,
+			mimetype: oldFile.mimetype,
 		});
 
 		// Ensure the target directory exists on the filesystem
@@ -251,6 +254,7 @@ export default class FileManager extends FileSystemManager {
 			userId: oldDir.userId,
 			type: 'DIRECTORY',
 			parentId: newDir.id,
+			mimetype: null
 		});
 
 		// / Create the directory on the filesystem as well

@@ -155,7 +155,7 @@ export default class FileAccessor {
 				},
 			},
 		});
-		if (file !== null) this.cache.set(`${userId}_${filePath}`, file);
+		if (file !== null) this.cache.set(`${userId}_${file.path.startsWith('/') ? file.path : `/${file.path}`}`, file);
 		return file;
 	}
 

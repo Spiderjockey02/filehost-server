@@ -1,62 +1,62 @@
 import imageThumbnail from 'image-thumbnail';
 import { spawn } from 'node:child_process';
+import type { File } from '@prisma/client';
 import { createCanvas } from 'canvas';
 import { PDFImage } from 'pdf-image';
-import { lookup } from 'mime-types';
 import fs from 'node:fs/promises';
 import { PATHS } from '../utils';
 import sharp from 'sharp';
+import FileSystemManager from './FileSystemManager';
 
 export default class ThumbnailCreator {
 	width: number;
 	height: number;
+	FileSystemManager: FileSystemManager
 
-	constructor() {
+	constructor(FileSystemManager: FileSystemManager) {
 		this.width = 400;
 		this.height = 520;
+		this.FileSystemManager = FileSystemManager;
 	}
 
-	async createThumbnail(userId: string, filePath: string) {
-		const file = await this.getFileByPath(userId, filePath);
-		if (!file) return `${PATHS.THUMBNAIL}/missing-file-icon.png`;
+	/**
+	  * Create a thumbnail for the given file.
+	  * @param {File} file The file object
+	*/
+	async createThumbnail(file: File) {
+		// Create file's parent folder but in thumbnail dir
+		const folder = file.path.split('/').slice(0, -1).join('/');
+		await this.FileSystemManager.createFolderOnSystem(`${PATHS.THUMBNAIL}/${file.userId}/${folder}`);
 
-		const folder = filePath.split('/').slice(0, -1).join('/');
-		await this.createFolderIfNotExists(`${PATHS.THUMBNAIL}/${userId}/${folder}`);
+		// Check if mimetype is null (indicates folder)
+		if (file.mimetype == null) return `${PATHS.THUMBNAIL}/missing-file-icon.png`;
 
-		const mimeType = lookup(filePath);
-		if (!mimeType) return `${PATHS.THUMBNAIL}/missing-file-icon.png`;
+		// Check for generic file types
+		switch (file.mimetype.split('/')[0]) {
+			case 'image':
+				await this.createFromImage(file);
+				break;
+			case 'video':
+				await this.createFromVideo(file);
+				break;
+			case 'text':
+				await this.generateTextThumbnail(file);
+				break;
+		}
 
-		if (mimeType.startsWith('image/')) {
-			await this.createFromImage(userId, filePath);
-		} else if (mimeType.startsWith('video/')) {
-			await this.createFromVideo(userId, filePath);
-		} else if (mimeType === 'application/pdf') {
-			await this.createFromPDF(userId, filePath);
-		} else if (mimeType.startsWith('text/')) {
-			await this.generateTextThumbnail(userId, filePath);
+		// Check for specific file types
+		if (file.mimetype === 'application/pdf') {
+			await this.createFromPDF(file);
 		} else {
 			return `${PATHS.THUMBNAIL}/missing-file-icon.png`;
 		}
 	}
 
-	private async getFileByPath(userId: string, filePath: string) {
-		try {
-			const file = await fs.stat(`${PATHS.CONTENT}/${userId}/${filePath}`);
-			return file ? { path: filePath, name: filePath.split('/').pop() || '' } : null;
-		} catch {
-			return null;
-		}
-	}
-
-	private async createFolderIfNotExists(folderPath: string) {
-		try {
-			await fs.mkdir(folderPath, { recursive: true });
-		} catch (err: any) {
-			if (err.code !== 'EEXIST') throw err;
-		}
-	}
-
-	private async createFromImage(userId: string, path: string) {
+	/**
+	  * Create a thumbnail from a given image
+	  * @param {File} file The file object
+	*/
+	private async createFromImage({ userId, path }: File) {
 		try {
 			// @ts-ignore Broken types
 			const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, {
@@ -71,7 +71,11 @@ export default class ThumbnailCreator {
 		}
 	}
 
-	private async createFromVideo(userId: string, path: string) {
+	/**
+	  * Create a thumbnail from a given video
+	  * @param {File} file The file object
+	*/
+	private async createFromVideo({ userId, path }: File) {
 		try {
 			const outputFilePath = `${PATHS.THUMBNAIL}/${userId}/${path.replace(/\.[^/.]+$/, '')}.jpg`;
 			const child = spawn('ffmpeg', [
@@ -90,7 +94,11 @@ export default class ThumbnailCreator {
 		}
 	}
 
-	private async createFromPDF(userId: string, path: string) {
+	/**
+	  * Create a thumbnail from a given video
+	  * @param {File} file The file object
+	*/
+	private async createFromPDF({ userId, path }: File) {
 		try {
 			const pdfImage = new PDFImage(`${PATHS.CONTENT}/${userId}${path}`);
 			const imagePath = await pdfImage.convertPage(0);
@@ -100,7 +108,11 @@ export default class ThumbnailCreator {
 		}
 	}
 
-	private async generateTextThumbnail(userId: string, path: string) {
+	/**
+	  * Create a thumbnail from a given text file
+	  * @param {File} file The file object
+	*/
+	private async generateTextThumbnail({ userId, path }: File) {
 		try {
 			const text = await fs.readFile(`${PATHS.CONTENT}/${userId}/${path}`, 'utf8');
 

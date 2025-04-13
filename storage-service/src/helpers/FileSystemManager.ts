@@ -27,7 +27,7 @@ export default class FileSystemManager extends FileAccessor {
 
 	constructor() {
 		super();
-		this.ThumbnailCreator = new ThumbnailCreator();
+		this.ThumbnailCreator = new ThumbnailCreator(this);
 
 		// Fetch disk data & update every 5 minutes
 		this.diskData = { free: 0, total: 0 };
@@ -47,6 +47,11 @@ export default class FileSystemManager extends FileAccessor {
 		return false;
 	}
 
+	/**
+	  * Send the user's avatar.
+		* @param {Response} res The HTTP response object.
+	  * @param {string} userId The user's ID.
+	*/
 	sendAvatar(res: Response, userId: string) {
 		// Check if the user already has an avatar, if not display default one
 		const avatarPath = existsSync(`${PATHS.AVATAR}/${userId}.webp`) ? userId : 'default-avatar';
@@ -55,9 +60,9 @@ export default class FileSystemManager extends FileAccessor {
 
 	/**
 	  * Send the thumbnail of the file.
-	  * @param {Response} res The user's ID.
+	  * @param {Response} res The HTTP response object.
 	  * @param {string} userId The user's ID.
-	  * @param {string} filePath The user's ID.
+	  * @param {string} filePath The filepath of the file for the thumbnail
 	*/
 	async sendThumbnail(res: Response, userId: string, filePath: string) {
 		const file = await this.getByFilePath(userId, filePath);
@@ -75,7 +80,7 @@ export default class FileSystemManager extends FileAccessor {
 		if (existsSync(`${folderPath}/${fileName}.jpg`)) {
 			res.sendFile(`${folderPath}/${fileName}.jpg`);
 		} else {
-			await this.ThumbnailCreator.createThumbnail(file.userId, file.path);
+			await this.ThumbnailCreator.createThumbnail(file);
 			res.sendFile(`${folderPath}/${fileName}.jpg`);
 		}
 	}
@@ -148,6 +153,11 @@ export default class FileSystemManager extends FileAccessor {
 		}
 	}
 
+	/**
+	  * Rename a file on the system.
+	  * @param {string} oldPath The old file path.
+	  * @param {string} newPath The new file path.
+	*/
 	async renameOnSystem(oldPath: string, newPath: string) {
 		try {
 			await fs.rename(oldPath, newPath);
@@ -160,27 +170,60 @@ export default class FileSystemManager extends FileAccessor {
 		}
 	}
 
+	/**
+	  * Creates a folder on the system.
+	  * @param {string} folderPath The folder path.
+		* @param {Mode | MakeDirectoryOptions | null} options The options for the folder creation.
+	*/
 	async createFolderOnSystem(folderPath: string, options?: Mode | MakeDirectoryOptions | null) {
-		return fs.mkdir(folderPath, options);
+		try {
+			await fs.mkdir(folderPath, options);
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+		}
 	}
 
+	/**
+	  * Copy a file on the system.
+	  * @param {string} oldPath The old file path.
+		* @param {string} newPath The new file path.
+	*/
 	async copyFileOnSystem(oldPath: string, newPath: string) {
 		return fs.copyFile(oldPath, newPath, fs.constants.COPYFILE_EXCL);
 	}
 
-	async getNumberOfChildrenInFolder(folderPath: string) {
+	/**
+	  * Get the number of children in a folder.
+	  * @param {string} folderPath The old file path.
+		* @return {number} The number of children in the folder.
+	*/
+	async getNumberOfChildrenInFolder(folderPath: string): Promise<number> {
 		const files = await fs.readdir(folderPath);
 		return files.length;
 	}
 
+	/**
+	  * Delete a folder on the system.
+	  * @param {string} filePath The file path.
+	*/
 	async deleteFolderOnSystem(filePath: string) {
 		return fs.rmdir(filePath, { recursive: true });
 	}
 
+	/**
+	  * Delete a file on the system.
+	  * @param {string} filePath The file path.
+	*/
 	async deleteFileOnSystem(filePath: string) {
 		return fs.unlink(filePath);
 	}
 
+	/**
+	  * Send a file to the user.
+	  * @param {Response} res The HTTP response object.
+		* @param {File} file The file to send.
+		* @param {string} [range] The range of the file to send.
+	*/
 	sendFile(res: Response, file: File, range?: string | undefined) {
 		if (file.mimetype == null || file.mimetype == 'application/javascript') {
 			const t = readFileSync(`${PATHS.CONTENT}/${file.userId}/${file.path}`, { encoding: 'utf-8' });
