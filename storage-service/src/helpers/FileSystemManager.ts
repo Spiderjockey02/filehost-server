@@ -77,11 +77,13 @@ export default class FileSystemManager extends FileAccessor {
 		const folderPath = `${PATHS.THUMBNAIL}/${userId}/${folder}`
 		if (!existsSync(folderPath)) await fs.mkdir(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
 
-		if (existsSync(`${folderPath}/${fileName}.jpg`)) {
-			res.sendFile(`${folderPath}/${fileName}.jpg`);
+		// Send or create the thumbnail
+		const thumbnailPath = `${folderPath}/${fileName}.jpg`
+		if (existsSync(thumbnailPath)) {
+			res.sendFile(thumbnailPath);
 		} else {
 			await this.ThumbnailCreator.createThumbnail(file);
-			res.sendFile(`${folderPath}/${fileName}.jpg`);
+			res.sendFile(existsSync(thumbnailPath) ? thumbnailPath : `${PATHS.THUMBNAIL}/missing-file-icon.png`);
 		}
 	}
 
