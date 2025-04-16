@@ -38,9 +38,9 @@ export default function FileViewer({ file }: Props) {
 	switch (mimeType.split('/')[0]) {
 		case 'image':
 			return (
-				<div className='d-flex justify-content-center' style={{ maxHeight: 'calc(100vh - 130px)' }}>
+				<div className='d-flex justify-content-center' style={{ maxHeight: 'calc(100vh - 130px)', padding: '0 6px' }}>
 					<Image className="center" src={`/content/${file.userId}${file.path}`} onClick={handleFullScreen} ref={imageRef}
-						alt={file.name} width={1000} height={1000} style={{ width: 'auto', maxHeight: '100%', cursor: 'pointer' }}
+						alt={file.name} width={1000} height={1000} style={{ cursor: 'pointer', maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
 					/>
 				</div>
 			);
