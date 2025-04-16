@@ -77,9 +77,14 @@ export default class FileManager extends FileSystemManager {
 		if (oldFile.type === 'DIRECTORY') {
 			const children = await this.getChildrenByParentId(oldFile.id);
 
-			// Move all child files/subfolders
-			for (const child of children) {
-				await this.move(userId, child.id, oldFile.id);
+			// Check if the folder is empty
+			if (children.length > 0) {
+				// Move all child files/subfolders
+				for (const child of children) {
+					await this.move(userId, child.id, oldFile.id);
+				}
+			} else {
+				await this.createFolderOnSystem(path.join(PATHS.CONTENT, userId, newFilePathInDb), { recursive: true });
 			}
 
 			// Delete the old folder now it should be empty
