@@ -166,6 +166,8 @@ export default class FileSystemManager extends FileAccessor {
 				// Handle cross-device link error
 				await this.copyFileOnSystem(oldPath, newPath);
 				await this.deleteFileOnSystem(oldPath);
+			} else {
+				throw error;
 			}
 		}
 	}
