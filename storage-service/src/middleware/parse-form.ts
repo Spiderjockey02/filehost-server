@@ -1,4 +1,5 @@
-import { UserWithGroup } from 'src/types/database/User';
+import type { UserWithGroup } from 'src/types/database/User';
+import { cleanUpVideo } from '../helpers/VideoPreprocessor';
 import { CONSTANTS, normalizePath, PATHS } from '../utils';
 import type Client from '../helpers/Client';
 import type { File } from '@prisma/client';
@@ -90,6 +91,11 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 					},
 				});
 			}
+
+			// Check if the uploaded file is a video
+			if (file.mimetype?.startsWith('video/')) await cleanUpVideo(file.filepath, `${file.originalFilename?.split('.').pop()}`);
+
+			// Move the uploaded file away from temp folder to storage server
 			await client.FileManager.renameOnSystem(file.filepath, `${path.join(PATHS.CONTENT, user.id, dir.path, `${file.originalFilename}`)}`);
 		} catch (error) {
 			// Delete the files that were uploaded

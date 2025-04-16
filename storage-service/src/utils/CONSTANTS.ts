@@ -25,4 +25,7 @@ export const CONSTANTS = {
 
 	// What characters or words that are not allowed in a file name
 	INVALID_CHARS_IN_FILE_NAME: ['/', '\\', '?', '%', '*', ':', '|', '"', '<', '>'],
+
+	// Whether or not to keep original metadata on videos and images
+	KEEP_ORIGINAL_METADATA: false,
 };
