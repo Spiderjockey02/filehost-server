@@ -9,9 +9,9 @@ interface Props extends FileSideBarProps {
 
 export default function FileLayout({ children, user, active }: Props) {
 	return (
-		<div className="wrapper" style={{ height:'100vh' }}>
+		<div className="wrapper" style={{ height: '100dvb', blockSize: '100dvb', overflow: 'hidden' }}>
 			<Sidebar user={user} active={active} />
-			<div className="container-fluid" style={{ maxHeight: '100vh', overflowY: 'scroll', padding: '0 6px' }}>
+			<div className="container-fluid" style={{ overflowY: 'scroll', padding: '0 6px' }}>
 				<FileNavBar user={user} />
 				<div className="container-fluid" style={{ padding: '0' }}>
 					{children}
