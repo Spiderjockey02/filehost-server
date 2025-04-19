@@ -1,8 +1,9 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell } from '@fortawesome/free-solid-svg-icons';
 import { NotificationProps } from '@/types/Components/UI';
+import { useIsMobile } from '../Hooks/IsMobile';
 import en from 'javascript-time-ago/locale/en';
-import { useSession } from 'next-auth/react';
+import { authClient } from '@/auth/client';
 import TimeAgo from 'javascript-time-ago';
 import Link from 'next/link';
 import axios from 'axios';
@@ -12,12 +13,13 @@ TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
 export default function NotificationBell({ notifications }: NotificationProps) {
-	const { update } = useSession();
+	const { refetch } = authClient.useSession();
+	const isMobile = useIsMobile();
 
 	async function deleteNotification(id: string) {
 		try {
 			await axios.delete(`/api/session/notifications/${id}`);
-			update();
+			refetch();
 		} catch (error) {
 			console.log(error);
 		}
@@ -25,16 +27,30 @@ export default function NotificationBell({ notifications }: NotificationProps) {
 
 	return (
 		<li className="navbar-nav dropdown">
-			<a className="nav-item text-dark nav-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-				<FontAwesomeIcon icon={faBell} />
-				{
-					notifications.length > 0 ?
-						<span className="position-absolute start-100 translate-middle badge rounded-pill bg-danger">
-							{notifications.length}
-						</span>
-						: null
-				}
-			</a>
+			{
+			isMobile ?
+				<Link className="nav-item text-dark nav-link" href="/notifications">
+					<FontAwesomeIcon icon={faBell} />
+					{
+						notifications.length > 0 ?
+							<span className="position-absolute start-100 translate-middle badge rounded-pill bg-danger">
+								{notifications.length}
+							</span>
+							: null
+					}
+				</Link>
+			:
+				<a className="nav-item text-dark nav-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					<FontAwesomeIcon icon={faBell} />
+					{
+						notifications.length > 0 ?
+							<span className="position-absolute start-100 translate-middle badge rounded-pill bg-danger">
+								{notifications.length}
+							</span>
+							: null
+					}
+				</a>
+			}
 			<div className="dropdown-menu dropdown-menu-end" style={{ width: '300px' }}>
 				<h3 className="dropdown-header">Notifications - {notifications.length}</h3>
 				{
