@@ -13,7 +13,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@prisma/client": "^6.6.0",
     "@types/archiver": "^6.0.2",
     "@types/bcrypt": "^5.0.0",
     "@types/compression": "^1.7.2",
@@ -26,12 +25,12 @@
     "@types/on-finished": "^2.3.1",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
-    "eslint": "^9.24.0",
-    "prisma": "^6.6.0",
+    "eslint": "^8.57.1",
     "typescript": "^5.4.5"
   },
   "dependencies": {
     "@eslint/migrate-config": "^1.4.1",
+    "@prisma/client": "^6.6.0",
     "@tensorflow/tfjs-node": "^4.19.0",
     "@tensorflow/tfjs-node-gpu": "^4.19.0",
     "@vladmandic/face-api": "^1.7.9",
@@ -53,6 +52,7 @@
     "nsfwjs": "^4.1.0",
     "on-finished": "^2.4.1",
     "pdf-image": "^2.0.0",
+    "prisma": "^6.6.0",
     "sharp": "^0.34.1",
     "simple-node-logger": "^21.8.12"
   }
