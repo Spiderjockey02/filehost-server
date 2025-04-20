@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import { getSession } from '../middleware';
-import { Error } from '../utils';
+import { Error, PATHS } from '../utils';
 
 // Endpoint GET /avatar/:userId?
 export const getAvatar = (client: Client) => {
@@ -22,10 +22,15 @@ export const getAvatar = (client: Client) => {
 // Endpoint GET /thumbnail/:userid/:path(*)
 export const getThumbnail = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const userId = req.params.userid as string;
-		const path = req.params.path as string;
+		try {
+			const userId = req.params.userid;
+			const path = req.params.path;
 
-		client.FileManager.sendThumbnail(res, userId, path);
+			await client.FileManager.sendThumbnail(res, userId, path);
+		} catch (error) {
+			client.logger.error(error);
+			res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+		}
 	};
 };
 
@@ -35,8 +40,8 @@ export const getContent = (client: Client) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.InvalidSession(res);
 
-		const userId = req.params.userid as string;
-		const path = req.params.path as string;
+		const userId = req.params.userid;
+		const path = req.params.path;
 
 		// Fetch file from database
 		const file = await client.FileManager.getByFilePath(userId, path);

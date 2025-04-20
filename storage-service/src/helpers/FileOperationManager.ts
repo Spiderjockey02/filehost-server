@@ -54,7 +54,8 @@ export default class FileManager extends FileSystemManager {
 		// Fetch the files from the database
 		const oldFile = await this.getById(fileId);
 		const newDir = await this.getById(newDirId);
-		if (oldFile == null || newDir == null) throw 'File not found path.';
+		if (oldFile == null) throw 'File not found';
+		if (newDir == null || newDir.type !== 'DIRECTORY') throw 'Directory not found';
 
 		// Check the owner of the file and folder
 		if (oldFile.userId !== userId || newDir.userId !== userId) throw 'You do not have permission to move this file.';
@@ -160,7 +161,8 @@ export default class FileManager extends FileSystemManager {
 	async copy(userId: string, fileId: string, newDirId: string) {
 		const file = await this.getById(fileId);
 		const newDir = await this.getById(newDirId);
-		if (file == null || newDir == null) throw new Error('Invalid path.');
+		if (file == null) throw 'File not found';
+		if (newDir == null || newDir.type !== 'DIRECTORY') throw 'Directory not found';
 
 		// Check the owner of the files
 		if (file.userId !== userId || newDir.userId !== userId) throw 'You do not have permission to move this file.';

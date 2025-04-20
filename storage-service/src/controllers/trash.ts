@@ -45,7 +45,7 @@ export const putRestore = (client: Client) => {
 
 			// Get and validate the file paths for restoring
 			const { paths } = req.body;
-			if (paths == undefined || !Array.isArray(paths)) return Error.IncorrectQuery(res, 'Paths is either missing or is not an array');
+			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
 
 			// Loop through each path and restore them (Could take some time if the multiple deep directories)
 			for (const path of paths) {

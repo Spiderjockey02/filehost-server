@@ -20,7 +20,13 @@ export default class TrashHandler {
 	*/
 	async moveToTrash(userId: string, fileId: string) {
 		const file = await this.client.FileManager.getById(fileId);
-		if (file == null) throw new Error('Invalid path');
+		if (file == null) throw 'Invalid File.';
+
+		// Check the owner of the file and folder
+		if (file.userId !== userId) throw 'You do not have permission to delete this file.';
+
+		// Check if the file is already in the trash
+		if (file.deletedAt != null) throw 'File already in the trash';
 
 		// Calculate how long the file should stay in the trash before being removed
 		const dateToDelete = new Date();

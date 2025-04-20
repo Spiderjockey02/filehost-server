@@ -50,11 +50,15 @@ export const deleteFile = (client: Client) => {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
 
+			// Validate request body
 			const { fileId } = req.body;
+			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
+
 			await client.FileManager.delete(session.user.id, fileId);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			client.logger.error(err);
+			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to delete item.');
 		}
 	};
@@ -63,24 +67,28 @@ export const deleteFile = (client: Client) => {
 // Endpoint DELETE /api/files/bulk-delete
 export const deleteBulkFiles = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		try {
-			const session = await getSession(req);
-			if (!session?.user) return Error.InvalidSession(res);
-			const { paths } = req.body;
-			const filePaths: string[] = paths;
+		const session = await getSession(req);
+		if (!session?.user) return Error.InvalidSession(res);
 
-			// Loop through and delete all files
-			for (const filePath of filePaths) {
+		// Validate request body
+		const { paths } = req.body;
+		if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
+
+		// Loop through and delete all files
+		let successfullyDeletion = 0;
+		for (const filePath of paths) {
+			try {
 				// Delete file but also delete the access so no broken links in the recently viewed files
 				const file = await client.FileManager.delete(session.user.id, filePath);
 				await client.recentlyViewedFileManager.delete(file.userId, file.id);
+				successfullyDeletion++;
+			} catch (err) {
+				client.logger.error(err);
 			}
-
-			res.json({ success: 'Successfully deleted items.' });
-		} catch (error) {
-			client.logger.error(error);
-			Error.GenericError(res, 'Failed to delete items.');
 		}
+
+		if (successfullyDeletion == 0) return Error.GenericError(res, 'Failed to delete any files.');
+		res.json({ success: `Successfully deleted ${successfullyDeletion}/${paths.length} items.` });
 	};
 };
 
@@ -90,7 +98,11 @@ export const postMoveFile = (client: Client) => {
 		try {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
+
+			// Validate request body
 			const { newDirId, fileId } = req.body;
+			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, 'New directory ID is missing from request');
+			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
 
 			await client.FileManager.move(session.user.id, fileId, newDirId);
 			res.json({ success: 'Successfully moved item' });
@@ -108,7 +120,11 @@ export const postCopyFile = (client: Client) => {
 		try {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
+
+			// Validate request body
 			const { newDirId, fileId } = req.body;
+			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, 'New directory ID is missing from request');
+			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
 
 			await client.FileManager.copy(session.user.id, fileId, newDirId);
 			res.json({ success: 'Successfully copied file' });
@@ -126,18 +142,21 @@ export const getDownloadFile = (client: Client) => {
 		try {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
+
+			// Validate the file path
 			const { path: filePath } = req.query;
+			if (typeof filePath !== 'string' || filePath.length == 0) return Error.IncorrectQuery(res, 'File path is missing from request');
 
 			// Fetch file from database
-			const file = await client.FileManager.getByFilePath(session.user.id, filePath as string);
+			const file = await client.FileManager.getByFilePath(session.user.id, filePath);
 			if (!file) return Error.MissingResource(res, 'File not found');
 
 			// Check if file is a file or actually a directory
 			switch (file.type) {
 				case 'FILE':
-					return client.FileManager.downloadFile(res, session.user.id, filePath as string);
+					return client.FileManager.downloadFile(res, session.user.id, filePath);
 				case 'DIRECTORY':
-					return client.FileManager.downloadDirectory(res, session.user.id, filePath as string);
+					return client.FileManager.downloadDirectory(res, session.user.id, filePath);
 				default:
 					return Error.GenericError(res, 'Invalid file type');
 			}
@@ -154,10 +173,12 @@ export const getBulkDownload = (client: Client) => {
 		try {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
-			const { paths } = req.body;
 
-			const filesPaths: string[] = paths;
-			client.FileManager.downloadFiles(res, session.user.id, filesPaths);
+			// Validate request body
+			const { paths } = req.body;
+			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
+
+			client.FileManager.downloadFiles(res, session.user.id, paths);
 		} catch (error) {
 			client.logger.error(error);
 			Error.GenericError(res, 'Failed to download files.');
@@ -214,7 +235,7 @@ export const getSearchFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return res.json({ error: 'Invalid session' });
+			if (!session?.user) return Error.InvalidSession(res);
 
 			// Search for file with extra information if sent aswell
 			const srch = req.query.query;
