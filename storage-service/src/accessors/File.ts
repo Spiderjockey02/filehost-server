@@ -20,7 +20,7 @@ export default class FileAccessor {
   */
 	async create(data: createFile): Promise<FullFile> {
 		if (data.mimetype !== null) await this.fetchOrCreateFileMediaType(data.mimetype);
-		
+
 		const file = await client.file.create({
 			data: {
 				path: data.path,
@@ -82,10 +82,12 @@ export default class FileAccessor {
 			},
 		});
 
-		// Update the cache on itself
+		// Update it's own cached version
+		this.cache.delete(`${file.userId}_${file.path}`);
+
+		// Update their parent's cached version aswell
 		const parentFile = await this.getById(file.parentId);
 		if (parentFile) this.cache.delete(`${file.userId}_${parentFile.path}`);
-		this.cache.set(`${file.userId}_${file.path}`, file);
 		return file;
 	}
 
@@ -94,25 +96,33 @@ export default class FileAccessor {
 	 * @param {updateFile} data The file data.
 	 * @returns {number} The number of rows updated.
 	*/
-	async updateChildsPath({ oldPath, newPath, userId }: updateFilePath): Promise<number> {
+	async updateChildsPath({ userId, parentId, oldPath, newPath }: updateFilePath): Promise<number> {
 		const updatedRows = await client.$executeRawUnsafe(
 			`UPDATE \`File\`
 			SET path = REPLACE(path, ?, ?)
 			WHERE path LIKE CONCAT(?, '%') 
-			AND userId = ?`,
+			AND path != ?
+			AND parentId = ?`,
 			oldPath,
 			newPath,
 			oldPath,
-			userId,
+			oldPath,
+			parentId,
 		);
 
-		this.cache.forEach((file, key) => {
-			if (key.startsWith(`${userId}_${oldPath}`)) {
-				const newKey = key.replace(oldPath, newPath);
-				this.cache.delete(key);
-				this.cache.set(newKey, { ...file, path: file.path.replace(oldPath, newPath) });
-			}
-		});
+		// Get the cached files that need replacing
+		const keys = [...this.cache.keys()];
+		const filteredKeys = keys.filter(key => key.startsWith(`${userId}_${oldPath}`));
+		for (const key of filteredKeys) {
+			const file = this.cache.get(key);
+			if (!file || file.parentId !== parentId) continue;
+
+			// Update the cache key
+			const [keyUserId, keyPath] = key.split('_', 2);
+			const newKey = `${keyUserId}_${keyPath.replace(oldPath, newPath)}`;
+			this.cache.delete(key);
+			this.cache.set(newKey, { ...file, path: file.path.replace(oldPath, newPath) });
+		}
 		return updatedRows;
 	}
 
@@ -252,7 +262,7 @@ export default class FileAccessor {
 				name: mimeType,
 			},
 			update: {},
-		})
+		});
 	}
 
 	/**

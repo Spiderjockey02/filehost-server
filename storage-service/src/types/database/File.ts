@@ -22,6 +22,7 @@ export interface updateFile {
 
 export interface updateFilePath {
   userId: string
+  parentId: string
   oldPath: string
   newPath: string
 }

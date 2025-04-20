@@ -64,7 +64,11 @@ export default class FileManager extends FileSystemManager {
 
 		// Make sure a file with the potential same name doesn't already exist
 		const existingFile = await this.getByFilePath(userId, newFilePathInDb);
-		if (existingFile) throw 'CONFLICT';
+		if (existingFile) throw 'A file with that name already exists in the same directory.';
+
+		// Update the old parent directory
+		const oldParent = await this.getById(oldFile.parentId);
+		if (oldParent !== null) this.cache.delete(`${oldParent.userId}_${oldParent.path}`);
 
 		// Update the current file/folder in the database
 		await this.update({
@@ -131,18 +135,19 @@ export default class FileManager extends FileSystemManager {
 
 		// Will update to also support their children for path to be updated aswell (when it's a directory)
 		const newFile = await this.update({ id: file.id, name: newName, path: newPath });
-		if (file.type === 'DIRECTORY') await this.updateChildsPath({ userId, oldPath: file.path, newPath });
+		if (file.type === 'DIRECTORY') await this.updateChildsPath({ parentId: file.id, userId, oldPath: file.path, newPath });
 
-		// Update file in the filesystem (If it failes rollback the database changes)
+		// Update file in the filesystem (If it fails rollback the database changes)
+		this.cache.delete(`${file.userId}_${file.path}`);
 		try {
 			// Rename the file in the filesystem
 			await this.renameOnSystem(path.join(PATHS.CONTENT, userId, file.path), path.join(PATHS.CONTENT, userId, newFile.path));
 		} catch (err) {
+			console.log(err);
 			// Rollback database changes on failure
 			await this.update({ id: file.id, name: file.name, path: file.path });
-			if (file.type === 'DIRECTORY') await this.updateChildsPath({ userId, oldPath: newPath, newPath: file.path });
-
-			throw new Error('Failed to rename file in filesystem.');
+			if (file.type === 'DIRECTORY') await this.updateChildsPath({ parentId: file.id, userId, oldPath: newPath, newPath: file.path });
+			throw 'Failed to rename file in filesystem.';
 		}
 	}
 
@@ -159,6 +164,9 @@ export default class FileManager extends FileSystemManager {
 
 		// Check the owner of the files
 		if (file.userId !== userId || newDir.userId !== userId) throw 'You do not have permission to move this file.';
+
+		// Delete the new file's cache
+		this.cache.delete(`${userId}_${newDir.path}`);
 
 		// If the old file is a directory, copy the directory and its contents recursively
 		if (file.type === 'DIRECTORY') {
@@ -259,7 +267,7 @@ export default class FileManager extends FileSystemManager {
 			userId: oldDir.userId,
 			type: 'DIRECTORY',
 			parentId: newDir.id,
-			mimetype: null
+			mimetype: null,
 		});
 
 		// / Create the directory on the filesystem as well
