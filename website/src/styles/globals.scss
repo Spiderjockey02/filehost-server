@@ -712,3 +712,23 @@ section {
 .table > :not(caption) > *:hover  {
   background-color: lightgray;
 }
+
+.file-name-overlay {
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translate(-50%, -1px);
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 2px 5px;
+  border-radius: 8px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.file-container:hover .file-name-overlay {
+  opacity: 1;
+}

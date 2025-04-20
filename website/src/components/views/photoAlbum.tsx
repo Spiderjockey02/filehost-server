@@ -32,17 +32,30 @@ export default function PhotoAlbum({ folder }: Props) {
 	return (
 		<>
 			<div className="d-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '5px' }}>
-				{paginatedFiles.map((file) => (
-					<div key={file.name} className="text-center rounded">
+				{paginatedFiles.filter(f => f.type == 'DIRECTORY').map((file) => (
+					<div key={file.name} className="text-center rounded position-relative file-container">
 						<Link href={`/files${file.path}`} className="text-decoration-none">
 							<Image className="center img-fluid" loader={myLoader} src={file.path}
 								alt={file.name} width={200} height={275}
 								style={{ maxHeight: file.type === 'DIRECTORY' ? '236px' : '260px', borderRadius: '8px' }}
 							/>
 						</Link>
-						{file.type === 'DIRECTORY' && (
-							<p className="m-0 text-truncate" style={{ maxWidth: '200px' }}>{file.name}</p>
-						)}
+						<div className="file-name-overlay text-truncate">
+								{file.name}
+						</div>
+					</div>
+				))}
+				{paginatedFiles.filter(f => f.type == 'FILE').map((file) => (
+					<div key={file.name} className="text-center rounded position-relative file-container">
+						<Link href={`/files${file.path}`} className="text-decoration-none">
+							<Image className="center img-fluid" loader={myLoader} src={file.path}
+								alt={file.name} width={200} height={275}
+								style={{ maxHeight: file.type === 'DIRECTORY' ? '236px' : '260px', borderRadius: '8px' }}
+							/>
+							<div className="file-name-overlay text-truncate">
+								{file.name}
+							</div>
+						</Link>
 					</div>
 				))}
 			</div>
