@@ -1,4 +1,5 @@
 import type { createFile, FullFile, updateFile, updateFilePath } from '../types/database/File';
+import { fetchOrCreateFileMediaType } from './FileMimeType';
 import type { File, FileType } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
@@ -19,7 +20,7 @@ export default class FileAccessor {
     * @returns {File} The created file.
   */
 	async create(data: createFile): Promise<FullFile> {
-		if (data.mimetype !== null) await this.fetchOrCreateFileMediaType(data.mimetype);
+		if (data.mimetype !== null) await fetchOrCreateFileMediaType(data.mimetype);
 
 		const file = await client.file.create({
 			data: {
@@ -46,7 +47,7 @@ export default class FileAccessor {
     * @returns {File} The updated file.
   */
 	async update(data: updateFile): Promise<FullFile> {
-		if (data.children !== undefined && data.children.mimetype !== null) await this.fetchOrCreateFileMediaType(data.children.mimetype);
+		if (data.children !== undefined && data.children.mimetype !== null) await fetchOrCreateFileMediaType(data.children.mimetype);
 
 		const file = await client.file.update({
 			where: {
@@ -253,18 +254,6 @@ export default class FileAccessor {
 		});
 	}
 
-	async fetchOrCreateFileMediaType(mimeType: string) {
-		return client.mediaType.upsert({
-			where: {
-				name: mimeType,
-			},
-			create: {
-				name: mimeType,
-			},
-			update: {},
-		});
-	}
-
 	/**
 		* Delete a file from the system
 		* @param {string} fileId The file Id.
@@ -282,9 +271,38 @@ export default class FileAccessor {
 
 	/**
 		* Gets all files
-		* @returns {number} The total count of files.
+		* @returns The total count of files.
 	*/
-	async fetchTotal(): Promise<number> {
-		return client.file.count();
+	async fetchTotal() {
+		const [files, folders] = await Promise.all([
+			client.file.count({
+				where: {
+					type: 'FILE',
+				},
+			}),
+			client.file.count({
+				where: {
+					type: 'DIRECTORY',
+				},
+			}),
+		]);
+
+		return { files, folders };
+	}
+
+	/**
+		* Gets the 10 recently uploaded files
+		* @returns The files.
+	*/
+	fetchRecentlyUploaded() {
+		return client.file.findMany({
+			where: {
+				deletedAt: null,
+			},
+			orderBy: {
+				createdAt: 'desc',
+			},
+			take: 15,
+		});
 	}
 }

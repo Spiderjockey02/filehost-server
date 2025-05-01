@@ -8,34 +8,38 @@ generator client {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified Boolean
-  languageCode  String        @default("en-GB")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  notifications Notification[]
-  recentlyViewed RecentlyViewedFile[]
-  files         File[]
-  groupId       String?
-  group         Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  name              String?
+  email             String?   @unique
+  emailVerified     Boolean
+  languageCode      String        @default("en-GB")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt
+  sessions          Session[]
+  accounts          Account[]
+  notifications     Notification[]
+  recentlyViewed    RecentlyViewedFile[]
+  files             File[]
+  groupId           String?
+  group             Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   totalStorageSize  BigInt  @default(0)
+  role              String  @default("user")
+  banned            Boolean @default(false)
+  banReason         String?
+  banExpires        DateTime?
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?  @db.Text
-  userAgent String?  @db.Text
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id              String   @id
+  expiresAt       DateTime
+  token           String
+  createdAt       DateTime
+  updatedAt       DateTime
+  ipAddress       String?  @db.Text
+  userAgent       String?  @db.Text
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy  String?
   @@unique([token])
   @@map("session")
 }

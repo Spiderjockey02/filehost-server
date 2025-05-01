@@ -62,7 +62,7 @@ export const getStatistics = (client: Client) => {
 		try {
 			const [totalUsers, diskData, totalFileCount] = await Promise.all([client.userManager.fetchTotal(), client.FileManager.getFileSystemStatistics(), client.FileManager.fetchTotal()]);
 
-			res.json({ totalUsers, diskData, totalFileCount });
+			res.json({ totalUsers, diskData, totalFileCount: totalFileCount.files + totalFileCount.folders });
 		} catch (error) {
 			client.logger.error(error);
 			return Error.GenericError(res, 'Failed to get statistics');

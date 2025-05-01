@@ -116,9 +116,21 @@ export default class UserManager {
 
 	/**
 	  * Fetch the total count of users
-		* @returns {number} The total count of users.
+		* @returns The total count of users.
 	*/
-	async fetchTotal(): Promise<number> {
-		return client.user.count();
+	async fetchTotal() {
+		const [total, active] = await Promise.all([
+			client.user.count(),
+			client.user.count({
+				where: {
+					updatedAt: {
+						// Fetch users that have been updated in the last 24 hours
+						gte: new Date(Date.now() - 1000 * 60 * 60 * 24),
+					},
+				},
+			}),
+		]);
+
+		return { total, active };
 	}
 }
