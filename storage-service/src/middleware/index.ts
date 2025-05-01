@@ -39,7 +39,7 @@ export async function checkAdmin(req: Request, res: Response, next: NextFunction
 	const session = await getSession(req);
 	if (session == null) return Error.InvalidSession(res);
 
-	if (session.user?.group?.name == 'Admin') return next();
+	if (session.user.role == 'admin') return next();
 	return Error.InvalidSession(res);
 }
 

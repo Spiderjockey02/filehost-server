@@ -1,14 +1,16 @@
-import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { customSession, organization, admin } from 'better-auth/plugins';
 import { nextCookies } from 'better-auth/next-js';
-import { customSession } from 'better-auth/plugins';
-import { multiSession } from 'better-auth/plugins';
-import client from './prisma'
+import { betterAuth } from 'better-auth';
+import client from './prisma';
 
 export const auth = betterAuth({
 	plugins: [
+		admin(),
 		nextCookies(),
-		multiSession(),
+		organization({
+			allowUserToCreateOrganization: false,
+		}),
 		customSession(async ({ user, session }) => {
 			const updatedUser = await client.user.findUnique({
 				where: {
@@ -19,7 +21,6 @@ export const auth = betterAuth({
 					notifications: true,
 				},
 			});
-
 			if (updatedUser == null) return { user: null, session: '' };
 
 			// Check for group
@@ -68,7 +69,15 @@ export const auth = betterAuth({
 		additionalFields: {
 			totalStorageSize: {
 				type: 'number',
-				required: true,
+				required: false,
+				input: false,
+				defaultValue: 0,
+			},
+			role: {
+				type: 'string',
+				required: false,
+				input: false,
+				defaultValue: 'user',
 			},
 		},
 	},

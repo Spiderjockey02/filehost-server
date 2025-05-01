@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 const client = new PrismaClient({ errorFormat: 'pretty',
 	log: [
@@ -40,4 +40,4 @@ client.$use(async (params, next) => {
 	return convertBigIntToNumber(result);
 });
 
-export default client
+export default client;
