@@ -3,10 +3,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FileNavBarProps } from '@/types/Components/Navbars';
 import { NotificationBell, SearchFileModal } from '@/components';
 import { useState, ChangeEvent } from 'react';
-import { authClient } from '@/auth-client';
+import { authClient } from '@/auth/client';
+import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
 import axios from 'axios';
+import { Notification } from '@/types';
 
 interface AutoComplete {
 	name: string
@@ -15,6 +17,7 @@ interface AutoComplete {
 
 export default function FileNavBar({ user }: FileNavBarProps) {
 	const [srchRes, setSrchRes] = useState<AutoComplete[]>([]);
+	const router = useRouter();
 
 	// Update to only use useStates not from documents
 	async function autoComplete(e: ChangeEvent<HTMLInputElement>) {
@@ -45,10 +48,27 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 									<input onChange={(e) => autoComplete(e)} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="query" autoComplete="off" />
 									{srchRes.length >= 1 && (
 										<div className="autocomplete-items">
-											{srchRes.map((file) => (
-												<div key={file.name}>
-													<a className='btn' href={`/files${file.path}`}>{file.name}</a>
-												</div>
+											{srchRes.slice(0, 5).map((file) => (
+												<Link style={{ textDecoration: 'none', color: 'black' }}	href={`/files${file.path}`} key={file.path}>
+													<div className="d-flex flex-column ms-2">
+														<span className="fw-bold text-truncate" >{file.name}</span>
+														<span className="text-muted small" style={{ height: '20px', overflow: 'hidden' }}>
+															<ol className="breadcrumb">
+																{file.path.split('/').length == 2 ?
+																	<li className="breadcrumb-item">
+																		/
+																	</li>
+																	:
+																	file.path.split('/').slice(1, -1).map(seg => (
+																		<li className="breadcrumb-item text-truncate" key={seg}>
+																			{seg}
+																		</li>
+																	))
+																}
+															</ol>
+														</span>
+													</div>
+												</Link>
 											))}
 										</div>
 									)}
@@ -90,17 +110,21 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 					</li>
 				</ul>
 				<ul className="navbar-nav ml-auto">
-					<NotificationBell notifications={user.notifications} />
+					<NotificationBell notifications={user.notifications as Notification[]} />
 					&nbsp;
 					<li className="nav-item">
 						<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" />{user.name}
+							<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" /> {user.name}
 						</a>
 						<div className="dropdown-menu dropdown-menu-end">
 							<Link className="dropdown-item text-dark" href="/settings">Settings</Link>
 							<Link className="dropdown-item text-dark" href="/files">My files</Link>
 							<div className="dropdown-divider"></div>
-							<a className="dropdown-item" href="#" onClick={() => authClient.signOut()} id="logout">Logout</a>
+							<a className="dropdown-item" href="#" onClick={() => authClient.signOut({ fetchOptions: {
+								onSuccess: () => {
+									router.push('/login');
+								},
+							} })} id="logout">Logout</a>
 						</div>
 					</li>
 				</ul>
