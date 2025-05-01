@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
 import axios, { AxiosRequestConfig } from 'axios';
-import { useFileDispatch } from './fileManager';
+import { useSetFolder } from './FileManager';
 import { usePathname } from 'next/navigation';
 
 type UploadFile = {
@@ -28,19 +28,17 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 	const controllerRef = useRef<AbortController | null>(null);
 	const [status, setStatus] = useState<UploadStatus>(null);
 	const isProcessingRef = useRef(false);
-	const dispatch = useFileDispatch();
+	const setFolder = useSetFolder();
 	const path = usePathname();
 	const totalBytesRef = useRef(0);
 
 	const processQueue = async () => {
 		isProcessingRef.current = true;
-
 		let uploadedBytes = 0;
 		const startAt = Date.now();
 
 		while (queueRef.current.length > 0) {
 			const { file, parentId } = queueRef.current.shift()!;
-			// Initialize status for the current file
 			setStatus({
 				filename: file.name,
 				progress: 0,
@@ -54,21 +52,17 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 			controllerRef.current = new AbortController();
 			let previousLoaded = 0;
-
 			try {
 				const options: AxiosRequestConfig = {
 					headers: { 'Content-Type': 'multipart/form-data', Accept: 'application/json' },
 					responseType: 'json',
 					signal: controllerRef.current.signal,
 					onUploadProgress: ({ loaded }) => {
-						// Calculate incremental progress for the current file
 						const incrementalBytes = loaded - previousLoaded;
 						previousLoaded = loaded;
 						uploadedBytes += incrementalBytes;
 
-						// Update the cumulative progress percentage
 						const percentage = Math.min((uploadedBytes * 100) / totalBytesRef.current, 100);
-
 						const timeElapsed = (Date.now() - startAt) / 1000;
 						let timeString = '';
 						if (timeElapsed > 0) {
@@ -93,7 +87,6 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 				};
 
 				const { data } = await axios.post('/api/files/upload', formData, options);
-
 				if (data?.error === 'File with that name already exists') {
 					setStatus({
 						filename: file.name,
@@ -104,10 +97,8 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 					continue;
 				}
 
-				// Optional: Update UI without reloading the page
 				const { data: { file: uploadedFile } } = await axios.get(`/api${path}`);
-				dispatch({ type: 'SET_FILE', payload: uploadedFile });
-
+				setFolder(uploadedFile);
 			} catch (err) {
 				if (axios.isAxiosError(err)) {
 					setStatus({
@@ -120,7 +111,6 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			}
 		}
 
-		// Delay slightly before clearing the toast
 		totalBytesRef.current = 0;
 		isProcessingRef.current = false;
 	};
@@ -134,9 +124,7 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			totalBytesRef.current += f.file.size;
 		}
 
-		if (!isProcessingRef.current) {
-			processQueue();
-		}
+		if (!isProcessingRef.current) processQueue();
 	}, []);
 
 	const cancelUpload = useCallback(() => {

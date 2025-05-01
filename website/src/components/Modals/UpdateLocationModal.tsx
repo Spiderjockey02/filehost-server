@@ -2,7 +2,7 @@ import { BaseSyntheticEvent, useEffect, useRef, useState } from 'react';
 import { FileModalProps } from '@/types/Components/Modals';
 import { fileItem } from '@/types';
 import axios from 'axios';
-import { useFileDispatch } from '../fileManager';
+import { useSetFolder } from '../Hooks/FileManager';
 
 export default function UpdateLocationModal({ file, closeContextMenu }: FileModalProps) {
 	const elementRef = useRef(null);
@@ -10,7 +10,7 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 	const [action, setAction] = useState<'copy' | 'move' | ''>('');
 	const [selectedDestination, setSelectedDestination] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
-	const dispatch = useFileDispatch();
+	const setFolder = useSetFolder();
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -29,7 +29,7 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 				fileId: file.id,
 			});
 			const { data } = await axios.get(`/api/${window.location.pathname}`);
-			dispatch({ type: 'SET_FILE', payload: data.file });
+			setFolder(data.file);
 		} catch (err) {
 			if (axios.isAxiosError(err)) return setErrorMsg(err.response?.data.error);
 			console.log(err);

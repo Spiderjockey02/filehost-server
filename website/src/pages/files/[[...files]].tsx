@@ -1,5 +1,5 @@
 import { Directory, PhotoAlbum, FileViewer, RecentNavbar, ErrorPopup, BreadcrumbNav, UploadStatusToast } from '@/components';
-import { useFile, useFileDispatch } from '@/components/fileManager';
+import { useFolder, useSetFolder } from '@/components/Hooks/FileManager';
 import { FilePageProps, viewTypeTypes } from '@/types/pages';
 import { useCallback, useEffect, useState } from 'react';
 import type { GetServerSidePropsContext } from 'next';
@@ -16,24 +16,25 @@ export default function Files({ path = '/' }: FilePageProps) {
 	const [errorMsg, setErrorMsg] = useState('');
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
-	const file = useFile();
-	const dispatch = useFileDispatch();
+	const file = useFolder();
+	const setFolder = useSetFolder();
 
 	const fetchFiles = useCallback(async () => {
 		try {
 			const { data } = await axios.get(`/api/files/${path}`);
-			dispatch({ type: 'SET_FILE', payload: data.file });
+			setFolder(data.file);
 		} catch (err) {
 			setErrorMsg('Unable to fetch files');
 			console.error('Error fetching files:', err);
 		}
-	}, [path, dispatch]);
+	}, [path, setFolder]);
 
 	const fetchRecentlyViewedFiles = useCallback(async () => {
 		try {
 			const { data } = await axios.get('/api/session/recently-viewed');
 			setRecents(data.files);
 		} catch (err) {
+			console.log(err);
 			setErrorMsg('Unable to fetch recently viewed files');
 		}
 	}, []);
