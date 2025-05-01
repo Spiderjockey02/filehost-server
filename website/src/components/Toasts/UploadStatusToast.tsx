@@ -1,17 +1,28 @@
-import { UploadStatusToastProps } from '@/types/Components/Toasts';
+import { useUploadQueue } from '../Hooks/UploadContentManager';
 
-export default function UploadStatusToast({ percentage, filename, show, timeRemaining, cancelUpload }: UploadStatusToastProps) {
-	if (!show) return null;
+export default function UploadStatusToast() {
+	const { status, cancelUpload } = useUploadQueue();
+	if (!status || status.error === 'File with that name already exists') return null;
+
 	return (
 		<div className="toast-container position-fixed bottom-0 end-0 p-3">
-			<div id="liveToast" className="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+			<div className="toast show mb-2">
 				<div className="toast-header">
-					<strong className="me-auto">Uploading ({percentage}%)</strong>
-					<small>{timeRemaining}</small>
-					<button type="button" className="btn-close" data-bs-dismiss="toast" aria-label="Close" onClick={cancelUpload}></button>
+					{status.progress < 100 ?
+						<>
+							<strong className="me-auto">Uploading ({status.progress}%)</strong>
+							<small>{status.remaining}</small>
+							<button type="button" className="btn-close" onClick={() => cancelUpload()}></button>
+						</>
+					 : <>
+							<strong className="me-auto">Upload Complete</strong>
+							<button type="button" className="btn-close" onClick={() => cancelUpload()}></button>
+					 </>
+					}
 				</div>
 				<div className="toast-body">
-					{filename}
+					{status.filename}
+					{status.error && <div className="text-danger mt-1">{status.error}</div>}
 				</div>
 			</div>
 		</div>

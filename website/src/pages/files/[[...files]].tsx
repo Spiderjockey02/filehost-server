@@ -1,4 +1,4 @@
-import { Directory, PhotoAlbum, FileViewer, RecentNavbar, ErrorPopup, BreadcrumbNav } from '@/components';
+import { Directory, PhotoAlbum, FileViewer, RecentNavbar, ErrorPopup, BreadcrumbNav, UploadStatusToast } from '@/components';
 import { useFile, useFileDispatch } from '@/components/fileManager';
 import { FilePageProps, viewTypeTypes } from '@/types/pages';
 import { useCallback, useEffect, useState } from 'react';
@@ -61,6 +61,7 @@ export default function Files({ path = '/' }: FilePageProps) {
 				)
 				}
 			</div>
+			<UploadStatusToast />
 		</FileLayout>
 	);
 }

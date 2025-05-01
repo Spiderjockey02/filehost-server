@@ -1,9 +1,10 @@
-import '@/styles/globals.scss';
-import type { AppProps } from 'next/app';
+import { UploadQueueProvider } from '@/components/Hooks/UploadContentManager';
+import { FileProvider } from '@/components/Hooks/fileManager';
 import 'bootstrap/dist/css/bootstrap.css';
-import { useEffect } from 'react';
 import Header from '../components/header';
-import { FileProvider } from '@/components/fileManager';
+import type { AppProps } from 'next/app';
+import { useEffect } from 'react';
+import '@/styles/globals.scss';
 
 export default function App({ Component, pageProps }: AppProps) {
 	useEffect(() => {
@@ -14,7 +15,9 @@ export default function App({ Component, pageProps }: AppProps) {
 		<>
 			<Header />
 			<FileProvider>
-				<Component {...pageProps} />
+				<UploadQueueProvider>
+					<Component {...pageProps} />
+				</UploadQueueProvider>
 			</FileProvider>
 		</>
 	);

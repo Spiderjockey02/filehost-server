@@ -11,7 +11,7 @@ export default function Directory({ folder }: Props) {
 	const [filePanelToShow, setFilePanelToShow] = useState('');
 
 	return (
-		<DragUploadField path={folder.path}>
+		<DragUploadField parentId={folder.id}>
 			{folder.children.map((_) => (
 				filePanelToShow == _.id && <FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
 			))}

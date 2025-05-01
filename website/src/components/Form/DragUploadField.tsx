@@ -1,26 +1,17 @@
 import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import axios, { AxiosRequestConfig } from 'axios';
 import { useState, useRef, DragEvent, ReactNode } from 'react';
-import { ErrorPopup, UploadStatusToast } from '..';
-import { useFileDispatch } from '../fileManager';
+import { useUploadQueue } from '../Hooks/UploadContentManager';
 
 interface Props {
   children: ReactNode
-	path: string
+	parentId: string
 }
 
-export default function DragUploadField({ children, path }: Props) {
+export default function DragUploadField({ children, parentId }: Props) {
 	const [isDragging, setIsDragging] = useState(false);
 	const dragCounter = useRef(0);
-	const [progress, setProgress] = useState(0);
-	const [timeRemaining, setRemaining] = useState('');
-	const [filename, setFilename] = useState('');
-	const [abortController] = useState(new AbortController());
-	const [errorMsg, setErrorMsg] = useState('');
-	const dispatch = useFileDispatch();
-
-	const cancelUpload = () => abortController.abort();
+	const { addToQueue } = useUploadQueue();
 
 	const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
@@ -58,67 +49,7 @@ export default function DragUploadField({ children, path }: Props) {
 			return alert('Files list is empty');
 		}
 
-		const files = Array.from(fileInput.files);
-		const totalSize = files.reduce((acc, file) => acc + file.size, 0);
-		let uploadedBytes = 0;
-		const startAt = Date.now();
-
-		try {
-			for (const file of files) {
-				setFilename(file.name);
-
-				const formData = new FormData();
-				formData.append('media', file);
-				let previousLoaded = 0;
-
-				const options: AxiosRequestConfig = {
-					headers: { 'Content-Type': 'multipart/form-data', 'Accept': 'application/json' },
-					responseType: 'json',
-					validateStatus: () => true,
-					onUploadProgress: ({ loaded }) => {
-						// Calculate incremental progress for the current file
-						const incrementalBytes = loaded - previousLoaded;
-						previousLoaded = loaded;
-						uploadedBytes += incrementalBytes;
-
-						// Update the cumulative progress percentage
-						const percentage = (uploadedBytes * 100) / totalSize;
-						setProgress(+percentage.toFixed(2));
-
-						const timeElapsed = (Date.now() - startAt) / 1000;
-						if (timeElapsed > 0) {
-							const uploadSpeed = uploadedBytes / timeElapsed;
-							const remainingTime = (totalSize - uploadedBytes) / uploadSpeed;
-
-							const hours = Math.floor(remainingTime / 3600);
-							const minutes = Math.floor((remainingTime % 3600) / 60);
-							const seconds = Math.floor(remainingTime % 60);
-
-							let timeString = '';
-							if (hours > 0) timeString += `${hours}h `;
-							timeString += `${minutes}m ${seconds}s`;
-
-							setRemaining(timeString.trim());
-						} else {
-							setRemaining('Calculating...');
-						}
-					},
-				};
-				const t = await axios.post('/api/files/upload', formData, options);
-				console.log(t);
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				console.log(error);
-				setErrorMsg(error.response?.data.error);
-				if (error.code === 'ERR_CANCELED') alert('Sorry! Something went wrong.');
-			}
-		} finally {
-			const { data: { file: uploadedFile } } = await axios.get(`/api/files/${path}`);
-			dispatch({ type: 'SET_FILE', payload: uploadedFile });
-			setProgress(0);
-			setRemaining('');
-		}
+		addToQueue(fileInput.files, parentId);
 	};
 
 	return (
@@ -133,8 +64,6 @@ export default function DragUploadField({ children, path }: Props) {
 				<input type="file" multiple hidden={true} id="fileInput" />
 				{children}
 			</div>
-			<UploadStatusToast percentage={progress} filename={filename} show={progress > 0} timeRemaining={timeRemaining} cancelUpload={cancelUpload} />
-			{errorMsg.length > 0 && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
 		</>
 	);
 }

@@ -1,93 +1,24 @@
 import { faArrowUpFromBracket, faFolderOpen, faGrip, faPlus, faTableList } from '@fortawesome/free-solid-svg-icons';
+import { UploadStatusToast, ErrorPopup, CreateFolderModal } from '@/components';
+import { ChangeEvent, RefObject, useEffect, useRef, useState } from 'react';
 import type { BreadcrumbNavProps } from '@/types/Components/Navbars';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useOnClickOutside } from '@/utils/useOnClickOutisde';
-import { UploadStatusToast, ErrorPopup, CreateFolderModal } from '@/components';
-import axios, { AxiosRequestConfig } from 'axios';
-import { useFileDispatch } from '../fileManager';
+import { useUploadQueue } from '../Hooks/UploadContentManager';
 import Link from 'next/link';
 
-export default function BreadcrumbNav({ path, isFile, setviewType, viewType }: BreadcrumbNavProps) {
+export default function BreadcrumbNav({ path, isFile, setviewType, viewType, parentId }: BreadcrumbNavProps) {
 	const splitPath = path.split('/');
-	const [progress, setProgress] = useState(0);
-	const [timeRemaining, setRemaining] = useState('');
-	const [filename, setFilename] = useState('');
-	const [abortController] = useState(new AbortController());
 	const [errorMsg, setErrorMsg] = useState('');
-	const dispatch = useFileDispatch();
 	const containerRef = useRef<HTMLOListElement>(null);
 	const dropdownRef = useRef<HTMLUListElement>(null);
 	const [isOverflowing, setIsOverflowing] = useState(false);
 	const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+	const { addToQueue } = useUploadQueue();
 
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
-		const fileInput = e.target;
-		if (!fileInput.files || fileInput.files.length === 0) {
-			return alert('Files list is empty');
-		}
-
-		const files = Array.from(fileInput.files);
-		const totalSize = files.reduce((acc, file) => acc + file.size, 0);
-		let uploadedBytes = 0;
-		const startAt = Date.now();
-
-		try {
-			for (const file of files) {
-				setFilename(file.name);
-
-				const formData = new FormData();
-				formData.append('media', file);
-				let previousLoaded = 0;
-
-				const options: AxiosRequestConfig = {
-					headers: { 'Content-Type': 'multipart/form-data' },
-					responseType: 'json',
-					onUploadProgress: ({ loaded }) => {
-						// Calculate incremental progress for the current file
-						const incrementalBytes = loaded - previousLoaded;
-						previousLoaded = loaded;
-						uploadedBytes += incrementalBytes;
-
-						// Update the cumulative progress percentage
-						const percentage = (uploadedBytes * 100) / totalSize;
-						setProgress(+percentage.toFixed(2));
-
-						const timeElapsed = (Date.now() - startAt) / 1000;
-						if (timeElapsed > 0) {
-							const uploadSpeed = uploadedBytes / timeElapsed;
-							const remainingTime = (totalSize - uploadedBytes) / uploadSpeed;
-
-							const hours = Math.floor(remainingTime / 3600);
-							const minutes = Math.floor((remainingTime % 3600) / 60);
-							const seconds = Math.floor(remainingTime % 60);
-
-							let timeString = '';
-							if (hours > 0) timeString += `${hours}h `;
-							timeString += `${minutes}m ${seconds}s`;
-
-							setRemaining(timeString.trim());
-						} else {
-							setRemaining('Calculating...');
-						}
-					},
-				};
-				await axios.post('/api/files/upload', formData, options);
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				setErrorMsg(error.response?.data.error);
-				if (error.code === 'ERR_CANCELED') alert('Sorry! Something went wrong.');
-			}
-		} finally {
-			const { data: { file: uploadedFile } } = await axios.get(`/api/files/${path}`);
-			dispatch({ type: 'SET_FILE', payload: uploadedFile });
-			setProgress(0);
-			setRemaining('');
-		}
+		if (e.target.files) addToQueue(e.target.files, parentId);
 	};
-
-	const cancelUpload = () => abortController.abort();
 
 	useEffect(() => {
 		const checkOverflow = () => {
@@ -106,7 +37,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType, viewType }: B
 		setDropdownPosition({ top: rect.bottom + 5, left: rect.left });
 	};
 
-	useOnClickOutside(dropdownRef as any, () => setDropdownPosition(null));
+	useOnClickOutside(dropdownRef as RefObject<HTMLUListElement>, () => setDropdownPosition(null));
 
 	return (
 		<>
@@ -186,12 +117,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType, viewType }: B
           	<div className="dropdown-menu dropdown-menu-right">
           		<input type="hidden" value="test" name="path" />
           		<label className="dropdown-item btn" id="fileHover">
-          			<FontAwesomeIcon icon={faArrowUpFromBracket} /> Upload<input type="file" hidden multiple name="sampleFile" className="upload-input" onChange={onFileUploadChange} ref={input => {
-          				if (input) {
-          					input.setAttribute('webkitdirectory', '');
-          					input.setAttribute('mozdirectory', '');
-          				}
-          			}} />
+          			<FontAwesomeIcon icon={faArrowUpFromBracket} /> Upload<input type="file" hidden multiple name="sampleFile" className="upload-input" onChange={onFileUploadChange} />
           		</label>
           		<div className="dropdown-divider"></div>
           		<a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#createFolderModal">
@@ -204,8 +130,8 @@ export default function BreadcrumbNav({ path, isFile, setviewType, viewType }: B
           </>
 					}
 				</div>
-				<CreateFolderModal />
-				<UploadStatusToast percentage={progress} filename={filename} show={progress > 0} timeRemaining={timeRemaining} cancelUpload={cancelUpload} />
+				<CreateFolderModal parentId={parentId} />
+				<UploadStatusToast />
 			</div>
 			{errorMsg.length > 0 && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
 		</>
