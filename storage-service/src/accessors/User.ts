@@ -96,6 +96,13 @@ export default class UserManager {
 		return user;
 	}
 
+	/**
+	 * Modify the storage size of a user
+	 * @param {string} userId The ID of the user
+	 * @param {bigint} size The size to modify the storage size by.
+	 * @param {storageDirection} direction The direction to modify the storage size.
+	 * @returns The updated user.
+	 */
 	async modifyStorageSize(userId: string, size: bigint, direction: storageDirection): Promise<FullUser> {
 		return client.user.update({
 			where: {
@@ -119,18 +126,45 @@ export default class UserManager {
 		* @returns The total count of users.
 	*/
 	async fetchTotal() {
-		const [total, active] = await Promise.all([
+		const last7days = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+
+		const [total, active, newUser] = await Promise.all([
 			client.user.count(),
 			client.user.count({
 				where: {
 					updatedAt: {
-						// Fetch users that have been updated in the last 24 hours
-						gte: new Date(Date.now() - 1000 * 60 * 60 * 24),
+						// Fetch users that have been updated in the last week
+						gte: last7days,
+					},
+				},
+			}),
+			client.user.count({
+				where: {
+					createdAt: {
+						// Fetch users that have been created in the last week
+						gte: last7days,
 					},
 				},
 			}),
 		]);
 
-		return { total, active };
+		return { total, active, new: newUser };
+	}
+
+	/**
+		* Fetch the number of users who joined between 2 dates
+		* @param {Date} oldDate The old date.
+		* @param {Date} newDate The new date.
+		* @returns The number of users
+	*/
+	async fetchUserJoinesBetweenTwoDates(oldDate: Date, newDate: Date) {
+		return client.user.count({
+			where: {
+				createdAt:{
+					gte: oldDate,
+					lte: newDate,
+				},
+			},
+		});
 	}
 }

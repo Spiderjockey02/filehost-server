@@ -4,8 +4,6 @@ import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import os from 'os';
 
-type data = { [key: string]: boolean}
-
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
@@ -32,29 +30,6 @@ export const getStats = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch system statistics.');
-		}
-	};
-};
-
-// Endpoint: GET /api/admin/users
-export const getUsers = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		try {
-			const rawFilters = req.query.filters;
-			const filters = (rawFilters !== undefined && Array.isArray(rawFilters)) ? rawFilters.map((filter) => filter.toString()) : [];
-
-			// Parse the filters and validate them
-			const parsedFilters: data = {};
-			for (const filter of filters) {
-				if (['group', 'recent', 'delete', 'analyse'].includes(filter)) parsedFilters[filter] = true;
-			}
-
-			// Fetch the database
-			const users = await client.userManager.fetchAll(parsedFilters);
-			res.json({ users: sanitiseObject(users) });
-		} catch (err) {
-			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch list of users.');
 		}
 	};
 };

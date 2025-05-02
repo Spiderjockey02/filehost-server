@@ -3,6 +3,7 @@ export const PATHS = {
 	THUMBNAIL: `${process.cwd()}/src/uploads/thumbnails`,
 	CONTENT: `${process.cwd()}/src/uploads/content`,
 	TRASH: `${process.cwd()}/src/uploads/trash`,
+	DATABASE_BACKUPS: `${process.cwd()}/prisma/backups`,
 };
 
 export const ipRegex = /^((\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])(\.(?!$)|$)){4}$|^(([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}|::(?:ffff:(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])(\.\d{1,3}){3})?)$/;
@@ -21,11 +22,19 @@ export const CONSTANTS = {
 	MAX_CHARS_FILE_NAME: 32,
 
 	// What mime types are not allowed to be uploaded
-	DISALLOWED_MIME_TYPES: ['application/*', 'image/bmp'],
+	DISALLOWED_MIME_TYPES: ['image/bmp'],
 
 	// What characters or words that are not allowed in a file name
 	INVALID_CHARS_IN_FILE_NAME: ['/', '\\', '?', '%', '*', ':', '|', '"', '<', '>'],
 
 	// Whether or not to keep original metadata on videos and images
 	KEEP_ORIGINAL_METADATA: false,
+
+	// Width & Height of the thumbnail including the file extension
+	THUMBNAIL: {
+		WIDTH: 400,
+		HEIGHT: 520,
+		// End of the file (etc jpg, png, etc)
+		EXTENSION: 'jpg',
+	},
 };

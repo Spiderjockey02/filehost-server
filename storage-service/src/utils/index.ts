@@ -91,4 +91,20 @@ export function normalizePath(path: string) {
 	return path;
 }
 
+export function parseMySQLConnectionString(connectionString: string) {
+	const regex = /^mysql:\/\/([^:]+):([^/]+)@([^/:]+):(\d+)\/(.+)$/;
+	const match = connectionString.match(regex);
+
+	if (!match) throw 'Invalid MySQL connection string format';
+	const [, username, password, host, port, database] = match;
+
+	return {
+		username,
+		password,
+		host,
+		port: parseInt(port, 10),
+		database,
+	};
+}
+
 export { PATHS, ipRegex, Logger, Error, CONSTANTS };
