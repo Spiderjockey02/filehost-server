@@ -1,9 +1,9 @@
-import type { Request, Response } from 'express';
 import { Error, parseMySQLConnectionString, PATHS } from '../../utils';
-import fs from 'fs/promises';
+import type { Request, Response } from 'express';
 import Client from 'src/helpers/Client';
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
+import fs from 'fs/promises';
 
 // Endpoint: GET /api/admin/database/backups
 export const getDatabaseBackups = (client: Client) => {
@@ -17,14 +17,12 @@ export const getDatabaseBackups = (client: Client) => {
 			const backups = [];
 
 			// Filter out files that are not .sql files and get their stats
-			for (const file of files) {
+			for (const file of files.filter((f) => f.endsWith('.json'))) {
 				const stats = await fs.stat(`${PATHS.DATABASE_BACKUPS}/${file}`);
-				if (stats.isFile() && file.endsWith('.sql')) {
-					backups.push({
-						name: file,
-						size: stats.size,
-						creationDate: stats.birthtime,
-					});
+				if (stats.isFile()) {
+					const data = await fs.readFile(`${PATHS.DATABASE_BACKUPS}/${file}`, 'utf-8');
+					const metadata = JSON.parse(data);
+					backups.push({ ...metadata });
 				}
 			}
 
@@ -45,9 +43,20 @@ export const postDatabaseBack = (client: Client) => {
 			// Check if the database backups folder exists
 			if (!existsSync(PATHS.DATABASE_BACKUPS)) await fs.mkdir(PATHS.DATABASE_BACKUPS, { recursive: true });
 
-			exec(`mysqldump -u ${mysqlArgs.username} -p${mysqlArgs.password} -n ${mysqlArgs.database} > "${PATHS.DATABASE_BACKUPS}/${new Date().getTime()}.dump.sql"`, (err) => {
+			const timestamp = new Date();
+			exec(`mysqldump -u ${mysqlArgs.username} -p${mysqlArgs.password} -n ${mysqlArgs.database} > "${PATHS.DATABASE_BACKUPS}/${timestamp.getTime()}.dump.sql"`, async (err) => {
+				const metadata = {
+					createdAt: timestamp.toISOString(),
+					filename: `${timestamp.getTime()}.dump.sql`,
+					status: err ? 'failed' : 'success',
+					sizeBytes: err ? null : await fs.stat(`${PATHS.DATABASE_BACKUPS}/${timestamp.getTime()}.dump.sql`).then((stats) => stats.size),
+					errorMessage: err ? err.message : null,
+					db: mysqlArgs.database,
+				};
+
+				await fs.writeFile(`${PATHS.DATABASE_BACKUPS}/${timestamp.getTime()}.meta.json`, JSON.stringify(metadata, null, 2));
 				if (err) throw err;
-				res.json({ Success: 'Successfully backed up database.' });
+				res.json({ success: 'Successfully backed up database.', metadata });
 			});
 		} catch (err) {
 			client.logger.error(err);
@@ -56,15 +65,22 @@ export const postDatabaseBack = (client: Client) => {
 	};
 };
 
-// Endpoint: DELETE /api/admin/database/backup/:name
+// Endpoint: DELETE /api/admin/database/backup/:timestamp
 export const deleteBackupByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			// Check if the database backups folder exists
-			if (!existsSync(PATHS.DATABASE_BACKUPS)) await fs.mkdir(PATHS.DATABASE_BACKUPS, { recursive: true });
+			const timestamp = req.params.timestamp;
 
-			await fs.rm(`${PATHS.DATABASE_BACKUPS}/${req.params.name}`);
-			res.json({ success: `Successfully deleted backup: ${req.params.name}` });
+			// Check if the database backups folder exists
+			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${timestamp}.dump.sql`)) return Error.MissingResource(res, 'Database backup not found.');
+
+			// Delete the backup files
+			await Promise.all([
+				fs.rm(`${PATHS.DATABASE_BACKUPS}/${timestamp}.dump.sql`),
+				fs.rm(`${PATHS.DATABASE_BACKUPS}/${timestamp}.meta.json`),
+			]);
+
+			res.json({ success: `Successfully deleted backup: ${timestamp}.sql` });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to delete database backup.');

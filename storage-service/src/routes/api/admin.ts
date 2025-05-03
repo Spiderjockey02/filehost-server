@@ -26,7 +26,7 @@ export default function(client: Client) {
 
 	router.post('/database/backup', checkAdmin, postDatabaseBack(client));
 
-	router.delete('/database/backup/:name', checkAdmin, deleteBackupByName(client));
+	router.delete('/database/backup/:timestamp', checkAdmin, deleteBackupByName(client));
 
 	return router;
 }
