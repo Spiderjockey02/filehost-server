@@ -1,7 +1,7 @@
+import { faFile, faFileAlt, faFileImage, faFilePdf, faFileVideo, faFolder, faMusic } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { fileItem } from '../types';
-import mimeType from 'mime-types';
-import { faFile, faFileAlt, faFileImage, faFilePdf, faFileVideo, faFolder, faMusic } from '@fortawesome/free-solid-svg-icons';
+import { UAParser } from 'ua-parser-js';
 
 export function formatBytes(bytes: number) {
 	if (bytes == 0) return '0 Bytes';
@@ -24,12 +24,10 @@ export function getFileIcon(file: fileItem) {
 	if (file.type == 'DIRECTORY') return (<FontAwesomeIcon icon={faFolder} />) ;
 
 	// Get the icon from file type
-	const type = mimeType.lookup(file.name);
-	if (type == false) return <FontAwesomeIcon icon={faFile} />;
+	if (file.mimetype == null) return <FontAwesomeIcon icon={faFile} />;
+	if (file.mimetype == 'application/pdf') return <FontAwesomeIcon icon={faFilePdf} />;
 
-	if (type == 'application/pdf') return <FontAwesomeIcon icon={faFilePdf} />;
-
-	switch (type.split('/')[0]) {
+	switch (file.mimetype.split('/')[0]) {
 		case 'image':
 			return <FontAwesomeIcon icon={faFileImage} />;
 		case 'video':
@@ -52,3 +50,38 @@ export function getStatusColor(startVal: number, maxValue: number) {
 		return 'bg-success';
 	}
 }
+
+export function getRandomColor() {
+	const r = Math.floor(Math.random() * 156) + 100;
+	const g = Math.floor(Math.random() * 156) + 100;
+	const b = Math.floor(Math.random() * 156) + 100;
+	return `rgb(${r}, ${g}, ${b})`;
+}
+
+export function parseUserAgent(userAgent?: string | null) {
+	if (userAgent == null) return '';
+	const parser = new UAParser(userAgent);
+	const browser = parser.getBrowser();
+	const os = parser.getOS();
+
+	return `${browser.name} ${browser.version} on ${os.name} ${os.version}`;
+}
+
+export function convertMiliseconds(miliseconds: number) {
+	const	total_seconds = Math.floor(miliseconds);
+	const	total_minutes = Math.floor(total_seconds / 60);
+	const	total_hours = Math.floor(total_minutes / 60);
+	const	days = Math.floor(total_hours / 24);
+
+	const	seconds = total_seconds % 60;
+	const	minutes = total_minutes % 60;
+	const	hours = total_hours % 24;
+
+	let formatText = '';
+	if (days > 0) formatText = formatText.concat(`${days} days `);
+	if (hours > 0) formatText = formatText.concat(`${hours} hours `);
+	if (minutes > 0) formatText = formatText.concat(`${minutes} minutes `);
+	if (days <= 1 && hours <= 1) formatText = formatText.concat(`${seconds} seconds`);
+
+	return formatText;
+};
