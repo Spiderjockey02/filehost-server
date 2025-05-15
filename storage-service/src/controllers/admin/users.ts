@@ -28,6 +28,21 @@ export const getUsers = (client: Client) => {
 	};
 };
 
+// Endpoint: GET /api/admin/users/language-codes
+export const getUsersByLanguageCode = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		try {
+			// Fetch the database
+			const langaugeCodes = await client.userManager.fetchGroupCountsByLanguageCodes();
+			res.json({ langaugeCodes });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch list of users.');
+		}
+	};
+};
+
+
 // Endpoint: GET /api/admin/users/growth
 export const getUserGrowth = (client: Client) => {
 	return async (req: Request, res: Response) => {
@@ -35,43 +50,52 @@ export const getUserGrowth = (client: Client) => {
 		const frame = req.query.frame;
 		if (!frame || typeof frame !== 'string' || !['yearly', 'monthly', 'daily'].includes(frame)) return Error.IncorrectQuery(res, `frame must be on one of the following: ${['yearly', 'monthly', 'daily'].join(', ')}`);
 
-		switch(frame) {
+		switch (frame) {
 			case 'yearly': {
-				// Get last 10 year
 				const years: countEnum = {};
 				const currentYear = new Date().getFullYear();
+				let cumulativeTotal = await client.userManager.fetchUserJoinesBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1));
 
-				for (let i = 0; i <= 9; i++) {
+				for (let i = 9; i >= 0; i--) {
 					const start = new Date(currentYear - i, 0, 1);
 					const end = new Date(currentYear - i + 1, 0, 1);
 					const users = await client.userManager.fetchUserJoinesBetweenTwoDates(start, end);
-					years[new Date().getFullYear() - i] = users;
+					cumulativeTotal += users;
+					years[currentYear - i] = cumulativeTotal;
 				}
 				return res.json({ years });
 			}
 			case 'monthly': {
-				// Get last 12 months
-				const months: countEnum = { 'January': 0, 'February': 0, 'March': 0, 'April': 0, 'May': 0, 'June': 0, 'July': 0, 'August': 0, 'September': 0, 'October': 0, 'November': 0, 'December': 0 };
+				const months: countEnum = {};
 				const current = new Date();
 				current.setDate(1);
 
-				for (let i = 0; i <= 11; i++) {
+				const firstMonthDate = new Date();
+				firstMonthDate.setMonth(current.getMonth() - 11);
+
+				let cumulativeTotal = await client.userManager.fetchUserJoinesBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate));
+				for (let i = 11; i >= 0; i--) {
 					const start = new Date(current);
-					const end = new Date(current);
-					end.setMonth(end.getMonth() + 1);
+					start.setMonth(current.getMonth() - i);
+					const end = new Date(start);
+					end.setMonth(start.getMonth() + 1);
 
-					const monthName = Object.keys(months).at(current.getMonth()) as string;
+					const monthName = start.toLocaleString('default', { month: 'long' });
 					const users = await client.userManager.fetchUserJoinesBetweenTwoDates(start, end);
-					months[monthName] = users;
-
-					current.setMonth(current.getMonth() - 1);
+					cumulativeTotal += users;
+					months[monthName] = cumulativeTotal;
 				}
 				return res.json({ months });
 			}
 			case 'daily': {
-				// Get last 14 days
 				const days: countEnum = {};
-				for (let i = 0; i <= 14; i++) {
+				const today = new Date();
+				today.setHours(0, 0, 0, 0);
+				const frameStart = new Date(today);
+				frameStart.setDate(today.getDate() - 14);
+				let cumulativeTotal = await client.userManager.fetchUserJoinesBetweenTwoDates(new Date(2023, 0, 1), frameStart);
+
+				for (let i = 14; i >= 0; i--) {
 					const end = new Date();
 					end.setHours(0, 0, 0, 0);
 					end.setDate(end.getDate() - i + 1);
@@ -81,11 +105,130 @@ export const getUserGrowth = (client: Client) => {
 
 					const dateStr = start.toISOString().split('T')[0];
 					const users = await client.userManager.fetchUserJoinesBetweenTwoDates(start, end);
-					days[dateStr] = users;
+					cumulativeTotal += users;
+					days[dateStr] = cumulativeTotal;
 				}
-
 				return res.json({ days });
 			}
+		}
+	};
+};
+
+// Endpoint GET /api/admin/users/signUp-source
+export const getUserSignupSource = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		try {
+			// Fetch the database
+			const signupSource = await client.userManager.fetchSignUpSource();
+			res.json({ signupSource });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch list of sign up sources.');
+		}
+	};
+};
+
+// Endpoint GET /api/admin/users/emails
+export const getUserEmails = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		try {
+			// Fetch the database
+			const emails = await client.userManager.fetchCountsByEmailDomain();
+			res.json({ emails });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch list of email domains.');
+		}
+	};
+};
+
+// Endpoint GET /api/admin/users/stats
+export const getUserStats = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		try {
+			// Last 7 days
+			const end = new Date();
+			end.setDate(end.getDate() - 7);
+
+			const [userTotal, avgstorageUsage, banned] = await Promise.all([
+				client.userManager.fetchTotal(),
+				client.userManager.fetchAverageStorageUsed(),
+				client.userManager.fetchBannedTotal(),
+			]);
+
+
+			res.json({
+				totalUsers: userTotal.total, newUsers: userTotal.new, activeUsers: userTotal.active, avgstorageUsage: avgstorageUsage._avg.totalStorageSize, banned, admins: 0,
+			});
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch list of email domains.');
+		}
+	};
+};
+
+// Endpoint GET /api/admin/users/sessions
+export const getUserSessions = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const userId = req.query.userId;
+			if (userId !== undefined && typeof userId !== 'string') return Error.IncorrectQuery(res, 'userID must be a string or undefined.');
+
+			const sessions = await client.userManager.fetchSessions(userId);
+			res.json({ sessions });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch user.');
+		}
+	};
+};
+
+// Endpoint GET /api/admin/users/retention
+export const getUserRetention = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		try {
+			// Loop last 14 days get
+			const { total } = await client.userManager.fetchTotal();
+			const days: countEnum = {};
+			const sessions: countEnum = {};
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			const frameStart = new Date(today);
+			frameStart.setDate(today.getDate() - 14);
+
+			for (let i = 14; i >= 0; i--) {
+				const end = new Date();
+				end.setHours(0, 0, 0, 0);
+				end.setDate(end.getDate() - i + 1);
+
+				const start = new Date(end);
+				start.setDate(start.getDate() - 1);
+
+				const dateStr = start.toISOString().split('T')[0];
+				const users = await client.userManager.fetchUsersWhoUploadedBetweenTwoDates(start, end);
+				const session = await client.userManager.fetchUsersWhoLoggedInBetweenTwoDates(start, end);
+				days[dateStr] = users.length / total;
+				sessions[dateStr] = session.length / total;
+			}
+			return res.json({ retention: { files: days, sessions } });
+
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch user.');
+		}
+	};
+};
+
+// Endpoint GET /api/admin/users/:id
+export const getUserById = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const userId = req.params.id;
+			const user = await client.userManager.fetchbyParam({ id: userId });
+			res.json({ user: sanitiseObject(user) });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch user.');
 		}
 	};
 };

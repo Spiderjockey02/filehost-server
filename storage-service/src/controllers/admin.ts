@@ -1,5 +1,5 @@
 import { fetchFileMediaTypes } from '../accessors/FileMimeType';
-import { Error, sanitiseObject } from '../utils';
+import { Error } from '../utils';
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import os from 'os';
@@ -18,14 +18,15 @@ export const getStats = (client: Client) => {
 					free: diskData.free,
 				},
 				memory: {
-					using: Number((process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)),
-					total:  Number((os.totalmem() / 1024 / 1024).toFixed(2)),
+					using: Number((process.memoryUsage().heapUsed).toFixed(2)),
+					total:  Number((os.totalmem()).toFixed(2)),
 				},
 				cpu: {
 					total: 0,
 					avg: os.loadavg(),
 				},
 				users: await client.userManager.fetchTotal(),
+				uptime: process.uptime(),
 			});
 		} catch (err) {
 			client.logger.error(err);
@@ -36,26 +37,17 @@ export const getStats = (client: Client) => {
 
 // Endpoint: GET /api/admin/mimetypes
 export const getMimeTypes = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return async (req: Request, res: Response) => {
 		try {
-			const mimeTypes = await fetchFileMediaTypes();
+			const { grouped } = req.query;
+			if (grouped && typeof grouped !== 'string') return Error.IncorrectQuery(res, 'grouped must be a string.');
+			if (grouped && !['true', 'false'].includes(grouped)) return Error.IncorrectQuery(res, 'grouped must be either true or false.');
+
+			const mimeTypes = await fetchFileMediaTypes(grouped === 'true');
 			res.json({ mimeTypes });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of mime types.');
-		}
-	};
-};
-
-// Endpoint: GET /api/admin/recently-uploaded
-export const getRecentlyUploaded = (client: Client) => {
-	return async (_req: Request, res: Response) => {
-		try {
-			const files = await client.FileManager.fetchRecentlyUploaded();
-			res.json({ files: sanitiseObject(files) });
-		} catch (err) {
-			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch recently uploaded files.');
 		}
 	};
 };
