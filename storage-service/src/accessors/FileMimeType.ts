@@ -21,7 +21,32 @@ export async function fetchOrCreateFileMediaType(mimeType: string) {
 /**
   * Fetches all media types from the database and the number of files associated with each type.
 */
-export async function fetchFileMediaTypes() {
+export async function fetchFileMediaTypes(grouped: boolean = false) {
+	const res = await client.mediaType.findMany({
+		include: {
+			_count: {
+				select: {
+					files: true,
+				},
+			},
+		},
+	});
+
+	const group: { [ key: string ]: number } = {};
+	if (grouped) {
+		for (const type of res) {
+			const mimeName = `${type.name.split('/')[0]}/*`;
+
+			if (group[mimeName] === undefined) group[mimeName] = 0;
+			group[mimeName] += type._count.files;
+		}
+		return group;
+	}
+
+	return res;
+}
+
+export async function fetchMostCommonFileTypes() {
 	return client.mediaType.findMany({
 		include: {
 			_count: {
@@ -30,5 +55,11 @@ export async function fetchFileMediaTypes() {
 				},
 			},
 		},
+		orderBy: {
+			files: {
+				_count: 'desc',
+			},
+		},
+		take: 10,
 	});
 }

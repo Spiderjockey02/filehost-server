@@ -45,6 +45,11 @@ export default class UserManager {
 			include: {
 				group: data.group,
 				notifications: true,
+				_count: {
+					select: {
+						files: true,
+					},
+				},
 			},
 		});
 	}
@@ -89,6 +94,12 @@ export default class UserManager {
 				include: {
 					group: true,
 					notifications: true,
+					sessions: true,
+					_count: {
+						select: {
+							files: true,
+						},
+					},
 				},
 			});
 			if (user != null) this.cache.set(user?.id, user);
@@ -132,9 +143,12 @@ export default class UserManager {
 			client.user.count(),
 			client.user.count({
 				where: {
-					updatedAt: {
-						// Fetch users that have been updated in the last week
-						gte: last7days,
+					sessions: {
+						some: {
+							createdAt: {
+								gte: last7days,
+							},
+						},
 					},
 				},
 			}),
@@ -160,11 +174,135 @@ export default class UserManager {
 	async fetchUserJoinesBetweenTwoDates(oldDate: Date, newDate: Date) {
 		return client.user.count({
 			where: {
-				createdAt:{
+				createdAt: {
 					gte: oldDate,
 					lte: newDate,
 				},
 			},
 		});
+	}
+
+	async fetchUsersWhoUploadedBetweenTwoDates(oldDate: Date, newDate: Date) {
+		const files = await client.file.findMany({
+			where: {
+				createdAt: {
+					gte: oldDate,
+					lte: newDate,
+				},
+			},
+		});
+
+		const users = [...new Set(files.map(f => f.userId))];
+		return users;
+	}
+
+	async fetchUsersWhoLoggedInBetweenTwoDates(oldDate: Date, newDate: Date) {
+		const sessions = await client.session.findMany({
+			where: {
+				createdAt: {
+					gte: oldDate,
+					lte: newDate,
+				},
+			},
+		});
+
+		const users = [...new Set(sessions.map(s => s.userId))];
+		return users;
+	}
+
+	/**
+	  * Fetch the number of users by language code
+	  * @returns The number of users by language code
+	*/
+	async fetchGroupCountsByLanguageCodes() {
+		const languageCode = await client.user.groupBy({
+			by: ['languageCode'],
+		});
+
+		const codesWithCount: {[ key: string ]: number} = {};
+		for (const code of languageCode) {
+			const count = await client.user.count({
+				where: {
+					languageCode: code.languageCode,
+				},
+			});
+
+			codesWithCount[code.languageCode] = count;
+		}
+
+		return codesWithCount;
+	}
+
+	/**
+	  * Fetch the number of users by email domain
+	  * @returns The number of users by group
+	*/
+	async fetchCountsByEmailDomain() {
+		const users = await client.user.findMany({
+			where: {
+				email: {
+					not: null,
+				},
+			},
+			select: {
+				email: true,
+			},
+		});
+
+		const domainCount: Record<string, number> = {};
+		for (const user of users) {
+			const email = user.email!;
+			const domain = email.split('@')[1].toLowerCase();
+			if (domain) domainCount[domain] = (domainCount[domain] || 0) + 1;
+		}
+
+		return domainCount;
+	}
+
+	/**
+		* Gets the average file size
+		* @returns The average file size.
+	*/
+	fetchAverageStorageUsed() {
+		return client.user.aggregate({
+			_avg: {
+				totalStorageSize: true,
+			},
+		});
+	}
+
+	/**
+		* Gets the average file size
+		* @returns The average file size.
+	*/
+	fetchBannedTotal() {
+		return client.user.count({
+			where: {
+				banned: true,
+			},
+		});
+	}
+
+	fetchSessions(userId?: string) {
+		return client.session.findMany({
+			where: {
+				userId,
+			},
+			orderBy: {
+				createdAt: 'desc',
+			},
+		});
+	}
+
+	async fetchSignUpSource() {
+		const accounts = await client.account.findMany();
+
+		const domainCount: Record<string, number> = {};
+		for (const account of accounts) {
+			const providerId = account.providerId!;
+			domainCount[providerId] = (domainCount[providerId] || 0) + 1;
+		}
+
+		return domainCount;
 	}
 }

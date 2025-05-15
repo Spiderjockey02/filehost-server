@@ -1,4 +1,4 @@
-import type { createFile, FullFile, updateFile, updateFilePath } from '../types/database/File';
+import type { createFile, FullFile, Pagination, updateFile, updateFilePath } from '../types/database/File';
 import { fetchOrCreateFileMediaType } from './FileMimeType';
 import type { File, FileType } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
@@ -294,15 +294,85 @@ export default class FileAccessor {
 		* Gets the 10 recently uploaded files
 		* @returns The files.
 	*/
-	fetchRecentlyUploaded() {
+	fetchRecentlyUploaded({ page = 0 }: Pagination) {
 		return client.file.findMany({
 			where: {
 				deletedAt: null,
+				type: 'FILE',
 			},
 			orderBy: {
 				createdAt: 'desc',
 			},
-			take: 15,
+			take: 20,
+			skip: page * 20,
 		});
+	}
+
+	/**
+		* Gets the average file size
+		* @returns The average file size.
+	*/
+	fetchAverageSize() {
+		return client.file.aggregate({
+			_avg: {
+				size: true,
+			},
+			where: {
+				deletedAt: null,
+				type: 'FILE',
+			},
+		});
+	}
+
+	/**
+		* Fetch the number of files uploaded between 2 dates
+		* @param {Date} oldDate The old date.
+		* @param {Date} newDate The new date.
+		* @returns The number of files uploaded.
+	*/
+	async fetchUploadsBetweenTwoDates(oldDate: Date, newDate: Date) {
+		return client.file.count({
+			where: {
+				type: 'FILE',
+				createdAt: {
+					gte: oldDate,
+					lte: newDate,
+				},
+			},
+		});
+	}
+
+	/**
+	  * Fetch the distribution of file sizes in bins.
+	  * @returns The distribution of file sizes in bins.
+	*/
+	async fetchUploadSizeDistribution() {
+		const files = await client.file.findMany({
+			where: {
+				deletedAt: null,
+				type: 'FILE',
+			},
+			select: { size: true },
+		});
+
+		const category = {
+			'Tiny (0-10 KB)': 0,
+			'Small (10 KB - 1 MB)': 0,
+			'Medium (1 MB - 50 MB)': 0,
+			'Large (50 MB - 500 MB)': 0,
+			'Very Large (500 MB - 1 GB)': 0,
+			'Huge (> 1 GB)': 0,
+		};
+
+		for (const { size } of files) {
+			if (size < 10 * 1024) category['Tiny (0-10 KB)']++;
+			else if (size < 1 * 1024 * 1024) category['Small (10 KB - 1 MB)']++;
+			else if (size < 50 * 1024 * 1024) category['Medium (1 MB - 50 MB)']++;
+			else if (size < 500 * 1024 * 1024) category['Large (50 MB - 500 MB)']++;
+			else if (size < 1024 * 1024 * 1024) category['Very Large (500 MB - 1 GB)']++;
+			else category['Huge (> 1 GB)']++;
+		}
+
+		return category;
 	}
 }
