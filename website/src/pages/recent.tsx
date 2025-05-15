@@ -92,7 +92,7 @@ export default function Recent() {
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user} active='recent'>
+		<FileLayout user={session.user} activeTab='recent'>
 			<div className="d-flex flex-row justify-content-between">
 				<h5><b>Recently viewed files</b></h5>
 				<div className="dropdown">
