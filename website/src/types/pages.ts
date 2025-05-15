@@ -1,19 +1,61 @@
-import { User } from '.';
+import { User } from 'better-auth';
 
 export interface AdminPageProps {
-  data: {
+  stats: {
     users: {
       total: number
+      active: number
     },
     storage: {
       total: number
       free: number
+      totalFiles: number
     }
+    memory: {
+      total: number
+      using: number
+    }
+    uptime: number
+  }
+  rawUserGrowth: {
+    [key: string]: number
+  }
+  rawUploadGrowth: {
+    [key: string]: number
   }
 }
 
 export interface AdminUserPageProps {
   users: Array<User>
+  months: {
+    [key: string]: number
+  }
+  newUsers: number
+  langaugeCodes: {
+    [key: string]: number
+  }
+  emails: {
+    [key: string]: number
+  }
+  rawUserGrowth: {
+    [key: string]: number
+  }
+  signupSource: {
+    [key: string]: number
+  }
+  retention: {
+    sessions: {
+      [key: string]: number
+    }
+    files: {
+      [key: string]: number
+    }
+  }
+  userStats: {
+    avgstorageUsage: number
+    banned: number
+    admins: number
+  }
 }
 
 export interface FilePageProps {
