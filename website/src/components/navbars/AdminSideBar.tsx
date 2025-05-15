@@ -1,0 +1,44 @@
+import Link from 'next/link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCogs, faFile, faLaughWink, faTachometerAlt, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { AdminSideBarProps } from '@/types/Components/Navbars';
+
+export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarProps) {
+	return (
+		<ul className="navbar-nav bg-primary sidebar sidebar-dark accordion" id="accordionSidebar" style={{ color: 'white', minHeight: '100vh', display: showSidebar ? 'block' : 'none' }}>
+			<Link className="sidebar-brand d-flex align-items-center justify-content-center" href="/" style={{ color: 'white' }}>
+				<div className="sidebar-brand-icon rotate-n-15">
+					<FontAwesomeIcon icon={faLaughWink} />
+				</div>
+				<div className="sidebar-brand-text mx-3">API server</div>
+			</Link>
+			<hr className="sidebar-divider my-0" />
+			<li className={`nav-item ${activeTab == 'dashboard' ? 'active' : ''}`}>
+				<Link className="nav-link" href="/admin">
+					<FontAwesomeIcon icon={faTachometerAlt} />
+					<span> Dashboard</span>
+				</Link>
+			</li>
+			<hr className="sidebar-divider" />
+			<li className={`nav-item ${activeTab == 'users' ? 'active' : ''}`}>
+				<Link className="nav-link" href="/admin/users">
+					<FontAwesomeIcon icon={faUsers} />
+					<span> Users</span>
+				</Link>
+			</li>
+			<li className={`nav-item ${activeTab == 'files' ? 'active' : ''}`}>
+				<Link className="nav-link" href="/admin/files">
+					<FontAwesomeIcon icon={faFile} />
+					<span> Files</span>
+				</Link>
+			</li>
+			<li className={`nav-item ${activeTab == 'logs' ? 'active' : ''}`}>
+				<Link className="nav-link" href="/admin/system">
+					<FontAwesomeIcon icon={faCogs} />
+					<span> System</span>
+				</Link>
+			</li>
+			<hr className="sidebar-divider" />
+		</ul>
+	);
+}

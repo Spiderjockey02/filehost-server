@@ -33,7 +33,7 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 	}
 
 	return (
-		<nav className="navbar navbar-expand">
+		<nav className="navbar navbar-expand sticky-top" style={{ backgroundColor: '#ffffff' }}>
 			<div className="navbar-collapse w-100 dual-collapse2">
 				<ul className="navbar-nav me-auto mb-2 mb-lg-0">
 					<li className="nav-item">
@@ -119,6 +119,7 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 						<div className="dropdown-menu dropdown-menu-end">
 							<Link className="dropdown-item text-dark" href="/settings">Settings</Link>
 							<Link className="dropdown-item text-dark" href="/files">My files</Link>
+							{user.role == 'admin' && <Link className="dropdown-item text-dark" href="/admin">Admin</Link>}
 							<div className="dropdown-divider"></div>
 							<a className="dropdown-item" href="#" onClick={() => authClient.signOut({ fetchOptions: {
 								onSuccess: () => {

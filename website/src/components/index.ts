@@ -1,3 +1,8 @@
+// Charts
+import PieChart from './Charts/Pie';
+import LineChart from './Charts/Line';
+import BarChart from './Charts/Bar';
+
 // Forms
 import InputField from './Form/InputField';
 import DragUploadField from './Form/DragUploadField';
@@ -19,7 +24,9 @@ import FileNavBar from './Navbars/FileNavbar';
 import Footer from './Navbars/Footer';
 import HomeNavbar from './Navbars/HomeNavbar';
 import RecentNavbar from './Navbars/RecentNavbar';
-import Sidebar from './Navbars/sideBar';
+import FileSideBar from './Navbars/FileSideBar';
+import AdminSideBar from './Navbars/AdminSideBar';
+import AdminNavBar from './Navbars/AdminNavbar';
 
 // Tables
 import FileDetailCell from './Tables/FileDetailCell';
@@ -36,6 +43,8 @@ import { Row, Col } from './UI/Grid';
 import Modal from './UI/Modal';
 import NotificationBell from './UI/Notification';
 import Table from './UI/Table';
+import InfoPill from './UI/InfoPill';
+import InfoPillProgress from './UI/InfoPillProgressBar';
 
 // Views
 import Directory from './views/directory';
@@ -46,8 +55,9 @@ import TextViewer from './views/TextViewer';
 import VideoPlayer from './views/VideoPlayer';
 
 export { InputField, FileContextMenu, TrashContextMenu, DeleteFileModal, RenameFileModal, UpdateLocationModal,
-	BreadcrumbNav, FileNavBar, Footer, HomeNavbar, RecentNavbar, Sidebar, FileDetailCell, FileItemRow,
+	BreadcrumbNav, FileNavBar, Footer, HomeNavbar, RecentNavbar, FileSideBar, FileDetailCell, FileItemRow,
 	FileViewTable, ErrorPopup, SuccessPopup, UploadStatusToast, Row, Col, Modal, NotificationBell,
 	Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer, VideoPlayer, CreateFolderModal,
-	SearchFileModal, DragUploadField,
+	SearchFileModal, DragUploadField, AdminSideBar, AdminNavBar, InfoPill, InfoPillProgress, PieChart,
+	LineChart, BarChart,
 };

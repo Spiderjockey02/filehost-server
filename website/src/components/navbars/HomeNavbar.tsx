@@ -1,11 +1,10 @@
-import { signOut, useSession } from 'next-auth/react';
+import { HomeNavbarProps } from '@/types/Components/Navbars';
+import NotificationBell from '../UI/Notification';
+import { authClient } from '@/auth/client';
 import Image from 'next/image';
 import Link from 'next/link';
-import NotificationBell from '../UI/Notification';
 
-export default function NavBar() {
-	const { data: session, status } = useSession();
-
+export default function NavBar({ user }: HomeNavbarProps) {
 	return (
 		<nav className="navbar navbar-expand fixed-top navbar-light" id="navBar" style={{ boxShadow: '0px 2px 5px 0px rgba(0,0,0,0.75)', backgroundColor: 'white' }}>
 			<Link className="navbar-brand btn" href="/">Home</Link>
@@ -16,19 +15,20 @@ export default function NavBar() {
 				<ul className="navbar-nav me-auto mb-2 mb-lg-0">
 				</ul>
 				<ul className="navbar-nav">
-					{(status == 'authenticated') ?
+					{!!user ?
 						<>
-							<NotificationBell notifications={session.user.notifications} />
+							<NotificationBell notifications={user?.notifications ?? []} />
 							&nbsp;
 							<li className="nav-item dropdown">
 								<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-									<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" /> {session.user?.name}
+									<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" /> {user?.name}
 								</a>
 								<div className="dropdown-menu dropdown-menu-end">
 									<Link className="dropdown-item text-dark" href="/settings">Settings</Link>
 									<Link className="dropdown-item text-dark" href="/files">My files</Link>
+									{user.role == 'admin' && <Link className="dropdown-item text-dark" href="/admin">Admin</Link>}
 									<div className="dropdown-divider"></div>
-									<a className="dropdown-item" href="#" onClick={() => signOut()} id="logout">Logout</a>
+									<a className="dropdown-item" href="#" onClick={() => authClient.signOut()} id="logout">Logout</a>
 								</div>
 							</li>
 						</>
