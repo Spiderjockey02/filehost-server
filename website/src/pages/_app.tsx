@@ -1,5 +1,5 @@
 import { UploadQueueProvider } from '@/components/Hooks/UploadContentManager';
-import { FileProvider } from '@/components/Hooks/fileManager';
+import { FileProvider } from '@/components/Hooks/FileManager';
 import 'bootstrap/dist/css/bootstrap.css';
 import Header from '../components/header';
 import type { AppProps } from 'next/app';
