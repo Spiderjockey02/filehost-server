@@ -1,12 +1,16 @@
-import { Notification, Group, RecentlyViewed } from './index';
+import { Notification } from './index';
 
 declare module 'better-auth' {
   export interface User {
+		group: any;
+		notifications: Notification[];
     id: string
     name: string
     email: string
     createdAt: Date
+    updatedAt: Date
     totalStorageSize: number
+    role: string
   }
 }
 

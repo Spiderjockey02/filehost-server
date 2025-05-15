@@ -11,8 +11,21 @@ export interface BreadcrumbNavProps {
 	viewType: viewTypeTypes
 }
 
+export interface FileSideBarProps extends FileNavBarProps {
+  activeTab: 'files' | 'recent' | 'bin'
+}
+
+export interface AdminSideBarProps {
+  activeTab: 'dashboard' | 'users' | 'files' | 'organisations' | 'logs' | 'payments'
+  showSidebar: boolean
+}
+
 export interface FileNavBarProps {
   user: User
+}
+
+export interface HomeNavbarProps {
+  user: User | null
 }
 
 export interface RecentNavbarProps {

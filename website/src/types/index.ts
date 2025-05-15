@@ -1,3 +1,4 @@
+import type { Session, User } from 'better-auth/types';
 export interface Notification {
   id: string
   text: string
@@ -33,6 +34,7 @@ export type fileItem = {
   size: number
   type: fileType
   parentId: string | null
+  mimetype: string | null
   _count: {
     children: number
   }
@@ -56,3 +58,22 @@ export interface SettingErrorTypes {
 	type: 'current' | 'pwd1' | 'pwd2' | 'misc' | 'av' | 'email'
 	text: string
 }
+
+export interface DatabaseBackup {
+  createdAt: Date
+  filename: string
+  status: 'success' | 'failed'
+  sizeBytes: number
+  errorMessage: string | null
+  db: string
+}
+
+export type AdminUser = {
+  totalStorageSize: number
+  group: Group
+  sessions: Session[]
+  files: fileItem[]
+  _count: {
+    files: number
+  }
+} & User
