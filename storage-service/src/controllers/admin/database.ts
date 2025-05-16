@@ -1,7 +1,7 @@
-import { Error, parseMySQLConnectionString, PATHS } from '../../utils';
+import extendedClient from '../../accessors/prisma';
 import type { Request, Response } from 'express';
+import { Error, PATHS } from '../../utils';
 import Client from 'src/helpers/Client';
-import { exec } from 'child_process';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 
@@ -37,27 +37,10 @@ export const getDatabaseBackups = (client: Client) => {
 // Endpoint: POST /api/admin/database/backup
 export const postDatabaseBack = (client: Client) => {
 	return async (_req: Request, res: Response) => {
-		const mysqlArgs = parseMySQLConnectionString(process.env.DATABASE_URL as string);
 
 		try {
-			// Check if the database backups folder exists
-			if (!existsSync(PATHS.DATABASE_BACKUPS)) await fs.mkdir(PATHS.DATABASE_BACKUPS, { recursive: true });
-
-			const timestamp = new Date();
-			exec(`mysqldump -u ${mysqlArgs.username} -p${mysqlArgs.password} -n ${mysqlArgs.database} > "${PATHS.DATABASE_BACKUPS}/${timestamp.getTime()}.dump.sql"`, async (err) => {
-				const metadata = {
-					createdAt: timestamp.toISOString(),
-					filename: `${timestamp.getTime()}.dump.sql`,
-					status: err ? 'failed' : 'success',
-					sizeBytes: err ? null : await fs.stat(`${PATHS.DATABASE_BACKUPS}/${timestamp.getTime()}.dump.sql`).then((stats) => stats.size),
-					errorMessage: err ? err.message : null,
-					db: mysqlArgs.database,
-				};
-
-				await fs.writeFile(`${PATHS.DATABASE_BACKUPS}/${timestamp.getTime()}.meta.json`, JSON.stringify(metadata, null, 2));
-				if (err) throw err;
-				res.json({ success: 'Successfully backed up database.', metadata });
-			});
+			const metadata = await extendedClient.$backup();
+			res.json({ success: 'Successfully backed up database.', metadata });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to create backup of database.');
