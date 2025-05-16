@@ -4,11 +4,11 @@ import { checkAdmin } from '../../../middleware';
 import { Router } from 'express';
 const router = Router();
 
-export default function(client: Client) {
-	router.get('/thumbnails', checkAdmin, getCachedThumbnailSize(client));
+export default async function(client: Client) {
+	router.get('/thumbnails', await checkAdmin(client), getCachedThumbnailSize(client));
 
-	router.delete('/:name', checkAdmin, deleteCacheByName(client));
+	router.delete('/:name', await checkAdmin(client), deleteCacheByName(client));
 
-	router.get('/stats', checkAdmin, getCachedStats(client));
+	router.get('/stats', await checkAdmin(client), getCachedStats(client));
 	return router;
 }

@@ -10,7 +10,7 @@ export const getAvatar = (client: Client) => {
 		if (req.params.userId) {
 			userId = req.params.userId;
 		} else {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 			userId = session.user.id;
 		}
@@ -22,9 +22,14 @@ export const getAvatar = (client: Client) => {
 // Endpoint GET /thumbnail/:userid/:path(*)
 export const getThumbnail = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		const userId = req.params.userid;
+		const path = req.params.path;
+
 		try {
-			const userId = req.params.userid;
-			const path = req.params.path;
+			// Make sure they have access to view the thumbnail
+			const session = await getSession(client, req);
+			if (!session?.user) return Error.InvalidSession(res);
+			if (session.user.id !== userId) return Error.InvalidAccess(res);
 
 			await client.FileManager.sendThumbnail(res, userId, path);
 		} catch (error) {
@@ -37,7 +42,7 @@ export const getThumbnail = (client: Client) => {
 // Endpoint GET /content/:userid/:path(*)
 export const getContent = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
+		const session = await getSession(client, req);
 		if (!session?.user) return Error.InvalidSession(res);
 
 		const userId = req.params.userid;

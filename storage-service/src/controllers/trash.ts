@@ -7,7 +7,7 @@ import { getSession } from '../middleware';
 export const getTrash = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			const files = await client.FileManager.getAllUsersDeletedFiles(session.user.id);
@@ -24,7 +24,7 @@ export const getTrash = (client: Client) => {
 export const deleteEmpty = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			await client.FileManager.TrashHandler.emptyTrash(session.user.id);
@@ -40,7 +40,7 @@ export const deleteEmpty = (client: Client) => {
 export const putRestore = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Get and validate the file paths for restoring

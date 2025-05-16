@@ -4,14 +4,14 @@ import { checkAdmin } from '../../../middleware';
 import { Router } from 'express';
 const router = Router();
 
-export default function(client: Client) {
-	router.get('/backups', checkAdmin, getDatabaseBackups(client));
+export default async function(client: Client) {
+	router.get('/backups', await checkAdmin(client), getDatabaseBackups(client));
 
-	router.post('/backup', checkAdmin, postDatabaseBack(client));
+	router.post('/backup', await checkAdmin(client), postDatabaseBack(client));
 
-	router.delete('/backup/:timestamp', checkAdmin, deleteBackupByName(client));
+	router.delete('/backup/:timestamp', await checkAdmin(client), deleteBackupByName(client));
 
-	router.get('/backup/:timestamp', checkAdmin, downloadBackupByName(client));
+	router.get('/backup/:timestamp', await checkAdmin(client), downloadBackupByName(client));
 
 	return router;
 }

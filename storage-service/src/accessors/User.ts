@@ -196,20 +196,6 @@ export default class UserManager {
 		return users;
 	}
 
-	async fetchUsersWhoLoggedInBetweenTwoDates(oldDate: Date, newDate: Date) {
-		const sessions = await client.session.findMany({
-			where: {
-				createdAt: {
-					gte: oldDate,
-					lte: newDate,
-				},
-			},
-		});
-
-		const users = [...new Set(sessions.map(s => s.userId))];
-		return users;
-	}
-
 	/**
 	  * Fetch the number of users by language code
 	  * @returns The number of users by language code
@@ -279,17 +265,6 @@ export default class UserManager {
 		return client.user.count({
 			where: {
 				banned: true,
-			},
-		});
-	}
-
-	fetchSessions(userId?: string) {
-		return client.session.findMany({
-			where: {
-				userId,
-			},
-			orderBy: {
-				createdAt: 'desc',
 			},
 		});
 	}

@@ -55,7 +55,7 @@ const client = new Client();
 		.use('/', (await import('./routes/index')).default(client));
 
 	for (const endpoint of endpoints) {
-		app.use(endpoint.route, (await import(endpoint.path)).default(client));
+		app.use(endpoint.route, await (await import(endpoint.path)).default(client));
 	}
 	app.listen(process.env.PORT, () => client.logger.ready(`Started on PORT: ${process.env.PORT}`));
 })();

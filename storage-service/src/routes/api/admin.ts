@@ -6,22 +6,22 @@ import { checkAdmin } from '../../middleware';
 import { Router } from 'express';
 const router = Router();
 
-export default function(client: Client) {
-	router.get('/stats', checkAdmin, getStats(client));
+export default async function(client: Client) {
+	router.get('/stats', await checkAdmin(client), getStats(client));
 
-	router.get('/mimetypes', checkAdmin, getMimeTypes(client));
+	router.get('/mimetypes', await checkAdmin(client), getMimeTypes(client));
 
-	router.get('/logs', checkAdmin, getLogs(client));
+	router.get('/logs', await checkAdmin(client), getLogs(client));
 
-	router.get('/logs/:date', checkAdmin, getSpecificLog(client));
+	router.get('/logs/:date', await checkAdmin(client), getSpecificLog(client));
 
-	router.get('/files/recently-uploaded', checkAdmin, getRecentlyUploaded(client));
+	router.get('/files/recently-uploaded', await checkAdmin(client), getRecentlyUploaded(client));
 
-	router.get('/files', checkAdmin, getFiles(client));
+	router.get('/files', await checkAdmin(client), getFiles(client));
 
-	router.get('/files/growth', checkAdmin, getFilesGrowth(client));
+	router.get('/files/growth', await checkAdmin(client), getFilesGrowth(client));
 
-	router.get('/files/sized-categories', checkAdmin, getFileSizeCategories(client));
+	router.get('/files/sized-categories', await checkAdmin(client), getFileSizeCategories(client));
 
 	return router;
 }

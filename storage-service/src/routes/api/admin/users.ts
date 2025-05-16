@@ -4,24 +4,24 @@ import { checkAdmin } from '../../../middleware';
 import { Router } from 'express';
 const router = Router();
 
-export default function(client: Client) {
-	router.get('/', checkAdmin, getUsers(client));
+export default async function(client: Client) {
+	router.get('/', await checkAdmin(client), getUsers(client));
 
-	router.get('/growth', checkAdmin, getUserGrowth(client));
+	router.get('/growth', await checkAdmin(client), getUserGrowth(client));
 
-	router.get('/language-codes', checkAdmin, getUsersByLanguageCode(client));
+	router.get('/language-codes', await checkAdmin(client), getUsersByLanguageCode(client));
 
-	router.get('/emails', checkAdmin, getUserEmails(client));
+	router.get('/emails', await checkAdmin(client), getUserEmails(client));
 
-	router.get('/signUp-source', checkAdmin, getUserSignupSource(client));
+	router.get('/signUp-source', await checkAdmin(client), getUserSignupSource(client));
 
-	router.get('/stats', checkAdmin, getUserStats(client));
+	router.get('/stats', await checkAdmin(client), getUserStats(client));
 
-	router.get('/sessions', checkAdmin, getUserSessions(client));
+	router.get('/sessions', await checkAdmin(client), getUserSessions(client));
 
-	router.get('/retention', checkAdmin, getUserRetention(client));
+	router.get('/retention', await checkAdmin(client), getUserRetention(client));
 
-	router.get('/:id', checkAdmin, getUserById(client));
+	router.get('/:id', await checkAdmin(client), getUserById(client));
 
 	return router;
 }

@@ -1,14 +1,14 @@
 import type { Request, Response, NextFunction } from 'express';
-import extendedClient from '../accessors/prisma';
 import avatarForm from './avatar-form';
 import parseForm from './parse-form';
 import { Error } from '../utils';
+import Client from 'src/helpers/Client';
 
-export async function getSession(req: Request) {
+export async function getSession(client: Client, req: Request) {
 	if (req.headers.cookie == undefined) return null;
 
 	// get Session token from cookies
-	const cookies: string[] = req.headers['cookie'].split('; ');
+	const cookies = req.headers['cookie'].split('; ');
 	const parsedcookies = cookies.map((i: string) => i.split('='));
 
 	// Get session token (Could be secure or not so check both)
@@ -16,18 +16,7 @@ export async function getSession(req: Request) {
 	if (!sessionToken) return null;
 
 	try {
-		const session = await extendedClient.session.findUnique({
-			where: {
-				token: sessionToken.split('.')[0],
-			},
-			include: {
-				user: {
-					include: {
-						group: true,
-					},
-				},
-			},
-		});
+		const session = await client.sessionManager.fetchByToken(sessionToken.split('.')[0]);
 		return session;
 	} catch (err) {
 		console.log(err);
@@ -35,12 +24,14 @@ export async function getSession(req: Request) {
 	}
 }
 
-export async function checkAdmin(req: Request, res: Response, next: NextFunction) {
-	const session = await getSession(req);
-	if (session == null) return Error.InvalidSession(res);
+export async function checkAdmin(client: Client) {
+	return async (req: Request, res: Response, next: NextFunction) => {
+		const session = await getSession(client, req);
+		if (session == null) return Error.InvalidSession(res);
 
-	if (session.user.role == 'admin') return next();
-	return Error.InvalidSession(res);
+		if (session.user.role == 'admin') return next();
+		return Error.InvalidAccess(res);
+	};
 }
 
 export { avatarForm, parseForm };

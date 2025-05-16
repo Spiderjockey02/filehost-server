@@ -174,7 +174,7 @@ export const getUserSessions = (client: Client) => {
 			const userId = req.query.userId;
 			if (userId !== undefined && typeof userId !== 'string') return Error.IncorrectQuery(res, 'userID must be a string or undefined.');
 
-			const sessions = await client.userManager.fetchSessions(userId);
+			const sessions = await client.sessionManager.fetchAll(userId);
 			res.json({ sessions });
 		} catch (err) {
 			client.logger.error(err);
@@ -206,7 +206,7 @@ export const getUserRetention = (client: Client) => {
 
 				const dateStr = start.toISOString().split('T')[0];
 				const users = await client.userManager.fetchUsersWhoUploadedBetweenTwoDates(start, end);
-				const session = await client.userManager.fetchUsersWhoLoggedInBetweenTwoDates(start, end);
+				const session = await client.sessionManager.fetchUsersWhoLoggedInBetweenTwoDates(start, end);
 				days[dateStr] = users.length / total;
 				sessions[dateStr] = session.length / total;
 			}

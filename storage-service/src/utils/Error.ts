@@ -23,6 +23,16 @@ export default class Error {
 	}
 
 	/**
+		* Tell the requestee they do not have permission to access the endpoint.
+		* @param {Response} res The response to the requestee
+	*/
+	public static InvalidAccess(res: Response) {
+		return res
+			.status(401)
+			.json({ error: 'You do not have permission to access this resource.' });
+	}
+
+	/**
 		* Tell the requestee the login was invalid (password wrong etc)
 		* @param {Response} res The response to the requestee
 	*/

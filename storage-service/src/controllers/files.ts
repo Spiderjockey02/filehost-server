@@ -8,7 +8,7 @@ import { FileType } from '@prisma/client';
 export const getFiles = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Fetch from cache
@@ -27,7 +27,7 @@ export const getFiles = (client: Client) => {
 export const postFileUpload = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Parse and save file(s)
@@ -47,7 +47,7 @@ export const postFileUpload = (client: Client) => {
 export const deleteFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Validate request body
@@ -67,7 +67,7 @@ export const deleteFile = (client: Client) => {
 // Endpoint DELETE /api/files/bulk-delete
 export const deleteBulkFiles = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
+		const session = await getSession(client, req);
 		if (!session?.user) return Error.InvalidSession(res);
 
 		// Validate request body
@@ -96,7 +96,7 @@ export const deleteBulkFiles = (client: Client) => {
 export const postMoveFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Validate request body
@@ -118,7 +118,7 @@ export const postMoveFile = (client: Client) => {
 export const postCopyFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Validate request body
@@ -140,7 +140,7 @@ export const postCopyFile = (client: Client) => {
 export const getDownloadFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Validate the file path
@@ -171,7 +171,7 @@ export const getDownloadFile = (client: Client) => {
 export const getBulkDownload = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Validate request body
@@ -191,7 +191,7 @@ export const getBulkDownload = (client: Client) => {
 export const postRenameFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 			const { fileId, newName } = req.body;
 
@@ -213,7 +213,7 @@ export const postRenameFile = (client: Client) => {
 export const postCreateFolder = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			const { parentId, folderName } = req.body;
@@ -234,7 +234,7 @@ export const postCreateFolder = (client: Client) => {
 export const getSearchFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Search for file with extra information if sent aswell
@@ -257,7 +257,7 @@ export const getSearchFile = (client: Client) => {
 export const getAllDirectories = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(req);
+			const session = await getSession(client, req);
 			if (!session?.user) return res.json({ error: 'Invalid session' });
 
 			const dirs = await client.FileManager.getAllUsersDirectories(session.user.id);
