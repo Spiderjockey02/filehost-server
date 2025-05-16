@@ -45,17 +45,22 @@ interface Props {
 			size: number
 			max: number
 			ttl: number
-		},
+		}
 		users: {
 			size: number
 			max: number
 			ttl: number
-			},
+		}
 		userHistory: {
 			size: number
 			max: number
 			ttl: number
-			}
+		}
+		sessions: {
+			size: number
+			max: number
+			ttl: number
+		}
 	}
 }
 
@@ -257,22 +262,29 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 										<td>Files</td>
 										<td>{cacheStats.files.size}</td>
 										<td>{cacheStats.files.max}</td>
-										<td>{cacheStats.files.ttl}</td>
+										<td>{convertMiliseconds(cacheStats.files.ttl / 1000)}</td>
 										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('files')}>Reset</button></td>
 									</tr>
 									<tr>
 										<td>Users</td>
 										<td>{cacheStats.users.size}</td>
 										<td>{cacheStats.users.max}</td>
-										<td>{cacheStats.users.ttl}</td>
+										<td>{convertMiliseconds(cacheStats.users.ttl / 1000)}</td>
 										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('users')}>Reset</button></td>
 									</tr>
 									<tr>
 										<td>User History</td>
 										<td>{cacheStats.userHistory.size}</td>
 										<td>{cacheStats.userHistory.max}</td>
-										<td>{cacheStats.userHistory.ttl}</td>
+										<td>{convertMiliseconds(cacheStats.userHistory.ttl / 1000)}</td>
 										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('history')}>Reset</button></td>
+									</tr>
+									<tr>
+										<td>Sessions</td>
+										<td>{cacheStats.sessions.size}</td>
+										<td>{cacheStats.sessions.max}</td>
+										<td>{convertMiliseconds(cacheStats.sessions.ttl / 1000)}</td>
+										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('sessions')}>Reset</button></td>
 									</tr>
 									<tr>
 										<td>Thumbnails</td>

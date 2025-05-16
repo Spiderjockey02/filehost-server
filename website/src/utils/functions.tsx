@@ -78,10 +78,10 @@ export function convertMiliseconds(miliseconds: number) {
 	const	hours = total_hours % 24;
 
 	let formatText = '';
-	if (days > 0) formatText = formatText.concat(`${days} days `);
-	if (hours > 0) formatText = formatText.concat(`${hours} hours `);
-	if (minutes > 0) formatText = formatText.concat(`${minutes} minutes `);
-	if (days <= 1 && hours <= 1) formatText = formatText.concat(`${seconds} seconds`);
+	if (days > 0) formatText = formatText.concat(`${days} day${(days > 1) ? 's' : ''} `);
+	if (hours > 0) formatText = formatText.concat(`${hours} hour${(hours > 1) ? 's' : ''} `);
+	if (minutes > 0) formatText = formatText.concat(`${minutes} minute${(minutes > 1) ? 's' : ''} `);
+	if (days <= 1 && hours <= 1 && seconds > 0) formatText = formatText.concat(`${seconds} second${(seconds > 1) ? 's' : ''}`);
 
 	return formatText;
 };

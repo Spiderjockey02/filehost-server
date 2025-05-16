@@ -42,8 +42,11 @@ export const deleteCacheByName = (client: Client) => {
 					await fs.rm(PATHS.THUMBNAIL, { recursive: true });
 					await fs.mkdir(PATHS.THUMBNAIL);
 					break;
+				case 'sessions':
+					client.sessionManager.cache.clear();
+					break;
 				default:
-					return Error.IncorrectQuery(res, 'endpoint must only be users, files, history or thumbnails');
+					return Error.IncorrectQuery(res, 'endpoint must only be users, files, history, cache or thumbnails');
 			}
 			res.json({ success: `Successfully deleted cached ${name}.` });
 		} catch (err) {
@@ -75,7 +78,13 @@ export const getCachedStats = (client: Client) => {
 				ttl: client.recentlyViewedFileManager.cache.ttl,
 			};
 
-			res.json({ files: fileStats, users: userStats, userHistory: userHistoryStats });
+			const sessionStats = {
+				size: client.sessionManager.cache.size,
+				max: client.sessionManager.cache.max,
+				ttl: client.sessionManager.cache.ttl,
+			};
+
+			res.json({ files: fileStats, users: userStats, userHistory: userHistoryStats, sessions: sessionStats });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to get cached stats.');
