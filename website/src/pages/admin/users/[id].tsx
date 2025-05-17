@@ -18,7 +18,7 @@ export default function AdminUserIdPage({ user }: Props) {
 	if (session == null) return null;
 
 	return (
-		<AdminLayout activeTab="users" user={session.user}>
+		<AdminLayout activeTab="users" user={session.user} tabName={`Admin user: ${user.name}`}>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">User: {user.name}</h1>

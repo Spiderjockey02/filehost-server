@@ -46,7 +46,7 @@ export default function Files({ path = '/' }: FilePageProps) {
 
 	if (session == null || file == null) return null;
 	return (
-		<FileLayout user={session.user} activeTab='files'>
+		<FileLayout user={session.user} activeTab='files' tabName={file.name}>
 			<BreadcrumbNav path={path} isFile={file.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={file.id} />
 			{errorMsg && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
 			{(path.length == 0 && recents.length > 0) &&

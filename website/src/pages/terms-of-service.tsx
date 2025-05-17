@@ -6,7 +6,7 @@ export default function TermsOfService() {
 	const { data } = authClient.useSession();
 
 	return (
-		<MainLayout user={data?.user ?? null}>
+		<MainLayout user={data?.user ?? null} tabName='Terms of Service'>
 			<div className="container my-5">
 				<h1 className="text-center mb-4">Terms of Service</h1>
 				<p className="text-muted text-center">Effective Date: <strong>22 January 2025</strong></p>

@@ -98,7 +98,7 @@ export default function Settings() {
 
 	if (session == null) return null;
 	return (
-		<MainLayout user={session.user}>
+		<MainLayout user={session.user} tabName='Settings'>
 			<section className="d-flex flex-row align-items-center" style={{ 'backgroundColor': '#eee', padding: '5% 0' }}>
 				<div className="card container">
 					<div className="row" style={{ margin: '5px' }}>
