@@ -121,3 +121,25 @@ model RecentlyViewedFile {
 
   @@unique([fileId, userId])
 }
+
+enum Status {
+  SUCCESS
+  FAILURE
+}
+
+model CronJobLog {
+  id        Int         @id   @default(autoincrement())
+  status    Status
+  message   String?
+  ranAt     DateTime    @default(now())
+  duration  Int?        @default(0)
+  cronJob   CronJob     @relation(fields: [jobName], references: [name], onDelete: Cascade)
+  jobName   String
+}
+
+model CronJob {
+  name          String        @id
+  latestStatus  Status? 
+  CronJobLog    CronJobLog[]
+  schedule      String    @default("0 * * * *")
+}

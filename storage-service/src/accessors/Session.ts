@@ -75,5 +75,34 @@ export default class SessionManager {
 
 		return session;
 	}
+
+	/**
+	  * Delete a session by token
+	  * @param {String} token The token
+		* @returns {Session} Whether it was deleted or not
+	*/
+	async delete(token: string): Promise<Session> {
+		const session = await client.session.delete({
+			where: {
+				token,
+			},
+		});
+
+		this.cache.delete(session.token);
+		return session;
+	}
+
+	/**
+	  * Delete expired sessions
+	*/
+	async deleteExpired() {
+		return client.session.deleteMany({
+			where: {
+				expiresAt: {
+					gte: new Date(),
+				},
+			},
+		});
+	}
 }
 

@@ -3,6 +3,7 @@ import { Logger, parseMySQLConnectionString, PATHS } from '../utils';
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
+import { DatabaseMetadata } from 'src/types';
 const LoggerClass = new Logger();
 
 const client = new PrismaClient({ errorFormat: 'pretty',
@@ -39,7 +40,7 @@ const extendedClient = client.$extends({
 		},
 	},
 	client: {
-		async $backup() {
+		async $backup(): Promise<DatabaseMetadata> {
 			// Check if the database backups folder exists
 			if (!existsSync(PATHS.DATABASE_BACKUPS)) await fs.mkdir(PATHS.DATABASE_BACKUPS, { recursive: true });
 

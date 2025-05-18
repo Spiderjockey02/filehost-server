@@ -37,4 +37,7 @@ export const CONSTANTS = {
 		// End of the file (etc jpg, png, etc)
 		EXTENSION: 'jpg',
 	},
+
+	// How many days should log files stay on system before being deleted
+	RETENTION_POLICY_FOR_LOG_FILES_IN_DAYS: 90,
 };

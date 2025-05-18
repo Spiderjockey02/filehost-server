@@ -15,3 +15,14 @@ export interface Session {
   user?: User
   expires?: Date
 }
+
+
+// Database backup metadata
+export interface DatabaseMetadata {
+  createdAt: string;
+  filename: string;
+  status: string
+  sizeBytes: number | null;
+  errorMessage: string | null;
+  db: string;
+}
