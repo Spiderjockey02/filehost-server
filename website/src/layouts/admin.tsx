@@ -1,5 +1,5 @@
 import { AdminSideBar, AdminNavBar } from '@/components';
-import { User } from 'better-auth/types';
+import type { User } from 'better-auth';
 import Head from 'next/head';
 import { ReactNode, useState } from 'react';
 

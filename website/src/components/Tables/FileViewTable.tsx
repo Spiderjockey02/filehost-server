@@ -4,21 +4,21 @@ import { FileViewProps, sortKeyTypes, SortOrder } from '@/types/Components/Table
 import { useEffect, useState, MouseEvent } from 'react';
 import FileItemRow from './FileItemRow';
 import Table from '../UI/Table';
-import { fileItem } from '@/types';
 import { FileContextMenu } from '..';
+import { File } from '@prisma/client';
 
 const initalContextMenu = {
 	show: false,
 	x: 0,
 	y: 0,
-	selected: [] as fileItem[],
+	selected: [] as File[],
 };
 
 export default function FileViewTable({ files, setFilePanelToShow, showMoreDetail = false }: FileViewProps) {
 	const [sortKey, setSortKey] = useState<sortKeyTypes>('Name');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
-	const [filesSelected, setFilesSelected] = useState<fileItem[]>([]);
+	const [filesSelected, setFilesSelected] = useState<File[]>([]);
 	const [allSelected, setAllSelected] = useState(false);
 
 	function updateSortKey(sort: sortKeyTypes) {
@@ -70,7 +70,7 @@ export default function FileViewTable({ files, setFilePanelToShow, showMoreDetai
 		}
 	}
 
-	function openContextMenu(e: MouseEvent<HTMLTableRowElement>, selected: fileItem) {
+	function openContextMenu(e: MouseEvent<HTMLTableRowElement>, selected: File) {
 		e.preventDefault();
 
 		const menuWidth = 170;
@@ -99,7 +99,7 @@ export default function FileViewTable({ files, setFilePanelToShow, showMoreDetai
 	}
 	const closeContextMenu = () => setContextMenu(initalContextMenu);
 
-	function handleCheckboxToggle(e: MouseEvent, file: fileItem) {
+	function handleCheckboxToggle(e: MouseEvent, file: File) {
 		e.stopPropagation();
 		setFilesSelected((prevSelected) =>
 			prevSelected.find((f) => f.name === file.name)

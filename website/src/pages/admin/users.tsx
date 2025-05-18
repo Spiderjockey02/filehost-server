@@ -1,7 +1,7 @@
 import type { AdminUserPageProps } from '@/types/pages';
 import type { GetServerSidePropsContext } from 'next';
 import { authClient } from '@/auth/client';
-import { User } from 'better-auth/types';
+import type { User } from 'better-auth';
 import axios from 'axios';
 import AdminLayout from '@/layouts/admin';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -62,8 +62,8 @@ export default function Files({ users, langaugeCodes, emails, rawUserGrowth, new
 		scales: {
 			y: {
 				ticks: {
-					callback: function(value: number) {
-						return `${(value * 100).toFixed(0)}%`;
+					callback: function(value: string | number) {
+						return `${(Number(value) * 100).toFixed(0)}%`;
 					},
 				},
 				beginAtZero: true,
@@ -85,7 +85,7 @@ export default function Files({ users, langaugeCodes, emails, rawUserGrowth, new
 
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='users' user={session.user} tabName='Admin users'>
+		<AdminLayout activeTab='users' user={session.user as User} tabName='Admin users'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">User Dashboard</h1>
@@ -273,7 +273,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			}),
 		]);
 
-		const values = Object.values(days);
+		const values = Object.values<number>(days);
 		const max = Math.max(...values);
 		const min = Math.min(...values);
 		const newUsers = max - min;

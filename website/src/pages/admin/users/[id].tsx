@@ -1,16 +1,16 @@
 import { authClient } from '@/auth/client';
 import { Col, Row, Table } from '@/components';
 import AdminLayout from '@/layouts/admin';
-import { AdminUser } from '@/types';
 import { formatBytes, getStatusColor, parseUserAgent } from '@/utils/functions';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios from 'axios';
+import { User } from 'better-auth';
 import { GetServerSidePropsContext } from 'next';
 import Image from 'next/image';
 
 interface Props {
-	user: AdminUser
+	user: User
 }
 
 export default function AdminUserIdPage({ user }: Props) {
@@ -18,7 +18,7 @@ export default function AdminUserIdPage({ user }: Props) {
 	if (session == null) return null;
 
 	return (
-		<AdminLayout activeTab="users" user={session.user} tabName={`Admin user: ${user.name}`}>
+		<AdminLayout activeTab="users" user={session.user as User} tabName={`Admin user: ${user.name}`}>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">User: {user.name}</h1>
@@ -52,7 +52,7 @@ export default function AdminUserIdPage({ user }: Props) {
 
 							<ul className="list-unstyled mt-3 mb-2 small">
 								<li><strong>Language:</strong> {user.languageCode}</li>
-								<li><strong>Plan:</strong> {user.group.name}</li>
+								<li><strong>Plan:</strong> {user.group?.name}</li>
 								<li>
 									<strong>Email Verified:</strong>{' '}
 									<span className={user.emailVerified ? 'text-success' : 'text-danger'}>
@@ -73,16 +73,16 @@ export default function AdminUserIdPage({ user }: Props) {
 								<label className="form-label mb-1 small"><strong>Storage Used:</strong></label>
 								<div className="progress" style={{ height: '8px' }}>
 									<div
-										className={`progress-bar ${getStatusColor(user.totalStorageSize, user.group.maxStorageSize)}`}
+										className={`progress-bar ${getStatusColor(user.totalStorageSize, user.group?.maxStorageSize)}`}
 										role="progressbar"
-										style={{ width: `${(user.totalStorageSize / user.group.maxStorageSize) * 100}%` }}
+										style={{ width: `${(user.totalStorageSize / (user.group?.maxStorageSize ?? 1)) * 100}%` }}
 										aria-valuenow={user.totalStorageSize}
 										aria-valuemin={0}
-										aria-valuemax={user.group.maxStorageSize}
+										aria-valuemax={user.group?.maxStorageSize}
 									></div>
 								</div>
 								<div className="text-muted small mt-1">
-									{formatBytes(user.totalStorageSize)} GB / {formatBytes(user.group.maxStorageSize)} GB
+									{formatBytes(user.totalStorageSize)} GB / {formatBytes(user.group?.maxStorageSize)} GB
 								</div>
 							</div>
 
@@ -116,6 +116,7 @@ export default function AdminUserIdPage({ user }: Props) {
 									<Table.Header>Expires at</Table.Header>
 								</Table.HeaderRow>
 								<Table.Body>
+									{/* @ts-expect-error CBA */}
 									{user.sessions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(userSes => (
 										<>
 											<tr>

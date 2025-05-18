@@ -1,4 +1,4 @@
-import { User } from 'better-auth';
+import { UserWithCount } from './database';
 
 export interface AdminPageProps {
   stats: {
@@ -26,7 +26,7 @@ export interface AdminPageProps {
 }
 
 export interface AdminUserPageProps {
-  users: Array<User>
+  users: UserWithCount[]
   months: {
     [key: string]: number
   }

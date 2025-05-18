@@ -9,8 +9,8 @@ generator client {
 
 model User {
   id                String    @id @default(cuid())
-  name              String?
-  email             String?   @unique
+  name              String
+  email             String   @unique
   emailVerified     Boolean
   languageCode      String        @default("en-GB")
   createdAt         DateTime      @default(now()) @map("created_at")
@@ -22,7 +22,7 @@ model User {
   files             File[]
   groupId           String?
   group             Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  totalStorageSize  BigInt  @default(0)
+  totalStorageSize  Int  @default(0)
   role              String  @default("user")
   banned            Boolean @default(false)
   banReason         String?
@@ -67,7 +67,7 @@ model Group {
   id              String    @id     @default(cuid())
   name            String    @unique
   users           User[]
-  maxStorageSize  BigInt       @default(5368709120)
+  maxStorageSize  Int       @default(5368709120)
 }
 
 model Notification {
@@ -89,7 +89,7 @@ model File {
   id          String    @id @default(cuid())
   path        String
   name        String
-  size        BigInt
+  size        Int
   type        FileType  @default(FILE)    
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

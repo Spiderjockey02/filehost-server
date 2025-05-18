@@ -1,21 +1,22 @@
-import { fileItem } from '..';
+import { File } from '@prisma/client';
 import { MouseEvent } from 'react';
+import { FileWithChildren } from '../database';
 
 export interface FileDetailCellProps {
-  file: fileItem
+  file: File
 }
 
 export interface FileItemRowProps {
-  file: fileItem
+  file: FileWithChildren
   isChecked: boolean
-  openContextMenu: (e: MouseEvent<HTMLTableRowElement>, file: fileItem) => void
-  handleCheckboxToggle: (e: MouseEvent, file: fileItem) => void
+  openContextMenu: (e: MouseEvent<HTMLTableRowElement>, file: File) => void
+  handleCheckboxToggle: (e: MouseEvent, file: File) => void
   setShow: (fileId: string) => void
   showMoreDetail?: boolean
 }
 
 export interface FileViewProps {
-  files: fileItem[]
+  files: FileWithChildren[]
   setFilePanelToShow: (fileId: string) => void
   showMoreDetail?: boolean
 }

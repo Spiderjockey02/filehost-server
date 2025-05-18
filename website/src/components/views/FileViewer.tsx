@@ -1,11 +1,11 @@
 import { VideoPlayer, TextViewer } from '@/components';
-import type { fileItem } from '@/types';
 import MimeType from 'mime-types';
 import { useRef } from 'react';
 import Image from 'next/image';
+import { File } from '@prisma/client';
 
 interface Props {
-  file: fileItem
+  file: File
   userId: string
 }
 

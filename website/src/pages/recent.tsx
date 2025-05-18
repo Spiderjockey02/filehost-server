@@ -1,4 +1,3 @@
-import type { RecentlyViewed } from '@/types';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import TimeAgo from 'javascript-time-ago';
@@ -10,6 +9,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Table from '@/components/UI/Table';
 import FileDetail from '@/components/Tables/FileDetailCell';
 import { authClient } from '@/auth/client';
+import { UserHistoryWithFile } from '@/types/database';
+import { User } from 'better-auth';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -18,7 +19,7 @@ type SortOrder = 'ascn' | 'dscn';
 
 export default function Recent() {
 	const { data: session } = authClient.useSession();
-	const [history, setHistory] = useState<RecentlyViewed[]>([]);
+	const [history, setHistory] = useState<UserHistoryWithFile[]>([]);
 	const [sortKey, setSortKey] = useState<sortKeyTypes>('Acc_On');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
 	const [filters, setFilters] = useState<string[]>(['']);
@@ -28,7 +29,7 @@ export default function Recent() {
 		try {
 			const { data } = await axios.get('/api/session/recently-viewed');
 			setHistory(data.files);
-			setFilters([...new Set((data.files as RecentlyViewed[]).map(c => c.file.name.split('.')[1]))]);
+			setFilters([...new Set((data.files as UserHistoryWithFile[]).map(c => c.file.name.split('.')[1]))]);
 		} catch (err) {
 			console.log(err);
 		}
@@ -70,11 +71,11 @@ export default function Recent() {
 				: [...activeFilters, type];
 
 			const { data } = await axios.get('/api/session/recently-viewed');
-			let newFilteredHistory: RecentlyViewed[] = [];
+			let newFilteredHistory: UserHistoryWithFile[] = [];
 			if (newActiveFilters.length == 1) {
-				newFilteredHistory = (data.files as RecentlyViewed[]);
+				newFilteredHistory = (data.files as UserHistoryWithFile[]);
 			} else {
-				newFilteredHistory = (data.files as RecentlyViewed[]).filter(s => {
+				newFilteredHistory = (data.files as UserHistoryWithFile[]).filter(s => {
 					return newActiveFilters.includes(s.file.name.split('.')[1]);
 				});
 			}
@@ -92,7 +93,7 @@ export default function Recent() {
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user} activeTab='recent'>
+		<FileLayout user={session.user as User} activeTab='recent'>
 			<div className="d-flex flex-row justify-content-between">
 				<h5><b>Recently viewed files</b></h5>
 				<div className="dropdown">

@@ -1,13 +1,11 @@
 import { NotificationBell } from '@/components';
-import { FileNavBarProps } from '@/types/Components/Navbars';
 import { authClient } from '@/auth/client';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Notification } from '@/types';
 import { faX, faBars } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { User } from 'better-auth/types';
+import type { User } from 'better-auth';
 
 interface props {
 	showSidebar: boolean;
@@ -27,7 +25,7 @@ export default function AdminNavBar({ user, showSidebar, setShowSidebar }: props
 					</a>
 				</ul>
 				<ul className="navbar-nav ml-auto">
-					<NotificationBell notifications={user.notifications as Notification[]} />
+					<NotificationBell notifications={user.notifications} />
 					&nbsp;
 					<li className="nav-item">
 						<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

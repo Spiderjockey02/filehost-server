@@ -1,9 +1,9 @@
+import { FileWithChildren } from '@/types/database';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { fileItem } from '@/types';
 
 interface FileContextType {
-  file: fileItem | null;
-  setFile: (file: fileItem | null) => void;
+  file: FileWithChildren | null;
+  setFile: (file: FileWithChildren | null) => void;
 }
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
@@ -13,7 +13,7 @@ interface FileProviderProps {
 }
 
 export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
-	const [file, setFile] = useState<fileItem | null>(null);
+	const [file, setFile] = useState<FileWithChildren | null>(null);
 
 	return (
 		<FileContext.Provider value={{ file, setFile }}>
@@ -22,7 +22,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
 	);
 };
 
-export const useFolder = (): fileItem | null => {
+export const useFolder = (): FileWithChildren | null => {
 	const context = useContext(FileContext);
 	if (!context) {
 		throw new Error('useFile must be used within a FileProvider');
@@ -30,7 +30,7 @@ export const useFolder = (): fileItem | null => {
 	return context.file;
 };
 
-export const useSetFolder = (): ((file: fileItem | null) => void) => {
+export const useSetFolder = (): ((file: FileWithChildren | null) => void) => {
 	const context = useContext(FileContext);
 	if (!context) {
 		throw new Error('useSetFile must be used within a FileProvider');

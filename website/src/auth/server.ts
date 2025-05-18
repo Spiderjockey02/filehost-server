@@ -24,28 +24,31 @@ export const auth = betterAuth({
 			if (updatedUser == null) return { user: null, session: '' };
 
 			// Check for group
-			if (updatedUser?.groupId == null) {
-				const group = await client.group.findFirst({
+			if (updatedUser.group == null) {
+				const group = await client.group.upsert({
 					where: {
 						name: 'Free',
 					},
+					create: {
+						name: 'Free',
+					},
+					update: {},
 				});
-				if (group) {
-					await client.user.update({
-						where: {
-							id: updatedUser.id,
-						},
-						data: {
-							group: {
-								connect: {
-									id: group.id,
-								},
+
+				await client.user.update({
+					where: {
+						id: updatedUser.id,
+					},
+					data: {
+						group: {
+							connect: {
+								id: group.id,
 							},
 						},
-					});
-					updatedUser.group = group;
-					updatedUser.groupId = group.id;
-				}
+					} });
+
+				updatedUser.group = group;
+				updatedUser.groupId = group.id;
 			}
 
 			return {
@@ -69,13 +72,13 @@ export const auth = betterAuth({
 		additionalFields: {
 			totalStorageSize: {
 				type: 'number',
-				required: false,
+				required: true,
 				input: false,
 				defaultValue: 0,
 			},
 			role: {
 				type: 'string',
-				required: false,
+				required: true,
 				input: false,
 				defaultValue: 'user',
 			},

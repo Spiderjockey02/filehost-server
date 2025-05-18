@@ -3,16 +3,17 @@ import { useFolder, useSetFolder } from '@/components/Hooks/FileManager';
 import { FilePageProps, viewTypeTypes } from '@/types/pages';
 import { useCallback, useEffect, useState } from 'react';
 import type { GetServerSidePropsContext } from 'next';
-import type { RecentlyViewed } from '../../types';
 import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
-import { auth } from '@/auth/server';
 import axios from 'axios';
+import { User } from 'better-auth';
+import { UserHistoryWithFile } from '@/types/database';
+import { auth } from '@/auth/server';
 
 export default function Files({ path = '/' }: FilePageProps) {
 	const { data: session } = authClient.useSession();
 
-	const [recents, setRecents] = useState<RecentlyViewed[]>([]);
+	const [recents, setRecents] = useState<UserHistoryWithFile[]>([]);
 	const [errorMsg, setErrorMsg] = useState('');
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
@@ -46,7 +47,7 @@ export default function Files({ path = '/' }: FilePageProps) {
 
 	if (session == null || file == null) return null;
 	return (
-		<FileLayout user={session.user} activeTab='files' tabName={file.name}>
+		<FileLayout user={session.user as User} activeTab='files' tabName={file.name}>
 			<BreadcrumbNav path={path} isFile={file.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={file.id} />
 			{errorMsg && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
 			{(path.length == 0 && recents.length > 0) &&
@@ -54,7 +55,7 @@ export default function Files({ path = '/' }: FilePageProps) {
 			}
 			<div style={{ paddingTop: '6px' }}>
 				{file.type === 'FILE' ? (
-					<FileViewer file={file} userId={session.user.id} />
+					<FileViewer file={file} userId={(session.user as User).id} />
 				) : viewType === 'Tiles' ? (
 					<PhotoAlbum folder={file} />
 				) : (

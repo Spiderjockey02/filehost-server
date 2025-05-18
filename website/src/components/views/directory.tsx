@@ -1,9 +1,9 @@
 import { DragUploadField, FilePanelPopup, FileViewTable } from '@/components';
-import type { fileItem } from '../../types';
+import type { FileWithChildren } from '@/types/database';
 import { useState } from 'react';
 
 interface Props {
-  folder: fileItem
+  folder: FileWithChildren
 }
 
 
@@ -13,8 +13,14 @@ export default function Directory({ folder }: Props) {
 	return (
 		<DragUploadField parentId={folder.id}>
 			{folder.children.map((_) => (
-				filePanelToShow == _.id && <FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
+				filePanelToShow == _.id && (
+					<>
+						{/* @ts-expect-error sdfhjk */}
+						<FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
+					</>
+				)
 			))}
+			{/* @ts-expect-error sdfhjk */}
 			<FileViewTable files={folder.children}
 				setFilePanelToShow={setFilePanelToShow} />
 		</DragUploadField>

@@ -32,7 +32,8 @@ export default function Settings() {
 			});
 
 			if (data.success) setSuccess(data.success);
-		} catch (error) {
+		} catch (err) {
+			console.log(err);
 			setErrors([{ type: 'av', text: 'Failed to upload avatar' }]);
 		}
 	};
@@ -41,7 +42,8 @@ export default function Settings() {
 		try {
 			const { data } = await axios.delete('/api/session/reset-avatar');
 			if (data.success) setSuccess(data.success);
-		} catch (error) {
+		} catch (err) {
+			console.log(err);
 			setErrors([{ type: 'av', text: 'Failed to delete avatar' }]);
 		}
 	};
@@ -92,8 +94,8 @@ export default function Settings() {
 	};
 
 	const ahjksd = async () => {
-		const t = await authClient.multiSession.listDeviceSessions();
-		console.log(t);
+		const sessions = await authClient.listSessions();
+		console.log(sessions);
 	};
 
 	if (session == null) return null;
@@ -112,7 +114,7 @@ export default function Settings() {
 							<div className="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab" >
 								<h3 className="mb-4">Account Settings</h3>
 								<div className="d-flex flex-column align-items-center">
-									<Image src={`/avatar/${session?.user.id}`} width={100} height={100} className="rounded-circle " alt="User avatar" />
+									<Image src={`/avatar/${session.user?.id}`} width={100} height={100} className="rounded-circle " alt="User avatar" />
 										&nbsp;
 									<div className="d-flex justify-content-center gap-2">
 										<label className="btn btn-sm btn-primary">
@@ -132,8 +134,8 @@ export default function Settings() {
 								<div className="tab-content mt-3">
 									<div className="tab-pane fade show active" id="personal-info">
 										<form className='mt-4' onSubmit={onPersonalSubmit}>
-											<InputField title='Update Name' name='name' placeholder={session.user.name} />
-											<InputField title='Update Email' name="email" placeholder={session.user.email} errorMsg={errors.find(e => e.type == 'email')?.text} onChange={(e) => setEmail(e.target.value)} />
+											<InputField title='Update Name' name='name' placeholder={session.user?.name} />
+											<InputField title='Update Email' name="email" placeholder={session.user?.email} errorMsg={errors.find(e => e.type == 'email')?.text} onChange={(e) => setEmail(e.target.value)} />
 											<button type="submit" className="btn btn-primary float-end">Save Changes</button>
 										</form>
 									</div>

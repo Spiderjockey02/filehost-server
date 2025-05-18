@@ -1,16 +1,19 @@
-import { Notification } from './index';
+import type { Group, Notification } from '@prisma/client';
 
 declare module 'better-auth' {
   export interface User {
-		group: any;
-		notifications: Notification[];
     id: string
-    name: string
+    name: string | null
     email: string
+    emailVerified: boolean
+    languageCode: string
     createdAt: Date
     updatedAt: Date
     totalStorageSize: number
     role: string
+    notifications: Notification[]
+    group: Group | null
+    banned: boolean
   }
 }
 

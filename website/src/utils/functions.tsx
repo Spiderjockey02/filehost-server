@@ -1,10 +1,10 @@
 import { faFile, faFileAlt, faFileImage, faFilePdf, faFileVideo, faFolder, faMusic } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { fileItem } from '../types';
+import { File } from '@prisma/client';
 import { UAParser } from 'ua-parser-js';
 
-export function formatBytes(bytes: number) {
-	if (bytes == 0) return '0 Bytes';
+export function formatBytes(bytes?: number) {
+	if (bytes == 0 || bytes == undefined) return '0 Bytes';
 	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
 		i = Math.floor(Math.log(bytes) / Math.log(1024));
 
@@ -19,7 +19,7 @@ export function formatTime(timeInSeconds: number) {
 	};
 }
 
-export function getFileIcon(file: fileItem) {
+export function getFileIcon(file: File) {
 	// Check folder stuff
 	if (file.type == 'DIRECTORY') return (<FontAwesomeIcon icon={faFolder} />) ;
 
@@ -41,7 +41,9 @@ export function getFileIcon(file: fileItem) {
 	}
 }
 
-export function getStatusColor(startVal: number, maxValue: number) {
+export function getStatusColor(startVal: number, maxValue?: number) {
+	if (maxValue == undefined) return 'bg-success';
+
 	if (startVal >= (0.9 * maxValue)) {
 		return 'bg-danger';
 	} else if (startVal >= (0.5 * maxValue)) {

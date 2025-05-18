@@ -1,9 +1,9 @@
-import { fileItem } from '..';
+import { File } from '@prisma/client';
 
 export interface FileContextMenuProps {
   x: number
   y: number
-  selected: fileItem[]
+  selected: File[]
   closeContextMenu: () => void
   showFilePanel: (fileId: string) => void
 }
@@ -11,6 +11,6 @@ export interface FileContextMenuProps {
 export interface TrashContextMenuProps {
   x: number
   y: number
-  selected: fileItem[]
+  selected: File[]
   closeContextMenu: () => void
 }

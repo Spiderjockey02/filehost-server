@@ -2,7 +2,6 @@ import { faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TrashContextMenu, FileDetailCell, Table } from '@/components';
 import { useEffect, useState, useCallback, MouseEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { deletedFileItem, fileItem } from '@/types';
 import { GetServerSidePropsContext } from 'next';
 import en from 'javascript-time-ago/locale/en';
 import { authClient } from '@/auth/client';
@@ -10,6 +9,9 @@ import TimeAgo from 'javascript-time-ago';
 import FileLayout from '@/layouts/file';
 import { auth } from '@/auth/server';
 import axios from 'axios';
+import { File } from '@prisma/client';
+import { User } from 'better-auth';
+import { DeletedFile } from '@/types/database';
 
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
@@ -18,16 +20,16 @@ const initalContextMenu = {
 	show: false,
 	x: 0,
 	y: 0,
-	selected: [] as fileItem[],
+	selected: [] as File[],
 };
 
 export default function Trash() {
 	const { data: session } = authClient.useSession();
-	const [files, setFiles] = useState<deletedFileItem[]>([]);
-	const [selected, setSelected] = useState<fileItem[]>([]);
+	const [files, setFiles] = useState<DeletedFile[]>([]);
+	const [selected, setSelected] = useState<File[]>([]);
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
 
-	function openContextMenu(e: MouseEvent<HTMLTableRowElement>, selectedFile: fileItem) {
+	function openContextMenu(e: MouseEvent<HTMLTableRowElement>, selectedFile: File) {
 		e.preventDefault();
 		const { pageX, pageY } = e;
 
@@ -94,7 +96,7 @@ export default function Trash() {
 	}
 
 	// Toggle individual checkbox selection
-	const handleCheckboxToggle = (filePath: fileItem) => {
+	const handleCheckboxToggle = (filePath: File) => {
 		setSelected(prevSelected =>
 			prevSelected.includes(filePath)
 				? prevSelected.filter(f => f !== filePath)
@@ -108,7 +110,7 @@ export default function Trash() {
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user} active='bin'>
+		<FileLayout user={session.user as User} activeTab='bin'>
 			<div className="d-flex justify-content-between align-items-center mb-3">
 				<nav aria-label="breadcrumb">
 					<ol className="breadcrumb bg-white mb-0">

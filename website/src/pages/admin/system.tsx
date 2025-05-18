@@ -14,6 +14,7 @@ import TimeAgo from 'javascript-time-ago';
 import { DatabaseBackup } from '@/types';
 import { CronJob } from '@prisma/client';
 import { AdminCRONJobLogsModal } from '@/components/Modals/AdminCRONJobLogsModal';
+import { User } from 'better-auth';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -185,7 +186,7 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 	};
 
 	return (
-		<AdminLayout activeTab='logs' user={session.user} tabName='Admin System'>
+		<AdminLayout activeTab='logs' user={session.user as User} tabName='Admin System'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">System Dashboard</h1>

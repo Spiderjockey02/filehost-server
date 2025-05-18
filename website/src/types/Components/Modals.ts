@@ -1,6 +1,6 @@
-import { fileItem } from '..';
+import { File } from '@prisma/client';
 
 export interface FileModalProps {
-  file: fileItem
+  file: File
   closeContextMenu?: () => void
 }

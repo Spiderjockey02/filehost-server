@@ -2,16 +2,16 @@ import Image from 'next/image';
 import { faCopy, faDownload, faFileSignature, faFolderOpen, faShareAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import path from 'path';
-import { fileItem } from '@/types';
 import { formatBytes } from '@/utils/functions';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import ChangeModal from '../Modals/UpdateLocationModal';
 import DeleteFileModal from '../Modals/DeleteFileModal';
 import RenameModal from '../Modals/RenameFileModal';
+import { FileWithCount } from '@/types/database';
 
 interface Props {
-  file: fileItem
+  file: FileWithCount
   setShow: (fileName: string) => void
   show: boolean
 }

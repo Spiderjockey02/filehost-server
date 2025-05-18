@@ -1,48 +1,5 @@
+import { File, Group } from '@prisma/client';
 import type { Session, User } from 'better-auth/types';
-export interface Notification {
-  id: string
-  text: string
-  createdAt: Date
-  title: string
-  url?: string
-}
-
-export interface RecentlyViewed {
-  id: string
-  userId: string
-  fileId: string
-  viewedAt: Date
-  file: fileItem
-}
-
-export interface Group {
-  id: string
-  name: string
-  maxStorageSize: number
-}
-
-export type fileType = 'FILE' | 'DIRECTORY'
-export type fileItem = {
-  id: string
-  userId: string
-  path: string
-  name: string
-  children: fileItem[]
-  createdAt: Date
-  deletedAt: Date | null
-  updatedAt: Date
-  size: number
-  type: fileType
-  parentId: string | null
-  mimetype: string | null
-  _count: {
-    children: number
-  }
-}
-
-export type deletedFileItem = {
-  deletedAt: Date
-} & fileItem
 
 export type LoginErrorTypes = {
   type: | 'email' | 'password' | 'misc'
@@ -72,8 +29,9 @@ export type AdminUser = {
   totalStorageSize: number
   group: Group
   sessions: Session[]
-  files: fileItem[]
+  files: File[]
   _count: {
     files: number
   }
 } & User
+

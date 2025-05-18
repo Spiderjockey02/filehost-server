@@ -14,7 +14,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Ho
 	const { data } = authClient.useSession();
 
 	return (
-		<MainLayout user={data?.user ?? null}>
+		<MainLayout user={data?.user}>
 			<Script src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js" strategy="worker" />
 			<section id="hero" className="d-flex align-items-center large-padding">
 				<div className="container">
@@ -243,7 +243,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Ho
 export async function getServerSideProps() {
 	try {
 		const { data } = await axios.get(`${process.env.BETTER_AUTH_URL}/api/statistics`);
-		const storageUsed = data.diskData.total - data.diskData.free
+		const storageUsed = data.diskData.total - data.diskData.free;
 
 		return { props: { totalUserCount: data.totalUsers.total, storageUsed, totalFileCount: data.totalFileCount } };
 	} catch {

@@ -8,7 +8,6 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
 import axios from 'axios';
-import { Notification } from '@/types';
 
 interface AutoComplete {
 	name: string
@@ -110,7 +109,7 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 					</li>
 				</ul>
 				<ul className="navbar-nav ml-auto">
-					<NotificationBell notifications={user.notifications as Notification[]} />
+					<NotificationBell notifications={user.notifications} />
 					&nbsp;
 					<li className="nav-item">
 						<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

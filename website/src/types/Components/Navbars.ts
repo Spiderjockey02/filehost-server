@@ -1,5 +1,5 @@
-import { User } from 'better-auth';
-import { RecentlyViewed } from '..';
+import { UserHistoryWithFile } from '../database';
+import type { User } from 'better-auth';
 
 export type viewTypeTypes = 'List' | 'Tiles';
 
@@ -25,9 +25,9 @@ export interface FileNavBarProps {
 }
 
 export interface HomeNavbarProps {
-  user: User | null
+  user?: User | null
 }
 
 export interface RecentNavbarProps {
-  files: RecentlyViewed[];
+  files: UserHistoryWithFile[];
 }

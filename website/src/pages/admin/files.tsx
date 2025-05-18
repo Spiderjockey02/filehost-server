@@ -6,6 +6,7 @@ import { formatBytes } from '@/utils/functions';
 import { faDownload, faFolderTree, faHardDrive, faMemory, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios from 'axios';
+import { User } from 'better-auth';
 import { GetServerSidePropsContext } from 'next';
 import { useEffect, useState } from 'react';
 
@@ -90,7 +91,7 @@ export default function AdminFiles(data: Props) {
 	}, []);
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='files' user={session.user} tabName='Admin File'>
+		<AdminLayout activeTab='files' user={session.user as User} tabName='Admin File'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">File Dashboard</h1>

@@ -1,12 +1,12 @@
 import { BaseSyntheticEvent, useEffect, useRef, useState } from 'react';
 import { FileModalProps } from '@/types/Components/Modals';
-import { fileItem } from '@/types';
 import axios from 'axios';
 import { useSetFolder } from '../Hooks/FileManager';
+import { File } from '@prisma/client';
 
 export default function UpdateLocationModal({ file, closeContextMenu }: FileModalProps) {
 	const elementRef = useRef(null);
-	const [dirs, setDirs] = useState<fileItem[]>([]);
+	const [dirs, setDirs] = useState<File[]>([]);
 	const [action, setAction] = useState<'copy' | 'move' | ''>('');
 	const [selectedDestination, setSelectedDestination] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');

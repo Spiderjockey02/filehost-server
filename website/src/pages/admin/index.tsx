@@ -12,6 +12,8 @@ import { useEffect, useState } from 'react';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
 import Link from 'next/link';
+import { File } from '@prisma/client';
+import { User } from 'better-auth';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -19,7 +21,7 @@ type growthGraphType = 'daily' | 'monthly' | 'yearly'
 
 export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPageProps) {
 	const { data: session } = authClient.useSession();
-	const [recentFiles, setRecentFiles] = useState<fileItem[]>([]);
+	const [recentFiles, setRecentFiles] = useState<File[]>([]);
 	const [userGrowth, setUserGrowth] = useState(rawUserGrowth);
 	const [userGrowthFrame, setUserGrowthFrame] = useState<growthGraphType>('monthly');
 	const [uploadGrowth, setUploadGrowth] = useState(rawUploadGrowth);
@@ -86,7 +88,7 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='dashboard' user={session.user} tabName='Admin Dashboard'>
+		<AdminLayout activeTab='dashboard' user={session.user as User} tabName='Admin Dashboard'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Admin Dashboard</h1>

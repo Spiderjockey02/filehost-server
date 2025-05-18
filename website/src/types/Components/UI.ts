@@ -1,5 +1,5 @@
 import { BaseSyntheticEvent, CSSProperties, ReactNode } from 'react';
-import { Notification } from '..';
+import type { Notification } from '@prisma/client';
 
 export interface ModalProps {
   id: string

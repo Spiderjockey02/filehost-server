@@ -1,11 +1,11 @@
 import type { ImageLoaderProps } from 'next/image';
 import { useState, useMemo } from 'react';
-import type { fileItem } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
+import { FileWithChildren } from '@/types/database';
 
 interface Props {
-  folder: fileItem;
+  folder: FileWithChildren;
 }
 
 export default function PhotoAlbum({ folder }: Props) {
@@ -41,7 +41,7 @@ export default function PhotoAlbum({ folder }: Props) {
 							/>
 						</Link>
 						<div className="file-name-overlay text-truncate">
-								{file.name}
+							{file.name}
 						</div>
 					</div>
 				))}
