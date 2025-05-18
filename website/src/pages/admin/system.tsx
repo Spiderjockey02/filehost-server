@@ -4,14 +4,16 @@ import type { SyntheticEvent } from 'react';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
 import axios from 'axios';
-import { faCheck, faCircleInfo, faDownload, faFolderTree, faHardDrive, faInfinity, faMemory, faTrash, faX } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCircleInfo, faDownload, faFolderTree, faHardDrive, faInfinity, faMemory, faQuestion, faTrash, faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Row, Col, InfoPill, Table, InfoPillProgress } from '@/components';
 import { convertMiliseconds, formatBytes } from '@/utils/functions';
-import { DatabaseBackup } from '@/types';
 import { AdminBackupModel } from '@/components/Modals/AdminBackupModal';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
+import { DatabaseBackup } from '@/types';
+import { CronJob } from '@prisma/client';
+import { AdminCRONJobLogsModal } from '@/components/Modals/AdminCRONJobLogsModal';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -62,9 +64,10 @@ interface Props {
 			ttl: number
 		}
 	}
+	cronJobs: CronJob[]
 }
 
-export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbnailCache, stats, cacheStats }: Props) {
+export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbnailCache, stats, cacheStats, cronJobs }: Props) {
 	const { data: session } = authClient.useSession();
 
 	const [logContent, setLogContent] = useState<string[]>([]);
@@ -168,6 +171,19 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 		}
 	}
 
+	async function runCronJob(name: string) {
+		try {
+			await axios.post(`/api/admin/cron-jobs/${name}`);
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
+	const latestBackupStats = {
+		text: backups.length == 0 ? '-1' : timeAgo.format(new Date().getTime() - (new Date().getTime() - new Date(backups[0].createdAt).getTime())),
+		icon: backups.length == 0 ? faQuestion : backups[0].status == 'success' ? faCheck : faX,
+	};
+
 	return (
 		<AdminLayout activeTab='logs' user={session.user} tabName='Admin System'>
 			&nbsp;
@@ -179,7 +195,7 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 			</div>
 			<Row>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Latest Backup Status'} text={timeAgo.format(new Date().getTime() - (new Date().getTime() - new Date(backups[0].createdAt).getTime()))} icon={backups[0].status == 'success' ? faCheck : faX} />
+					<InfoPill title={'Latest Backup Status'} text={latestBackupStats.text} icon={latestBackupStats.icon} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
 					<InfoPill title={'Log File Size'} text={`${formatBytes(totalLogSize)} (${logFiles.length})`} icon={faFolderTree} />
@@ -201,7 +217,7 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 				<Col lg={4}>
 					<div className="card shadow mb-4">
 						<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-							<h5 className="m-0 fw-bold text-primary">Database Backups</h5>
+							<h5 className="m-0 fw-bold">Database Backups</h5>
 							<button className='btn btn-secondary' onClick={createDatabaseBackup}>Backup</button>
 						</div>
 						<div className="card-body table-responsive" style={{ overflowY: 'scroll', maxHeight: '40vh' }}>
@@ -246,7 +262,7 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 					&nbsp;
 					<div className="card shadow mb-4">
 						<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-							<h5 className="m-0 fw-bold text-primary">Cache</h5>
+							<h5 className="m-0 fw-bold">Cache</h5>
 						</div>
 						<div className="card-body table-responsive">
 							<Table>
@@ -302,7 +318,7 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 					{logContent.length == 0 ?
 						<div className="card shadow mb-4">
 							<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-								<h5 className="m-0 fw-bold text-primary">Log files</h5>
+								<h5 className="m-0 fw-bold">Log files</h5>
 							</div>
 							<div className="card-body table-responsive" style={{ overflowY: 'scroll', maxHeight: '65vh' }}>
 								<table className="table">
@@ -321,7 +337,7 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 						:
 						<div className="card shadow mb-4">
 							<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-								<h4 className="m-0 font-weight-bold text-primary">Log content</h4>
+								<h4 className="m-0 fw-bold">Log content</h4>
 								<div className="input-group mb-3" style={{ padding: 0, maxWidth: '50%' }}>
 									<label className="input-group-text" htmlFor="inputGroupSelect01">Log type</label>
 									<select className="form-select" id="inputGroupSelect01" aria-label="Default select example" onChange={(e) => updateViewContentType(e)}>
@@ -346,10 +362,38 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 				<Col lg={4}>
 					<div className="card shadow mb-4">
 						<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-							<h4 className="m-0 font-weight-bold text-primary">CRON Jobs</h4>
+							<h4 className="m-0 fw-bold">CRON Jobs</h4>
 						</div>
-						<div className="card-body">
-							<p>aasd</p>
+						<div className="card-body table-responsive">
+							<Table>
+								<Table.HeaderRow>
+									<Table.Header>Name</Table.Header>
+									<Table.Header className='text-center'>Latest Status</Table.Header>
+									<Table.Header className='text-center'>Action</Table.Header>
+									<Table.Header className='text-center'>Info</Table.Header>
+								</Table.HeaderRow>
+								<Table.Body>
+									{cronJobs.map(job => (
+										<tr key={job.name}>
+											<td>{job.name}</td>
+											<td className='text-center' style={{ color: job.latestStatus == null ? 'grey' : job.latestStatus == 'SUCCESS' ? 'green' : 'red' }}>
+												<FontAwesomeIcon size='lg' icon={job.latestStatus == null ? faQuestion : job.latestStatus == 'SUCCESS' ? faCheck : faX } />
+											</td>
+											<td className='text-center'>
+												<button className='btn btn-secondary btn-sm' onClick={() => runCronJob(job.name)}>
+													Re-run
+												</button>
+											</td>
+											<td className='text-center'>
+												<button className='btn' data-bs-toggle="modal" data-bs-target={`#${job.name}`}>
+													<FontAwesomeIcon size='lg' icon={faCircleInfo} />
+												</button>
+											</td>
+										</tr>
+									))}
+								</Table.Body>
+							</Table>
+							{cronJobs.map((job) => <AdminCRONJobLogsModal CRONJob={job} key={job.name} />)}
 						</div>
 					</div>
 				</Col>
@@ -361,7 +405,7 @@ export default function AdminEndpoints({ logFiles, totalLogSize, backups, thumbn
 // Fetch endpoints
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 	try {
-		const [{ data }, { data: { backups } }, { data: { folderSize } }, { data: stats }, { data: cacheStats }] = await Promise.all([
+		const [{ data }, { data: { backups } }, { data: { folderSize } }, { data: stats }, { data: cacheStats }, { data: { cronJobs } }] = await Promise.all([
 			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/logs`, {
 				headers: { cookie: ctx.req.headers.cookie },
 			}),
@@ -377,12 +421,15 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/cache/stats`, {
 				headers: { cookie: ctx.req.headers.cookie },
 			}),
+			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/cron-jobs`, {
+				headers: { cookie: ctx.req.headers.cookie },
+			}),
 		]);
 
 		// Add the frontend RAM usage to total
 		stats.memory.using = stats.memory.using + process.memoryUsage().heapUsed;
-		return { props: { logFiles: data.logs, totalLogSize: data.totalLogSize, backups, thumbnailCache: folderSize, stats, cacheStats } };
+		return { props: { logFiles: data.logs, totalLogSize: data.totalLogSize, backups, thumbnailCache: folderSize, stats, cacheStats, cronJobs } };
 	} catch {
-		return { props: { logFiles: [], error: 'API server currently unavailable' } };
+		return { props: { logFiles: [], totalLogSize:0, backups: [], thumbnailCache: {}, stats: { memory: {} }, cacheStats: {}, cronJobs:[], error: 'API server currently unavailable' } };
 	}
 }
