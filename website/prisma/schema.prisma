@@ -8,34 +8,38 @@ generator client {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified Boolean
-  languageCode  String        @default("en-GB")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  notifications Notification[]
-  recentlyViewed RecentlyViewedFile[]
-  files         File[]
-  groupId       String?
-  group         Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  name              String?
+  email             String?   @unique
+  emailVerified     Boolean
+  languageCode      String        @default("en-GB")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt
+  sessions          Session[]
+  accounts          Account[]
+  notifications     Notification[]
+  recentlyViewed    RecentlyViewedFile[]
+  files             File[]
+  groupId           String?
+  group             Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   totalStorageSize  BigInt  @default(0)
+  role              String  @default("user")
+  banned            Boolean @default(false)
+  banReason         String?
+  banExpires        DateTime?
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?  @db.Text
-  userAgent String?  @db.Text
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id              String   @id
+  expiresAt       DateTime
+  token           String
+  createdAt       DateTime
+  updatedAt       DateTime
+  ipAddress       String?  @db.Text
+  userAgent       String?  @db.Text
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy  String?
   @@unique([token])
   @@map("session")
 }
@@ -95,7 +99,16 @@ model File {
   parentId    String?   
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
+  mediatype   MediaType? @relation(fields: [mimetype], references: [name])
+  mimetype    String?
   recentlyViewedBy  RecentlyViewedFile[]
+
+  @@unique([path, userId])
+}
+
+model MediaType {
+  name        String  @id
+  files       File[]
 }
 
 model RecentlyViewedFile {
@@ -107,4 +120,26 @@ model RecentlyViewedFile {
   viewedAt    DateTime @default(now())
 
   @@unique([fileId, userId])
+}
+
+enum Status {
+  SUCCESS
+  FAILURE
+}
+
+model CronJobLog {
+  id        Int         @id   @default(autoincrement())
+  status    Status
+  message   String?
+  ranAt     DateTime    @default(now())
+  duration  Int?        @default(0)
+  cronJob   CronJob     @relation(fields: [jobName], references: [name], onDelete: Cascade)
+  jobName   String
+}
+
+model CronJob {
+  name          String        @id
+  latestStatus  Status? 
+  CronJobLog    CronJobLog[]
+  schedule      String    @default("0 * * * *")
 }
