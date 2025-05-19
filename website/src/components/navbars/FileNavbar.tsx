@@ -1,6 +1,6 @@
 import { faSearch, faSlidersH } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FileNavBarProps } from '@/types/Components/Navbars';
+import type { AutoComplete, FileNavBarProps } from '@/types/Components/Navbars';
 import { NotificationBell, SearchFileModal } from '@/components';
 import { useState, ChangeEvent } from 'react';
 import { authClient } from '@/auth/client';
@@ -8,11 +8,6 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
 import axios from 'axios';
-
-interface AutoComplete {
-	name: string
-	path: string
-}
 
 export default function FileNavBar({ user }: FileNavBarProps) {
 	const [srchRes, setSrchRes] = useState<AutoComplete[]>([]);

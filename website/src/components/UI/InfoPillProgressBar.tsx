@@ -1,16 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-interface Props {
-  title: string
-  text: string
-  icon: IconDefinition
-  colour?: string
-  max: number
-  current: number
-}
+import type { InfoPillProgressProps } from '@/types/Components/UI';
 
-
-export default function InfoPillProgress({ title, text, icon, colour, max, current = 0 }: Props) {
+export default function InfoPillProgress({ title, text, icon, colour, max, current = 0 }: InfoPillProgressProps) {
 	const randomColor = colour ?? `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
 	return (

@@ -1,3 +1,4 @@
+import { StringNumberObj } from '.';
 import { UserWithCount } from './database';
 
 export interface AdminPageProps {
@@ -17,39 +18,21 @@ export interface AdminPageProps {
     }
     uptime: number
   }
-  rawUserGrowth: {
-    [key: string]: number
-  }
-  rawUploadGrowth: {
-    [key: string]: number
-  }
+  rawUserGrowth: StringNumberObj
+  rawUploadGrowth: StringNumberObj
 }
 
 export interface AdminUserPageProps {
   users: UserWithCount[]
-  months: {
-    [key: string]: number
-  }
+  months: StringNumberObj
   newUsers: number
-  langaugeCodes: {
-    [key: string]: number
-  }
-  emails: {
-    [key: string]: number
-  }
-  rawUserGrowth: {
-    [key: string]: number
-  }
-  signupSource: {
-    [key: string]: number
-  }
+  langaugeCodes: StringNumberObj
+  emails: StringNumberObj
+  rawUserGrowth: StringNumberObj
+  signupSource: StringNumberObj
   retention: {
-    sessions: {
-      [key: string]: number
-    }
-    files: {
-      [key: string]: number
-    }
+    sessions: StringNumberObj
+    files: StringNumberObj
   }
   userStats: {
     total: number

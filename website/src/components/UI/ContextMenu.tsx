@@ -1,25 +1,11 @@
-import { ReactNode, Ref } from 'react';
+import type { ContextMenuProps, ButtonProps } from '@/types/Components/UI';
 
-interface Props {
-  x: number
-  y: number
-  ref: Ref<HTMLDivElement>
-  children: ReactNode
-}
-
-function ContextMenu({ x, y, ref, children }: Props) {
+function ContextMenu({ x, y, ref, children }: ContextMenuProps) {
 	return (
 		<div className="ctxmenu" ref={ref} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
 			{children}
 		</div>
 	);
-}
-
-interface ButtonProps {
-  onClick?: () => void
-  children: ReactNode
-	BSToggle?: string
-	BSTarget?: string
 }
 
 function Button({ onClick, children, BSToggle, BSTarget }: ButtonProps) {

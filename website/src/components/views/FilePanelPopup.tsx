@@ -8,15 +8,9 @@ import axios from 'axios';
 import ChangeModal from '../Modals/UpdateLocationModal';
 import DeleteFileModal from '../Modals/DeleteFileModal';
 import RenameModal from '../Modals/RenameFileModal';
-import { FileWithCount } from '@/types/database';
+import type { FilePanelPopupProps } from '@/types/Components/Views';
 
-interface Props {
-  file: FileWithCount
-  setShow: (fileName: string) => void
-  show: boolean
-}
-
-export default function FilePanelPopup({ file, setShow, show }: Props) {
+export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupProps) {
 	const router = useRouter();
 	const handleRowClick = () => router.push(`/files${file.path}`);
 	const imageLoader = () => path.join('/thumbnail', file.userId, file.path);

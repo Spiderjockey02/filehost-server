@@ -2,14 +2,9 @@ import { VideoPlayer, TextViewer } from '@/components';
 import MimeType from 'mime-types';
 import { useRef } from 'react';
 import Image from 'next/image';
-import { File } from '@prisma/client';
+import type { FileViewerProps } from '@/types/Components/Views';
 
-interface Props {
-  file: File
-  userId: string
-}
-
-export default function FileViewer({ file }: Props) {
+export default function FileViewer({ file }: FileViewerProps) {
 	const imageRef = useRef<HTMLImageElement>(null);
 	const mimeType = MimeType.lookup(file.name);
 

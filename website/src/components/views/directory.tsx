@@ -1,13 +1,8 @@
 import { DragUploadField, FilePanelPopup, FileViewTable } from '@/components';
-import type { FileWithChildren } from '@/types/database';
+import type { DirectoryProps } from '@/types/Components/Views';
 import { useState } from 'react';
 
-interface Props {
-  folder: FileWithChildren
-}
-
-
-export default function Directory({ folder }: Props) {
+export default function Directory({ folder }: DirectoryProps) {
 	const [filePanelToShow, setFilePanelToShow] = useState('');
 
 	return (

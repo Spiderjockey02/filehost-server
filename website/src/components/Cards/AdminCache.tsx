@@ -1,54 +1,12 @@
-import { useEffect, useState } from 'react';
 import Table from '../UI/Table';
 import { convertMiliseconds, formatBytes } from '@/utils/functions';
 import { faInfinity } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
-interface cacheStats {
-  files: {
-    size: number
-    max: number
-    ttl: number
-  }
-  users: {
-    size: number
-    max: number
-    ttl: number
-  }
-  userHistory: {
-    size: number
-    max: number
-    ttl: number
-  }
-  sessions: {
-    size: number
-    max: number
-    ttl: number
-  }
-}
-
-interface thumbnailStats {
-  sizeInBytes: number
-  count: number
-}
+import { useFetchWithCleanup } from '../Hooks/useFetchWithCleanup';
+import type { cacheStats, thumbnailStats } from '@/types/Components/Card';
 
 export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
-	const [stats, setStats] = useState<cacheStats | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-
-	useEffect(() => {
-		// Fetch recent files
-		(async () => {
-			try {
-				const res = await fetch('/api/admin/cache/stats');
-				const data = await res.json();
-				setStats(data);
-				setIsLoading(false);
-			} catch (err) {
-				console.error(err);
-			}
-		})();
-	}, []);
+	const { data: stats, loading: isLoading } = useFetchWithCleanup<cacheStats>('/api/admin/cache/stats');
 
 	async function deleteCache(name: string) {
 		try {

@@ -1,15 +1,9 @@
-import { DatabaseBackup } from '@/types';
+import type { AdminBackupModalProps } from '@/types/Components/Modals';
 import { formatBytes } from '@/utils/functions';
 import { faDownload, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-interface Props {
-  backup: DatabaseBackup
-	deleteBackup: () => void
-	downloadBackup: () => void
-}
-
-export function AdminBackupModel({ backup, deleteBackup, downloadBackup }: Props) {
+export function AdminBackupModel({ backup, deleteBackup, downloadBackup }: AdminBackupModalProps) {
 	return (
 		<div className="modal fade" id={`${new Date(backup.createdAt).getTime()}`} role="dialog" aria-hidden="true">
 			<div className="modal-dialog modal-dialog-centered" role="document">

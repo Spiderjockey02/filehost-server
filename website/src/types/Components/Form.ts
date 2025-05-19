@@ -1,4 +1,4 @@
-import type { HTMLInputTypeAttribute, ChangeEventHandler, HTMLInputAutoCompleteAttribute } from 'react';
+import type { HTMLInputTypeAttribute, ChangeEventHandler, HTMLInputAutoCompleteAttribute, ReactNode } from 'react';
 
 export interface InputFieldProps {
   title: string
@@ -8,4 +8,9 @@ export interface InputFieldProps {
   onChange?: ChangeEventHandler<HTMLInputElement>
   errorMsg?: string
   autocomplete?: HTMLInputAutoCompleteAttribute
+}
+
+export interface DragUploadFieldProps {
+  children: ReactNode
+	parentId: string
 }

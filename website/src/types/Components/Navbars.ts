@@ -31,3 +31,14 @@ export interface HomeNavbarProps {
 export interface RecentNavbarProps {
   files: UserHistoryWithFile[];
 }
+
+export interface AdminNavbarProps {
+  showSidebar: boolean;
+  setShowSidebar: (arg0: boolean) => void;
+  user: User
+}
+
+export interface AutoComplete {
+  name: string
+  path: string
+}

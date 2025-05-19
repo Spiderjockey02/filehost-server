@@ -2,13 +2,9 @@ import type { ImageLoaderProps } from 'next/image';
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FileWithChildren } from '@/types/database';
+import type { DirectoryProps } from '@/types/Components/Views';
 
-interface Props {
-  folder: FileWithChildren;
-}
-
-export default function PhotoAlbum({ folder }: Props) {
+export default function PhotoAlbum({ folder }: DirectoryProps) {
 	const [page, setPage] = useState(0);
 	const [pageCount, setPageCount] = useState(40);
 	const totalItems = folder.children.length;

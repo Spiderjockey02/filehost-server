@@ -1,14 +1,10 @@
 import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState, useRef, DragEvent, ReactNode } from 'react';
+import { useState, useRef, DragEvent } from 'react';
 import { useUploadQueue } from '../Hooks/UploadContentManager';
+import type { DragUploadFieldProps } from '@/types/Components/Form';
 
-interface Props {
-  children: ReactNode
-	parentId: string
-}
-
-export default function DragUploadField({ children, parentId }: Props) {
+export default function DragUploadField({ children, parentId }: DragUploadFieldProps) {
 	const [isDragging, setIsDragging] = useState(false);
 	const dragCounter = useRef(0);
 	const { addToQueue } = useUploadQueue();

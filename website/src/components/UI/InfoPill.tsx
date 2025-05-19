@@ -1,14 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-interface Props {
-  title: string
-  text: string | number
-  icon: IconDefinition
-  colour?: string
-}
+import type { InfoPillProps } from '@/types/Components/UI';
 
-
-export default function InfoPill({ title, text, icon, colour }: Props) {
+export default function InfoPill({ title, text, icon, colour }: InfoPillProps) {
 	const randomColor = colour ?? `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 	return (
 		<div className="card shadow h-100 py-2" style={{ borderLeft: `.25rem solid ${randomColor}` }}>

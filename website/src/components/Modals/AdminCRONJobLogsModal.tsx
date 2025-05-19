@@ -1,15 +1,12 @@
-import { CronJob, CronJobLog } from '@prisma/client';
+import type { CronJobLog } from '@prisma/client';
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import Table from '../UI/Table';
 import { faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { AdminCRONJobLogsModalProps } from '@/types/Components/Modals';
 
-interface Props {
-  CRONJob: CronJob
-}
-
-export function AdminCRONJobLogsModal({ CRONJob }: Props) {
+export function AdminCRONJobLogsModal({ CRONJob }: AdminCRONJobLogsModalProps) {
 	const elementRef = useRef(null);
 	const [logs, setLogs] = useState<CronJobLog[]>([]);
 
@@ -33,7 +30,7 @@ export function AdminCRONJobLogsModal({ CRONJob }: Props) {
 
 		// Cleanup the observer on component unmount
 		return () => observer.disconnect();
-	}, []);
+	}, [CRONJob.name]);
 
 	return (
 		<div className="modal fade" ref={elementRef} id={`${CRONJob.name}`} role="dialog" aria-hidden="true">

@@ -2,12 +2,9 @@ import { BaseSyntheticEvent, useState } from 'react';
 import { useSetFolder } from '../Hooks/FileManager';
 import InputField from '../Form/InputField';
 import axios from 'axios';
+import type { CreateFolderModalProps } from '@/types/Components/Modals';
 
-interface Props {
-	parentId: string;
-}
-
-export default function CreateFolderModal({ parentId }: Props) {
+export default function CreateFolderModal({ parentId }: CreateFolderModalProps) {
 	const [folderName, setFolderName] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
 	const setFolder = useSetFolder();

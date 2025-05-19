@@ -1,14 +1,9 @@
 import { ChartData, ChartOptions } from 'chart.js';
 import PieChart from '../Charts/Pie';
 import { getRandomColor } from '@/utils/functions';
+import type { ObjectOrientedPieChartProps } from '@/types/Components/Chart';
 
-interface Props {
-  data: {
-    [key: string]: number;
-  }
-}
-
-export function ObjectOrientedPieChart({ data }: Props) {
+export function ObjectOrientedPieChart({ data }: ObjectOrientedPieChartProps) {
 	const dataset = {
 		labels: Object.keys(data),
 		datasets: [

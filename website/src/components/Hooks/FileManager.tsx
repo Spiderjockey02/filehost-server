@@ -1,16 +1,8 @@
+import type { FileContextType, FileProviderProps } from '@/types/Components/Hooks';
 import { FileWithChildren } from '@/types/database';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-interface FileContextType {
-  file: FileWithChildren | null;
-  setFile: (file: FileWithChildren | null) => void;
-}
+import React, { createContext, useContext, useState } from 'react';
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
-
-interface FileProviderProps {
-  children: ReactNode;
-}
 
 export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
 	const [file, setFile] = useState<FileWithChildren | null>(null);

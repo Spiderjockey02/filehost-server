@@ -1,13 +1,8 @@
-import { AdminUser } from '@/types';
+import type { AdminUserIdProps } from '@/types/Components/Card';
 import { getStatusColor, formatBytes } from '@/utils/functions';
 import Image from 'next/image';
 
-interface Props {
-  isLoading: boolean
-  user: AdminUser | null
-}
-
-export default function AdminUserIdCard({ isLoading, user }: Props) {
+export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 	return (
 		<div className="card shadow-sm mb-4">
 			<div className="card-body">

@@ -35,3 +35,6 @@ export type AdminUser = {
   }
 } & User
 
+export interface StringNumberObj {
+  [key: string]: number
+}

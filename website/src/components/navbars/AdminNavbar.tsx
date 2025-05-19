@@ -5,15 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { faX, faBars } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { User } from 'better-auth';
+import type { AdminNavbarProps } from '@/types/Components/Navbars';
 
-interface props {
-	showSidebar: boolean;
-	setShowSidebar: (arg0: boolean) => void;
-	user: User
-}
-
-export default function AdminNavBar({ user, showSidebar, setShowSidebar }: props) {
+export default function AdminNavBar({ user, showSidebar, setShowSidebar }: AdminNavbarProps) {
 	const router = useRouter();
 
 	return (

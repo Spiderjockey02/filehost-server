@@ -1,10 +1,9 @@
 import { getFileIcon, formatBytes } from '@/utils/functions';
-import { FileItemRowProps } from '@/types/Components/Tables';
+import type { FileItemRowProps } from '@/types/Components/Tables';
 import FileDetail from './FileDetailCell';
 import { useRouter } from 'next/router';
 import type { MouseEvent }from 'react';
 import Link from 'next/link';
-
 
 export default function FileItemRow({ file, isChecked, openContextMenu, handleCheckboxToggle, setShow, showMoreDetail = false }: FileItemRowProps) {
 	const router = useRouter();

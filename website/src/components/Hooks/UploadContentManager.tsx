@@ -2,24 +2,7 @@ import React, { createContext, useContext, useState, useRef, useCallback } from 
 import axios, { AxiosRequestConfig } from 'axios';
 import { useSetFolder } from './FileManager';
 import { usePathname } from 'next/navigation';
-
-type UploadFile = {
-  file: File;
-  parentId: string;
-};
-
-type UploadStatus = {
-  filename: string;
-  progress: number;
-  remaining: string;
-  error?: string;
-} | null;
-
-type UploadQueueContextType = {
-  addToQueue: (file: FileList, parentId: string) => void;
-  status: UploadStatus;
-  cancelUpload: () => void;
-};
+import type { UploadQueueContextType, UploadFile, UploadStatus } from '@/types/Components/Hooks';
 
 const UploadQueueContext = createContext<UploadQueueContextType | undefined>(undefined);
 
