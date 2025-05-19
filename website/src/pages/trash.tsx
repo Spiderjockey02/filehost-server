@@ -3,18 +3,14 @@ import { TrashContextMenu, FileDetailCell, Table } from '@/components';
 import { useEffect, useState, useCallback, MouseEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { GetServerSidePropsContext } from 'next';
-import en from 'javascript-time-ago/locale/en';
 import { authClient } from '@/auth/client';
-import TimeAgo from 'javascript-time-ago';
 import FileLayout from '@/layouts/file';
 import { auth } from '@/auth/server';
 import axios from 'axios';
 import { File } from '@prisma/client';
 import { User } from 'better-auth';
 import { DeletedFile } from '@/types/database';
-
-TimeAgo.addDefaultLocale(en);
-const timeAgo = new TimeAgo('en-US');
+import { format } from '@/utils/functions';
 
 const initalContextMenu = {
 	show: false,
@@ -146,7 +142,7 @@ export default function Trash() {
 								<input className="form-check-input" type="checkbox" checked={selected.includes(file)} onChange={() => handleCheckboxToggle(file)} aria-label={`Select file ${file.path}`} />
 							</td>
 							<FileDetailCell file={file} />
-							<td>{timeAgo.format(new Date(file.deletedAt))}</td>
+							<td>{format(new Date(file.deletedAt))}</td>
 						</tr>
 					))}
 				</Table.Body>

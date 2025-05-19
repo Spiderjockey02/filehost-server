@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
 import FileLayout from '@/layouts/file';
 import React from 'react';
 import { faSortUp, faSortDown, faSort, faFilter } from '@fortawesome/free-solid-svg-icons';
@@ -11,8 +9,7 @@ import FileDetail from '@/components/Tables/FileDetailCell';
 import { authClient } from '@/auth/client';
 import { UserHistoryWithFile } from '@/types/database';
 import { User } from 'better-auth';
-TimeAgo.addDefaultLocale(en);
-const timeAgo = new TimeAgo('en-US');
+import { format } from '@/utils/functions';
 
 type sortKeyTypes = 'Name' | 'Acc_On';
 type SortOrder = 'ascn' | 'dscn';
@@ -125,7 +122,7 @@ export default function Recent() {
 					{history.map(entry => (
 						<tr key={entry.id}>
 							<FileDetail file={entry.file} />
-							<td>{timeAgo.format(new Date().getTime() - (new Date().getTime() - new Date(entry.viewedAt).getTime()))}</td>
+							<td>{format(new Date().getTime() - (new Date().getTime() - new Date(entry.viewedAt).getTime()))}</td>
 						</tr>
 					))}
 				</Table.Body>
