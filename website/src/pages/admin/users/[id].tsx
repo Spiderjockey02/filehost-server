@@ -1,5 +1,5 @@
 import { authClient } from '@/auth/client';
-import { Col, Row, Table } from '@/components';
+import { Card, Col, Row, Table } from '@/components';
 import AdminUserIdCard from '@/components/Cards/AdminUserId';
 import AdminLayout from '@/layouts/admin';
 import { AdminUser } from '@/types';
@@ -46,11 +46,11 @@ export default function AdminUserIdPage({ userId }: Props) {
 					<AdminUserIdCard isLoading={isLoading} user={user} />
 				</Col>
 				<Col lg={8}>
-					<div className="card shadow mb-4">
-						<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-							<h4 className="m-0 font-weight-bold text-primary">Sessions</h4>
-						</div>
-						<div className="card-body table-responsive" style={{ overflowY: 'scroll', maxHeight: '75vh' }}>
+					<Card>
+						<Card.Header>
+							Sessions
+						</Card.Header>
+						<Card.Body className='table-responsive' style={{ overflowY: 'scroll', maxHeight: '75vh' }}>
 							<Table>
 								<Table.HeaderRow>
 									<Table.Header>IP</Table.Header>
@@ -88,8 +88,8 @@ export default function AdminUserIdPage({ userId }: Props) {
 									)}
 								</Table.Body>
 							</Table>
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 			</Row>
 		</AdminLayout>

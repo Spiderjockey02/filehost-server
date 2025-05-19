@@ -1,5 +1,5 @@
 import { faDownload, faUsers, faHardDrive, faFolderTree } from '@fortawesome/free-solid-svg-icons';
-import { Col, Row, InfoPill, LineChart } from '@/components';
+import { Col, Row, InfoPill, LineChart, Card } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { GetServerSidePropsContext } from 'next';
 import type { AdminPageProps } from '@/types/pages';
@@ -88,8 +88,8 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 			</Row>
 			<Row>
 				<Col lg={6}>
-					<div className="card mb-4">
-						<h5 className="card-header d-flex flex-row align-items-center justify-content-between fw-bold">
+					<Card>
+						<Card.Header>
 							User Growth Over Time
 							<div className="dropdown">
 								<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -101,15 +101,15 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 									<li><a className="dropdown-item" href="#" onClick={() => updatedUserJoinGrowth('yearly')}>Yearly</a></li>
 								</ul>
 							</div>
-						</h5>
-						<div className="card-body">
+						</Card.Header>
+						<Card.Body>
 							<LineChart data={userJoinData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 				<Col lg={6}>
-					<div className="card mb-4">
-						<h5 className="card-header d-flex flex-row align-items-center justify-content-between fw-bold">
+					<Card>
+						<Card.Header>
 							File Uploads Over Time
 							<div className="dropdown">
 								<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -121,11 +121,11 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 									<li><a className="dropdown-item" href="#" onClick={() => updatedUploadGrowth('yearly')}>Yearly</a></li>
 								</ul>
 							</div>
-						</h5>
-						<div className="card-body">
+						</Card.Header>
+						<Card.Body>
 							<LineChart data={fileUploadData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 			</Row>
 			<Row>

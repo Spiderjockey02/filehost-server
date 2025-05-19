@@ -45,6 +45,7 @@ import NotificationBell from './UI/Notification';
 import Table from './UI/Table';
 import InfoPill from './UI/InfoPill';
 import InfoPillProgress from './UI/InfoPillProgressBar';
+import Card from './UI/Card';
 
 // Views
 import Directory from './views/directory';
@@ -59,5 +60,5 @@ export { InputField, FileContextMenu, TrashContextMenu, DeleteFileModal, RenameF
 	FileViewTable, ErrorPopup, SuccessPopup, UploadStatusToast, Row, Col, Modal, NotificationBell,
 	Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer, VideoPlayer, CreateFolderModal,
 	SearchFileModal, DragUploadField, AdminSideBar, AdminNavBar, InfoPill, InfoPillProgress, PieChart,
-	LineChart, BarChart,
+	LineChart, BarChart, Card,
 };

@@ -1,5 +1,5 @@
 import { authClient } from '@/auth/client';
-import { Row, Col, InfoPill, BarChart, LineChart } from '@/components';
+import { Row, Col, InfoPill, BarChart, LineChart, Card } from '@/components';
 import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
 import AdminLayout from '@/layouts/admin';
 import { formatBytes } from '@/utils/functions';
@@ -122,8 +122,8 @@ export default function AdminFiles(data: Props) {
 					<InfoPill title={'Deleted Files Count'} text={data.deletedFiles} icon={faMemory} />
 				</Col>
 			</Row>
-			<div className="card mb-4">
-				<h5 className="card-header d-flex flex-row align-items-center justify-content-between">
+			<Card>
+				<Card.Header>
 					File Uploads Over Time
 					<div className="dropdown">
 						<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -135,35 +135,41 @@ export default function AdminFiles(data: Props) {
 							<li><a className="dropdown-item" href="#" onClick={() => updatedUploadGrowth('yearly')}>Yearly</a></li>
 						</ul>
 					</div>
-				</h5>
-				<div className="card-body">
+				</Card.Header>
+				<Card.Body>
 					<LineChart data={fileUploadData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
-				</div>
-			</div>
+				</Card.Body>
+			</Card>
 			<Row>
 				<Col xxl={4} xl={4} lg={12} md={12} className='mb-4'>
-					<div className="card mb-4">
-						<h5 className="card-header">File Size Distribution</h5>
-						<div className="card-body">
+					<Card>
+						<Card.Header>
+							File Size Distribution
+						</Card.Header>
+						<Card.Body>
 							<BarChart data={fileCategory} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 				<Col xxl={4} xl={4} lg={12} md={12} className='mb-4'>
-					<div className="card mb-4">
-						<h5 className="card-header">Suspicious MIME Type Upload</h5>
-						<div className="card-body">
+					<Card>
+						<Card.Header>
+							Suspicious MIME Type Upload
+						</Card.Header>
+						<Card.Body>
 							<p>Make hard ban list and a soft ban list (suspicious)</p>
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 				<Col xxl={4} xl={4} lg={12} md={12} className='mb-4'>
-					<div className="card">
-						<h5 className="card-header">File MIME types</h5>
-						<div className="card-body">
+					<Card>
+						<Card.Header>
+							File MIME types
+						</Card.Header>
+						<Card.Body>
 							<ObjectOrientedPieChart data={mimeType} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 			</Row>
 			<p>Some graphs about deleted files, what no clue?</p>

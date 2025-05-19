@@ -1,13 +1,14 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { InfoPillProgressProps } from '@/types/Components/UI';
+import Card from './Card';
 
 export default function InfoPillProgress({ title, text, icon, colour, max, current = 0 }: InfoPillProgressProps) {
 	const randomColor = colour ?? `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
 	return (
-		<div className="card shadow h-100 py-2" style={{ borderLeft: `.25rem solid ${randomColor}` }}>
-  		<div className="card-body">
-  			<div className="row no-gutters align-items-center">
+		<Card className='shadow h-75' style={{ borderLeft: `.25rem solid ${randomColor}` }}>
+			<Card.Body>
+				<div className="row no-gutters align-items-center">
   				<div className="col mr-2">
 						<b className="text-xs fw-bold text-uppercase mb-1" style={{ color: randomColor }}>{title}</b>
   					<div className="row align-items-center">
@@ -27,7 +28,7 @@ export default function InfoPillProgress({ title, text, icon, colour, max, curre
   					<FontAwesomeIcon icon={icon} className="fa-2x" />
   				</div>
   			</div>
-  		</div>
-  	</div>
+			</Card.Body>
+		</Card>
 	);
 }

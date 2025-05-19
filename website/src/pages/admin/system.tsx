@@ -74,13 +74,13 @@ export default function AdminEndpoints({ thumbnailCache, stats }: Props) {
 			<Row>
 				<Col lg={4}>
 					<AdminDatabaseBackupCard />
-					<AdminCacheCard sizeInBytes={thumbnailCache.sizeInBytes} count={thumbnailCache.count} />
 				</Col>
 				<Col lg={4}>
 					<AdminLogFileCard />
 				</Col>
 				<Col lg={4}>
 					<AdminCRONJobCard />
+					<AdminCacheCard sizeInBytes={thumbnailCache.sizeInBytes} count={thumbnailCache.count} />
 				</Col>
 			</Row>
 		</AdminLayout>

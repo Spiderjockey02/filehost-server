@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { GetServerSidePropsContext } from 'next/types';
-import { ErrorPopup, InputField } from '@/components';
+import { Card, ErrorPopup, InputField } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { authClient } from '@/auth/client';
 import { LoginErrorTypes } from '@/types';
@@ -62,8 +62,8 @@ export default function SignIn() {
 					<div className="row d-flex justify-content-center align-items-center h-100">
 						<div className="col-lg-8 col-xl-7">
 							<div className="d-flex justify-content-center align-items-center vh-100">
-								<div className="card w-100" style={{ 'borderRadius': '25px' }}>
-									<div className="card-body d-flex flex-column align-items-center">
+								<Card className='w-100'>
+									<Card.Body className='d-flex flex-column align-items-center'>
 										<h1 className="h1 fw-bold mb-4">Login</h1>
 										<form className="w-100" onSubmit={handleSubmit}>
 											<div className="mb-3 w-100">
@@ -89,8 +89,8 @@ export default function SignIn() {
 												</button>
 											</form>
 										</div>
-									</div>
-								</div>
+									</Card.Body>
+								</Card>
 							</div>
 						</div>
 					</div>

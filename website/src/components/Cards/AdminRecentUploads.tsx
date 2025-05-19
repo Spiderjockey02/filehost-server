@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Table from '../UI/Table';
 import { useEffect, useState } from 'react';
 import type { File } from '@prisma/client';
+import Card from '../UI/Card';
 
 export default function AdminRecentUploadsCards() {
 	const [page, setPage] = useState(0);
@@ -27,11 +28,11 @@ export default function AdminRecentUploadsCards() {
 	}, [page]);
 
 	return (
-		<div className="card">
-			<h5 className="card-header fw-bold">
-        Recent uploads
-			</h5>
-			<div className="card-body table-responsive">
+		<Card>
+			<Card.Header>
+				Recent uploads
+			</Card.Header>
+			<Card.Body>
 				<Table>
 					<Table.HeaderRow>
 						<Table.Header>File Id</Table.Header>
@@ -78,7 +79,6 @@ export default function AdminRecentUploadsCards() {
 					</Table.Body>
 				</Table>
 				<div className="d-flex flex-row justify-content-between">
-					<div></div>
 					<nav aria-label="Page navigation">
 						<ul className="pagination">
 							<li className={`page-item ${page === 0 ? 'disabled' : ''}`}>
@@ -102,7 +102,7 @@ export default function AdminRecentUploadsCards() {
 						</p>
 					</div>
 				</div>
-			</div>
-		</div>
+			</Card.Body>
+		</Card>
 	);
 }

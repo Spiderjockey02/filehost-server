@@ -1,4 +1,4 @@
-import { ErrorPopup, SuccessPopup, InputField } from '@/components';
+import { ErrorPopup, SuccessPopup, InputField, Card } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { SettingErrorTypes } from '@/types';
 import MainLayout from '@/layouts/main';
@@ -102,67 +102,69 @@ export default function Settings() {
 	return (
 		<MainLayout user={session.user} tabName='Settings'>
 			<section className="d-flex flex-row align-items-center" style={{ 'backgroundColor': '#eee', padding: '5% 0' }}>
-				<div className="card container">
-					<div className="row" style={{ margin: '5px' }}>
-						<div className='col-lg-1 nav nav-pills flex-column' id="v-pills-tab" role="tablist" aria-orientation="vertical" style={{ padding: 0 }}>
-							<button className="nav-link active" id="v-pills-home-tab" data-bs-toggle="pill" data-bs-target="#v-pills-home" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">Account</button>
-							<button className="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="false">Billing</button>
-						</div>
-						<div className='col-lg-11 tab-content' id="v-pills-tabContent">
-							{errors.find(c => c.type == 'av') !== undefined && <ErrorPopup text={`${errors.find(c => c.type == 'av')?.text}`} />}
-							{success.length != 0 && <SuccessPopup text={success} />}
-							<div className="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab" >
-								<h3 className="mb-4">Account Settings</h3>
-								<div className="d-flex flex-column align-items-center">
-									<Image src={`/avatar/${session.user?.id}`} width={100} height={100} className="rounded-circle " alt="User avatar" />
+				<Card className='container'>
+					<Card.Body>
+						<div className="row" style={{ margin: '5px' }}>
+							<div className='col-lg-1 nav nav-pills flex-column' id="v-pills-tab" role="tablist" aria-orientation="vertical" style={{ padding: 0 }}>
+								<button className="nav-link active" id="v-pills-home-tab" data-bs-toggle="pill" data-bs-target="#v-pills-home" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">Account</button>
+								<button className="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="false">Billing</button>
+							</div>
+							<div className='col-lg-11 tab-content' id="v-pills-tabContent">
+								{errors.find(c => c.type == 'av') !== undefined && <ErrorPopup text={`${errors.find(c => c.type == 'av')?.text}`} />}
+								{success.length != 0 && <SuccessPopup text={success} />}
+								<div className="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab" >
+									<h3 className="mb-4">Account Settings</h3>
+									<div className="d-flex flex-column align-items-center">
+										<Image src={`/avatar/${session.user?.id}`} width={100} height={100} className="rounded-circle " alt="User avatar" />
 										&nbsp;
-									<div className="d-flex justify-content-center gap-2">
-										<label className="btn btn-sm btn-primary">
+										<div className="d-flex justify-content-center gap-2">
+											<label className="btn btn-sm btn-primary">
 												File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} accept="image/*" />
-										</label>
-										<button className="btn btn-sm btn-danger" onClick={() => deleteAvatar()}>Remove</button>
+											</label>
+											<button className="btn btn-sm btn-danger" onClick={() => deleteAvatar()}>Remove</button>
+										</div>
+									</div>
+									<ul className="nav nav-tabs mt-4" id="account-tabs">
+										<li className="nav-item">
+											<a className="nav-link active" href="#personal-info" data-bs-toggle="tab">Personal Information</a>
+										</li>
+										<li className="nav-item">
+											<a className="nav-link" href="#password" data-bs-toggle="tab">Password</a>
+										</li>
+									</ul>
+									<div className="tab-content mt-3">
+										<div className="tab-pane fade show active" id="personal-info">
+											<form className='mt-4' onSubmit={onPersonalSubmit}>
+												<InputField title='Update Name' name='name' placeholder={session.user?.name} />
+												<InputField title='Update Email' name="email" placeholder={session.user?.email} errorMsg={errors.find(e => e.type == 'email')?.text} onChange={(e) => setEmail(e.target.value)} />
+												<button type="submit" className="btn btn-primary float-end">Save Changes</button>
+											</form>
+										</div>
+										<div className="tab-pane fade" id="password">
+											<form className="mt-4" onSubmit={onPasswordSubmit}>
+												<InputField title="Current Password" name="current-password" autocomplete='current-password' type='password' errorMsg={errors.find(e => e.type == 'current')?.text} onChange={(e) => setPasswords(p => ({ ...p, currentPassword: e.target.value }))} />
+												<div className="row">
+													<div className="col-md-6">
+														<InputField title="New Password" name="new-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd1')?.text} onChange={(e) => setPasswords(p => ({ ...p, newPassword: e.target.value }))} />
+													</div>
+													<div className="col-md-6">
+														<InputField title="Repeat Password" name="repeat-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd2')?.text} onChange={(e) => setPasswords(p => ({ ...p, repeatNewPassword: e.target.value }))} />
+													</div>
+												</div>
+												<button type="submit" className="btn btn-primary float-end">Save Changes</button>
+											</form>
+										</div>
 									</div>
 								</div>
-								<ul className="nav nav-tabs mt-4" id="account-tabs">
-									<li className="nav-item">
-										<a className="nav-link active" href="#personal-info" data-bs-toggle="tab">Personal Information</a>
-									</li>
-									<li className="nav-item">
-										<a className="nav-link" href="#password" data-bs-toggle="tab">Password</a>
-									</li>
-								</ul>
-								<div className="tab-content mt-3">
-									<div className="tab-pane fade show active" id="personal-info">
-										<form className='mt-4' onSubmit={onPersonalSubmit}>
-											<InputField title='Update Name' name='name' placeholder={session.user?.name} />
-											<InputField title='Update Email' name="email" placeholder={session.user?.email} errorMsg={errors.find(e => e.type == 'email')?.text} onChange={(e) => setEmail(e.target.value)} />
-											<button type="submit" className="btn btn-primary float-end">Save Changes</button>
-										</form>
-									</div>
-									<div className="tab-pane fade" id="password">
-										<form className="mt-4" onSubmit={onPasswordSubmit}>
-											<InputField title="Current Password" name="current-password" autocomplete='current-password' type='password' errorMsg={errors.find(e => e.type == 'current')?.text} onChange={(e) => setPasswords(p => ({ ...p, currentPassword: e.target.value }))} />
-											<div className="row">
-												<div className="col-md-6">
-													<InputField title="New Password" name="new-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd1')?.text} onChange={(e) => setPasswords(p => ({ ...p, newPassword: e.target.value }))} />
-												</div>
-												<div className="col-md-6">
-													<InputField title="Repeat Password" name="repeat-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd2')?.text} onChange={(e) => setPasswords(p => ({ ...p, repeatNewPassword: e.target.value }))} />
-												</div>
-											</div>
-											<button type="submit" className="btn btn-primary float-end">Save Changes</button>
-										</form>
-									</div>
+								<div className="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+									<h3 className="mb-4">Billing Information</h3>
+									<p>Billing settings will be available here.</p>
+									<button onClick={ahjksd}>asd</button>
 								</div>
-							</div>
-							<div className="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
-								<h3 className="mb-4">Billing Information</h3>
-								<p>Billing settings will be available here.</p>
-								<button onClick={ahjksd}>asd</button>
 							</div>
 						</div>
-					</div>
-				</div>
+					</Card.Body>
+				</Card>
 			</section>
 		</MainLayout>
 	);

@@ -1,4 +1,5 @@
 import { SyntheticEvent, useEffect, useState } from 'react';
+import Card from '../UI/Card';
 
 export default function AdminLogFileCard() {
 	const [logFiles, setlogFiles] = useState<string[]>([]);
@@ -71,11 +72,9 @@ export default function AdminLogFileCard() {
 
 	return (
 		logContent.length == 0 ?
-			<div className="card shadow mb-4">
-				<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-					<h5 className="m-0 fw-bold">Log files</h5>
-				</div>
-				<div className="card-body table-responsive" style={{ overflowY: 'scroll', maxHeight: '65vh' }}>
+			<Card>
+				<Card.Header>Log files</Card.Header>
+				<Card.Body style={{ overflowY: 'scroll', maxHeight: '65vh' }}>
 					<table className="table">
 						<tbody>
 							{isLoading ? (
@@ -97,13 +96,13 @@ export default function AdminLogFileCard() {
 							)}
 						</tbody>
 					</table>
-				</div>
-			</div>
+				</Card.Body>
+			</Card>
 			:
-			<div className="card shadow mb-4">
-				<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-					<h4 className="m-0 fw-bold">Log content</h4>
-					<div className="input-group mb-3" style={{ padding: 0, maxWidth: '50%' }}>
+			<Card>
+				<Card.Header>
+					Log content
+					<div className="input-group" style={{ padding: 0, maxWidth: '50%' }}>
 						<label className="input-group-text" htmlFor="inputGroupSelect01">Log type</label>
 						<select className="form-select form-select-sm" onChange={(e) => updateViewContentType(e)}>
 							<option selected value="ALL">All</option>
@@ -114,8 +113,8 @@ export default function AdminLogFileCard() {
 							<option value="FATAL">Fatal</option>
 						</select>
 					</div>
-				</div>
-				<div className="card-body" style={{ overflowY: 'scroll', maxHeight: '65vh' }}>
+				</Card.Header>
+				<Card.Body style={{ overflowY: 'scroll', maxHeight: '65vh' }}>
 					<button className='btn btn-link' onClick={() => setLogContent([])}>Back</button>
 					{isLoading ? (
 						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].map((_, index) => (
@@ -128,8 +127,7 @@ export default function AdminLogFileCard() {
 							<div key={logContent.indexOf(line)}>{line}</div>
 						))
 					)}
-				</div>
-			</div>
-
+				</Card.Body>
+			</Card>
 	);
 }

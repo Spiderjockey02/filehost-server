@@ -1,11 +1,12 @@
 import type { AdminUserIdProps } from '@/types/Components/Card';
 import { getStatusColor, formatBytes } from '@/utils/functions';
 import Image from 'next/image';
+import Card from '../UI/Card';
 
 export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 	return (
-		<div className="card shadow-sm mb-4">
-			<div className="card-body">
+		<Card>
+			<Card.Body>
 				<div className="d-flex align-items-center mb-3">
 					<Image
 						src={`/avatar/${user?.id}`}
@@ -99,9 +100,9 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 					}
 				</div>
 				<div>
-                    Add stuff to edit the user (Ban, update group, send notification etc)
+          Add stuff to edit the user (Ban, update group, send notification etc)
 				</div>
-			</div>
-		</div>
+			</Card.Body>
+		</Card>
 	);
 }

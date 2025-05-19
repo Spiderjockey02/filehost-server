@@ -1,5 +1,5 @@
 import { GetServerSidePropsContext } from 'next/types';
-import { ErrorPopup, InputField } from '@/components';
+import { Card, ErrorPopup, InputField } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { RegisterErrorTypes } from '@/types';
 import { authClient } from '@/auth/client';
@@ -79,8 +79,8 @@ export default function Register() {
 					}
 					<div className="row d-flex justify-content-center align-items-center">
 						<div className="col-lg-12 col-xl-11">
-							<div className="card text-black" style={{ 'borderRadius': '25px' }}>
-								<div className="card-body p-md-5">
+							<Card>
+								<Card.Body>
 									<div className="row">
 										<div className="col-lg-6 order-2 order-lg-1">
 											<p className="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Sign up</p>
@@ -120,8 +120,8 @@ export default function Register() {
 											<Image src="/register.webp" className="img-fluid" alt="Sample image" width={530} height={280}/>
 										</div>
 									</div>
-								</div>
-							</div>
+								</Card.Body>
+							</Card>
 						</div>
 					</div>
 				</div>

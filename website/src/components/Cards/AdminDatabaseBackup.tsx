@@ -5,6 +5,7 @@ import { AdminBackupModel } from '../Modals/AdminBackupModal';
 import Table from '../UI/Table';
 import { useEffect, useState } from 'react';
 import { DatabaseBackup } from '@/types';
+import Card from '../UI/Card';
 
 export default function AdminDatabaseBackupCard() {
 	const [backups, setBackups] = useState<DatabaseBackup[]>([]);
@@ -70,12 +71,12 @@ export default function AdminDatabaseBackupCard() {
 	}
 
 	return (
-		<div className="card shadow mb-4">
-			<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-				<h5 className="m-0 fw-bold">Database Backups</h5>
+		<Card>
+			<Card.Header>
+				Database Backups
 				<button className='btn btn-secondary' onClick={createDatabaseBackup}>Backup</button>
-			</div>
-			<div className="card-body table-responsive" style={{ overflowY: 'scroll', maxHeight: '40vh' }}>
+			</Card.Header>
+			<Card.Body>
 				<Table>
 					<Table.HeaderRow>
 						<Table.Header>Name</Table.Header>
@@ -134,7 +135,7 @@ export default function AdminDatabaseBackupCard() {
 					</Table.Body>
 				</Table>
 				{backups.map(backup => (<AdminBackupModel backup={backup} key={backup.filename} downloadBackup={() => downloadBackup(backup.filename)} deleteBackup={() => deleteBackup(backup.filename)} />))}
-			</div>
-		</div>
+			</Card.Body>
+		</Card>
 	);
 }

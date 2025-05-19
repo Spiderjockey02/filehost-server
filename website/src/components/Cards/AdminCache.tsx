@@ -4,6 +4,7 @@ import { faInfinity } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useFetchWithCleanup } from '../Hooks/useFetchWithCleanup';
 import type { cacheStats, thumbnailStats } from '@/types/Components/Card';
+import Card from '../UI/Card';
 
 export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 	const { data: stats, loading: isLoading } = useFetchWithCleanup<cacheStats>('/api/admin/cache/stats');
@@ -19,11 +20,11 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 	}
 
 	return (
-		<div className="card shadow mb-4">
-			<div className="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-				<h5 className="m-0 fw-bold">Cache</h5>
-			</div>
-			<div className="card-body table-responsive">
+		<Card>
+			<Card.Header>
+				Cache
+			</Card.Header>
+			<Card.Body>
 				<Table>
 					<Table.HeaderRow>
 						<Table.Header>Name</Table.Header>
@@ -94,7 +95,7 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 						</tr>
 					</Table.Body>
 				</Table>
-			</div>
-		</div>
+			</Card.Body>
+		</Card>
 	);
 }

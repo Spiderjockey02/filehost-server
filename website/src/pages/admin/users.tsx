@@ -6,7 +6,7 @@ import axios from 'axios';
 import AdminLayout from '@/layouts/admin';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFolderTree, faHardDrive, faMemory, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { Row, Col, InfoPill, LineChart } from '@/components';
+import { Row, Col, InfoPill, LineChart, Card } from '@/components';
 import { formatBytes } from '@/utils/functions';
 import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
 import { useState } from 'react';
@@ -35,13 +35,13 @@ export default function Files({ langaugeCodes, emails, rawUserGrowth, newUsers, 
 		labels: Object.keys(retention.files),
 		datasets: [
 			{
-				label: 'File count',
+				label: '% of users who uploaded a file',
 				data: Object.values(retention.files),
 				borderColor: 'rgb(255, 99, 132)',
 				backgroundColor: 'rgba(255, 99, 132, 0.5)',
 			},
 			{
-				label: 'Session count',
+				label: '% of users who logged in',
 				data: Object.values(retention.sessions),
 				borderColor: 'rgb(8, 99, 132)',
 				backgroundColor: 'rgba(8, 99, 132, 0.5)',
@@ -109,8 +109,8 @@ export default function Files({ langaugeCodes, emails, rawUserGrowth, newUsers, 
 			</Row>
 			<Row>
 				<Col lg={6}>
-					<div className="card mb-4">
-						<h5 className="card-header d-flex flex-row align-items-center justify-content-between">
+					<Card>
+						<Card.Header>
 							User Growth Over Time
 							<div className="dropdown">
 								<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -122,55 +122,67 @@ export default function Files({ langaugeCodes, emails, rawUserGrowth, newUsers, 
 									<li><a className="dropdown-item" href="#" onClick={() => updatedUserJoinGrowth('yearly')}>Yearly</a></li>
 								</ul>
 							</div>
-						</h5>
-						<div className="card-body">
+						</Card.Header>
+						<Card.Body>
 							<LineChart data={userJoinData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 				<Col lg={6}>
-					<div className="card mb-4">
-						<h5 className="card-header d-flex flex-row align-items-center justify-content-between">
+					<Card>
+						<Card.Header>
 							User Rention Over Time
-						</h5>
-						<div className="card-body">
+						</Card.Header>
+						<Card.Body>
 							<LineChart data={userRetentionData} options={userRetentionOptions} style={{ height: '400px' }} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 			</Row>
 			<Row>
-				<Col lg={4} className='mb-4'>
-					<div className="card">
-						<h5 className="card-header">Language Distribution</h5>
-						<div className="card-body d-flex justify-content-center">
+				<Col lg={4}>
+					<Card>
+						<Card.Header>
+							Language Distribution
+						</Card.Header>
+						<Card.Body>
 							<ObjectOrientedPieChart data={langaugeCodes} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
-				<Col lg={4} className='mb-4'>
-					<div className="card">
-						<h5 className="card-header">Sign up sources</h5>
-						<div className="card-body d-flex justify-content-center">
+				<Col lg={4}>
+					<Card>
+						<Card.Header>
+							Sign up sources
+						</Card.Header>
+						<Card.Body>
 							<ObjectOrientedPieChart data={signupSource} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
-				<Col lg={4} className='mb-4'>
-					<div className="card">
-						<h5 className="card-header">Email domains Distribution</h5>
-						<div className="card-body d-flex justify-content-center">
+				<Col lg={4}>
+					<Card>
+						<Card.Header>
+							Email domains Distribution
+						</Card.Header>
+						<Card.Body>
 							<ObjectOrientedPieChart data={emails} />
-						</div>
-					</div>
+						</Card.Body>
+					</Card>
 				</Col>
 			</Row>
-			<div className="card mb-4">
-				<h5 className="card-header">All users</h5>
-				<div className="card-body">
-					<AdminUserTableCards />
-				</div>
-			</div>
+			<Row>
+				<Col lg={12}>
+					<Card>
+						<Card.Header>
+							All users
+						</Card.Header>
+						<Card.Body>
+							<AdminUserTableCards />
+						</Card.Body>
+					</Card>
+				</Col>
+			</Row>
 		</AdminLayout>
 	);
 }
