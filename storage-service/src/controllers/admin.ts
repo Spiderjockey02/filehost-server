@@ -1,8 +1,9 @@
 import { fetchFileMediaTypes } from '../accessors/FileMimeType';
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
-import { Error } from '../utils';
+import { Error, PATHS } from '../utils';
 import os from 'os';
+import fs from 'fs/promises';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
@@ -106,5 +107,31 @@ export const postCronJobsByName = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
+	};
+};
+
+// Endpoint: GET /api/admin/system/stats
+export const getSystemStats = () => {
+	return async (_req: Request, res: Response) => {
+		// Fetch all logs and total byte size
+		const logs = await fs.readdir(`${process.cwd()}/src/utils/logs`);
+		const stats = await Promise.all(logs.map(path => fs.stat(`${process.cwd()}/src/utils/logs/${path}`)));
+		const totalLogSize = stats.reduce((acc, stat) => acc + stat.size, 0);
+
+		const files = await fs.readdir(PATHS.DATABASE_BACKUPS);
+		const latestBackup = files.filter(a => a.endsWith('.json')).sort((a, b) => b.localeCompare(a))[0];
+		const backup = await fs.readFile(`${PATHS.DATABASE_BACKUPS}/${latestBackup}`, 'utf-8');
+		res.json({
+			memory: {
+				using: Number((process.memoryUsage().heapUsed).toFixed(2)),
+				total:  Number((os.totalmem()).toFixed(2)),
+			},
+			uptime: process.uptime(),
+			logs: {
+				totalByteSize: totalLogSize,
+				count: logs.length,
+			},
+			backup: JSON.parse(backup),
+		});
 	};
 };

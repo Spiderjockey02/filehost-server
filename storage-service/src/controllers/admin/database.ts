@@ -48,9 +48,6 @@ export const postDatabaseBack = (client: Client) => {
 	};
 };
 
-// TODO UNDER HERE VALIDATE TIMESTAMP TO BE JUST THE TIMESTAMP AND ENSURE .DUMP.SQL AND .JSON FILES ARE DELETED
-// REQUEST COMES IN
-
 // Endpoint: DELETE /api/admin/database/backup/:timestamp
 export const deleteBackupByName = (client: Client) => {
 	return async (req: Request, res: Response) => {

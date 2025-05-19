@@ -8,12 +8,10 @@ import { existsSync } from 'fs';
 export const getLogs = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
+			// Fetch all logs and total byte size
 			const logs = await fs.readdir(`${process.cwd()}/src/utils/logs`);
-			let totalLogSize = 0;
-			for (const file of logs) {
-				const stats = await fs.stat(`${process.cwd()}/src/utils/logs/${file}`);
-				totalLogSize += stats.size;
-			}
+			const stats = await Promise.all(logs.map(path => fs.stat(`${process.cwd()}/src/utils/logs/${path}`)));
+			const totalLogSize = stats.reduce((acc, stat) => acc + stat.size, 0);
 
 			res.json({ logs: logs.reverse(), totalLogSize });
 		} catch (error) {

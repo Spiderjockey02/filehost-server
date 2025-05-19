@@ -8,11 +8,15 @@ type countEnum = { [key: string | number]: number }
 export const getFiles = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const { files, folders } = await client.FileManager.fetchTotal();
-			const avgSize = await client.FileManager.fetchAverageSize();
-			const mostCommonFileTypes = await fetchMostCommonFileTypes();
+			const [{ files, folders, newFiles }, avgSize, mostCommonFileTypes, deletedFiles, { _sum: { size } }] = await Promise.all([
+				client.FileManager.fetchTotal(),
+				client.FileManager.fetchAverageSize(),
+				fetchMostCommonFileTypes(),
+				client.FileManager.fetchTotalDeleted(),
+				client.FileManager.fetchTotalStorageUsed(),
+			]);
 
-			res.json({ files, folders, avgFileSize: avgSize._avg.size, mostCommonFileTypes: mostCommonFileTypes.map(m => ({ mimeType: m.name, count: m._count.files })) });
+			res.json({ files, folders, avgFileSize: avgSize._avg.size, mostCommonFileTypes: mostCommonFileTypes.map(m => ({ mimeType: m.name, count: m._count.files })), deletedFiles, newFiles, totalStorageSize: Number(size) });
 		} catch (error) {
 			client.logger.error(error);
 			Error.GenericError(res, 'Failed to fetch files.');
@@ -109,14 +113,16 @@ export const getRecentlyUploaded = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			// Allow pagination
-			const { page, pageSize } = req.query;
+			const { page } = req.query;
 
-			// Validate page and pageSize
+			// Validate page
 			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
-			if (pageSize !== undefined && (typeof pageSize !== 'string' || !/^\d+$/.test(pageSize) || Number(pageSize) < 0)) return Error.IncorrectQuery(res, 'page must be a number');
 
-			const files = await client.FileManager.fetchRecentlyUploaded({ page: isNaN(Number(page)) ? undefined : Number(page), pageSize: isNaN(Number(pageSize)) ? undefined : Number(pageSize) });
-			res.json({ files: sanitiseObject(files) });
+			const [files, total] = await Promise.all([
+				client.FileManager.fetchRecentlyUploaded({ page: isNaN(Number(page)) ? undefined : Number(page) }),
+				client.FileManager.fetchTotal(),
+			]);
+			res.json({ files: sanitiseObject(files), total: total.files });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch recently uploaded files.');

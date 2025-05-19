@@ -1,5 +1,5 @@
 import { getFiles, getFilesGrowth, getFileSizeCategories, getRecentlyUploaded } from '../../controllers/admin/files';
-import { getCronJobs, getCronJobsByName, getMimeTypes, getStats, postCronJobsByName } from '../../controllers/admin';
+import { getCronJobs, getCronJobsByName, getMimeTypes, getStats, getSystemStats, postCronJobsByName } from '../../controllers/admin';
 import { getLogs, getSpecificLog } from '../../controllers/admin/logs';
 import type Client from '../../helpers/Client';
 import { checkAdmin } from '../../middleware';
@@ -28,6 +28,8 @@ export default async function(client: Client) {
 	router.get('/cron-jobs/:name/logs', await checkAdmin(client), getCronJobsByName(client));
 
 	router.post('/cron-jobs/:name', await checkAdmin(client), postCronJobsByName(client));
+
+	router.get('/system/stats', await checkAdmin(client), getSystemStats());
 
 	return router;
 }

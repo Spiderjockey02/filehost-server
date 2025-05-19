@@ -274,7 +274,9 @@ export default class FileAccessor {
 		* @returns The total count of files.
 	*/
 	async fetchTotal() {
-		const [files, folders] = await Promise.all([
+		const last7days = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+
+		const [files, folders, newFiles] = await Promise.all([
 			client.file.count({
 				where: {
 					type: 'FILE',
@@ -285,9 +287,16 @@ export default class FileAccessor {
 					type: 'DIRECTORY',
 				},
 			}),
+			client.file.count({
+				where: {
+					createdAt: {
+						gte: last7days,
+					},
+				},
+			}),
 		]);
 
-		return { files, folders };
+		return { files, folders, newFiles };
 	}
 
 	/**
@@ -374,5 +383,27 @@ export default class FileAccessor {
 		}
 
 		return category;
+	}
+
+	/**
+	  * Fetch the count of deleted files
+	  * @returns The number of deleted files
+	*/
+	async fetchTotalDeleted() {
+		return client.file.count({
+			where: {
+				deletedAt: {
+					not: null,
+				},
+			},
+		});
+	}
+
+	async fetchTotalStorageUsed() {
+		return client.file.aggregate({
+			_sum: {
+				size: true,
+			},
+		});
 	}
 }

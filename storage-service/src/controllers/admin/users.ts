@@ -9,8 +9,8 @@ type countEnum = { [key: string | number]: number }
 export const getUsers = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const rawFilters = req.query.filters;
-			const filters = (rawFilters !== undefined && Array.isArray(rawFilters)) ? rawFilters.map((filter) => filter.toString()) : [];
+			const { page, filters: rawFilters } = req.query;
+			const filters = (rawFilters !== undefined && Array.isArray(rawFilters)) ? rawFilters.map((filter) => filter.toString()) : [`${rawFilters}`];
 
 			// Parse the filters and validate them
 			const parsedFilters: data = {};
@@ -18,9 +18,13 @@ export const getUsers = (client: Client) => {
 				if (['group', 'recent', 'delete', 'analyse'].includes(filter)) parsedFilters[filter] = true;
 			}
 
+			// Valid page index (if present)
+			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
+
 			// Fetch the database
-			const users = await client.userManager.fetchAll(parsedFilters);
-			res.json({ users: sanitiseObject(users) });
+			const users = await client.userManager.fetchAll({ ...parsedFilters, page: isNaN(Number(page)) ? undefined : Number(page) });
+			const { total } = await client.userManager.fetchTotal();
+			res.json({ users: sanitiseObject(users), total });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of users.');
@@ -146,10 +150,6 @@ export const getUserEmails = (client: Client) => {
 export const getUserStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			// Last 7 days
-			const end = new Date();
-			end.setDate(end.getDate() - 7);
-
 			const [userTotal, avgstorageUsage, banned] = await Promise.all([
 				client.userManager.fetchTotal(),
 				client.userManager.fetchAverageStorageUsed(),
@@ -158,7 +158,7 @@ export const getUserStats = (client: Client) => {
 
 
 			res.json({
-				totalUsers: userTotal.total, newUsers: userTotal.new, activeUsers: userTotal.active, avgstorageUsage: avgstorageUsage._avg.totalStorageSize, banned, admins: 0,
+				total: userTotal.total, new: userTotal.new, active: userTotal.active, avgstorageUsage: avgstorageUsage._avg.totalStorageSize, banned, admins: 0,
 			});
 		} catch (err) {
 			client.logger.error(err);
@@ -205,8 +205,11 @@ export const getUserRetention = (client: Client) => {
 				start.setDate(start.getDate() - 1);
 
 				const dateStr = start.toISOString().split('T')[0];
-				const users = await client.userManager.fetchUsersWhoUploadedBetweenTwoDates(start, end);
-				const session = await client.sessionManager.fetchUsersWhoLoggedInBetweenTwoDates(start, end);
+				const [users, session] = await Promise.all([
+					client.userManager.fetchUsersWhoUploadedBetweenTwoDates(start, end),
+					client.sessionManager.fetchUsersWhoLoggedInBetweenTwoDates(start, end),
+				]);
+
 				days[dateStr] = users.length / total;
 				sessions[dateStr] = session.length / total;
 			}
@@ -224,7 +227,7 @@ export const getUserById = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const userId = req.params.id;
-			const user = await client.userManager.fetchbyParam({ id: userId });
+			const user = await client.userManager.fetchbyParam({ id: userId, force: true });
 			res.json({ user: sanitiseObject(user) });
 		} catch (err) {
 			client.logger.error(err);

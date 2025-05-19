@@ -10,12 +10,14 @@ export interface GetUsers {
 export type fetchUserbyParam = {
 	email?: string
 	id?: string
+	force?: boolean
 }
 
 export interface updateUser {
 	id: string
 	email?: string
 	totalStorageSize?: bigint
+	updatedAt?: Date
 }
 
 export interface UserToGroupProps {

@@ -1,6 +1,7 @@
 import type { GetUsers, fetchUserbyParam, updateUser, UserToGroupProps, FullUser, storageDirection } from '../types/database/User';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
+import { Pagination } from 'src/types/database/File';
 
 export default class UserManager {
 	cache: LRUCache<string, FullUser>;
@@ -25,6 +26,7 @@ export default class UserManager {
 			data: {
 				email: data.email,
 				totalStorageSize: data.totalStorageSize,
+				updatedAt: data.updatedAt,
 			},
 			include: {
 				group: true,
@@ -40,10 +42,10 @@ export default class UserManager {
 	  * @param {GetUsers} data The user data.
 		* @returns {UserWithGroup[]} The users.
 	*/
-	async fetchAll(data: GetUsers = {}): Promise<FullUser[]> {
+	async fetchAll({ group, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
 		return client.user.findMany({
 			include: {
-				group: data.group,
+				group: group,
 				notifications: true,
 				_count: {
 					select: {
@@ -51,6 +53,11 @@ export default class UserManager {
 					},
 				},
 			},
+			orderBy: {
+				createdAt: 'desc',
+			},
+			take: 20,
+			skip: page * 20,
 		});
 	}
 
@@ -84,7 +91,7 @@ export default class UserManager {
 		* @returns {UserWithGroup | null} The updated user.
 	*/
 	async fetchbyParam(data: fetchUserbyParam): Promise<FullUser | null> {
-		let user = this.cache.find(u => u.id === data.id || u.email === data.email) ?? null;
+		let user = !data.force ? (this.cache.find(u => u.id === data.id || u.email === data.email) ?? null) : null;
 		if (user == null) {
 			user = await client.user.findUnique({
 				where: {
@@ -108,12 +115,12 @@ export default class UserManager {
 	}
 
 	/**
-	 * Modify the storage size of a user
-	 * @param {string} userId The ID of the user
-	 * @param {bigint} size The size to modify the storage size by.
-	 * @param {storageDirection} direction The direction to modify the storage size.
-	 * @returns The updated user.
-	 */
+	  * Modify the storage size of a user
+	  * @param {string} userId The ID of the user
+	  * @param {bigint} size The size to modify the storage size by.
+	  * @param {storageDirection} direction The direction to modify the storage size.
+	  * @returns The updated user.
+	*/
 	async modifyStorageSize(userId: string, size: bigint, direction: storageDirection): Promise<FullUser> {
 		return client.user.update({
 			where: {
@@ -182,6 +189,12 @@ export default class UserManager {
 		});
 	}
 
+	/**
+		* Fetch a unique list of user IDs that have uploaded between two dates
+		* @param {Date} oldDate The old date.
+		* @param {Date} newDate The new date.
+		* @returns The array of user IDs.
+	*/
 	async fetchUsersWhoUploadedBetweenTwoDates(oldDate: Date, newDate: Date) {
 		const files = await client.file.findMany({
 			where: {
@@ -225,11 +238,6 @@ export default class UserManager {
 	*/
 	async fetchCountsByEmailDomain() {
 		const users = await client.user.findMany({
-			where: {
-				email: {
-					not: null,
-				},
-			},
 			select: {
 				email: true,
 			},
@@ -269,6 +277,10 @@ export default class UserManager {
 		});
 	}
 
+	/**
+		* Fetch the count of each provider the users have logged / registered in using.
+		* @returns An object of providers with values the number of users
+	*/
 	async fetchSignUpSource() {
 		const accounts = await client.account.findMany();
 

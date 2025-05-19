@@ -35,3 +35,7 @@ export type FullFile = Prisma.FileGetPayload<{
     children: number
   }
 }>
+
+export interface Pagination {
+  page?: number
+}
