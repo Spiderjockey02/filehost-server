@@ -3,19 +3,35 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatBytes } from '@/utils/functions';
 import { Col, Row } from '@/components/UI/Grid';
 import { authClient } from '@/auth/client';
-import { HomePageProps } from '@/types/pages';
 import MainLayout from '@/layouts/main';
-import Script from 'next/script';
 import config from '../config';
 import Link from 'next/link';
-import axios from 'axios';
+import { useEffect, useState } from 'react';
+import CountUp from 'react-countup';
 
-export default function Home({ totalUserCount, storageUsed, totalFileCount }: HomePageProps) {
+export default function Home() {
 	const { data } = authClient.useSession();
+	const [stats, setStats] = useState({
+		totalUsers: 0,
+		storageUsed: 0,
+		totalFiles: 0,
+	});
+
+	useEffect(() => {
+		async function fetchData() {
+			const res = await fetch('/api/statistics');
+			const { totalUsers, diskData, totalFileCount } = await res.json();
+
+			setStats({
+				totalUsers: totalUsers.total, storageUsed: diskData.total - diskData.free, totalFiles: totalFileCount,
+			});
+		}
+
+		fetchData();
+	}, []);
 
 	return (
 		<MainLayout user={data?.user}>
-			<Script src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js" strategy="worker" />
 			<section id="hero" className="d-flex align-items-center large-padding">
 				<div className="container">
 					<h1>Welcome to <span>{config.company.name}</span></h1>
@@ -69,21 +85,21 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Ho
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faUsers} />
-									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter">{totalUserCount}</span>
+									<CountUp end={stats.totalUsers} className='purecounter' duration={10} />
 									<p>Happy users</p>
 								</div>
 							</Col>
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faFile} />
-									<span data-purecounter-start="0" data-purecounter-end={totalFileCount} data-purecounter-duration="1" className="purecounter">{totalFileCount}</span>
+									<CountUp end={stats.totalFiles} className='purecounter' duration={10} />
 									<p>Total files</p>
 								</div>
 							</Col>
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faHardDrive} />
-									<span data-purecounter-start="0" data-purecounter-end={(storageUsed)} data-purecounter-duration="1" data-purecounter-currency="true" className="purecounter-data">{formatBytes(storageUsed)}</span>
+									<CountUp end={stats.storageUsed} className='purecounter' formattingFn={(n) => formatBytes(n)} duration={10} />
 									<p>Total storage used</p>
 								</div>
 							</Col>
@@ -189,7 +205,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Ho
 										</h2>
 										<div id="collapseOne" className="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
 											<div className="accordion-body">
-											 Yes, but you will not be able to upload anymore files until you are in your limit of your new tier.
+												Yes, but you will not be able to upload anymore files until you are in your limit of your new tier.
 											</div>
 										</div>
 									</div>
@@ -213,7 +229,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Ho
 										</h2>
 										<div id="collapseThree" className="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
 											<div className="accordion-body">
-												 Just simply login and go to your dashboard Billing information and there you will see your payment history for your account.
+												Just simply login and go to your dashboard Billing information and there you will see your payment history for your account.
 											</div>
 										</div>
 									</div>
@@ -238,15 +254,4 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Ho
 			</main>
 		</MainLayout>
 	);
-}
-
-export async function getServerSideProps() {
-	try {
-		const { data } = await axios.get(`${process.env.BETTER_AUTH_URL}/api/statistics`);
-		const storageUsed = data.diskData.total - data.diskData.free;
-
-		return { props: { totalUserCount: data.totalUsers.total, storageUsed, totalFileCount: data.totalFileCount } };
-	} catch {
-		return { props: { totalUserCount: 0, storageUsed: 0, totalFileCount: 0 } };
-	}
 }
