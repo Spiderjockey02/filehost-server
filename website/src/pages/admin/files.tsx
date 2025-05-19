@@ -19,6 +19,9 @@ interface Props {
 	files: number
 	folders: number
 	avgFileSize: number
+	deletedFiles: number
+	newFiles: number
+	totalStorageSize: number
 	mostCommonFileTypes: MimeType[]
 	days: {
 		[key: string]: number
@@ -104,10 +107,10 @@ export default function AdminFiles(data: Props) {
 					<InfoPill title={'Total files'} text={data.files + data.folders} icon={faUsers} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'New files (7 days)'} text="0" icon={faFolderTree} />
+					<InfoPill title={'New files (7 days)'} text={data.newFiles} icon={faFolderTree} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Total Storage Used'} text={'0'} icon={faHardDrive} />
+					<InfoPill title={'Total Storage Used'} text={formatBytes(data.totalStorageSize)} icon={faHardDrive} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
 					<InfoPill title={'Average File Size'} text={formatBytes(data.avgFileSize)} icon={faHardDrive} />
@@ -116,7 +119,7 @@ export default function AdminFiles(data: Props) {
 					<InfoPill title={'Most Common File Type'} text={data.mostCommonFileTypes[0].mimeType} icon={faMemory} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Deleted Files Count'} text={'0'} icon={faMemory} />
+					<InfoPill title={'Deleted Files Count'} text={data.deletedFiles} icon={faMemory} />
 				</Col>
 			</Row>
 			<div className="card mb-4">

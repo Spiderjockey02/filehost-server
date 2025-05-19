@@ -2,6 +2,10 @@ import { faFile, faFileAlt, faFileImage, faFilePdf, faFileVideo, faFolder, faMus
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { File } from '@prisma/client';
 import { UAParser } from 'ua-parser-js';
+import en from 'javascript-time-ago/locale/en';
+import TimeAgo from 'javascript-time-ago';
+TimeAgo.addDefaultLocale(en);
+const timeAgo = new TimeAgo('en-US');
 
 export function formatBytes(bytes?: number) {
 	if (bytes == 0 || bytes == undefined) return '0 Bytes';
@@ -87,3 +91,7 @@ export function convertMiliseconds(miliseconds: number) {
 
 	return formatText;
 };
+
+export function format(text: Date | number) {
+	return timeAgo.format(text);
+}

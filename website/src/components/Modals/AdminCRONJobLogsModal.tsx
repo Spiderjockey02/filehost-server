@@ -43,7 +43,7 @@ export function AdminCRONJobLogsModal({ CRONJob }: Props) {
 						<h5 className="modal-title" id="exampleModalLongTitle">CRON logs for: {CRONJob.name}</h5>
 						<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
-					<div className="modal-body">
+					<div className="modal-body table-responsive">
 						<Table>
 							<Table.HeaderRow>
 								<Table.Header>ID</Table.Header>

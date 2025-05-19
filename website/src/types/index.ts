@@ -1,5 +1,5 @@
 import { File, Group } from '@prisma/client';
-import type { Session, User } from 'better-auth/types';
+import type { Session, User } from 'better-auth';
 
 export type LoginErrorTypes = {
   type: | 'email' | 'password' | 'misc'
@@ -27,7 +27,7 @@ export interface DatabaseBackup {
 
 export type AdminUser = {
   totalStorageSize: number
-  group: Group
+  group: Group | null
   sessions: Session[]
   files: File[]
   _count: {

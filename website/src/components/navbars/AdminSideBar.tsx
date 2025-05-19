@@ -10,7 +10,7 @@ export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarPro
 				<div className="sidebar-brand-icon rotate-n-15">
 					<FontAwesomeIcon icon={faLaughWink} />
 				</div>
-				<div className="sidebar-brand-text mx-3">API server</div>
+				<div className="sidebar-brand-text mx-3">{process.env.NEXT_PUBLIC_COMPANY_NAME}</div>
 			</Link>
 			<hr className="sidebar-divider my-0" />
 			<li className={`nav-item ${activeTab == 'dashboard' ? 'active' : ''}`}>

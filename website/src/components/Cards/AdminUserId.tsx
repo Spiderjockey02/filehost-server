@@ -1,0 +1,112 @@
+import { AdminUser } from '@/types';
+import { getStatusColor, formatBytes } from '@/utils/functions';
+import Image from 'next/image';
+
+interface Props {
+  isLoading: boolean
+  user: AdminUser | null
+}
+
+export default function AdminUserIdCard({ isLoading, user }: Props) {
+	return (
+		<div className="card shadow-sm mb-4">
+			<div className="card-body">
+				<div className="d-flex align-items-center mb-3">
+					<Image
+						src={`/avatar/${user?.id}`}
+						alt="User Avatar"
+						className="rounded-circle me-3"
+						width={60}
+						height={60}
+						style={{ objectFit: 'cover', border: '1px solid #ddd' }}
+					/>
+					{isLoading || user == null ? (
+						<div className="flex-grow-1">
+							<h5 className="card-title mb-1 placeholder col-7"></h5>
+							<p className="card-subtitle text-muted placeholder col-7"></p>
+						</div>
+					) : (
+						<div className="flex-grow-1">
+							<h5 className="card-title mb-1">{user.name}</h5>
+							<p className="card-subtitle text-muted">{user.email}</p>
+						</div>
+					)}
+					<span className={`badge text-uppercase ${
+						user?.role === 'admin' ? 'bg-danger' : 'bg-secondary'
+					}`}>
+						{user?.role}
+					</span>
+				</div>
+
+				<ul className="list-unstyled mt-3 mb-2 small">
+					<li><strong>Language: </strong>{isLoading || user == null ? <span className='placeholder col-1'></span> : user.languageCode}</li>
+					<li><strong>Plan: </strong>{isLoading || user == null ? <span className='placeholder col-1'></span> : user.group?.name}</li>
+					<li>
+						<strong>Email Verified: </strong>
+						{isLoading || user == null ? <span className='placeholder col-1'></span> :
+							<span className={user?.emailVerified ? 'text-success' : 'text-danger'}>
+								{user?.emailVerified ? 'Yes' : 'No'}
+							</span>
+						}
+					</li>
+					<li>
+						<strong>Account Status: </strong>
+						{isLoading || user == null ? <span className='placeholder col-1'></span> :
+							user?.banned ? (
+								<span className="text-danger">Banned</span>
+							) : (
+								<span className="text-success">Active</span>
+							)
+						}
+					</li>
+				</ul>
+
+				<div className="mb-2">
+					<label className="form-label mb-1 small"><strong>Storage Used:</strong></label>
+					{isLoading || user == null ?
+						<>
+							<span className='placeholder col-12'></span>
+							<div className="text-muted small mt-1">
+								<span className='placeholder col-3'></span>
+							</div>
+						</>
+						:	<>
+							<div className="progress" style={{ height: '8px' }}>
+								<div
+									className={`progress-bar ${getStatusColor(user?.totalStorageSize, user?.group?.maxStorageSize)}`}
+									role="progressbar"
+									style={{ width: `${(user?.totalStorageSize / (user?.group?.maxStorageSize ?? 1)) * 100}%` }}
+									aria-valuenow={user?.totalStorageSize}
+									aria-valuemin={0}
+									aria-valuemax={user?.group?.maxStorageSize}
+								></div>
+							</div>
+							<div className="text-muted small mt-1">
+								{formatBytes(user?.totalStorageSize)} GB / {formatBytes(user?.group?.maxStorageSize)} GB
+							</div>
+						</>
+					}
+				</div>
+
+				<div className="text-muted small">
+					{isLoading || user == null ? <p className="mb-0">Created: <span className='placeholder col-4'></span></p> :
+						<p className="mb-0">Created: {new Intl.DateTimeFormat('en-GB', {
+							dateStyle: 'full',
+							timeStyle: 'long',
+						}).format(new Date(user.createdAt))}</p>
+					}
+
+					{isLoading || user == null ? <p className="mb-0">Updated: <span className='placeholder col-4'></span></p> :
+						<p>Updated: {new Intl.DateTimeFormat('en-GB', {
+							dateStyle: 'full',
+							timeStyle: 'long',
+						}).format(new Date(user.updatedAt))}</p>
+					}
+				</div>
+				<div>
+                    Add stuff to edit the user (Ban, update group, send notification etc)
+				</div>
+			</div>
+		</div>
+	);
+}

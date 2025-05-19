@@ -52,6 +52,9 @@ export interface AdminUserPageProps {
     }
   }
   userStats: {
+    total: number
+    new: number
+    active:number
     avgstorageUsage: number
     banned: number
     admins: number
