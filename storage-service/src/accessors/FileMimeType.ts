@@ -41,9 +41,13 @@ export async function fetchFileMediaTypes(grouped: boolean = false) {
 			group[mimeName] += type._count.files;
 		}
 		return group;
+	} else {
+		for (const type of res) {
+			if (group[type.name] === undefined) group[type.name] = 0;
+			group[type.name] += type._count.files;
+		}
+		return group;
 	}
-
-	return res;
 }
 
 export async function fetchMostCommonFileTypes() {

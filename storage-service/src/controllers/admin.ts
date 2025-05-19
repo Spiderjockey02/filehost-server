@@ -1,4 +1,3 @@
-import { fetchFileMediaTypes } from '../accessors/FileMimeType';
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import { Error, PATHS } from '../utils';
@@ -32,23 +31,6 @@ export const getStats = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch system statistics.');
-		}
-	};
-};
-
-// Endpoint: GET /api/admin/mimetypes
-export const getMimeTypes = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		try {
-			const { grouped } = req.query;
-			if (grouped && typeof grouped !== 'string') return Error.IncorrectQuery(res, 'grouped must be a string.');
-			if (grouped && !['true', 'false'].includes(grouped)) return Error.IncorrectQuery(res, 'grouped must be either true or false.');
-
-			const mimeTypes = await fetchFileMediaTypes(grouped === 'true');
-			res.json({ mimeTypes });
-		} catch (err) {
-			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
 	};
 };

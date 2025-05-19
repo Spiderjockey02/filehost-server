@@ -85,7 +85,7 @@ export default function AdminFiles(data: Props) {
 		// Fetch recent files
 		(async () => {
 			try {
-				const { data: { mimeTypes } } = await axios.get('/api/admin/mimetypes?grouped=true');
+				const { data: { mimeTypes } } = await axios.get('/api/admin/files/mimetypes?grouped=true');
 				setMimeType(mimeTypes);
 			} catch (err) {
 				console.error(err);

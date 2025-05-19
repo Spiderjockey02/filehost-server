@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { fetchMostCommonFileTypes } from '../../accessors/FileMimeType';
+import { fetchFileMediaTypes, fetchMostCommonFileTypes } from '../../accessors/FileMimeType';
 import Client from 'src/helpers/Client';
 import { Error, sanitiseObject } from '../../utils';
 type countEnum = { [key: string | number]: number }
@@ -126,6 +126,23 @@ export const getRecentlyUploaded = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch recently uploaded files.');
+		}
+	};
+};
+
+// Endpoint: GET /api/admin/files/mimetypes
+export const getMimeTypes = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const { grouped } = req.query;
+			if (grouped && typeof grouped !== 'string') return Error.IncorrectQuery(res, 'grouped must be a string.');
+			if (grouped && !['true', 'false'].includes(grouped)) return Error.IncorrectQuery(res, 'grouped must be either true or false.');
+
+			const mimeTypes = await fetchFileMediaTypes(grouped === 'true');
+			res.json({ mimeTypes });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
 	};
 };
