@@ -99,10 +99,9 @@ export default class SessionManager {
 		return client.session.deleteMany({
 			where: {
 				expiresAt: {
-					gte: new Date(),
+					lte: new Date(),
 				},
 			},
 		});
 	}
 }
-
