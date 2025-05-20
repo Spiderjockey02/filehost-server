@@ -1,5 +1,5 @@
 import Client from './Client';
-import cron from 'node-cron';
+import { CronJob } from 'cron';
 import CronJobAccessor from '../accessors/CronJob';
 import extendedClient from '../accessors/prisma';
 import { CONSTANTS } from '../utils/CONSTANTS';
@@ -35,13 +35,13 @@ export default class CRONManager extends CronJobAccessor {
 		for (const [name, cronJob] of this.names.entries()) {
 			switch (name) {
 				case 'BACKED_UP_DATABASE':
-					this.scheduleJob(cronJob.schedule, this.backupDatabase);
+					this.scheduleJob(cronJob.schedule, this.backupDatabase.bind(this));
 					break;
 				case 'DELETE_OLD_LOG_FILES':
-					this.scheduleJob(cronJob.schedule, this.deleteOldLogFiles);
+					this.scheduleJob(cronJob.schedule, this.deleteOldLogFiles.bind(this));
 					break;
 				case 'DELETE_EXPIRED_SESSIONS':
-					this.scheduleJob(cronJob.schedule, this.deleteExpiredSessions);
+					this.scheduleJob(cronJob.schedule, this.deleteExpiredSessions.bind(this));
 					break;
 				default:
 					this.client.logger.error(`[CRONMANAGER]: ${name} is not a valid CRON job.`);
@@ -51,13 +51,17 @@ export default class CRONManager extends CronJobAccessor {
 
 	/**
 	  * Setup scheduling for a CRON job
-	  * @param {string} cronExpr The ID of the user
+	  * @param {string} cronExpr The CRON schedule expression
 		* @param {Function} handler The function to run
 	  * @returns The updated user.
 	*/
 	private scheduleJob(cronExpr: string, handler: () => Promise<CronJobLog>) {
-		cron.schedule(cronExpr, async () => {
-			await handler();
+		CronJob.from({
+			cronTime: cronExpr,
+			onTick: async () => {
+				await handler();
+			},
+			start: true,
 		});
 	}
 

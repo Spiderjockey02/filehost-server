@@ -5,6 +5,7 @@ import FileManager from './FileOperationManager';
 import GroupManager from '../accessors/Group';
 import UserManager from '../accessors/User';
 import Logger from '../utils/Logger';
+import CRONManager from './CRONManager';
 
 export default class Client {
 	logger: Logger;
@@ -14,6 +15,7 @@ export default class Client {
 	recentlyViewedFileManager: RecentlyViewedFileManager;
 	FileManager: FileManager;
 	sessionManager: SessionManager;
+	CRONManager: CRONManager;
 
 	constructor() {
 		this.logger = new Logger();
@@ -23,5 +25,6 @@ export default class Client {
 		this.recentlyViewedFileManager = new RecentlyViewedFileManager();
 		this.FileManager = new FileManager(this);
 		this.sessionManager = new SessionManager();
+		this.CRONManager = new CRONManager(this);
 	}
 }
