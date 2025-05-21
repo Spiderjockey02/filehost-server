@@ -7,6 +7,7 @@ import FileLayout from '@/layouts/file';
 import axios from 'axios';
 import { User } from 'better-auth';
 import { FileWithCount } from '@/types/database';
+import { auth } from '@/auth/server';
 
 export default function Search({ query: { query, fileType, dateUpdated } }: SearchPageProps) {
 	const { data: session } = authClient.useSession();
@@ -40,5 +41,21 @@ export default function Search({ query: { query, fileType, dateUpdated } }: Sear
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	return { props: { query: context.query } };
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+
+	// Only show this page if they are logged in
+	if (session == null) {
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else {
+		return { props: { query: context.query } };
+	}
 }

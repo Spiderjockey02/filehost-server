@@ -10,6 +10,8 @@ import { authClient } from '@/auth/client';
 import { UserHistoryWithFile } from '@/types/database';
 import { User } from 'better-auth';
 import { format } from '@/utils/functions';
+import { auth } from '@/auth/server';
+import { GetServerSidePropsContext } from 'next';
 
 type sortKeyTypes = 'Name' | 'Acc_On';
 type SortOrder = 'ascn' | 'dscn';
@@ -129,4 +131,24 @@ export default function Recent() {
 			</Table>
 		</FileLayout>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+
+	// Only show this page if they are logged in
+	if (session == null) {
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else {
+		return { props: {} };
+	}
 }

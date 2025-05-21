@@ -1,5 +1,5 @@
 import { faDownload, faUsers, faHardDrive, faFolderTree } from '@fortawesome/free-solid-svg-icons';
-import { Col, Row, InfoPill, LineChart, Card } from '@/components';
+import { Col, Row, InfoPill, LineChart, Card, ErrorPopup } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { GetServerSidePropsContext } from 'next';
 import type { AdminPageProps } from '@/types/pages';
@@ -9,10 +9,11 @@ import axios from 'axios';
 import { useState } from 'react';
 import { User } from 'better-auth';
 import AdminRecentUploadsCards from '@/components/Cards/AdminRecentUploads';
+import { auth } from '@/auth/server';
 
 type growthGraphType = 'daily' | 'monthly' | 'yearly'
 
-export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPageProps) {
+export default function Files({ stats, rawUserGrowth, rawUploadGrowth, error }: AdminPageProps) {
 	const { data: session } = authClient.useSession();
 	const [userGrowth, setUserGrowth] = useState(rawUserGrowth);
 	const [userGrowthFrame, setUserGrowthFrame] = useState<growthGraphType>('monthly');
@@ -49,8 +50,8 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 			const keys = Object.keys(p);
 			setUserGrowth(p[keys[0]]);
 			setUserGrowthFrame(time);
-		} catch (error) {
-			console.log(error);
+		} catch (err) {
+			console.log(err);
 		}
 	}
 
@@ -60,8 +61,8 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 			const keys = Object.keys(p);
 			setUploadGrowth(p[keys[0]]);
 			setUploadGrowthFrame(time);
-		} catch (error) {
-			console.log(error);
+		} catch (err) {
+			console.log(err);
 		}
 	}
 
@@ -75,6 +76,7 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 					<FontAwesomeIcon icon={faDownload} /> Generate Report
 				</button>
 			</div>
+			{error && <ErrorPopup text={error} />}
 			<Row>
 				<Col xl={4} md={6} className='mb-4'>
 					<InfoPill title={'Total Users (Active)'} text={`${stats.users.total} (${stats.users.active})`} icon={faUsers} />
@@ -86,7 +88,7 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 					<InfoPill title={'System Health'} text={'True'} icon={faHardDrive} />
 				</Col>
 			</Row>
-			<Row>
+			<Row className='mb-4'>
 				<Col lg={6}>
 					<Card>
 						<Card.Header>
@@ -138,32 +140,46 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth }: AdminPa
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	// Validate path
-	try {
-		const [{ data: stats }, { data: { months } }, { data: { days } }] = await Promise.all([
-			// For the top bar of stats
-			 axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/stats`, {
-				headers: { cookie: context.req.headers.cookie },
-			}),
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
 
-			// Show user growth monthly (12 months)
-			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/growth?frame=monthly`, {
-				headers: { cookie: context.req.headers.cookie },
-			}),
-
-			// Show files uploaded daily (14 days)
-			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/growth?frame=daily`, {
-				headers: { cookie: context.req.headers.cookie },
-			}),
-		]);
-		return { props: { stats, rawUserGrowth: months, rawUploadGrowth: days } };
-	} catch (err) {
-		console.error(err);
+	// Only show this page if they are logged in
+	if (session == null || session.user?.role !== 'ADMIN') {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
+	} else {
+		// Validate path
+		try {
+			const [{ data: stats }, { data: { months } }, { data: { days } }] = await Promise.all([
+			// For the top bar of stats
+			 axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/stats`, {
+					headers: { cookie: context.req.headers.cookie },
+				}),
+
+				// Show user growth monthly (12 months)
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/growth?frame=monthly`, {
+					headers: { cookie: context.req.headers.cookie },
+				}),
+
+				// Show files uploaded daily (14 days)
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/growth?frame=daily`, {
+					headers: { cookie: context.req.headers.cookie },
+				}),
+			]);
+			return { props: { stats, rawUserGrowth: months, rawUploadGrowth: days } };
+		} catch (err) {
+			console.log(err);
+			return { props: { stats: {
+				users: { total: 0, active: 0 },
+				storage: { totalFiles: 0 },
+			}, rawUserGrowth: {}, rawUploadGrowth: {}, error: 'API server currently unavailable' } };
+		}
 	}
 }

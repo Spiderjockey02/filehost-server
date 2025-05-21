@@ -1,5 +1,6 @@
 import { authClient } from '@/auth/client';
-import { Row, Col, InfoPill, BarChart, LineChart, Card } from '@/components';
+import { auth } from '@/auth/server';
+import { Row, Col, InfoPill, BarChart, LineChart, Card, ErrorPopup } from '@/components';
 import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
 import AdminLayout from '@/layouts/admin';
 import { formatBytes } from '@/utils/functions';
@@ -32,6 +33,7 @@ interface Props {
 	rawUploadGrowth: {
     [key: string]: number
   }
+	error?: string
 }
 
 interface MimeTypeObject {
@@ -102,6 +104,7 @@ export default function AdminFiles(data: Props) {
 					<FontAwesomeIcon icon={faDownload} /> Generate Report
 				</button>
 			</div>
+			{data.error && <ErrorPopup text={data.error} />}
 			<Row>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
 					<InfoPill title={'Total files'} text={data.files + data.folders} icon={faUsers} />
@@ -116,13 +119,13 @@ export default function AdminFiles(data: Props) {
 					<InfoPill title={'Average File Size'} text={formatBytes(data.avgFileSize)} icon={faHardDrive} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Most Common File Type'} text={data.mostCommonFileTypes[0].mimeType} icon={faMemory} />
+					<InfoPill title={'Most Common File Type'} text={data.mostCommonFileTypes[0]?.mimeType} icon={faMemory} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
 					<InfoPill title={'Deleted Files Count'} text={data.deletedFiles} icon={faMemory} />
 				</Col>
 			</Row>
-			<Card>
+			<Card className='mb-4'>
 				<Card.Header>
 					File Uploads Over Time
 					<div className="dropdown">
@@ -166,7 +169,7 @@ export default function AdminFiles(data: Props) {
 						<Card.Header>
 							File MIME types
 						</Card.Header>
-						<Card.Body>
+						<Card.Body className='d-flex justify-content-center'>
 							<ObjectOrientedPieChart data={mimeType} />
 						</Card.Body>
 					</Card>
@@ -178,27 +181,51 @@ export default function AdminFiles(data: Props) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	// Validate path
-	try {
-		const [{ data }, { data: { categories } }, { data: { days } }] = await Promise.all([
-			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files`, {
-				headers: { cookie: context.req.headers.cookie },
-			}),
-			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/sized-categories`, {
-				headers: { cookie: context.req.headers.cookie },
-			}),
-			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/growth?frame=daily`, {
-				headers: { cookie: context.req.headers.cookie },
-			}),
-		]);
-		return { props: { ...data, categories, rawUploadGrowth: days } };
-	} catch (err) {
-		console.error(err);
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+
+	// Only show this page if they are logged in
+	if (session == null || session.user?.role !== 'ADMIN') {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
+	} else {
+		try {
+			const [{ data }, { data: { categories } }, { data: { days } }] = await Promise.all([
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files`, {
+					headers: { cookie: context.req.headers.cookie },
+				}),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/sized-categories`, {
+					headers: { cookie: context.req.headers.cookie },
+				}),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/growth?frame=daily`, {
+					headers: { cookie: context.req.headers.cookie },
+				}),
+			]);
+			return { props: { ...data, categories, rawUploadGrowth: days } };
+		} catch (err) {
+			console.error(err);
+			return {
+				props: {
+					files: 0,
+					folders: 0,
+					avgFileSize: 0,
+					deletedFiles: 0,
+					newFiles: 0,
+					totalStorageSize: 0,
+					mostCommonFileTypes: [],
+					days: {},
+					categories: {},
+					rawUploadGrowth: {},
+					error: 'API server currently unavailable',
+				},
+			};
+		}
 	}
 }

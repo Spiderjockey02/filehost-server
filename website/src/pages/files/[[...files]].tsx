@@ -69,15 +69,23 @@ export default function Files({ path = '/' }: FilePageProps) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	// Last check to ensure the user is authenticated
 	const session = await auth.api.getSession({
 		headers: new Headers({
 			cookie: context.req.headers.cookie || '',
 		}),
 	});
-	if (session == null) return;
 
-	// Get the path from the URL
-	const path = [context.params?.files].flat();
-	return { props: { path: path.join('/') } };
+	// Only show this page if they are logged in
+	if (session == null) {
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else {
+		// Get the path from the URL
+		const path = [context.params?.files].flat();
+		return { props: { path: path.join('/') } };
+	}
 }

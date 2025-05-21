@@ -1,18 +1,19 @@
 import { authClient } from '@/auth/client';
+import { auth } from '@/auth/server';
 import MainLayout from '@/layouts/main';
 import { User } from 'better-auth';
+import { GetServerSidePropsContext } from 'next';
 
 export default function Notifications() {
-	const { data } = authClient.useSession();
-	if (data == null || data.user == null) return null;
+	const { data: session } = authClient.useSession();
+	if (session == null) return null;
 
-	const user = data?.user as unknown as User;
 	return (
-		<MainLayout user={user}>
+		<MainLayout user={session.user as User} tabName={`Notifications (${session.user?.notifications.length})`}>
 			<div style={{ minHeight: '68vh' }}>
-				<h1 className="text-center">Notifications ({user.notifications.length})</h1>
+				<h1 className="text-center">Notifications ({session.user?.notifications.length})</h1>
 				<div className="accordion" id="accordionExample">
-					{user.notifications.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((notification) => (
+					{session.user?.notifications.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((notification) => (
 						<div className="accordion-item" key={notification.id}>
 							<h2 className="accordion-header">
 								<button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target={notification.id} aria-expanded="true" aria-controls={notification.id}>
@@ -30,4 +31,24 @@ export default function Notifications() {
 			</div>
 		</MainLayout>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+
+	// Only show this page if they are logged in
+	if (session == null) {
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else {
+		return { props: {} };
+	}
 }

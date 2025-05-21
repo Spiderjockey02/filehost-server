@@ -1,15 +1,15 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
-import { GetServerSidePropsContext } from 'next/types';
 import { Card, ErrorPopup, InputField } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { authClient } from '@/auth/client';
 import { LoginErrorTypes } from '@/types';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { auth } from '@/auth/server';
 import Link from 'next/link';
 import Head from 'next/head';
+import { auth } from '@/auth/server';
+import { GetServerSidePropsContext } from 'next';
 
 export default function SignIn() {
 	const [errors, setErrors] = useState<LoginErrorTypes[]>([]);
@@ -102,7 +102,9 @@ export default function SignIn() {
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const session = await auth.api.getSession({
-		headers: context.req.headers as any,
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
 	});
 
 	// Only show this page if they are not logged in

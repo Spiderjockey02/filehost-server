@@ -132,8 +132,9 @@ export default function Register() {
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const session = await auth.api.getSession({
-		// @ts-expect-error Something funky
-		headers: context.req.headers,
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
 	});
 
 	// Only show this page if they are not logged in

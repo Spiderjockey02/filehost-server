@@ -6,6 +6,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
 import { authClient } from '@/auth/client';
+import { auth } from '@/auth/server';
+import { GetServerSidePropsContext } from 'next';
 
 export default function Settings() {
 	const { data: session } = authClient.useSession();
@@ -168,4 +170,24 @@ export default function Settings() {
 			</section>
 		</MainLayout>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+
+	// Only show this page if they are logged in
+	if (session == null) {
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else {
+		return { props: {} };
+	}
 }

@@ -1,4 +1,5 @@
 import { authClient } from '@/auth/client';
+import { auth } from '@/auth/server';
 import { Card, Col, Row, Table } from '@/components';
 import AdminUserIdCard from '@/components/Cards/AdminUserId';
 import AdminLayout from '@/layouts/admin';
@@ -97,17 +98,22 @@ export default function AdminUserIdPage({ userId }: Props) {
 };
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	// Validate path
-	try {
-		const userId = context.params?.id;
-		return { props: { userId } };
-	} catch (err) {
-		console.error(err);
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
+
+	// Only show this page if they are logged in
+	if (session == null || session.user?.role !== 'ADMIN') {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
+	} else {
+		const userId = context.params?.id;
+		return { props: { userId } };
 	}
 }

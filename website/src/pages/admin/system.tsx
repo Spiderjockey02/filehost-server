@@ -1,7 +1,7 @@
-import { faCheck, faClock, faDownload, faFolderTree, faHardDrive, faImage, faMemory, faX } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClock, faDownload, faFolderTree, faHardDrive, faImage, faMemory, faQuestion, faX } from '@fortawesome/free-solid-svg-icons';
 import AdminDatabaseBackupCard from '@/components/Cards/AdminDatabaseBackup';
 import { convertMiliseconds, format, formatBytes } from '@/utils/functions';
-import { Row, Col, InfoPill, InfoPillProgress } from '@/components';
+import { Row, Col, InfoPill, InfoPillProgress, ErrorPopup } from '@/components';
 import { AdminCRONJobCard } from '@/components/Cards/AdminCRONJob';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AdminLogFileCard from '@/components/Cards/AdminLogFile';
@@ -12,6 +12,7 @@ import AdminLayout from '@/layouts/admin';
 import { DatabaseBackup } from '@/types';
 import { User } from 'better-auth';
 import axios from 'axios';
+import { auth } from '@/auth/server';
 
 interface Props {
   error: string
@@ -29,17 +30,17 @@ interface Props {
 			totalByteSize: number
 			count: number
 		},
-		backup: DatabaseBackup
+		backup: DatabaseBackup | Record<never, never>
   }
 }
 
-export default function AdminEndpoints({ thumbnailCache, stats }: Props) {
+export default function AdminEndpoints({ thumbnailCache, stats, error }: Props) {
 	const { data: session } = authClient.useSession();
 	if (session == null) return null;
 
 	const latestBackupStats = {
-		text: format(new Date().getTime() - (new Date().getTime() - new Date(stats.backup.createdAt).getTime())),
-		icon: stats.backup.status == 'success' ? faCheck : faX,
+		text: 'createdAt' in stats.backup ? format(new Date().getTime() - (new Date().getTime() - new Date(stats.backup.createdAt).getTime())) : '0',
+		icon: 'createdAt' in stats.backup ? (stats.backup?.status == 'success' ? faCheck : faX) : faQuestion,
 	};
 
 	return (
@@ -51,6 +52,7 @@ export default function AdminEndpoints({ thumbnailCache, stats }: Props) {
 					<FontAwesomeIcon icon={faDownload} /> Generate Report
 				</button>
 			</div>
+			{error && <ErrorPopup text={error} />}
 			<Row>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
 					<InfoPill title={'Latest Backup Status'} text={latestBackupStats.text} icon={latestBackupStats.icon} />
@@ -87,22 +89,46 @@ export default function AdminEndpoints({ thumbnailCache, stats }: Props) {
 	);
 }
 
-// Fetch endpoints
-export async function getServerSideProps(ctx: GetServerSidePropsContext) {
-	try {
-		const [{ data: { folderSize } }, { data: stats }] = await Promise.all([
-			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/cache/thumbnails`, {
-				headers: { cookie: ctx.req.headers.cookie },
-			}),
-			axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/system/stats`, {
-				headers: { cookie: ctx.req.headers.cookie },
-			}),
-		]);
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const session = await auth.api.getSession({
+		headers: new Headers({
+			cookie: context.req.headers.cookie || '',
+		}),
+	});
 
-		// Add the frontend RAM usage to total
-		stats.memory.using = stats.memory.using + process.memoryUsage().heapUsed;
-		return { props: { thumbnailCache: folderSize, stats } };
-	} catch {
-		return { props: { thumbnailCache: {}, stats: { memory: {} }, error: 'API server currently unavailable' } };
+	// Only show this page if they are logged in
+	if (session == null || session.user?.role !== 'ADMIN') {
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else {
+		try {
+			const [{ data: { folderSize } }, { data: stats }] = await Promise.all([
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/cache/thumbnails`, {
+					headers: { cookie: context.req.headers.cookie },
+				}),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/system/stats`, {
+					headers: { cookie: context.req.headers.cookie },
+				}),
+			]);
+
+			// Add the frontend RAM usage to total
+			stats.memory.using = stats.memory.using + process.memoryUsage().heapUsed;
+			return { props: { thumbnailCache: folderSize, stats } };
+		} catch {
+			return { props: { thumbnailCache: { sizeInBytes: 0, count: 0 }, stats: { memory: {
+				using: 0,
+				total: 0,
+			},
+			uptime: 0,
+			logs: {
+				totalByteSize: 0,
+				count: 0,
+			},
+			backup: {} }, error: 'API server currently unavailable' } };
+		}
 	}
 }
