@@ -21,7 +21,7 @@ export default function NavBar({ user }: HomeNavbarProps) {
 							&nbsp;
 							<li className="nav-item dropdown">
 								<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-									<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" /> {user.name}
+									<Image src={user.image ?? '/avatar'} width={25} height={25} className="rounded-circle" alt="User avatar" /> {user.name}
 								</a>
 								<div className="dropdown-menu dropdown-menu-end">
 									<Link className="dropdown-item text-dark" href="/settings">Settings</Link>

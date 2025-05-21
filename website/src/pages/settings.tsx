@@ -117,7 +117,7 @@ export default function Settings() {
 								<div className="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab" >
 									<h3 className="mb-4">Account Settings</h3>
 									<div className="d-flex flex-column align-items-center">
-										<Image src={`/avatar/${session.user?.id}`} width={100} height={100} className="rounded-circle " alt="User avatar" />
+										<Image src={session.user?.image ?? '/avatar'} width={100} height={100} className="rounded-circle " alt="User avatar" />
 										&nbsp;
 										<div className="d-flex justify-content-center gap-2">
 											<label className="btn btn-sm btn-primary">

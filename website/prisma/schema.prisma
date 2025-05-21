@@ -11,6 +11,7 @@ model User {
   id                String    @id @default(cuid())
   name              String
   email             String   @unique
+  image             String?
   emailVerified     Boolean
   languageCode      String        @default("en-GB")
   createdAt         DateTime      @default(now()) @map("created_at")
@@ -61,6 +62,15 @@ model Account {
   updatedAt             DateTime
 
   @@map("account")
+}
+
+model Verification {
+  id	          String	@id
+  identifier	  String
+  value	        String  @db.VarChar(500)
+  expiresAt	    DateTime
+  createdAt	    DateTime
+  updatedAt	    DateTime
 }
 
 model Group {

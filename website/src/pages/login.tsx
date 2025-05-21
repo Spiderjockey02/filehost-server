@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
+import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { Card, ErrorPopup, InputField } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { authClient } from '@/auth/client';
@@ -77,17 +77,14 @@ export default function SignIn() {
 											</div>
 											<p className="text-center">Need an account? <Link href="/register">Register</Link></p>
 										</form>
-										<div className="d-flex justify-content-around w-100 visually-hidden">
-											<form action="/api/auth/signin/twitter" method="post">
-												<button className='btn btn-secondary' type="submit">
-													<FontAwesomeIcon icon={faXTwitter}/> Twitter
-												</button>
-											</form>
-											<form action="/api/auth/signin/twitter" method="post">
-												<button className='btn btn-secondary' type="submit">
-													<FontAwesomeIcon icon={faXTwitter}/> Twitter
-												</button>
-											</form>
+										<div className="d-flex justify-content-around w-100">
+											<button className='btn btn-secondary' type="submit" onClick={async () => {
+												await authClient.signIn.social({
+													provider: 'discord',
+												});
+											}}>
+												<FontAwesomeIcon icon={faDiscord}/> Discord
+											</button>
 										</div>
 									</Card.Body>
 								</Card>

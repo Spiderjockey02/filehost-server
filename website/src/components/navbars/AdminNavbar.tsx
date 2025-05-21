@@ -11,7 +11,7 @@ export default function AdminNavBar({ user, showSidebar, setShowSidebar }: Admin
 	const router = useRouter();
 
 	return (
-		<nav className="navbar navbar-expand navbar-light static-top shadow" style={{ paddingLeft:'5px' }}>
+		<nav className="navbar navbar-expand navbar-light bg-light sticky-top shadow" style={{ paddingLeft:'5px' }}>
 			<div className="navbar-collapse w-100 dual-collapse2">
 				<ul className="navbar-nav me-auto mb-2 mb-lg-0">
 					<a type="button" className="nav-link" onClick={() => setShowSidebar(!showSidebar)}>
@@ -23,7 +23,7 @@ export default function AdminNavBar({ user, showSidebar, setShowSidebar }: Admin
 					&nbsp;
 					<li className="nav-item">
 						<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" /> {user.name}
+							<Image src={user.image ?? '/avatar'} width={25} height={25} className="rounded-circle" alt="User avatar" /> {user.name}
 						</a>
 						<div className="dropdown-menu dropdown-menu-end">
 							<Link className="dropdown-item text-dark" href="/settings">Settings</Link>

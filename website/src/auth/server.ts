@@ -90,4 +90,16 @@ export const auth = betterAuth({
 			maxAge: 5 * 60,
 		},
 	},
+	account: {
+		accountLinking: {
+			enabled: true,
+			trustedProviders: ['google', 'discord'],
+		},
+	},
+	socialProviders: {
+		discord: {
+			clientId: process.env.DISCORD_CLIENT_ID as string,
+			clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
+		},
+	},
 });
