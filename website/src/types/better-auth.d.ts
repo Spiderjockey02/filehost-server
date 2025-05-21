@@ -5,6 +5,7 @@ declare module 'better-auth' {
     id: string
     name: string | null
     email: string
+    image: string | null
     emailVerified: boolean
     languageCode: string
     createdAt: Date
