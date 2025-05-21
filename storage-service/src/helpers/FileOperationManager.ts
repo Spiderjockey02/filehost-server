@@ -204,7 +204,7 @@ export default class FileManager extends FileSystemManager {
 				userId,
 				name: folderName,
 				path: `${normalizePath(parentDir.path)}${folderName}`,
-				size: 0n,
+				size: 4096n,
 				type: 'DIRECTORY',
 				mimetype: null,
 			},

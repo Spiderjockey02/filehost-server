@@ -125,7 +125,7 @@ async function ensureFolderExists(client: Client, userId: string, fullPath: stri
 					userId,
 					name: part,
 					path: currentPath,
-					size: 0n,
+					size: 4096n,
 					type: 'DIRECTORY',
 					mimetype: null,
 				},
