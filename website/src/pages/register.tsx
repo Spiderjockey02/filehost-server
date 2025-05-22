@@ -4,7 +4,6 @@ import type { BaseSyntheticEvent } from 'react';
 import { RegisterErrorTypes } from '@/types';
 import { authClient } from '@/auth/client';
 import { useRouter } from 'next/router';
-import { auth } from '@/auth/server';
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -131,14 +130,14 @@ export default function Register() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
 
-	// Only show this page if they are not logged in
-	if (session) {
+	const data = await res.json();
+	if (data !== null) {
 		return {
 			redirect: {
 				destination: '/files',
@@ -146,6 +145,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: {} };
+		// Get the path from the URL
+		const path = [context.params?.files].flat();
+		return { props: { path: path.join('/') } };
 	}
 }

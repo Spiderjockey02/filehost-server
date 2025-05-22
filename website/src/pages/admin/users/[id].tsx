@@ -1,15 +1,14 @@
 import { authClient } from '@/auth/client';
-import { auth } from '@/auth/server';
 import { Card, Col, Row, Table } from '@/components';
 import AdminUserIdCard from '@/components/Cards/AdminUserId';
 import AdminLayout from '@/layouts/admin';
 import { AdminUser } from '@/types';
-import { parseUserAgent } from '@/utils/functions';
+import { parseUserAgent, queryOptions } from '@/utils/functions';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useQuery } from '@tanstack/react-query';
 import { User } from 'better-auth';
 import { GetServerSidePropsContext } from 'next';
-import { useEffect, useState } from 'react';
 
 interface Props {
 	userId: string
@@ -17,34 +16,34 @@ interface Props {
 
 export default function AdminUserIdPage({ userId }: Props) {
 	const { data: session } = authClient.useSession();
-	const [user, setUser] = useState<AdminUser | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
 
+	const { data, isLoading } = useQuery({
+		queryKey: ['adminUser', userId],
+		queryFn: async ({ signal }) => {
+			const res = await fetch(`/api/admin/users/${userId}`, { signal });
+			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
 
-	useEffect(() => {
-		setIsLoading(true);
-		async function fetchData() {
-			const res = await fetch(`/api/admin/users/${userId}`, { cache: 'no-cache' });
-			const data = await res.json();
-			setUser(data.user);
-			setIsLoading(false);
-		}
-		fetchData();
-	}, [userId]);
+			const d = await res.json();
+			return d as { user: AdminUser };
+		},
+		...queryOptions,
+	});
 
 	if (session == null) return null;
+
+	console.log(data);
 	return (
-		<AdminLayout activeTab="users" user={session.user as User} tabName={`Admin user: ${user?.name}`}>
+		<AdminLayout activeTab="users" user={session.user as User} tabName={`Admin user: ${data?.user.name}`}>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
-				<h1 className="h3 mb-0 text-gray-800">User: {user?.name}</h1>
+				<h1 className="h3 mb-0 text-gray-800">User: {data?.user.name}</h1>
 				<button className="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
 					<FontAwesomeIcon icon={faDownload} /> Generate Report
 				</button>
 			</div>
 			<Row>
 				<Col lg={4}>
-					<AdminUserIdCard isLoading={isLoading} user={user} />
+					<AdminUserIdCard isLoading={isLoading} user={data?.user ?? null} />
 				</Col>
 				<Col lg={8}>
 					<Card>
@@ -60,7 +59,7 @@ export default function AdminUserIdPage({ userId }: Props) {
 									<Table.Header>Expires at</Table.Header>
 								</Table.HeaderRow>
 								<Table.Body>
-									{isLoading || user == null ? (
+									{isLoading || data == null ? (
 										[0, 0, 0, 0].map((_, index) => (
 											<tr key={index}>
 												<td className="placeholder-glow">
@@ -78,7 +77,7 @@ export default function AdminUserIdPage({ userId }: Props) {
 											</tr>
 										))
 									) : (
-										user.sessions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(userSes => (
+										data?.user.sessions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(userSes => (
 											<tr key={userSes.id}>
 												<td>{userSes.ipAddress}</td>
 												<td>{parseUserAgent(userSes.userAgent)}</td>
@@ -98,17 +97,24 @@ export default function AdminUserIdPage({ userId }: Props) {
 };
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
 
-	// Only show this page if they are logged in
-	if (session == null || session.user?.role !== 'ADMIN') {
+	const data = await res.json();
+	if (data == null) {
 		return {
 			redirect: {
 				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else if (data.user.role !== 'admin') {
+		return {
+			redirect: {
+				destination: '/files',
 				permanent: false,
 			},
 		};

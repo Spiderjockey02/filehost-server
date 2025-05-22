@@ -1,10 +1,9 @@
 import { authClient } from '@/auth/client';
-import { auth } from '@/auth/server';
 import { Row, Col, InfoPill, BarChart, LineChart, Card, ErrorPopup } from '@/components';
 import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
 import AdminLayout from '@/layouts/admin';
-import { formatBytes } from '@/utils/functions';
-import { faDownload, faFolderTree, faHardDrive, faMemory, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { formatBytes, headers } from '@/utils/functions';
+import { faDownload, faFolderTree, faHardDrive, faMemory, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios from 'axios';
 import { User } from 'better-auth';
@@ -122,7 +121,7 @@ export default function AdminFiles(data: Props) {
 					<InfoPill title={'Most Common File Type'} text={data.mostCommonFileTypes[0]?.mimeType} icon={faMemory} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Deleted Files Count'} text={data.deletedFiles} icon={faMemory} />
+					<InfoPill title={'Deleted Files Count'} text={data.deletedFiles} icon={faTrash} />
 				</Col>
 			</Row>
 			<Card className='mb-4'>
@@ -181,34 +180,35 @@ export default function AdminFiles(data: Props) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
 
-	// Only show this page if they are logged in
-	if (session == null || session.user?.role !== 'ADMIN') {
+	const data = await res.json();
+	if (data == null) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
+	} else if (data.user.role !== 'admin') {
+		return {
+			redirect: {
+				destination: '/files',
+				permanent: false,
+			},
+		};
 	} else {
 		try {
-			const [{ data }, { data: { categories } }, { data: { days } }] = await Promise.all([
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/sized-categories`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/growth?frame=daily`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
+			const [{ data: apiData }, { data: { categories } }, { data: { days } }] = await Promise.all([
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files`, headers(context.req)),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/sized-categories`, headers(context.req)),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/growth?frame=daily`, headers(context.req)),
 			]);
-			return { props: { ...data, categories, rawUploadGrowth: days } };
+			return { props: { ...apiData, categories, rawUploadGrowth: days } };
 		} catch (err) {
 			console.error(err);
 			return {

@@ -1,6 +1,6 @@
 import { faCheck, faClock, faDownload, faFolderTree, faHardDrive, faImage, faMemory, faQuestion, faX } from '@fortawesome/free-solid-svg-icons';
 import AdminDatabaseBackupCard from '@/components/Cards/AdminDatabaseBackup';
-import { convertMiliseconds, format, formatBytes } from '@/utils/functions';
+import { convertMiliseconds, format, formatBytes, headers } from '@/utils/functions';
 import { Row, Col, InfoPill, InfoPillProgress, ErrorPopup } from '@/components';
 import { AdminCRONJobCard } from '@/components/Cards/AdminCRONJob';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,7 +12,6 @@ import AdminLayout from '@/layouts/admin';
 import { DatabaseBackup } from '@/types';
 import { User } from 'better-auth';
 import axios from 'axios';
-import { auth } from '@/auth/server';
 
 interface Props {
   error: string
@@ -90,29 +89,32 @@ export default function AdminEndpoints({ thumbnailCache, stats, error }: Props) 
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
 
-	// Only show this page if they are logged in
-	if (session == null || session.user?.role !== 'ADMIN') {
+	const data = await res.json();
+	if (data == null) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
+	} else if (data.user.role !== 'admin') {
+		return {
+			redirect: {
+				destination: '/files',
+				permanent: false,
+			},
+		};
 	} else {
 		try {
 			const [{ data: { folderSize } }, { data: stats }] = await Promise.all([
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/cache/thumbnails`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/system/stats`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/cache/thumbnails`, headers(context.req)),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/system/stats`, headers(context.req)),
 			]);
 
 			// Add the frontend RAM usage to total

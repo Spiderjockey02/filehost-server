@@ -4,6 +4,8 @@ import { File } from '@prisma/client';
 import { UAParser } from 'ua-parser-js';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
+import { IncomingMessage } from 'http';
+import { NextApiRequestCookies } from 'next/dist/server/api-utils';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -93,5 +95,23 @@ export function convertMiliseconds(miliseconds: number) {
 };
 
 export function format(text: Date | number) {
+	if ((typeof text == 'number' && isNaN(text)) || text == null) return 'N/A';
 	return timeAgo.format(text);
+}
+
+export const queryOptions = {
+	refetchOnWindowFocus: true,
+	retry: 1,
+	retryDelay: 1000,
+	// After 5 minutes data is stale
+	staleTime: 1000 * 60 * 5,
+};
+
+export function headers(req: IncomingMessage & { cookies: NextApiRequestCookies }) {
+	return {
+		headers: {
+			cookie: `${req.headers.cookie}`,
+			'user-agent': `${req.headers['user-agent']}`,
+		},
+	};
 }

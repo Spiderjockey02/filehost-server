@@ -7,11 +7,10 @@ import AdminLayout from '@/layouts/admin';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFolderTree, faHardDrive, faMemory, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { Row, Col, InfoPill, LineChart, Card, ErrorPopup } from '@/components';
-import { formatBytes } from '@/utils/functions';
+import { formatBytes, headers } from '@/utils/functions';
 import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
 import { useState } from 'react';
 import AdminUserTableCards from '@/components/Cards/AdminUserTable';
-import { auth } from '@/auth/server';
 type growthGraphType = 'daily' | 'monthly' | 'yearly'
 
 export default function Files({ langaugeCodes, emails, rawUserGrowth, signupSource, retention, userStats, error }: AdminUserPageProps) {
@@ -190,17 +189,24 @@ export default function Files({ langaugeCodes, emails, rawUserGrowth, signupSour
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
 
-	// Only show this page if they are logged in
-	if (session == null || session.user?.role !== 'ADMIN') {
+	const data = await res.json();
+	if (data == null) {
 		return {
 			redirect: {
 				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else if (data.user.role !== 'admin') {
+		return {
+			redirect: {
+				destination: '/files',
 				permanent: false,
 			},
 		};
@@ -208,24 +214,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		// Validate path
 		try {
 			const [{ data: { langaugeCodes } }, { data: { emails } }, { data: { months } }, { data: { signupSource } }, { data: { retention } }, { data: userStats }] = await Promise.all([
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/language-codes`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/emails`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/growth?frame=monthly`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/signup-source`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/retention`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/stats`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/language-codes`, headers(context.req)),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/emails`, headers(context.req)),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/growth?frame=monthly`, headers(context.req)),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/signup-source`, headers(context.req)),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/retention`, headers(context.req)),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/stats`, headers(context.req)),
 			]);
 
 			return { props: { langaugeCodes, emails, rawUserGrowth: months, signupSource, retention, userStats } };

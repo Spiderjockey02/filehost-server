@@ -1,5 +1,4 @@
 import { authClient } from '@/auth/client';
-import { auth } from '@/auth/server';
 import MainLayout from '@/layouts/main';
 import { User } from 'better-auth';
 import { GetServerSidePropsContext } from 'next';
@@ -34,14 +33,14 @@ export default function Notifications() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
 
-	// Only show this page if they are logged in
-	if (session == null) {
+	const data = await res.json();
+	if (data == null) {
 		return {
 			redirect: {
 				destination: '/login',
@@ -49,6 +48,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: {} };
+		// Get the path from the URL
+		const path = [context.params?.files].flat();
+		return { props: { path: path.join('/') } };
 	}
 }

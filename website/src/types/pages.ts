@@ -20,12 +20,12 @@ export interface AdminPageProps {
   }
   rawUserGrowth: StringNumberObj
   rawUploadGrowth: StringNumberObj
+  error?: string
 }
 
 export interface AdminUserPageProps {
   users: UserWithCount[]
   months: StringNumberObj
-  newUsers: number
   langaugeCodes: StringNumberObj
   emails: StringNumberObj
   rawUserGrowth: StringNumberObj
@@ -42,6 +42,7 @@ export interface AdminUserPageProps {
     banned: number
     admins: number
   }
+  error?: string
 }
 
 export interface FilePageProps {

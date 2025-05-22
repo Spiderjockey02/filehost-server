@@ -9,8 +9,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { User } from 'better-auth';
 import AdminRecentUploadsCards from '@/components/Cards/AdminRecentUploads';
-import { auth } from '@/auth/server';
-
+import { headers } from '@/utils/functions';
 type growthGraphType = 'daily' | 'monthly' | 'yearly'
 
 export default function Files({ stats, rawUserGrowth, rawUploadGrowth, error }: AdminPageProps) {
@@ -140,38 +139,38 @@ export default function Files({ stats, rawUserGrowth, rawUploadGrowth, error }: 
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
 
-	// Only show this page if they are logged in
-	if (session == null || session.user?.role !== 'ADMIN') {
+	const data = await res.json();
+	if (data == null) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
+	} else if (data.user.role !== 'admin') {
+		return {
+			redirect: {
+				destination: '/files',
+				permanent: false,
+			},
+		};
 	} else {
-		// Validate path
 		try {
 			const [{ data: stats }, { data: { months } }, { data: { days } }] = await Promise.all([
-			// For the top bar of stats
-			 axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/stats`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
+				// For the top bar of stats
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/stats`, headers(context.req)),
 
 				// Show user growth monthly (12 months)
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/growth?frame=monthly`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/users/growth?frame=monthly`, headers(context.req)),
 
 				// Show files uploaded daily (14 days)
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/growth?frame=daily`, {
-					headers: { cookie: context.req.headers.cookie },
-				}),
+				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/files/growth?frame=daily`, headers(context.req)),
 			]);
 			return { props: { stats, rawUserGrowth: months, rawUploadGrowth: days } };
 		} catch (err) {
