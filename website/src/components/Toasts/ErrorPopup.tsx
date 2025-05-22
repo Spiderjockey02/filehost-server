@@ -7,7 +7,7 @@ export default function ErrorPopup({ text, onClose }: PopupProps) {
 			<div className="toast fade show" style={{ backgroundColor: '#ea868f', border: '1px solid #842029', minWidth: '50vw' }}>
 				<div className="toast-body justify-content-between d-flex">
 					<span>
-						<strong>Error - {text}!</strong> If this error keeps occurring, please contact <Link className='link-underline link-underline-opacity-0' href="/contact-us">support</Link>.
+						<strong>Error - {text}!</strong> If this error keeps occurring, please contact <Link className='fw-bold' style={{ color: '#713f44' }} href="/contact-us"><b>support</b></Link>.
 					</span>
 					<button className="btn-close" onClick={onClose}></button>
 				</div>

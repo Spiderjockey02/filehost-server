@@ -23,7 +23,6 @@ export default function BreadcrumbNav({ path, isFile, setviewType, viewType, par
 	useEffect(() => {
 		const checkOverflow = () => {
 			if (containerRef.current) {
-				console.log(containerRef.current.scrollHeight);
 				setIsOverflowing(containerRef.current.scrollHeight > 40);
 			}
 		};

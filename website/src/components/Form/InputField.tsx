@@ -1,10 +1,10 @@
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { InputFieldProps } from '@/types/Components/Form';
-import { JSX, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 
-export default function InputField({ title, name, type, placeholder, onChange, errorMsg, autocomplete }: InputFieldProps): JSX.Element {
+export default function InputField({ title, name, type, placeholder, onChange, errorMsg, autocomplete }: InputFieldProps) {
 	const [hidden, setHidden] = useState(false);
 
 	return (
@@ -18,7 +18,7 @@ export default function InputField({ title, name, type, placeholder, onChange, e
 					</Link>
 					: null
 				}
-				{errorMsg && <div id="emailHelp" className="invalid-feedback" style={{ color: 'red', display: 'block' }}>{errorMsg}</div>}
+				{errorMsg && <div className="invalid-feedback" style={{ color: 'red', display: 'block' }}>{errorMsg}</div>}
 			</div>
 		</div>
 	);
