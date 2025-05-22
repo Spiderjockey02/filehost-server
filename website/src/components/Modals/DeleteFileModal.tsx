@@ -1,11 +1,11 @@
 import { FileModalProps } from '@/types/Components/Modals';
-import { useSetFolder } from '../Hooks/FileManager';
+import { useFolderRefetch } from '../Hooks/FileManager';
 import { BaseSyntheticEvent } from 'react';
 import Modal from '@/components/UI/Modal';
 import axios from 'axios';
 
 export default function DeleteFileModal({ file, closeContextMenu }: FileModalProps) {
-	const setFolder = useSetFolder();
+	const refreshFolder = useFolderRefetch();
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -21,8 +21,7 @@ export default function DeleteFileModal({ file, closeContextMenu }: FileModalPro
 			await axios.delete('/api/files/delete', {
 				data: { fileId: file.id },
 			});
-			const { data } = await axios.get(`/api/${window.location.pathname}`);
-			setFolder(data.file);
+			refreshFolder();
 		} catch (err) {
 			console.log(err);
 		}

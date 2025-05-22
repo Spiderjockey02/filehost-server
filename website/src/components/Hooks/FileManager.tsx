@@ -1,31 +1,54 @@
-import type { FileContextType, FileProviderProps } from '@/types/Components/Hooks';
-import { FileWithChildren } from '@/types/database';
-import React, { createContext, useContext, useState } from 'react';
+import type { FileWithChildren } from '@/types/database';
+import React, { createContext, useContext } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
+
+interface FileContextType {
+	file: FileWithChildren | null;
+	isLoading: boolean;
+	error: Error | null;
+	refetch: () => void;
+}
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
-export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
-	const [file, setFile] = useState<FileWithChildren | null>(null);
+export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+	const router = useRouter();
+	const path = (router.query.files as string[] | undefined) ?? [];
+
+	const { data, isLoading, error, refetch } = useQuery({
+		queryKey: ['folder', path],
+		queryFn: async ({ signal }) => {
+			const res = await fetch(`/api/files/${path.join('/')}`, { signal });
+			if (!res.ok) throw new Error(`Failed to fetch cache stats: ${res.statusText}`);
+
+			const { file } = await res.json();
+			return file as FileWithChildren;
+		},
+		enabled: router.isReady && router.pathname.startsWith('/files'),
+	});
 
 	return (
-		<FileContext.Provider value={{ file, setFile }}>
+		<FileContext.Provider value={{ file: data ?? null, isLoading, error, refetch }}>
 			{children}
 		</FileContext.Provider>
 	);
 };
 
-export const useFolder = (): FileWithChildren | null => {
+export const useFolder = () => {
 	const context = useContext(FileContext);
-	if (!context) {
-		throw new Error('useFile must be used within a FileProvider');
-	}
+	if (!context) throw new Error('useFolder must be used within a FileProvider');
 	return context.file;
 };
 
-export const useSetFolder = (): ((file: FileWithChildren | null) => void) => {
+export const useFolderLoading = () => {
 	const context = useContext(FileContext);
-	if (!context) {
-		throw new Error('useSetFile must be used within a FileProvider');
-	}
-	return context.setFile;
+	if (!context) throw new Error('useFolderLoading must be used within a FileProvider');
+	return { isLoading: context.isLoading, error: context.error };
+};
+
+export const useFolderRefetch = () => {
+	const context = useContext(FileContext);
+	if (!context) throw new Error('useFolderRefetch must be used within a FileProvider');
+	return context.refetch;
 };

@@ -1,7 +1,7 @@
 import type { AdminUserIdProps } from '@/types/Components/Card';
 import { getStatusColor, formatBytes } from '@/utils/functions';
+import { Card } from '@/components';
 import Image from 'next/image';
-import Card from '../UI/Card';
 
 export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 	return (
@@ -9,7 +9,7 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 			<Card.Body>
 				<div className="d-flex align-items-center mb-3">
 					<Image
-						src={`/avatar/${user?.id}`}
+						src={user?.image ?? `/avatar/${user?.id}`}
 						alt="User Avatar"
 						className="rounded-circle me-3"
 						width={60}
@@ -56,7 +56,6 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 						}
 					</li>
 				</ul>
-
 				<div className="mb-2">
 					<label className="form-label mb-1 small"><strong>Storage Used:</strong></label>
 					{isLoading || user == null ?
@@ -78,7 +77,7 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 								></div>
 							</div>
 							<div className="text-muted small mt-1">
-								{formatBytes(user?.totalStorageSize)} GB / {formatBytes(user?.group?.maxStorageSize)} GB
+								{formatBytes(user?.totalStorageSize)} / {formatBytes(user?.group?.maxStorageSize)}
 							</div>
 						</>
 					}

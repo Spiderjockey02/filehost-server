@@ -1,6 +1,6 @@
 import { FileModalProps } from '@/types/Components/Modals';
 import { BaseSyntheticEvent, useState } from 'react';
-import { useSetFolder } from '../Hooks/FileManager';
+import { useFolderRefetch } from '../Hooks/FileManager';
 import axios from 'axios';
 
 const InputErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'red', borderLeftColor: 'red', borderBottomColor: 'red' } : {};
@@ -9,7 +9,7 @@ const TextErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'r
 export default function RenameFileModal({ file, closeContextMenu }: FileModalProps) {
 	const [rename, setRename] = useState(file.name);
 	const [errorMsg, setErrorMsg] = useState('');
-	const setFolder = useSetFolder();
+	const refreshFolder = useFolderRefetch();
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -24,8 +24,7 @@ export default function RenameFileModal({ file, closeContextMenu }: FileModalPro
 
 		try {
 			await axios.post('/api/files/rename', { fileId: file.id, newName: `${rename}${file.type == 'FILE' ? `.${file.name.split('.').at(-1)}` : ''}` });
-			const { data } = await axios.get(`/api/${window.location.pathname}`);
-			setFolder(data.file);
+			refreshFolder();
 		} catch (err) {
 			if (axios.isAxiosError(err)) return setErrorMsg(err.response?.data.error);
 			console.error(err);

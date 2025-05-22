@@ -1,7 +1,7 @@
 import { BaseSyntheticEvent, useEffect, useRef, useState } from 'react';
 import { FileModalProps } from '@/types/Components/Modals';
 import axios from 'axios';
-import { useSetFolder } from '../Hooks/FileManager';
+import { useFolderRefetch } from '../Hooks/FileManager';
 import { File } from '@prisma/client';
 
 export default function UpdateLocationModal({ file, closeContextMenu }: FileModalProps) {
@@ -10,7 +10,7 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 	const [action, setAction] = useState<'copy' | 'move' | ''>('');
 	const [selectedDestination, setSelectedDestination] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
-	const setFolder = useSetFolder();
+	const refreshFolder = useFolderRefetch();
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -28,8 +28,7 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 				newDirId: selectedDestination,
 				fileId: file.id,
 			});
-			const { data } = await axios.get(`/api/${window.location.pathname}`);
-			setFolder(data.file);
+			refreshFolder();
 		} catch (err) {
 			if (axios.isAxiosError(err)) return setErrorMsg(err.response?.data.error);
 			console.log(err);

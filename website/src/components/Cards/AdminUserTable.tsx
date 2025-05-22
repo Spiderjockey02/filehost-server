@@ -1,35 +1,31 @@
-import { UserWithCount } from '@/types/database';
-import { format, formatBytes } from '@/utils/functions';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { format, formatBytes, queryOptions } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { UserWithCount } from '@/types/database';
+import { useQuery } from '@tanstack/react-query';
+import { Table } from '@/components';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import Table from '../UI/Table';
 
 export default function AdminUserTableCards() {
 	const [page, setPage] = useState(0);
 	const [total, setTotal] = useState(0);
-	const [users, setUsers] = useState<UserWithCount[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		// Fetch recent files
-		(async () => {
-			try {
-				setIsLoading(true);
-				const res = await fetch(`/api/admin/users?filters=group&page=${page}`);
-				const { users: resUsers, total: totalUsers } = await res.json();
-				setUsers(resUsers);
-				setTotal(totalUsers);
-				setIsLoading(false);
-			} catch (err) {
-				console.error(err);
-			}
-		})();
-	}, [page]);
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['users', page],
+		queryFn: async ({ signal }) => {
+			const res = await fetch(`/api/admin/users?filters=group&page=${page}`, { signal });
+			if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
+
+			const d = await res.json();
+			setTotal(d.total);
+			return d as { users: UserWithCount[], total: number };
+		},
+		...queryOptions,
+	});
 
 	return (
-		<div className="table-responsive">
+		<>
 			<div className="form-inline mr-auto my-2 my-md-0 mw-100 col-lg-6">
 				<div className="input-group mb-3">
 					<input type="text" className="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Recipient's username" aria-describedby="basic-addon2" />
@@ -38,53 +34,62 @@ export default function AdminUserTableCards() {
 					</button>
 				</div>
 			</div>
-			<Table>
-				<Table.HeaderRow>
-					<Table.Header>ID</Table.Header>
-					<Table.Header>Name</Table.Header>
-					<Table.Header>Joined</Table.Header>
-					<Table.Header>Last login</Table.Header>
-					<Table.Header>Uploaded files</Table.Header>
-					<Table.Header>Utilisation</Table.Header>
-				</Table.HeaderRow>
-				<Table.Body>
-					{isLoading ? (
-						[0, 0, 0, 0, 0, 0, 0, 0].map((_, index) => (
-							<tr key={index}>
-								<td className="placeholder-glow">
-									<span className="placeholder col-12"></span>
-								</td>
-								<td className="placeholder-glow">
-									<span className="placeholder col-12"></span>
-								</td>
-								<td className="placeholder-glow">
-									<span className="placeholder col-12"></span>
-								</td>
-								<td className="placeholder-glow">
-									<span className="placeholder col-12"></span>
-								</td>
-								<td className="placeholder-glow">
-									<span className="placeholder col-12"></span>
-								</td>
-								<td className="placeholder-glow">
-									<span className="placeholder col-12"></span>
+			<div className="table-responsive">
+				<Table>
+					<Table.HeaderRow>
+						<Table.Header>ID</Table.Header>
+						<Table.Header>Name</Table.Header>
+						<Table.Header>Joined</Table.Header>
+						<Table.Header>Last login</Table.Header>
+						<Table.Header>Uploaded files</Table.Header>
+						<Table.Header>Utilisation</Table.Header>
+					</Table.HeaderRow>
+					<Table.Body>
+						{error == null ?
+							isLoading || data == null ? (
+								[0, 0, 0, 0, 0, 0, 0, 0].map((_, index) => (
+									<tr key={index}>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
+									</tr>
+								))
+							) : (
+								data?.users.map((u) => (
+									<tr key={u.id}>
+										<td scope="row"><Link href={`/admin/users/${u.id}`}>{u.id}</Link></td>
+										<td>{u.name}</td>
+										<td>{new Date(u.createdAt).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+										<td>{format(new Date().getTime() - (new Date().getTime() - new Date(u.updatedAt).getTime()))}</td>
+										<td>{u._count?.files}</td>
+										<td>{formatBytes(u.totalStorageSize)} / 5GB</td>
+									</tr>
+								))
+							) :
+							<tr>
+								<td colSpan={5} className="text-center text-danger fw-bold">
+									{error?.message ?? 'Failed to load users'}
 								</td>
 							</tr>
-						))
-					) : (
-						users?.map((u) => (
-							<tr key={u.id}>
-								<td scope="row"><Link href={`/admin/users/${u.id}`}>{u.id}</Link></td>
-								<td>{u.name}</td>
-								<td>{new Date(u.createdAt).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
-								<td>{format(new Date().getTime() - (new Date().getTime() - new Date(u.updatedAt).getTime()))}</td>
-								<td>{u._count?.files}</td>
-								<td>{formatBytes(u.totalStorageSize)} / 5GB</td>
-							</tr>
-						))
-					)}
-				</Table.Body>
-			</Table>
+						}
+					</Table.Body>
+				</Table>
+			</div>
 			<div className="d-flex flex-row align-items-center mt-3">
 				<div className="d-flex align-items-center mb-2">
 					<p className="mb-0 me-2">
@@ -118,6 +123,6 @@ export default function AdminUserTableCards() {
 					: null
 				}
 			</div>
-		</div>
+		</>
 	);
 }

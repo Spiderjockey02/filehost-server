@@ -1,5 +1,5 @@
 import { BaseSyntheticEvent, useState } from 'react';
-import { useSetFolder } from '../Hooks/FileManager';
+import { useFolderRefetch } from '../Hooks/FileManager';
 import InputField from '../Form/InputField';
 import axios from 'axios';
 import type { CreateFolderModalProps } from '@/types/Components/Modals';
@@ -7,7 +7,7 @@ import type { CreateFolderModalProps } from '@/types/Components/Modals';
 export default function CreateFolderModal({ parentId }: CreateFolderModalProps) {
 	const [folderName, setFolderName] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
-	const setFolder = useSetFolder();
+	const refreshFolder = useFolderRefetch();
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -25,8 +25,7 @@ export default function CreateFolderModal({ parentId }: CreateFolderModalProps) 
 			});
 			setFolderName('');
 			closeModal('createFolderModal');
-			const { data } = await axios.get(`/api${window.location.pathname}`);
-			setFolder(data.file);
+			refreshFolder();
 		} catch (error) {
 			if (axios.isAxiosError(error)) return setErrorMsg(error.response?.data.error);
 			console.error(error);

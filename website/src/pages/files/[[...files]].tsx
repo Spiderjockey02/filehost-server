@@ -1,14 +1,12 @@
 import { Directory, PhotoAlbum, FileViewer, RecentNavbar, ErrorPopup, BreadcrumbNav, UploadStatusToast } from '@/components';
-import { useFolder, useSetFolder } from '@/components/Hooks/FileManager';
+import { useFolder, useFolderLoading } from '@/components/Hooks/FileManager';
 import { FilePageProps, viewTypeTypes } from '@/types/pages';
 import { useCallback, useEffect, useState } from 'react';
+import { UserHistoryWithFile } from '@/types/database';
 import type { GetServerSidePropsContext } from 'next';
 import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
-import axios from 'axios';
 import { User } from 'better-auth';
-import { UserHistoryWithFile } from '@/types/database';
-import { auth } from '@/auth/server';
 
 export default function Files({ path = '/' }: FilePageProps) {
 	const { data: session } = authClient.useSession();
@@ -18,22 +16,13 @@ export default function Files({ path = '/' }: FilePageProps) {
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
 	const file = useFolder();
-	const setFolder = useSetFolder();
-
-	const fetchFiles = useCallback(async () => {
-		try {
-			const { data } = await axios.get(`/api/files/${path}`);
-			setFolder(data.file);
-		} catch (err) {
-			setErrorMsg('Unable to fetch files');
-			console.error('Error fetching files:', err);
-		}
-	}, [path, setFolder]);
+	const { isLoading, error } = useFolderLoading();
 
 	const fetchRecentlyViewedFiles = useCallback(async () => {
 		try {
-			const { data } = await axios.get('/api/session/recently-viewed');
-			setRecents(data.files);
+			const res = await fetch('/api/session/recently-viewed');
+			const { files } = await res.json();
+			setRecents(files);
 		} catch (err) {
 			console.log(err);
 			setErrorMsg('Unable to fetch recently viewed files');
@@ -41,26 +30,33 @@ export default function Files({ path = '/' }: FilePageProps) {
 	}, []);
 
 	useEffect(() => {
-		fetchFiles();
 		if (!path) fetchRecentlyViewedFiles();
-	}, [path, fetchFiles, fetchRecentlyViewedFiles]);
+	}, [path, fetchRecentlyViewedFiles]);
 
-	if (session == null || file == null) return null;
+	if (session == null) return null;
+
+	console.log(file);
 	return (
-		<FileLayout user={session.user as User} activeTab='files' tabName={file.name}>
-			<BreadcrumbNav path={path} isFile={file.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={file.id} />
+		<FileLayout user={session.user as User} activeTab='files' tabName={file?.name}>
+			<BreadcrumbNav path={path} isFile={file?.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={`${file?.id}`} />
 			{errorMsg && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
 			{(path.length == 0 && recents.length > 0) &&
 				<RecentNavbar files={recents} />
 			}
 			<div style={{ paddingTop: '6px' }}>
-				{file.type === 'FILE' ? (
-					<FileViewer file={file} userId={(session.user as User).id} />
-				) : viewType === 'Tiles' ? (
-					<PhotoAlbum folder={file} />
-				) : (
-					<Directory folder={file} />
-				)
+				{error == null ?
+					isLoading || file == null ?
+						<p>Loading</p> :
+						file.type === 'FILE' ? (
+							<FileViewer file={file} userId={(session.user as User).id} />
+						) : viewType === 'Tiles' ? (
+							<PhotoAlbum folder={file} />
+						) : (
+							<Directory folder={file} />
+						) :
+					<div className="text-center text-danger fw-bold">
+						{error?.message ?? 'Failed to load cache stats'}
+					</div>
 				}
 			</div>
 			<UploadStatusToast />
@@ -69,14 +65,14 @@ export default function Files({ path = '/' }: FilePageProps) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
 
-	// Only show this page if they are logged in
-	if (session == null) {
+	const data = await res.json();
+	if (data == null) {
 		return {
 			redirect: {
 				destination: '/login',
