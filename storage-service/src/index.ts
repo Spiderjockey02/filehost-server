@@ -5,6 +5,7 @@ import type { customRequest, customResponse } from './types';
 import { join } from 'path';
 import cors from 'cors';
 import Client from './helpers/Client';
+import onFinished from 'on-finished';
 const app = express();
 const client = new Client();
 
@@ -31,25 +32,23 @@ const client = new Client();
 		}))
 		.use(compression())
 		.use((req, res, next) => {
-			if (req.originalUrl !== '/favicon.ico') {
-				// Handle custom rate limits
-				const newReq = req as customRequest;
-				const newRes = res as customResponse;
+			const newReq = req as customRequest;
+			const newRes = res as customResponse;
 
-				// Add time to request
-				newReq._startTime = new Date().getTime();
-				newReq._endTime = 0;
+			// Add time to request
+			newReq._startTime = new Date().getTime();
+			newReq._endTime = 0;
 
-				// Add time to response
-				newRes._startTime = new Date().getTime();
-				newRes._endTime = 0;
+			// Add time to response
+			newRes._startTime = new Date().getTime();
+			newRes._endTime = 0;
 
-				// Run logger & RateLimter
-				client.logger.connection(newReq, newRes);
+			onFinished(res, async () => {
+				await client.logger.connection(newReq, newRes);
+			});
 
-				// Display actually response
-				next();
-			}
+			// Display actually response
+			next();
 		})
 		.use(express.json())
 		.use('/', (await import('./routes/index')).default(client));
