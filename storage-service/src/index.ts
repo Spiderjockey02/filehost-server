@@ -1,5 +1,5 @@
 import express from 'express';
-import { generateRoutes } from './utils';
+import { generateRoutes, logUserActivity } from './utils';
 import compression from 'compression';
 import type { customRequest, customResponse } from './types';
 import { join } from 'path';
@@ -27,6 +27,7 @@ const client = new Client();
 
 	// Add endpoints to app
 	app
+		.set('trust proxy', true)
 		.use(cors({
 			origin: process.env.FRONTEND_URL,
 		}))
@@ -50,6 +51,7 @@ const client = new Client();
 			// Display actually response
 			next();
 		})
+		.use(logUserActivity(client))
 		.use(express.json())
 		.use('/', (await import('./routes/index')).default(client));
 

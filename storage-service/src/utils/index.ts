@@ -3,7 +3,11 @@ import Logger from './Logger';
 import Error from './Error';
 import { readdirSync, statSync } from 'fs';
 import { join, parse, sep } from 'path';
-import type { Request } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import Client from 'src/helpers/Client';
+import { createUserActivity } from '../accessors/UserActivity';
+import { getSession } from '../middleware';
+import { HTTPMethod } from '@prisma/client';
 
 interface FileOptions {
 	path: string,
@@ -106,5 +110,74 @@ export function parseMySQLConnectionString(connectionString: string) {
 		database,
 	};
 }
+
+export function logUserActivity(client: Client) {
+	return async (req: Request, res: Response, next: NextFunction) => {
+		const startTime = Date.now();
+		let incomingBytes = 0;
+		let outgoingBytes = 0;
+		const ipAddress = getIP(req);
+
+		const contentType = req.headers['content-type'] || '';
+
+		const measureRequest = !contentType.startsWith('multipart/form-data');
+		if (measureRequest) {
+			const originalPush = req.push;
+			if (originalPush) {
+				req.push = function(chunk, encoding) {
+					if (chunk) {
+						incomingBytes += Buffer.byteLength(chunk, encoding);
+					}
+					return originalPush.call(this, chunk, encoding);
+				};
+			}
+		} else if (req.headers['content-length']) {
+			incomingBytes = parseInt(req.headers['content-length'], 10);
+		}
+
+		const originalWrite = res.write.bind(res);
+		res.write = ((chunk: any, encoding?: BufferEncoding, cb?: () => void): boolean => {
+			if (typeof chunk === 'string' || Buffer.isBuffer(chunk)) {
+				outgoingBytes += Buffer.byteLength(chunk, encoding);
+			}
+			return originalWrite(chunk, encoding as any, cb);
+		}) as typeof res.write;
+
+		const originalEnd = res.end.bind(res);
+		res.end = ((chunk?: any, encoding?: any, cb?: any): any => {
+			if (chunk && (typeof chunk === 'string' || Buffer.isBuffer(chunk))) {
+				outgoingBytes += Buffer.byteLength(chunk, encoding);
+			}
+
+			res.once('finish', async () => {
+				const durationMs = Date.now() - startTime;
+
+				const session = await getSession(client, req);
+				const userAgent = req.headers['user-agent'] || null;
+
+				try {
+					await createUserActivity({
+						userId: session?.userId,
+						method: req.method as HTTPMethod,
+						endpoint: req.originalUrl,
+						statusCode: res.statusCode,
+						incomingBytes,
+						outgoingBytes,
+						ipAddress: `${ipAddress}`,
+						userAgent: `${userAgent}`,
+						durationMs,
+					});
+				} catch (err) {
+					console.error('Failed to log user activity:', err);
+				}
+			});
+
+			return originalEnd(chunk, encoding, cb);
+		});
+
+		next();
+	};
+};
+
 
 export { PATHS, ipRegex, Logger, Error, CONSTANTS };
