@@ -3,6 +3,7 @@ import type Client from '../helpers/Client';
 import { Error, PATHS } from '../utils';
 import os from 'os';
 import fs from 'fs/promises';
+import { calculateTransferBetweenTwoDates } from '../accessors/UserActivity';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
@@ -103,6 +104,9 @@ export const getSystemStats = () => {
 		const files = await fs.readdir(PATHS.DATABASE_BACKUPS);
 		const latestBackup = files.filter(a => a.endsWith('.json')).sort((a, b) => b.localeCompare(a))[0];
 		const backup = await fs.readFile(`${PATHS.DATABASE_BACKUPS}/${latestBackup}`, 'utf-8');
+
+		const lastSevenDays = await calculateTransferBetweenTwoDates(new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), new Date());
+
 		res.json({
 			memory: {
 				using: Number((process.memoryUsage().heapUsed).toFixed(2)),
@@ -113,6 +117,7 @@ export const getSystemStats = () => {
 				totalByteSize: totalLogSize,
 				count: logs.length,
 			},
+			network: (lastSevenDays?.incomingBytes ?? 0) + (lastSevenDays?.outgoingBytes ?? 0),
 			backup: JSON.parse(backup),
 		});
 	};

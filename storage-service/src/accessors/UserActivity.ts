@@ -1,5 +1,15 @@
 import { HTTPMethod } from '@prisma/client';
 import client from './prisma';
+import { Pagination } from 'src/types/database/File';
+import fs from 'fs';
+import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
+import { UAParser } from 'ua-parser-js';
+const db = fs.readFileSync('./assets/GeoLite2-City.mmdb');
+const db2 = fs.readFileSync('./assets/GeoLite2-ASN.mmdb');
+
+const cityReader = new Reader<CityResponse>(db);
+const asnReader = new Reader<AsnResponse>(db2);
+
 
 interface CreateUserActivity {
 	method: HTTPMethod
@@ -14,6 +24,11 @@ interface CreateUserActivity {
 }
 
 export async function createUserActivity(data: CreateUserActivity) {
+	// Get metadata from the IP address and user agent
+	const city = cityReader.get(`${data.ipAddress}`);
+	const asn = asnReader.get(`${data.ipAddress}`);
+	const parsedUserAgent = new UAParser(data.userAgent);
+
 	return client.userActivity.create({
 		data: {
 			methodType: {
@@ -27,7 +42,7 @@ export async function createUserActivity(data: CreateUserActivity) {
 				},
 			},
 			responseCode: {
-				connectOrCreate:{
+				connectOrCreate: {
 					where: {
 						code: data.statusCode,
 					},
@@ -39,8 +54,37 @@ export async function createUserActivity(data: CreateUserActivity) {
 			endpoint: data.endpoint,
 			incomingBytes: data.incomingBytes,
 			outgoingBytes: data.outgoingBytes,
-			ipAddress: data.ipAddress,
-			userAgent: data.userAgent,
+			ipCon: data.ipAddress == undefined ? undefined : {
+				connectOrCreate: {
+					where: {
+						ip: data.ipAddress,
+					},
+					create: {
+						ip: data.ipAddress,
+						country: city?.country?.names.en || '',
+						city : city?.city?.names.en || '',
+						latitude: city?.location?.latitude || 0,
+						longitude: city?.location?.longitude || 0,
+						isp: asn?.autonomous_system_organization,
+						isVPN: false,
+						isCrawler: false,
+					},
+				},
+			},
+			UserAgentCon: data.userAgent == undefined ? undefined : {
+				connectOrCreate: {
+					where: {
+						agent: data.userAgent,
+					},
+					create: {
+						agent: data.userAgent,
+						browserName: parsedUserAgent.getBrowser().name || '',
+						browserVersion: parsedUserAgent.getBrowser().version || '',
+						osName: parsedUserAgent.getOS().name || '',
+						osVersion: parsedUserAgent.getOS().version || '',
+					},
+				},
+			},
 			durationMs: data.durationMs,
 			user: data.userId == undefined ? undefined : {
 				connect: {
@@ -48,5 +92,94 @@ export async function createUserActivity(data: CreateUserActivity) {
 				},
 			},
 		},
+	});
+}
+
+export async function getInboundOutboundBytes() {
+	const result = await client.userActivity.aggregate({
+		_sum: {
+			incomingBytes: true,
+			outgoingBytes: true,
+		},
+	});
+	return result._sum;
+}
+
+export async function getHTTPMethods() {
+	const result = await client.activityMethod.findMany({
+		include: {
+			_count: {
+				select: {
+					history: true,
+				},
+			},
+		},
+	});
+
+	return result;
+}
+
+export async function getHTTPStatus() {
+	const result = await client.activityStatusCode.findMany({
+		include: {
+			_count: {
+				select: {
+					history: true,
+				},
+			},
+		},
+	});
+
+	return result;
+}
+
+export async function averageDuration() {
+	const result = await client.userActivity.aggregate({
+		_avg: {
+			durationMs: true,
+		},
+	});
+	return result._avg.durationMs;
+}
+
+export async function totalRequests() {
+	const result = await client.userActivity.count();
+	return result;
+}
+
+export async function fetchActivityBetweenTwoDates(oldDate: Date, newDate: Date) {
+	return client.userActivity.count({
+		where: {
+			timestamp: {
+				gte: oldDate,
+				lte: newDate,
+			},
+		},
+	});
+}
+
+export async function calculateTransferBetweenTwoDates(oldDate: Date, newDate: Date) {
+	const result = await client.userActivity.aggregate({
+		_sum: {
+			incomingBytes: true,
+			outgoingBytes: true,
+		},
+		where: {
+			timestamp: {
+				gte: oldDate,
+				lte: newDate,
+			},
+		},
+	});
+	return result._sum;
+}
+
+export async function fetchActivity({ page = 0 }: Pagination) {
+	return client.userActivity.findMany({
+		orderBy: {
+			timestamp: 'desc',
+		},
+		take: 20,
+		skip: page * 20,
 	});
 }

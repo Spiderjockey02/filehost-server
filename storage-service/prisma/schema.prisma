@@ -164,7 +164,9 @@ model UserActivity {
   statusCode    Int
   incomingBytes Int
   outgoingBytes Int
+  ipCon         IpAddress?    @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
   ipAddress     String?
+  UserAgentCon  UserAgent?    @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
   userAgent     String?
   durationMs    Int
   timestamp     DateTime      @default(now())
@@ -192,4 +194,26 @@ enum HTTPMethod {
 model ActivityMethod {
   method        HTTPMethod      @id
   history       UserActivity[]
+}
+
+model IpAddress {
+  ip        String      @id
+  country   String?
+  city      String?
+  latitude  Float?
+  longitude Float?
+  isp       String?
+  isVPN     Boolean    @default(false)
+  isCrawler Boolean    @default(false)
+  activity  UserActivity[]
+}
+
+model UserAgent {
+  agent           String    @id
+  browserName     String?
+  browserVersion  String?
+  osName          String?
+  osVersion       String?
+  isBot           Boolean   @default(false)
+  activity        UserActivity[]
 }

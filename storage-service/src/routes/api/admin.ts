@@ -4,6 +4,7 @@ import { getLogs, getSpecificLog } from '../../controllers/admin/logs';
 import type Client from '../../helpers/Client';
 import { checkAdmin } from '../../middleware';
 import { Router } from 'express';
+import { getActivityList, getActivityRequests, getActivityTraffic, getNetworkStats } from '../../controllers/admin/network';
 const router = Router();
 
 export default async function(client: Client) {
@@ -30,6 +31,14 @@ export default async function(client: Client) {
 	router.post('/cron-jobs/:name', await checkAdmin(client), postCronJobsByName(client));
 
 	router.get('/system/stats', await checkAdmin(client), getSystemStats());
+
+	router.get('/network/stats', await checkAdmin(client), getNetworkStats(client));
+
+	router.get('/network/requests', await checkAdmin(client), getActivityRequests());
+
+	router.get('/network/traffic', await checkAdmin(client), getActivityTraffic());
+
+	router.get('/network/list', await checkAdmin(client), getActivityList(client));
 
 	return router;
 }
