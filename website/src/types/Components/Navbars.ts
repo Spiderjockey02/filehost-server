@@ -16,7 +16,7 @@ export interface FileSideBarProps extends FileNavBarProps {
 }
 
 export interface AdminSideBarProps {
-  activeTab: 'dashboard' | 'users' | 'files' | 'organisations' | 'logs' | 'payments'
+  activeTab: 'dashboard' | 'users' | 'files' | 'organisations' | 'logs' | 'payments' | 'network'
   showSidebar: boolean
 }
 

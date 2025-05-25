@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCogs, faFile, faLaughWink, faTachometerAlt, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faFile, faLaughWink, faTachometerAlt, faUsers, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { AdminSideBarProps } from '@/types/Components/Navbars';
 
 export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarProps) {
@@ -36,6 +36,12 @@ export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarPro
 				<Link className="nav-link" href="/admin/system">
 					<FontAwesomeIcon icon={faCogs} />
 					<span> System</span>
+				</Link>
+			</li>
+			<li className={`nav-item ${activeTab == 'network' ? 'active' : ''}`}>
+				<Link className="nav-link" href="/admin/network">
+					<FontAwesomeIcon icon={faWifi} />
+					<span> Network</span>
 				</Link>
 			</li>
 			<hr className="sidebar-divider" />

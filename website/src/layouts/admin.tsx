@@ -6,7 +6,7 @@ import { ReactNode, useState } from 'react';
 interface Props {
 	children: ReactNode;
 	user: User;
-	activeTab: 'dashboard' | 'users' | 'files' | 'organisations' | 'logs' | 'payments'
+	activeTab: 'dashboard' | 'users' | 'files' | 'organisations' | 'logs' | 'payments' | 'network'
 	tabName?: string
 }
 

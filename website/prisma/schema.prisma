@@ -21,6 +21,7 @@ model User {
   notifications     Notification[]
   recentlyViewed    RecentlyViewedFile[]
   files             File[]
+  activity          UserActivity[]
   groupId           String?
   group             Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   totalStorageSize  Int  @default(0)
@@ -152,4 +153,43 @@ model CronJob {
   latestStatus  Status? 
   CronJobLog    CronJobLog[]
   schedule      String    @default("0 * * * *")
+}
+
+model UserActivity {
+  id            String   @id          @default(cuid())
+  methodType    ActivityMethod        @relation(fields: [method], references: [method], onDelete: Cascade)
+  method        HTTPMethod
+  endpoint      String
+  responseCode  ActivityStatusCode    @relation(fields: [statusCode], references: [code], onDelete: Cascade)
+  statusCode    Int
+  incomingBytes Int
+  outgoingBytes Int
+  ipAddress     String?
+  userAgent     String?
+  durationMs    Int
+  timestamp     DateTime      @default(now())
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId        String?
+}
+
+model ActivityStatusCode {
+  code          Int       @id
+  history       UserActivity[]
+}
+
+enum HTTPMethod {
+  CONNECT
+  DELETE
+  GET
+  HEAD
+  OPTIONS
+  PATCH
+  POST
+  PUT
+  TRACE
+}
+
+model ActivityMethod {
+  method        HTTPMethod      @id
+  history       UserActivity[]
 }
