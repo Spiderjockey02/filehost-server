@@ -1,5 +1,5 @@
 import type { UserWithGroup } from 'src/types/database/User';
-import { cleanUpVideo } from '../helpers/VideoPreprocessor';
+import { cleanUpVideo } from '../utils/VideoPreprocessor';
 import { CONSTANTS, normalizePath, PATHS } from '../utils';
 import type Client from '../helpers/Client';
 import type { File } from '@prisma/client';
