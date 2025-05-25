@@ -55,7 +55,7 @@ export default class CRONManager extends CronJobAccessor {
 		* @param {Function} handler The function to run
 	  * @returns The updated user.
 	*/
-	private scheduleJob(cronExpr: string, handler: () => Promise<CronJobLog>) {
+	private scheduleJob(cronExpr: string, handler: () => Promise<CronJobLog | null>) {
 		CronJob.from({
 			cronTime: cronExpr,
 			onTick: async () => {
@@ -97,6 +97,7 @@ export default class CRONManager extends CronJobAccessor {
 			let deleteNum = 0;
 			for (const file of logs) {
 				const stats = await fs.stat(`${process.cwd()}/src/utils/logs/${file}`);
+				// Check when it was last modified
 				if (stats.ctimeMs < oldestDateToKeepFile.getTime()) {
 					deleteNum++;
 					fs.unlink(`${process.cwd()}/src/utils/logs/${file}`);
@@ -115,11 +116,13 @@ export default class CRONManager extends CronJobAccessor {
 	  * Delete expired sessions
 		* @returns {CronJobLog}
 	*/
-	async deleteExpiredSessions(): Promise<CronJobLog> {
+	async deleteExpiredSessions(): Promise<CronJobLog | null> {
 		const start = Date.now();
 
 		try {
 			const { count } = await this.client.sessionManager.deleteExpired();
+			if (count == 0) return null;
+
 			const duration = Date.now() - start;
 			return this.createCronJobLog({ jobName: 'DELETE_EXPIRED_SESSIONS', status: 'SUCCESS', message: `Deleted ${count} expired sessions.`, duration });
 		} catch (err) {
