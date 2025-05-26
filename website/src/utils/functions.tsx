@@ -1,4 +1,4 @@
-import { faFile, faFileAlt, faFileImage, faFilePdf, faFileVideo, faFolder, faMusic } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFileAlt, faFileAudio, faFileImage, faFilePdf, faFileVideo, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { File } from '@prisma/client';
 import { UAParser } from 'ua-parser-js';
@@ -40,8 +40,8 @@ export function getFileIcon(file: File) {
 			return <FontAwesomeIcon icon={faFileVideo} />;
 		case 'text':
 			return <FontAwesomeIcon icon={faFileAlt} />;
-		case 'music':
-			return <FontAwesomeIcon icon={faMusic} />;
+		case 'audio':
+			return <FontAwesomeIcon icon={faFileAudio} />;
 		default:
 			return <FontAwesomeIcon icon={faFile} />;
 	}
