@@ -2,15 +2,12 @@ import { CONSTANTS, PATHS } from '../utils';
 import type { File } from '@prisma/client';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import cron from 'node-cron';
 import Client from './Client';
 
 export default class TrashHandler {
 	client: Client;
 	constructor(client: Client) {
 		this.client = client;
-
-		this.checkRetentionOfFiles();
 	}
 
 	/**
@@ -126,21 +123,5 @@ export default class TrashHandler {
 			await this.client.userManager.modifyStorageSize(userId, file.size, 'DECRE');
 			await fs.rm(`${PATHS.CONTENT}/${userId}${filePath}`, { recursive: true });
 		}
-	}
-
-
-	/**
-	  * At the end of each day check if any trashed files need actually removing from system
-	*/
-	checkRetentionOfFiles() {
-		cron.schedule('0 0 * * *', async () => {
-			const files = await this.client.FileManager.getAllUsersDeletedFiles();
-
-			// Loop through each file and check if it should be deleted
-			for (const file of files) {
-				// @ts-expect-error All files that are fetched would have deletedAt value as that's the query
-				if (file.deletedAt.getTime() <= new Date().getTime()) this.removeFileFromSystem(file.userId, file.path);
-			}
-		});
 	}
 }
