@@ -38,4 +38,4 @@ export type UserWithGroup = Prisma.UserGetPayload<{
   }
 }>
 
-export type storageDirection = 'DECRE' | 'INCRE'
+export type storageDirection = 'DECRE' | 'INCRE' | 'SET'

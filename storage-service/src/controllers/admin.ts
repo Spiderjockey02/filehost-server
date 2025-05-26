@@ -82,8 +82,11 @@ export const postCronJobsByName = (client: Client) => {
 				case 'DELETE_OLD_LOG_FILES':
 					await client.CRONManager.deleteOldLogFiles();
 					break;
+				case 'RECALCULATE_USER_STORAGE':
+					await client.CRONManager.recalculateUserStorage();
+					break;
 				default:
-					Error.MissingResource(res, `${name} is not a valid CRON job.`);
+					return Error.MissingResource(res, `${name} is not a valid CRON job.`);
 			}
 			res.json({ success: 'Successfully ran CRON job.' });
 		} catch (err) {

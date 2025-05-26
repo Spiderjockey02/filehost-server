@@ -23,12 +23,19 @@ export default class CRONManager extends CronJobAccessor {
 		await this.fetchAllCronJobs();
 
 		// First ensure all CRON jobs exist on the database (Could be first time setup)
-		if ([...this.names.keys()].length == 0) {
-			await Promise.all([
-				this.createCronJob({ name: 'BACKED_UP_DATABASE', schedule: '0 2 * * *' }),
-				this.createCronJob({ name: 'DELETE_OLD_LOG_FILES', schedule: '0 3 * * *' }),
-				this.createCronJob({ name: 'DELETE_EXPIRED_SESSIONS', schedule: '0 * * * *' }),
-			]);
+		if ([...this.names.keys()].length != 4) {
+			try {
+				// Daily at 2 AM
+				await	this.createCronJob({ name: 'BACKED_UP_DATABASE', schedule: '0 2 * * *' });
+				// Daily at 3 AM
+				await	this.createCronJob({ name: 'DELETE_OLD_LOG_FILES', schedule: '0 3 * * *' });
+				// Every hour
+				await	this.createCronJob({ name: 'DELETE_EXPIRED_SESSIONS', schedule: '0 * * * *' });
+				// Every 6 hours
+				await	this.createCronJob({ name: 'RECALCULATE_USER_STORAGE', schedule: '0 0,6,12,18 * * *' });
+			} catch (err) {
+				this.client.logger.error(`[CRONMANAGER]: Failed to create CRON jobs: ${err}`);
+			}
 		}
 
 		// Second start the scheduling
@@ -42,6 +49,9 @@ export default class CRONManager extends CronJobAccessor {
 					break;
 				case 'DELETE_EXPIRED_SESSIONS':
 					this.scheduleJob(cronJob.schedule, this.deleteExpiredSessions.bind(this));
+					break;
+				case 'RECALCULATE_USER_STORAGE':
+					this.scheduleJob(cronJob.schedule, this.recalculateUserStorage.bind(this));
 					break;
 				default:
 					this.client.logger.error(`[CRONMANAGER]: ${name} is not a valid CRON job.`);
@@ -114,7 +124,7 @@ export default class CRONManager extends CronJobAccessor {
 
 	/**
 	  * Delete expired sessions
-		* @returns {CronJobLog}
+		* @returns {CronJobLog | null}
 	*/
 	async deleteExpiredSessions(): Promise<CronJobLog | null> {
 		const start = Date.now();
@@ -128,6 +138,32 @@ export default class CRONManager extends CronJobAccessor {
 		} catch (err) {
 			const duration = Date.now() - start;
 			return this.createCronJobLog({ jobName: 'DELETE_EXPIRED_SESSIONS', status: 'FAILURE', message: `${err}`, duration });
+		}
+	}
+
+	/**
+	  * Recalculate user storage sizes
+		* @returns {CronJobLog}
+	*/
+	async recalculateUserStorage(): Promise<CronJobLog | null> {
+		const start = Date.now();
+
+		try {
+			const users = await this.client.userManager.fetchAll({});
+			let updatedNum = 0;
+			for (const user of users) {
+				const size = await this.client.userManager.fetchUsersTotalFileSize(user.id);
+				if (size._sum.size !== user.totalStorageSize) {
+					await this.client.userManager.modifyStorageSize(user.id, size._sum.size ?? 0n, 'SET');
+					updatedNum++;
+				}
+			}
+
+			const duration = Date.now() - start;
+			return this.createCronJobLog({ jobName: 'RECALCULATE_USER_STORAGE', status: 'SUCCESS', message: `Recalculated storage for ${updatedNum} users.`, duration });
+		} catch (err) {
+			const duration = Date.now() - start;
+			return this.createCronJobLog({ jobName: 'RECALCULATE_USER_STORAGE', status: 'FAILURE', message: `${err}`, duration });
 		}
 	}
 }

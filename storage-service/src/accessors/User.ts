@@ -134,6 +134,7 @@ export default class UserManager {
 			},
 			data: {
 				totalStorageSize: {
+					set: direction === 'SET' ? size : undefined,
 					decrement: direction === 'DECRE' ? size : undefined,
 					increment: direction === 'INCRE' ? size : undefined,
 				},
@@ -297,5 +298,21 @@ export default class UserManager {
 		}
 
 		return domainCount;
+	}
+
+	/**
+		* Fetch the total size of all user's files.
+		* @param {string} userId The ID of the user
+		* @returns The total size of all files.
+	*/
+	async fetchUsersTotalFileSize(userId: string) {
+		return client.file.aggregate({
+			where: {
+				userId,
+			},
+			_sum: {
+				size: true,
+			},
+		});
 	}
 }
