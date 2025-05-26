@@ -31,7 +31,7 @@ export const getSpecificLog = (client: Client) => {
 			if (!existsSync(`${process.cwd()}/src/utils/logs/${date}`)) return Error.IncorrectQuery(res, 'Log file does not exist.');
 
 			const log = await fs.readFile(`${process.cwd()}/src/utils/logs/${date}`, 'utf-8');
-			res.json({ file: log.toString().split(/\r?\n/) });
+			res.json({ logs: log.toString().split(/\r?\n/) });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log file.');
