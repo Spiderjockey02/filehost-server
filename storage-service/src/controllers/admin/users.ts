@@ -1,6 +1,7 @@
 import { Error, sanitiseObject } from '../../utils';
 import type { Request, Response } from 'express';
 import type Client from '../../helpers/Client';
+import { fetchUsersWhoHadActivityBetweenTwoDates } from '../../accessors/UserActivity';
 
 type data = { [key: string]: boolean}
 type countEnum = { [key: string | number]: number }
@@ -9,13 +10,13 @@ type countEnum = { [key: string | number]: number }
 export const getUsers = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { page, filters: rawFilters } = req.query;
+			const { page, include: rawFilters } = req.query;
 			const filters = (rawFilters !== undefined && Array.isArray(rawFilters)) ? rawFilters.map((filter) => filter.toString()) : [`${rawFilters}`];
 
 			// Parse the filters and validate them
 			const parsedFilters: data = {};
 			for (const filter of filters) {
-				if (['group', 'recent', 'delete', 'analyse'].includes(filter)) parsedFilters[filter] = true;
+				if (['group', 'recent', 'delete', 'analyse', 'user'].includes(filter)) parsedFilters[filter] = true;
 			}
 
 			// Valid page index (if present)
@@ -207,7 +208,7 @@ export const getUserRetention = (client: Client) => {
 				const dateStr = start.toISOString().split('T')[0];
 				const [users, session] = await Promise.all([
 					client.userManager.fetchUsersWhoUploadedBetweenTwoDates(start, end),
-					client.sessionManager.fetchUsersWhoLoggedInBetweenTwoDates(start, end),
+					fetchUsersWhoHadActivityBetweenTwoDates(start, end),
 				]);
 
 				days[dateStr] = users.length / total;

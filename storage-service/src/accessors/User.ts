@@ -47,6 +47,12 @@ export default class UserManager {
 			include: {
 				group: group,
 				notifications: true,
+				activity: {
+					take: 1,
+					orderBy: {
+						timestamp: 'desc',
+					},
+				},
 				_count: {
 					select: {
 						files: true,

@@ -14,7 +14,7 @@ export default function AdminUserTableCards() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['users', page],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/users?filters=group&page=${page}`, { signal });
+			const res = await fetch(`/api/admin/users?include=group&page=${page}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
 
 			const d = await res.json();
@@ -40,7 +40,7 @@ export default function AdminUserTableCards() {
 						<Table.Header>ID</Table.Header>
 						<Table.Header>Name</Table.Header>
 						<Table.Header>Joined</Table.Header>
-						<Table.Header>Last login</Table.Header>
+						<Table.Header>Last active</Table.Header>
 						<Table.Header>Uploaded files</Table.Header>
 						<Table.Header>Utilisation</Table.Header>
 					</Table.HeaderRow>
@@ -75,7 +75,7 @@ export default function AdminUserTableCards() {
 										<td scope="row"><Link href={`/admin/users/${u.id}`}>{u.id}</Link></td>
 										<td>{u.name}</td>
 										<td>{new Date(u.createdAt).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
-										<td>{format(new Date().getTime() - (new Date().getTime() - new Date(u.updatedAt).getTime()))}</td>
+										<td>{format(new Date().getTime() - (new Date().getTime() - new Date(u.activity[0]?.timestamp ?? u.updatedAt).getTime()))}</td>
 										<td>{u._count?.files}</td>
 										<td>{formatBytes(u.totalStorageSize)} / 5GB</td>
 									</tr>

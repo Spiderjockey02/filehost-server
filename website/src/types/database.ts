@@ -34,6 +34,7 @@ export type UserWithCount = Prisma.UserGetPayload<{
         files: true
       }
     }
+    activity: true
   }
 }>
 

@@ -183,3 +183,17 @@ export async function fetchActivity({ page = 0 }: Pagination) {
 		skip: page * 20,
 	});
 }
+
+export async function fetchUsersWhoHadActivityBetweenTwoDates(oldDate: Date, newDate: Date): Promise<string[]> {
+	const activity = await client.userActivity.findMany({
+		where: {
+			timestamp: {
+				gte: oldDate,
+				lte: newDate,
+			},
+		},
+	});
+
+	const users = [...new Set(activity.map(s => s.userId).filter(s => s !== null))];
+	return users;
+}
