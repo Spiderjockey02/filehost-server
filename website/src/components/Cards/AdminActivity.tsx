@@ -8,14 +8,18 @@ import { faCircleInfo, faDownLong, faUpLong } from '@fortawesome/free-solid-svg-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AdminActivityModal from '../Modals/AdminActivityModal';
 
-export default function AdminActivityCard() {
+interface Props {
+	userId?: string;
+}
+
+export default function AdminActivityCard({ userId }: Props) {
 	const [page, setPage] = useState(0);
 	const [total, setTotal] = useState(0);
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['recentUploads', page],
+		queryKey: userId ? ['recentActivity', page ] : [`recentActivity_${userId}`, page, userId],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/network/list?page=${page}`, { signal });
+			const res = await fetch(`/api/admin/network/list?page=${page}${userId ? `&userId=${userId}` : ''}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
 
 			const d = await res.json();
@@ -25,6 +29,7 @@ export default function AdminActivityCard() {
 		...queryOptions,
 	});
 
+	console.log(data, isLoading, error);
 	return (
 		<Card>
 			<Card.Header>
@@ -36,10 +41,10 @@ export default function AdminActivityCard() {
 						<Table.HeaderRow>
 							<Table.Header>Method</Table.Header>
 							<Table.Header>Endpoint</Table.Header>
-							<Table.Header>Status code</Table.Header>
+							<Table.Header className='text-center'>Status code</Table.Header>
 							<Table.Header>Timestamp</Table.Header>
-							<Table.Header>User ID</Table.Header>
-							<Table.Header className='hide-on-mobile'>Traffic</Table.Header>
+							{userId == undefined && <Table.Header>User ID</Table.Header>}
+							<Table.Header className='hide-on-mobile text-center'>Traffic</Table.Header>
 							<Table.Header className='text-center'>Info</Table.Header>
 						</Table.HeaderRow>
 						<Table.Body>
@@ -76,10 +81,10 @@ export default function AdminActivityCard() {
 											<tr key={index}>
 												<td>{activity.method}</td>
 												<td>{activity.endpoint}</td>
-												<td>{activity.statusCode}</td>
+												<td className='text-center'>{activity.statusCode}</td>
 												<td>{format(new Date().getTime() - (new Date().getTime() - new Date(activity.timestamp).getTime()))}</td>
-												<td><Link href={`/admin/users/${activity.userId}`}>{activity.userId}</Link></td>
-												<td className='hide-on-mobile'>{formatBytes(activity.outgoingBytes)} <FontAwesomeIcon icon={faUpLong} /> | {formatBytes(activity.incomingBytes)} <FontAwesomeIcon icon={faDownLong} /></td>
+												{userId == undefined && <td><Link href={`/admin/users/${activity.userId}`}>{activity.userId}</Link></td>}
+												<td className='hide-on-mobile text-center'>{formatBytes(activity.outgoingBytes)} <FontAwesomeIcon icon={faUpLong} /> | {formatBytes(activity.incomingBytes)} <FontAwesomeIcon icon={faDownLong} /></td>
 												<td className='text-center'>
 													<button className='btn' data-bs-toggle="modal" data-bs-target={`#${new Date(activity.timestamp).getTime()}`} style={{ padding: '0' }}>
 														<FontAwesomeIcon size='lg' icon={faCircleInfo} />

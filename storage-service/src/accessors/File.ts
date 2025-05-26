@@ -273,22 +273,25 @@ export default class FileAccessor {
 		* Gets all files
 		* @returns The total count of files.
 	*/
-	async fetchTotal() {
+	async fetchTotal(userId?: string) {
 		const last7days = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
 
 		const [files, folders, newFiles] = await Promise.all([
 			client.file.count({
 				where: {
+					userId,
 					type: 'FILE',
 				},
 			}),
 			client.file.count({
 				where: {
+					userId,
 					type: 'DIRECTORY',
 				},
 			}),
 			client.file.count({
 				where: {
+					userId,
 					createdAt: {
 						gte: last7days,
 					},
@@ -303,11 +306,12 @@ export default class FileAccessor {
 		* Gets the 10 recently uploaded files
 		* @returns The files.
 	*/
-	fetchRecentlyUploaded({ page = 0 }: Pagination) {
+	fetchRecentlyUploaded({ page = 0, userId }: Pagination & { userId?: string }) {
 		return client.file.findMany({
 			where: {
 				deletedAt: null,
 				type: 'FILE',
+				userId,
 			},
 			orderBy: {
 				createdAt: 'desc',

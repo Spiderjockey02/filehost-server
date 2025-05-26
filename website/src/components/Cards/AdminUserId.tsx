@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 	return (
-		<Card>
+		<Card className='mb-4'>
 			<Card.Body>
 				<div className="d-flex align-items-center mb-3">
 					<Image

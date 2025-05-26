@@ -142,8 +142,12 @@ export async function averageDuration() {
 	return result._avg.durationMs;
 }
 
-export async function totalRequests() {
-	const result = await client.userActivity.count();
+export async function totalRequests(userId?: string) {
+	const result = await client.userActivity.count({
+		where: {
+			userId,
+		},
+	});
 	return result;
 }
 
@@ -174,8 +178,11 @@ export async function calculateTransferBetweenTwoDates(oldDate: Date, newDate: D
 	return result._sum;
 }
 
-export async function fetchActivity({ page = 0 }: Pagination) {
+export async function fetchActivity({ page = 0, userId }: Pagination & { userId?: string }) {
 	return client.userActivity.findMany({
+		where: {
+			userId,
+		},
 		orderBy: {
 			timestamp: 'desc',
 		},

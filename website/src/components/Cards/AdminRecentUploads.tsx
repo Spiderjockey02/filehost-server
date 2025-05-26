@@ -5,14 +5,18 @@ import type { File } from '@prisma/client';
 import { useState } from 'react';
 import Link from 'next/link';
 
-export default function AdminRecentUploadsCards() {
+interface Props {
+	userId?: string;
+}
+
+export default function AdminRecentUploadsCards({ userId }: Props) {
 	const [page, setPage] = useState(0);
 	const [total, setTotal] = useState(0);
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['recentUploads', page],
+		queryKey: userId ? ['recentUploads', page ] : [`recentUploads_${userId}`, page, userId],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/files/recently-uploaded?page=${page}`, { signal });
+			const res = await fetch(`/api/admin/files/recently-uploaded?page=${page}${userId ? `&userId=${userId}` : ''}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch recently uploaded files: ${res.statusText}`);
 
 			const d = await res.json();
@@ -35,7 +39,7 @@ export default function AdminRecentUploadsCards() {
 							<Table.Header>MIME Type</Table.Header>
 							<Table.Header>Size</Table.Header>
 							<Table.Header>Date</Table.Header>
-							<Table.Header>User</Table.Header>
+							{userId == undefined && <Table.Header>User</Table.Header>}
 						</Table.HeaderRow>
 						<Table.Body>
 							{error == null ?
@@ -69,7 +73,9 @@ export default function AdminRecentUploadsCards() {
 												</td>
 												<td>{formatBytes(file.size)}</td>
 												<td>{format(new Date().getTime() - (new Date().getTime() - new Date(file.createdAt).getTime()))}</td>
-												<td><Link href={`/admin/users/${file.userId}`}>{file.userId}</Link></td>
+												{userId == undefined && (
+													<td><Link href={`/admin/users/${file.userId}`}>{file.userId}</Link></td>
+												)}
 											</tr>
 										))
 									) :

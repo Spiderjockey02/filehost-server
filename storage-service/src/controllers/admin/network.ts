@@ -218,13 +218,13 @@ export const getActivityList = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			// Allow pagination
-			const { page } = req.query;
+			const { page, userId } = req.query;
 
 			// Validate page
 			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
 
-			const activity = await fetchActivity({ page: page ? Number(page) : undefined });
-			const total = await totalRequests();
+			const activity = await fetchActivity({ page: page ? Number(page) : undefined, userId: userId ? `${userId}` : undefined });
+			const total = await totalRequests(userId ? `${userId}` : undefined);
 			res.json({ activity, total });
 		} catch (err) {
 			client.logger.error(err);

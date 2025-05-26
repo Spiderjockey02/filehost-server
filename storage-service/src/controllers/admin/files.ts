@@ -113,14 +113,14 @@ export const getRecentlyUploaded = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			// Allow pagination
-			const { page } = req.query;
+			const { page, userId } = req.query;
 
 			// Validate page
 			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
 
 			const [files, total] = await Promise.all([
-				client.FileManager.fetchRecentlyUploaded({ page: isNaN(Number(page)) ? undefined : Number(page) }),
-				client.FileManager.fetchTotal(),
+				client.FileManager.fetchRecentlyUploaded({ page: isNaN(Number(page)) ? undefined : Number(page), userId: userId ? `${userId}` : undefined }),
+				client.FileManager.fetchTotal(userId ? `${userId}` : undefined),
 			]);
 			res.json({ files: sanitiseObject(files), total: total.files });
 		} catch (err) {

@@ -1,5 +1,7 @@
 import { authClient } from '@/auth/client';
 import { Card, Col, Row, Table } from '@/components';
+import AdminActivityCard from '@/components/Cards/AdminActivity';
+import AdminRecentUploadsCards from '@/components/Cards/AdminRecentUploads';
 import AdminUserIdCard from '@/components/Cards/AdminUserId';
 import AdminLayout from '@/layouts/admin';
 import { AdminUser } from '@/types';
@@ -44,11 +46,12 @@ export default function AdminUserIdPage({ userId }: Props) {
 			<Row>
 				<Col lg={4}>
 					<AdminUserIdCard isLoading={isLoading} user={data?.user ?? null} />
+					<AdminRecentUploadsCards userId={userId} />
 				</Col>
 				<Col lg={8}>
-					<Card>
+					<Card className='mb-4'>
 						<Card.Header>
-							Sessions
+							Active Sessions
 						</Card.Header>
 						<Card.Body className='table-responsive' style={{ overflowY: 'scroll', maxHeight: '75vh' }}>
 							<Table>
@@ -90,6 +93,7 @@ export default function AdminUserIdPage({ userId }: Props) {
 							</Table>
 						</Card.Body>
 					</Card>
+					<AdminActivityCard userId={userId} />
 				</Col>
 			</Row>
 		</AdminLayout>
