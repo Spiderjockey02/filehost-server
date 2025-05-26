@@ -154,7 +154,7 @@ export async function totalRequests(userId?: string) {
 export async function fetchActivityBetweenTwoDates(oldDate: Date, newDate: Date) {
 	return client.userActivity.count({
 		where: {
-			timestamp: {
+			createdAt: {
 				gte: oldDate,
 				lte: newDate,
 			},
@@ -169,7 +169,7 @@ export async function calculateTransferBetweenTwoDates(oldDate: Date, newDate: D
 			outgoingBytes: true,
 		},
 		where: {
-			timestamp: {
+			createdAt: {
 				gte: oldDate,
 				lte: newDate,
 			},
@@ -184,7 +184,7 @@ export async function fetchActivity({ page = 0, userId }: Pagination & { userId?
 			userId,
 		},
 		orderBy: {
-			timestamp: 'desc',
+			createdAt: 'desc',
 		},
 		take: 20,
 		skip: page * 20,
@@ -194,7 +194,7 @@ export async function fetchActivity({ page = 0, userId }: Pagination & { userId?
 export async function fetchUsersWhoHadActivityBetweenTwoDates(oldDate: Date, newDate: Date): Promise<string[]> {
 	const activity = await client.userActivity.findMany({
 		where: {
-			timestamp: {
+			createdAt: {
 				gte: oldDate,
 				lte: newDate,
 			},

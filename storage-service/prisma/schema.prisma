@@ -169,7 +169,7 @@ model UserActivity {
   UserAgentCon  UserAgent?    @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
   userAgent     String?
   durationMs    Int
-  timestamp     DateTime      @default(now())
+  createdAt     DateTime      @default(now())
   user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId        String?
 }

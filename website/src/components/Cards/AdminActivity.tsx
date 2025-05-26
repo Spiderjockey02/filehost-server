@@ -82,11 +82,11 @@ export default function AdminActivityCard({ userId }: Props) {
 												<td>{activity.method}</td>
 												<td>{activity.endpoint}</td>
 												<td className='text-center'>{activity.statusCode}</td>
-												<td>{format(new Date().getTime() - (new Date().getTime() - new Date(activity.timestamp).getTime()))}</td>
+												<td>{format(new Date().getTime() - (new Date().getTime() - new Date(activity.createdAt).getTime()))}</td>
 												{userId == undefined && <td><Link href={`/admin/users/${activity.userId}`}>{activity.userId}</Link></td>}
 												<td className='hide-on-mobile text-center'>{formatBytes(activity.outgoingBytes)} <FontAwesomeIcon icon={faUpLong} /> | {formatBytes(activity.incomingBytes)} <FontAwesomeIcon icon={faDownLong} /></td>
 												<td className='text-center'>
-													<button className='btn' data-bs-toggle="modal" data-bs-target={`#${new Date(activity.timestamp).getTime()}`} style={{ padding: '0' }}>
+													<button className='btn' data-bs-toggle="modal" data-bs-target={`#${new Date(activity.createdAt).getTime()}`} style={{ padding: '0' }}>
 														<FontAwesomeIcon size='lg' icon={faCircleInfo} />
 													</button>
 												</td>

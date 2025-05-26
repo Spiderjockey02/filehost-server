@@ -50,7 +50,7 @@ export default class UserManager {
 				activity: {
 					take: 1,
 					orderBy: {
-						timestamp: 'desc',
+						createdAt: 'desc',
 					},
 				},
 				_count: {

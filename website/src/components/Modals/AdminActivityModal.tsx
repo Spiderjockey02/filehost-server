@@ -8,7 +8,7 @@ interface Props {
 
 export default function AdminActivityModal({ activity }: Props) {
 	return (
-		<div className="modal fade" id={`${new Date(activity.timestamp).getTime()}`} role="dialog" aria-hidden="true">
+		<div className="modal fade" id={`${new Date(activity.createdAt).getTime()}`} role="dialog" aria-hidden="true">
 			<div className="modal-dialog modal-dialog-centered modal-lg" role="document">
 				<div className="modal-content">
 					<div className="modal-header">
@@ -38,7 +38,7 @@ export default function AdminActivityModal({ activity }: Props) {
 										<h5 className="card-title fw-bold">User Info</h5>
 										<p className="mb-1"><strong>User ID: </strong><Link href={`/admin/users/${activity.userId}`}>{activity.userId}</Link></p>
 										<p className="mb-1"><strong>IP Address: </strong> {activity.ipAddress}</p>
-										<p className="mb-0"><strong>Timestamp: </strong> {new Date(activity.timestamp).toLocaleString()}</p>
+										<p className="mb-0"><strong>Timestamp: </strong> {new Date(activity.createdAt).toLocaleString()}</p>
 									</div>
 								</div>
 							</div>
