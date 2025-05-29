@@ -1,19 +1,25 @@
-import { CONSTANTS, PATHS } from '../utils';
+import { CONSTANTS } from '../utils';
 import type { Request } from 'express';
 import Client from '../helpers/Client';
 import formidable from 'formidable';
-import path from 'node:path';
 import sharp from 'sharp';
+import { User } from '@prisma/client';
+import { readFile } from 'node:fs/promises';
 
-export default async (client: Client, req: Request, userId: string) => {
+export default async (client: Client, req: Request, user: User) => {
+	// Get storage and it's provider
+	const storage = await client.FileManager.storageManager.fetchByName('Avatars');
+	if (storage == null) throw 'Storage not found';
+	const fileProvider = client.FileManager.storageManager.getProvider(storage);
+
 	const form = formidable({
 		multiples: false,
 		maxFileSize: CONSTANTS.MAX_AVATAR_SIZE,
 		allowEmptyFiles: false,
 		maxFiles: 1,
-		filename: () => `${userId}.webp`,
+		filename: () => `${user.id}.webp`,
 		filter: function({ mimetype }) {
-			// @ts-ignore Broken types for error event
+			// @ts-expect-error Broken types for error event
 			if (!mimetype?.includes('image')) form.emit('error', 'The uploaded avatar must be an image file (e.g., JPEG, PNG, GIF).');
 			return true;
 		},
@@ -33,12 +39,11 @@ export default async (client: Client, req: Request, userId: string) => {
 		if ((metadata.pages ?? 1) > 1) throw 'Animated images are not allowed.';
 
 		// Move to avatar directory, overwriting the old one
-		await client.FileManager.renameOnSystem(file[0].filepath, path.join(PATHS.AVATAR, `${userId}.webp`));
-
-		// Return the parsed fields and files
+		const buffer = await readFile(file[0].filepath);
+		await fileProvider.writeFileToSystem(`${user.id}.webp`, buffer);
 		return { fields, files };
 	} catch (error) {
-		await client.FileManager.deleteFileOnSystem(file[0].filepath);
+		await fileProvider.deleteFileOnSystem(file[0].filepath);
 		throw error;
 	}
 };

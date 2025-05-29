@@ -7,7 +7,7 @@ import FileAccessor from '../accessors/File';
 import StorageManager from './StorageManager';
 import type { Response } from 'express';
 import { existsSync } from 'node:fs';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import ThumbnailCreator from './ThumbnailCreator';
 
 export default class FileManager extends FileAccessor {
@@ -395,12 +395,12 @@ export default class FileManager extends FileAccessor {
 	  * Delete user's avatar (If there is one).
 	  * @param {string} userId The user's ID.
 	*/
-	async deleteAvatar(userId: string): Promise<boolean> {
-		if (existsSync(`${PATHS.AVATAR}/${userId}.webp`)) {
-			await rm(`${PATHS.AVATAR}/${userId}.webp`);
-			return true;
-		}
-		return false;
+	async deleteAvatar(userId: string) {
+		// Get storage and it's provider
+		const storage = await this.storageManager.fetchByName('Avatars');
+		if (storage == null) throw 'Storage not found';
+		const fileProvider = this.storageManager.getProvider(storage);
+		fileProvider.deleteFileOnSystem(`${userId}.webp`);
 	}
 
 	/**
@@ -408,10 +408,13 @@ export default class FileManager extends FileAccessor {
 		* @param {Response} res The HTTP response object.
 	  * @param {string} userId The user's ID.
 	*/
-	sendAvatar(res: Response, userId: string) {
-		// Check if the user already has an avatar, if not display default one
-		const avatarPath = existsSync(`${PATHS.AVATAR}/${userId}.webp`) ? userId : 'default-avatar';
-		res.sendFile(`${PATHS.AVATAR}/${avatarPath}.webp`);
+	async sendAvatar(res: Response, userId: string) {
+		// Get storage and it's provider
+		const storage = await this.storageManager.fetchByName('Avatars');
+		if (storage == null) throw 'Storage not found';
+		const fileProvider = this.storageManager.getProvider(storage);
+
+		fileProvider.sendFile(res, { path: `${userId}.webp`, userId: '' } as File);
 	}
 
 	/**

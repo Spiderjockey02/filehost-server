@@ -11,7 +11,7 @@ export const postChangeAvatar = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Parse and save file(s)
-			const { files } = await avatarForm(client, req, session.user.id);
+			const { files } = await avatarForm(client, req, session.user);
 			if (Object.keys(files).length == 0) throw 'No files uploaded';
 
 			return res

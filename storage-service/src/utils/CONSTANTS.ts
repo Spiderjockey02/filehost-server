@@ -13,7 +13,7 @@ export const CONSTANTS = {
 	MAX_FILE_SIZE: 10 * 1024 ** 3,
 
 	// Max avatar file size in bytes
-	MAX_AVATAR_SIZE: 1 * 1024 ** 2,
+	MAX_AVATAR_SIZE: 5 * 1024 ** 2,
 
 	// How long files should stay in the trash before actually deleting in days
 	RETENTION_POLICY_IN_DAYS: 7,

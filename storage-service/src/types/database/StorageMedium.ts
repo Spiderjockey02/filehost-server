@@ -9,4 +9,6 @@ export interface createStorageMedium {
   endpoint?: string
   maxSize?: bigint
   usedSize?: bigint
+  thumbnailOnly?: boolean
+  avatarOnly?: boolean
 }

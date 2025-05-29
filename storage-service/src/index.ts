@@ -23,7 +23,7 @@ const client = new Client();
 	}
 
 	// Create a storage medium (if not exists) where files will be stored
-	if (await client.FileManager.storageManager.fetchCount() < 2) {
+	if (await client.FileManager.storageManager.fetchCount() < 3) {
 		// Where files will be stored (by default)
 		await client.FileManager.storageManager.create({
 			name: 'Default Storage Medium',
@@ -37,9 +37,20 @@ const client = new Client();
 		await client.FileManager.storageManager.create({
 			name: 'Thumbnails',
 			type: 'FILE_SYSTEM',
+			basePath: PATHS.THUMBNAIL,
+			latitude: 0,
+			longitude: 0,
+			thumbnailOnly: true,
+		});
+
+		// Where avatars will be stored
+		await client.FileManager.storageManager.create({
+			name: 'Avatars',
+			type: 'FILE_SYSTEM',
 			basePath: PATHS.AVATAR,
 			latitude: 0,
 			longitude: 0,
+			avatarOnly: true,
 		});
 	}
 

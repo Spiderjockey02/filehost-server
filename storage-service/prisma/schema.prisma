@@ -124,20 +124,24 @@ enum StorageType {
 }
 
 model StorageMedium {
-  id          String      @id     @default(cuid())
-  type        StorageType
-  name        String
-  basePath    String
-  latitude    Float?
-  longitude   Float?
-  endpoint    String?
-  maxSize     BigInt      @default(0)
-  usedSize    BigInt      @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String      @id     @default(cuid())
+  type          StorageType
+  name          String
+  basePath      String
+  latitude      Float?
+  longitude     Float?
+  endpoint      String?
+  maxSize       BigInt      @default(0)
+  usedSize      BigInt      @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  isPrivate     Boolean     @default(false)
+  thumbnailOnly Boolean     @default(false)
+  avatarOnly    Boolean     @default(false)
 
-  files       File[]
-  users       User[]
+  files         File[]
+  users         User[]
 }
 
 model MediaType {
