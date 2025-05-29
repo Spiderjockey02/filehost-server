@@ -236,6 +236,11 @@ export default class FileSystemManager implements StorageProvider {
 		}
 	}
 
+	async checkFileExists(filePath: string) {
+		const cleanedFilePath = path.isAbsolute(filePath) ? filePath : path.join(this.basePath, filePath);
+		return existsSync(cleanedFilePath);
+	}
+
 	/**
 	  * Fetches disk data
 	*/

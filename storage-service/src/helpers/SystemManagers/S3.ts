@@ -186,6 +186,25 @@ export default class S3Manager implements StorageProvider {
 		}
 	}
 
+	async checkFileExists(filePath: string) {
+		try {
+			await this.s3.send(
+				new HeadObjectCommand({
+					Bucket: this.bucketName,
+					Key: filePath,
+				}),
+			);
+			return true;
+		} catch (err: any) {
+		// If the error is that the object does not exist, return false
+			if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
+				return false;
+			}
+			// Rethrow other unexpected errors
+			throw err;
+		}
+	}
+
 	getFileSystemStatistics() {
 		return { free: 0, total: 0 };
 	}
