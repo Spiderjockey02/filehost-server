@@ -13,7 +13,7 @@ export default class CronJobAccessor {
 	  * Fetch all CRON jobs for running
 	  * @returns {CronJob[]} The CRON jobs
 	*/
-	async fetchAllCronJobs(): Promise<CronJob[]> {
+	async fetchAll(): Promise<CronJob[]> {
 		const cronJobs = await client.cronJob.findMany();
 
 		for (const cronJob of cronJobs) {
@@ -28,7 +28,7 @@ export default class CronJobAccessor {
 	  * @param {createCronJob} data The data to make one
 	  * @returns The new CRON job
 	*/
-	async createCronJob(data: createCronJob) {
+	async create(data: createCronJob) {
 		return client.cronJob.create({
 			data,
 		});
@@ -39,7 +39,7 @@ export default class CronJobAccessor {
 	  * @param {createCronJob} data The data to make one
 	  * @returns The new CRON job
 	*/
-	async updateCronJob(data: createCronJob) {
+	async update(data: createCronJob) {
 		return client.cronJob.update({
 			where: {
 				name: data.name,
@@ -56,7 +56,7 @@ export default class CronJobAccessor {
 	  * @param {createCronJobLogType} data The ID of the user
 	  * @returns The updated user.
 	*/
-	async createCronJobLog(data: createCronJobLogType) {
+	async createLog(data: createCronJobLogType) {
 		const log = await client.cronJobLog.create({
 			data: {
 				cronJob: {
@@ -76,7 +76,7 @@ export default class CronJobAccessor {
 		});
 
 		// Update latest status and then return the inital log
-		await this.updateCronJob({ name: data.jobName, latestStatus: data.status });
+		await this.update({ name: data.jobName, latestStatus: data.status });
 		return log;
 	}
 
@@ -84,7 +84,7 @@ export default class CronJobAccessor {
 	  * Fetch all CRON job logs
 		* @returns {CronJobLog[]} An array of CRON job logs
 	*/
-	async fetchAllCronJobLogs(): Promise<CronJobLog[]> {
+	async fetchAllLogs(): Promise<CronJobLog[]> {
 		return client.cronJobLog.findMany();
 	}
 }

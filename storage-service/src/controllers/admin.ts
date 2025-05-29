@@ -40,7 +40,7 @@ export const getStats = (client: Client) => {
 export const getCronJobs = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const cronJobs = await client.CRONManager.fetchAllCronJobs();
+			const cronJobs = await client.CRONManager.fetchAll();
 			res.json({ cronJobs });
 		} catch (err) {
 			client.logger.error(err);
@@ -57,8 +57,7 @@ export const getCronJobsByName = (client: Client) => {
 			const names = [...client.CRONManager.names.keys()];
 			if (!names.includes(name)) return Error.MissingResource(res, `${name} is not a valid CRON job.`);
 
-
-			const logs = await client.CRONManager.fetchAllCronJobLogs();
+			const logs = await client.CRONManager.fetchAllLogs();
 			res.json({ logs: logs.filter(l => l.jobName == name) });
 		} catch (err) {
 			client.logger.error(err);

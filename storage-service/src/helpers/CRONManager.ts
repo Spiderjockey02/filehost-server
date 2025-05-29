@@ -8,11 +8,12 @@ import { CronJobLog } from '@prisma/client';
 
 export default class CRONManager extends CronJobAccessor {
 	client: Client;
+	private activeJobs: Map<string, CronJob>;
 
 	constructor(client: Client) {
 		super();
 		this.client = client;
-
+		this.activeJobs = new Map();
 		this.setupCRONJobs();
 	}
 
@@ -20,38 +21,42 @@ export default class CRONManager extends CronJobAccessor {
 	  * Setup and initalise the CRON job manager
 	*/
 	private async setupCRONJobs() {
-		await this.fetchAllCronJobs();
+		await this.fetchAll();
 
 		// First ensure all CRON jobs exist on the database (Could be first time setup)
 		if ([...this.names.keys()].length != 4) {
 			try {
 				// Daily at 2 AM
-				await	this.createCronJob({ name: 'BACKED_UP_DATABASE', schedule: '0 2 * * *' });
+				await	this.create({ name: 'BACKED_UP_DATABASE', schedule: '0 2 * * *' });
 				// Daily at 3 AM
-				await	this.createCronJob({ name: 'DELETE_OLD_LOG_FILES', schedule: '0 3 * * *' });
+				await	this.create({ name: 'DELETE_OLD_LOG_FILES', schedule: '0 3 * * *' });
 				// Every hour
-				await	this.createCronJob({ name: 'DELETE_EXPIRED_SESSIONS', schedule: '0 * * * *' });
+				await	this.create({ name: 'DELETE_EXPIRED_SESSIONS', schedule: '0 * * * *' });
 				// Every 6 hours
-				await	this.createCronJob({ name: 'RECALCULATE_USER_STORAGE', schedule: '0 0,6,12,18 * * *' });
+				await	this.create({ name: 'RECALCULATE_USER_STORAGE', schedule: '0 0,6,12,18 * * *' });
 			} catch (err) {
 				this.client.logger.error(`[CRONMANAGER]: Failed to create CRON jobs: ${err}`);
 			}
 		}
 
+		this.loadCRONJobs();
+	}
+
+	private loadCRONJobs() {
 		// Second start the scheduling
 		for (const [name, cronJob] of this.names.entries()) {
 			switch (name) {
 				case 'BACKED_UP_DATABASE':
-					this.scheduleJob(cronJob.schedule, this.backupDatabase.bind(this));
+					this.scheduleJob(name, cronJob.schedule, this.backupDatabase.bind(this));
 					break;
 				case 'DELETE_OLD_LOG_FILES':
-					this.scheduleJob(cronJob.schedule, this.deleteOldLogFiles.bind(this));
+					this.scheduleJob(name, cronJob.schedule, this.deleteOldLogFiles.bind(this));
 					break;
 				case 'DELETE_EXPIRED_SESSIONS':
-					this.scheduleJob(cronJob.schedule, this.deleteExpiredSessions.bind(this));
+					this.scheduleJob(name, cronJob.schedule, this.deleteExpiredSessions.bind(this));
 					break;
 				case 'RECALCULATE_USER_STORAGE':
-					this.scheduleJob(cronJob.schedule, this.recalculateUserStorage.bind(this));
+					this.scheduleJob(name, cronJob.schedule, this.recalculateUserStorage.bind(this));
 					break;
 				default:
 					this.client.logger.error(`[CRONMANAGER]: ${name} is not a valid CRON job.`);
@@ -65,14 +70,33 @@ export default class CRONManager extends CronJobAccessor {
 		* @param {Function} handler The function to run
 	  * @returns The updated user.
 	*/
-	private scheduleJob(cronExpr: string, handler: () => Promise<CronJobLog | null>) {
-		CronJob.from({
+	private scheduleJob(name: string, cronExpr: string, handler: () => Promise<CronJobLog | null>) {
+		// Check if it's already active (Might have been called due to a schedule being updated)
+		const existingJob = this.activeJobs.get(name);
+		if (existingJob) {
+			existingJob.stop();
+			this.activeJobs.delete(name);
+		}
+
+		// Create the new CRON job
+		const job = CronJob.from({
 			cronTime: cronExpr,
 			onTick: async () => {
 				await handler();
 			},
 			start: true,
 		});
+		this.activeJobs.set(name, job);
+	}
+
+	async updateAndReschedule(name: string, newSchedule: string) {
+		// Check if name is valid
+		const job = this.activeJobs.get(name);
+		if (job == undefined) throw new Error(`CRON job: ${name} is not an active job.`);
+
+		// Update and reload CRON jobs
+		await this.update({ name, schedule: newSchedule });
+		this.loadCRONJobs();
 	}
 
 
@@ -87,10 +111,10 @@ export default class CRONManager extends CronJobAccessor {
 			const metadata = await extendedClient.$backup();
 
 			const duration = Date.now() - start;
-			return this.createCronJobLog({ jobName: 'BACKED_UP_DATABASE', status: 'SUCCESS', message: `File name: ${metadata.filename}, Size: ${metadata.sizeBytes}`, duration });
+			return this.createLog({ jobName: 'BACKED_UP_DATABASE', status: 'SUCCESS', message: `File name: ${metadata.filename}, Size: ${metadata.sizeBytes}`, duration });
 		} catch (err) {
 			const duration = Date.now() - start;
-			return this.createCronJobLog({ jobName: 'BACKED_UP_DATABASE', status: 'FAILURE', message: `${err}`, duration });
+			return this.createLog({ jobName: 'BACKED_UP_DATABASE', status: 'FAILURE', message: `${err}`, duration });
 		}
 	}
 
@@ -115,10 +139,10 @@ export default class CRONManager extends CronJobAccessor {
 			}
 
 			const duration = Date.now() - start;
-			return this.createCronJobLog({ jobName: 'DELETE_OLD_LOG_FILES', status: 'SUCCESS', message: `Deleted ${deleteNum} log files.`, duration });
+			return this.createLog({ jobName: 'DELETE_OLD_LOG_FILES', status: 'SUCCESS', message: `Deleted ${deleteNum} log files.`, duration });
 		} catch (err) {
 			const duration = Date.now() - start;
-			return this.createCronJobLog({ jobName: 'DELETE_OLD_LOG_FILES', status: 'FAILURE', message: `${err}`, duration });
+			return this.createLog({ jobName: 'DELETE_OLD_LOG_FILES', status: 'FAILURE', message: `${err}`, duration });
 		}
 	}
 
@@ -134,10 +158,10 @@ export default class CRONManager extends CronJobAccessor {
 			if (count == 0) return null;
 
 			const duration = Date.now() - start;
-			return this.createCronJobLog({ jobName: 'DELETE_EXPIRED_SESSIONS', status: 'SUCCESS', message: `Deleted ${count} expired sessions.`, duration });
+			return this.createLog({ jobName: 'DELETE_EXPIRED_SESSIONS', status: 'SUCCESS', message: `Deleted ${count} expired sessions.`, duration });
 		} catch (err) {
 			const duration = Date.now() - start;
-			return this.createCronJobLog({ jobName: 'DELETE_EXPIRED_SESSIONS', status: 'FAILURE', message: `${err}`, duration });
+			return this.createLog({ jobName: 'DELETE_EXPIRED_SESSIONS', status: 'FAILURE', message: `${err}`, duration });
 		}
 	}
 
@@ -160,10 +184,10 @@ export default class CRONManager extends CronJobAccessor {
 			}
 
 			const duration = Date.now() - start;
-			return this.createCronJobLog({ jobName: 'RECALCULATE_USER_STORAGE', status: 'SUCCESS', message: `Recalculated storage for ${updatedNum} users.`, duration });
+			return this.createLog({ jobName: 'RECALCULATE_USER_STORAGE', status: 'SUCCESS', message: `Recalculated storage for ${updatedNum} users.`, duration });
 		} catch (err) {
 			const duration = Date.now() - start;
-			return this.createCronJobLog({ jobName: 'RECALCULATE_USER_STORAGE', status: 'FAILURE', message: `${err}`, duration });
+			return this.createLog({ jobName: 'RECALCULATE_USER_STORAGE', status: 'FAILURE', message: `${err}`, duration });
 		}
 	}
 }
