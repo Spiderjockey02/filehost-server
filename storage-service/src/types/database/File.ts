@@ -8,6 +8,7 @@ export interface createFile {
   parentId?: string
   userId: string
   type?: FileType
+  storageId: string
 }
 
 export interface updateFile {

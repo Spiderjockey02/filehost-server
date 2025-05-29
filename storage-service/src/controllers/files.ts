@@ -13,7 +13,7 @@ export const getFiles = (client: Client) => {
 
 			// Fetch from cache
 			const filePath = req.params.path;
-			const file = await client.FileManager.getDirectory(session.user.id, filePath);
+			const file = await client.FileManager.getDirectory(session.user, filePath);
 
 			res.json({ file });
 		} catch (err) {
@@ -38,7 +38,7 @@ export const postFileUpload = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
-			Error.GenericError(res, `Failed to upload file due to: ${err}.`);
+			Error.GenericError(res, 'Failed to upload file.');
 		}
 	};
 };
@@ -104,7 +104,7 @@ export const postMoveFile = (client: Client) => {
 			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, 'New directory ID is missing from request');
 			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
 
-			await client.FileManager.move(session.user.id, fileId, newDirId);
+			await client.FileManager.move(session.user, fileId, newDirId);
 			res.json({ success: 'Successfully moved item' });
 		} catch (err) {
 			client.logger.error(err);
@@ -126,7 +126,7 @@ export const postCopyFile = (client: Client) => {
 			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, 'New directory ID is missing from request');
 			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
 
-			await client.FileManager.copy(session.user.id, fileId, newDirId);
+			await client.FileManager.copy(session.user, fileId, newDirId);
 			res.json({ success: 'Successfully copied file' });
 		} catch (err) {
 			client.logger.error(err);
@@ -154,9 +154,9 @@ export const getDownloadFile = (client: Client) => {
 			// Check if file is a file or actually a directory
 			switch (file.type) {
 				case 'FILE':
-					return client.FileManager.downloadFile(res, session.user.id, filePath);
+					return client.FileManager.downloadFile(res, session.user, filePath);
 				case 'DIRECTORY':
-					return client.FileManager.downloadDirectory(res, session.user.id, filePath);
+					return client.FileManager.downloadDirectory(res, session.user, filePath);
 				default:
 					return Error.GenericError(res, 'Invalid file type');
 			}
@@ -178,7 +178,7 @@ export const getBulkDownload = (client: Client) => {
 			const { paths } = req.body;
 			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
 
-			client.FileManager.downloadFiles(res, session.user.id, paths);
+			client.FileManager.downloadFiles(res, session.user, paths);
 		} catch (error) {
 			client.logger.error(error);
 			Error.GenericError(res, 'Failed to download files.');
@@ -199,7 +199,7 @@ export const postRenameFile = (client: Client) => {
 			if (typeof newName !== 'string' || newName.replace(/\.[^/.]+$/, '').length == 0) return Error.IncorrectQuery(res, 'New name must not be empty.');
 
 			// Rename file
-			await client.FileManager.rename(session.user.id, fileId, newName);
+			await client.FileManager.rename(session.user, fileId, newName);
 			res.json({ success: 'Successfully renamed item' });
 		} catch (err) {
 			client.logger.error(err);
@@ -220,7 +220,7 @@ export const postCreateFolder = (client: Client) => {
 			if (typeof folderName !== 'string' || folderName.trim().length == 0) return Error.IncorrectQuery(res, 'Folder name is not a string.');
 
 			// Decode & santise the referer path to ensure the folder is added to the correct path
-			await client.FileManager.createDirectory(session.user.id, parentId, folderName.trim());
+			await client.FileManager.createDirectory(session.user, parentId, folderName.trim());
 			res.json({ success: 'Successfully created folder.' });
 		} catch (err) {
 			client.logger.error(err);

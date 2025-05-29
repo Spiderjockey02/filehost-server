@@ -9,14 +9,13 @@ import { calculateTransferBetweenTwoDates } from '../accessors/UserActivity';
 export const getStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const diskData = client.FileManager.getFileSystemStatistics();
+			const mediums = client.FileManager.getFileSystemStatistics();
 			const { files } = await client.FileManager.fetchTotal();
 
 			res.json({
 				storage: {
 					totalFiles: files,
-					total: diskData.total,
-					free: diskData.free,
+					mediums,
 				},
 				memory: {
 					using: Number((process.memoryUsage().heapUsed).toFixed(2)),

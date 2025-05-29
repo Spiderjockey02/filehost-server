@@ -1,15 +1,21 @@
 import type { UserWithGroup } from 'src/types/database/User';
 import { cleanUpVideo } from '../utils/VideoPreprocessor';
-import { CONSTANTS, normalizePath, PATHS } from '../utils';
+import { CONSTANTS, normalizePath } from '../utils';
 import type Client from '../helpers/Client';
 import type { File } from '@prisma/client';
 import type { Request } from 'express';
 import formidable from 'formidable';
 import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 
 export default async (client: Client, req: Request, user: UserWithGroup) => {
 	// Make sure they haven't already uploaded past their max storage
 	if (user.totalStorageSize >= (user.group?.maxStorageSize ?? 0)) throw 'Max storage reached';
+
+	// Get storage and it's provider
+	const storage = await client.FileManager.storageManager.fetchById(user.storageId);
+	if (storage == null) throw 'Storage not found';
+	const fileProvider = client.FileManager.storageManager.getProvider(storage);
 
 	const form = formidable({
 		allowEmptyFiles: false,
@@ -32,6 +38,8 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 	if (metadata.parentId == undefined) throw 'No parentId provided';
 
 	for (const file of files.media ?? []) {
+
+		let uploadedFile = null;
 		try {
 			let dir = await client.FileManager.getById(metadata.parentId);
 			if (!dir) throw 'Missing parent directory';
@@ -51,7 +59,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 			if (lastSlashIndex > -1) {
 				const folderPath = `/${`${file.originalFilename}`.substring(0, lastSlashIndex)}`;
 				const fileName = `${file.originalFilename}`.substring(lastSlashIndex + 1);
-				await ensureFolderExists(client, user.id, folderPath);
+				await ensureFolderExists(client, user.id, folderPath, storage.id);
 
 				// Add the file to the folder
 				dir = await client.FileManager.getByFilePath(user.id, folderPath);
@@ -65,6 +73,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 						path: `${folderPath}/${fileName}`,
 						size: BigInt(file.size),
 						mimetype: file.mimetype,
+						storageId: storage.id,
 					},
 				});
 			} else {
@@ -77,10 +86,11 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 						type: 'DIRECTORY',
 						name: '/',
 						mimetype: null,
+						storageId:  storage.id,
 					});
 				}
 
-				await client.FileManager.update({
+				uploadedFile = await client.FileManager.update({
 					id: dir.id,
 					children: {
 						userId: user.id,
@@ -88,6 +98,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 						path: `${normalizePath(dir.path)}${file.originalFilename}`,
 						size: BigInt(file.size),
 						mimetype: file.mimetype,
+						storageId: storage.id,
 					},
 				});
 			}
@@ -96,10 +107,14 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 			if (file.mimetype?.startsWith('video/')) await cleanUpVideo(file.filepath, `${file.originalFilename?.split('.').pop()}`);
 
 			// Move the uploaded file away from temp folder to storage server
-			await client.FileManager.renameOnSystem(file.filepath, `${path.join(PATHS.CONTENT, user.id, dir.path, `${file.originalFilename}`)}`);
+			const buffer = await readFile(file.filepath);
+			await fileProvider.writeFileToSystem(`${path.join(user.id, dir.path, `${file.originalFilename}`)}`, buffer);
 		} catch (error) {
 			// Delete the files that were uploaded
-			await client.FileManager.deleteFileOnSystem(file.filepath);
+			await fileProvider.deleteFileOnSystem(file.filepath);
+			const uploadedId = uploadedFile?.children.find(c => c.name == file.originalFilename);
+			if (uploadedId) client.FileManager.deleteFromDB(uploadedId.id);
+
 			throw error;
 		}
 	}
@@ -107,7 +122,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 };
 
 // Helper function to create folders recursively
-async function ensureFolderExists(client: Client, userId: string, fullPath: string) {
+async function ensureFolderExists(client: Client, userId: string, fullPath: string, storageId: string) {
 	const pathParts = fullPath.split('/');
 	let parentDir = await client.FileManager.getByFilePath(userId, '/') as File;
 	let currentPath = parentDir.path;
@@ -128,6 +143,7 @@ async function ensureFolderExists(client: Client, userId: string, fullPath: stri
 					size: 4096n,
 					type: 'DIRECTORY',
 					mimetype: null,
+					storageId: storageId,
 				},
 			});
 		}

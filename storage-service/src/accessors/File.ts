@@ -31,6 +31,7 @@ export default class FileAccessor {
 				type: data.type,
 				parentId: data.parentId,
 				mimetype: data.mimetype,
+				storageId: data.storageId,
 			},
 			include: {
 				children: data.type == 'DIRECTORY',
@@ -46,7 +47,7 @@ export default class FileAccessor {
     * @param {updateFile} data The file data.
     * @returns {File} The updated file.
   */
-	async update(data: updateFile): Promise<FullFile> {
+	async update(data: updateFile) {
 		if (data.children !== undefined && data.children.mimetype !== null) await fetchOrCreateFileMediaType(data.children.mimetype);
 
 		const file = await client.file.update({

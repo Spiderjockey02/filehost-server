@@ -26,9 +26,8 @@ model User {
   group             Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   totalStorageSize  BigInt  @default(0)
   role              String  @default("user")
-  banned            Boolean @default(false)
-  banReason         String?
-  banExpires        DateTime?
+  storage           StorageMedium    @relation(fields: [storageId], references: [id])
+  storageId         String
 }
 
 model Session {
@@ -112,9 +111,33 @@ model File {
   userId      String
   mediatype   MediaType? @relation(fields: [mimetype], references: [name])
   mimetype    String?
+  storage     StorageMedium    @relation(fields: [storageId], references: [id])
+  storageId   String
   recentlyViewedBy  RecentlyViewedFile[]
 
   @@unique([path, userId])
+}
+
+enum StorageType {
+  FILE_SYSTEM
+  S3
+}
+
+model StorageMedium {
+  id          String      @id     @default(cuid())
+  type        StorageType
+  name        String
+  basePath    String
+  latitude    Float?
+  longitude   Float?
+  endpoint    String?
+  maxSize     BigInt      @default(0)
+  usedSize    BigInt      @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  files       File[]
+  users       User[]
 }
 
 model MediaType {

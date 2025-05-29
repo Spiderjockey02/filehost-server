@@ -1,5 +1,5 @@
 import express from 'express';
-import { generateRoutes, logUserActivity } from './utils';
+import { generateRoutes, logUserActivity, PATHS } from './utils';
 import compression from 'compression';
 import type { customRequest, customResponse } from './types';
 import { join } from 'path';
@@ -21,6 +21,28 @@ const client = new Client();
 			client.logger.error(err);
 		}
 	}
+
+	// Create a storage medium (if not exists) where files will be stored
+	if (await client.FileManager.storageManager.fetchCount() < 2) {
+		// Where files will be stored (by default)
+		await client.FileManager.storageManager.create({
+			name: 'Default Storage Medium',
+			type: 'FILE_SYSTEM',
+			basePath: PATHS.CONTENT,
+			latitude: 0,
+			longitude: 0,
+		});
+
+		// Where thumbnails will be stored
+		await client.FileManager.storageManager.create({
+			name: 'Thumbnails',
+			type: 'FILE_SYSTEM',
+			basePath: PATHS.AVATAR,
+			latitude: 0,
+			longitude: 0,
+		});
+	}
+
 
 	// Get all endpoints
 	const endpoints = generateRoutes(join(__dirname, './', 'routes')).filter(e => e.route !== '/index');

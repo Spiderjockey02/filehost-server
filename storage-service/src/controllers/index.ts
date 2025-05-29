@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import { getSession } from '../middleware';
 import { Error, PATHS } from '../utils';
+import { User } from '@prisma/client';
 
 // Endpoint GET /avatar/:userId?
 export const getAvatar = (client: Client) => {
@@ -58,7 +59,9 @@ export const getContent = (client: Client) => {
 		} catch (error) {
 			client.logger.error(error);
 		}
-		client.FileManager.sendFile(res, file, req.headers.range);
+
+		const owner = await client.userManager.fetchbyParam({ id: file.userId }) as User;
+		client.FileManager.sendFile(res, owner, file, req.headers.range);
 	};
 };
 

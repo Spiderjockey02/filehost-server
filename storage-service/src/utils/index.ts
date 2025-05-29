@@ -111,6 +111,27 @@ export function parseMySQLConnectionString(connectionString: string) {
 	};
 }
 
+export function parseS3Url(s3Url: string) {
+	if (!s3Url.startsWith('s3://')) throw 'Invalid S3 URL';
+
+	const parsed = new URL(s3Url);
+	const accessKeyId = decodeURIComponent(parsed.username);
+	const secretAccessKey = decodeURIComponent(parsed.password);
+	const endpoint = `${parsed.protocol.replace(':', '')}://${parsed.hostname}${parsed.port ? `:${parsed.port}` : ''}`;
+	const bucket = parsed.pathname.replace(/^\/+/, '').split('/')[0];
+	const region = parsed.searchParams.get('region') || 'us-east-1';
+	const forcePathStyle = parsed.searchParams.get('pathStyle') === 'true';
+
+	return {
+		endpoint,
+		region,
+		accessKeyId,
+		secretAccessKey,
+		bucket,
+		forcePathStyle,
+	};
+}
+
 export function logUserActivity(client: Client) {
 	return (req: Request, res: Response, next: NextFunction) => {
 		const startTime = Date.now();
