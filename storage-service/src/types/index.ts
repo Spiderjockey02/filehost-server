@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { User, File } from '@prisma/client';
 import { MakeDirectoryOptions, Mode } from 'node:fs';
+import { Writable } from 'node:stream';
 
 // For logger
 export type loggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
@@ -38,12 +39,14 @@ export interface StorageProvider {
   getNumberOfChildrenInFolder(folderPath: string): Promise<number>;
   deleteFolderOnSystem(folderPath: string): Promise<void>;
   deleteFileOnSystem(filePath: string): Promise<void>;
+  uploadFileToSystem(userId: string, fileName: string): Writable
   writeFileToSystem(filePath: string, data: Buffer | string): Promise<void>;
-  readFileFromSystem(filePath: string): Promise<Buffer>;
-	readFileFromSystem(filePath: string, encoding?: BufferEncoding): Promise<string>;
-  readFileFromSystem(filePath: string, encoding?: BufferEncoding): Promise<string | Buffer>;
+  readFileFromSystem(file: File): Promise<Buffer>;
+	readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
+  readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string | Buffer>;
   sendFile(res: Response, file: File, range?: string): Promise<void>;
   getFileSystemStatistics(): storageMediumSize;
+  checkFileExists(filePath:string): Promise<boolean>
 }
 
 export interface storageMediumSize {

@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, MakeDirectoryOptions, Mode, statSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, MakeDirectoryOptions, Mode, statSync } from 'node:fs';
 import type { File } from '@prisma/client';
 import { exec } from 'node:child_process';
 import { Error } from '../../utils';
@@ -164,6 +164,10 @@ export default class FileSystemManager implements StorageProvider {
 		if (existsSync(cleanedFilePath)) return fs.unlink(cleanedFilePath);
 	}
 
+	uploadFileToSystem(_userId: string, fileName: string) {
+		return createWriteStream(fileName);
+	}
+
 	/**
 	  * Write a file to the system.
 	  * @param {string} filePath The file path.
@@ -179,13 +183,13 @@ export default class FileSystemManager implements StorageProvider {
 	  * @param {string} filePath The file path.
 		* @return {string} The data read from the file.
 	*/
-	async readFileFromSystem(filePath: string): Promise<Buffer>;
-	async readFileFromSystem(filePath: string, encoding?: BufferEncoding): Promise<string>;
-	async readFileFromSystem(filePath: string, encoding?: BufferEncoding): Promise<Buffer | string> {
+	async readFileFromSystem(file: File): Promise<Buffer>;
+	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
+	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<Buffer | string> {
 		if (encoding) {
-			return fs.readFile(path.join(this.basePath, filePath), encoding);
+			return fs.readFile(path.join(this.basePath, file.userId, file.path), encoding);
 		} else {
-			return fs.readFile(path.join(this.basePath, filePath));
+			return fs.readFile(path.join(this.basePath, file.userId, file.path));
 		}
 	}
 
@@ -226,7 +230,7 @@ export default class FileSystemManager implements StorageProvider {
 					createReadStream(filePath).pipe(res);
 				}
 			} else {
-			// Default for images, text, pdf, etc.
+				// Default for images, text, pdf, etc.
 				res.type(mime);
 				createReadStream(filePath).pipe(res);
 			}

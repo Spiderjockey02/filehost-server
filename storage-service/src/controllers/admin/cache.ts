@@ -12,6 +12,10 @@ export const getCachedThumbnailSize = (client: Client) => {
 			if (!existsSync(PATHS.THUMBNAIL)) await fs.mkdir(PATHS.THUMBNAIL);
 			const folderSize = await buildFolderSizeRecursively(PATHS.THUMBNAIL, { sizeInBytes: 0, count: 0 });
 
+			// Update database for thumbnail cache
+			const storage = await client.FileManager.storageManager.fetchThumbnailMedium();
+			if (storage) await client.FileManager.storageManager.update({ id: storage.id, usedSize: folderSize.sizeInBytes });
+
 			res.json({ folderSize });
 		} catch (err) {
 			client.logger.error(err);

@@ -26,7 +26,7 @@ client.$on('error', (data) => {
 	LoggerClass.error(data.message);
 });
 
-const extendedClient = client.$extends({
+const prismaClient = client.$extends({
 	query: {
 		$allModels: {
 			async $allOperations({ model, operation, args, query }) {
@@ -67,4 +67,4 @@ const extendedClient = client.$extends({
 	},
 });
 
-export default extendedClient;
+export default prismaClient;

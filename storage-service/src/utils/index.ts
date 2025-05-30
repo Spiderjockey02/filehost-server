@@ -114,7 +114,7 @@ export function parseMySQLConnectionString(connectionString: string) {
 export function parseS3Url(s3Url: string) {
 	if (!s3Url.startsWith('s3://')) throw 'Invalid S3 URL';
 
-	const parsed = new URL(s3Url);
+	const parsed = new URL(s3Url.replace('s3://', 'http://'));
 	const accessKeyId = decodeURIComponent(parsed.username);
 	const secretAccessKey = decodeURIComponent(parsed.password);
 	const endpoint = `${parsed.protocol.replace(':', '')}://${parsed.hostname}${parsed.port ? `:${parsed.port}` : ''}`;
