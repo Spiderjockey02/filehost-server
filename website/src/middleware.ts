@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
 		const data = await res.json();
 
 		// Check to see if the user is logged in
-		if (data.user) {
+		if (data?.user) {
 			if (request.nextUrl.pathname.startsWith('/admin')) {
 				if (data.user.role !== 'admin') {
 					return NextResponse.redirect(new URL('/', request.url));
