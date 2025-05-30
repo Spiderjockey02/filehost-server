@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, DeleteObjectCommand, CopyObjectCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
 import type { File } from '@prisma/client';
 import archiver from 'archiver';
 import type { Response } from 'express';
@@ -8,6 +8,8 @@ import { promisify } from 'node:util';
 import { storageMediumSize, StorageProvider } from 'src/types';
 import { parseS3Url } from '../../utils';
 const pipeline = promisify(stream.pipeline);
+import { Upload } from '@aws-sdk/lib-storage';
+import { PassThrough } from 'node:stream';
 
 export default class S3Manager implements StorageProvider {
 	diskData: storageMediumSize;
@@ -31,7 +33,7 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	private getKey(userId: string, filePath: string): string {
-		return `${userId}/${filePath}`;
+		return path.join(userId, filePath);
 	}
 
 	async downloadFile(res: Response, userId: string, filePath: string) {
@@ -125,18 +127,58 @@ export default class S3Manager implements StorageProvider {
 		await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: filePath }));
 	}
 
-	async writeFileToSystem(filePath: string, data: Buffer | string) {
-		await this.s3.send(new PutObjectCommand({
-			Bucket: this.bucketName,
-			Key: filePath,
-			Body: data,
-		}));
+	uploadFileToSystem(userId: string, fileName: string) {
+		const pass = new PassThrough();
+
+		const upload = new Upload({
+			client: this.s3,
+			params: {
+				Bucket: this.bucketName,
+				Key: `uploads/${userId}/${fileName}`,
+				Body: pass,
+			},
+		});
+
+		upload.on('httpUploadProgress', (progress) => {
+			if (progress.total && progress.loaded) {
+				console.log(`Progress: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
+			}
+		});
+
+		upload.done().catch(err => {
+			console.error('S3 upload error:', err);
+		});
+
+		return pass;
 	}
 
-	async readFileFromSystem(filePath: string): Promise<Buffer>;
-	async readFileFromSystem(filePath: string, encoding?: BufferEncoding): Promise<string>;
-	async readFileFromSystem(filePath: string, encoding?: BufferEncoding): Promise<string | Buffer> {
-		const command = new GetObjectCommand({ Bucket: this.bucketName, Key: filePath });
+	async writeFileToSystem(filePath: string, data: Buffer | string) {
+		const upload = new Upload({
+			client: this.s3,
+			params: {
+				Bucket: this.bucketName,
+				Key: filePath,
+				Body: data,
+			},
+		});
+
+		upload.on('httpUploadProgress', (progress) => {
+			if (progress.total && progress.loaded) {
+				console.log(`Progress: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
+			}
+		});
+
+		await upload.done();
+	}
+
+	async readFileFromSystem(file: File): Promise<Buffer>;
+	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
+	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string | Buffer> {
+		const command = new GetObjectCommand({
+			Bucket: this.bucketName,
+			Key: this.getKey(file.userId, file.path),
+			Range: (file.mimetype == null || !file.mimetype.split('/')[0].startsWith('video')) ? undefined : `bytes=${0}-${5 * 1024 * 1024}`,
+		 });
 		const s3Response = await this.s3.send(command);
 		const chunks: Buffer[] = [];
 		if (s3Response.Body) {
@@ -149,39 +191,63 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	async sendFile(res: Response, file: File, range?: string) {
-		const key = this.getKey(file.userId, file.path);
-		const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
+		try {
+			const key = this.getKey(file.userId, file.path);
+			const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
 
-		if (!range) {
-			const streamCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
-			const result = await this.s3.send(streamCommand);
-			if (result.Body) {
-				res.writeHead(200, {
-					'Content-Type': file.mimetype ?? 'application/octet-stream',
-					'Content-Length': head.ContentLength ?? 0,
-				});
-				await pipeline(result.Body as stream.Readable, res);
+			if (file.mimetype?.startsWith('video')) {
+				if (range) {
+					const CHUNK_SIZE = 10 * 10 ** 6;
+					const start = Number(range.replace(/\D/g, ''));
+					const end = Math.min(start + CHUNK_SIZE, Number(file.size) - 1);
+
+					const command = new GetObjectCommand({
+						Bucket: this.bucketName,
+						Key: key,
+						Range: `bytes=${start}-${end}`,
+					});
+					const result = await this.s3.send(command);
+					if (result.Body) {
+						res.writeHead(206, {
+							'Content-Range': `bytes ${start}-${end}/${head.ContentLength}`,
+							'Accept-Ranges': 'bytes',
+							'Content-Length': end - start + 1,
+							'Content-Type': file.mimetype ?? 'application/octet-stream',
+						});
+						await pipeline(result.Body as stream.Readable, res);
+					}
+				} else {
+					const command = new GetObjectCommand({
+						Bucket: this.bucketName,
+						Key: key,
+					});
+					const result = await this.s3.send(command);
+					if (result.Body) {
+						res.writeHead(200, {
+							'Content-Type': file.mimetype ?? 'application/octet-stream',
+							'Content-Length': head.ContentLength ?? 0,
+						});
+						await pipeline(result.Body as stream.Readable, res);
+					}
+				}
+			} else {
+				const streamCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
+				const result = await this.s3.send(streamCommand);
+				if (result.Body) {
+					res.writeHead(200, {
+						'Content-Type': file.mimetype ?? 'application/octet-stream',
+						'Content-Length': head.ContentLength ?? 0,
+					});
+					await pipeline(result.Body as stream.Readable, res);
+				}
 			}
-		} else {
-			const rangeMatch = /bytes=(\d+)-(\d+)?/.exec(range);
-			if (!rangeMatch) return;
 
-			const start = parseInt(rangeMatch[1], 10);
-			const end = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : (head.ContentLength ?? 0) - 1;
-			const command = new GetObjectCommand({
-				Bucket: this.bucketName,
-				Key: key,
-				Range: `bytes=${start}-${end}`,
-			});
-			const result = await this.s3.send(command);
-			if (result.Body) {
-				res.writeHead(206, {
-					'Content-Range': `bytes ${start}-${end}/${head.ContentLength}`,
-					'Accept-Ranges': 'bytes',
-					'Content-Length': end - start + 1,
-					'Content-Type': file.mimetype ?? 'application/octet-stream',
-				});
-				await pipeline(result.Body as stream.Readable, res);
+		} catch (err: any) {
+			if (err.code !== 'ERR_STREAM_PREMATURE_CLOSE') console.error('Pipeline error:', err);
+			if (!res.headersSent) {
+				res.status(404).send('File not found or inaccessible');
+			} else {
+				res.destroy();
 			}
 		}
 	}
