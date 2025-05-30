@@ -1,4 +1,5 @@
 import { AdminSideBar, AdminNavBar } from '@/components';
+import { adminSidebarTabs } from '@/types/pages';
 import type { User } from 'better-auth';
 import Head from 'next/head';
 import { ReactNode, useState } from 'react';
@@ -6,7 +7,7 @@ import { ReactNode, useState } from 'react';
 interface Props {
 	children: ReactNode;
 	user: User;
-	activeTab: 'dashboard' | 'users' | 'files' | 'organisations' | 'logs' | 'payments' | 'network'
+	activeTab: adminSidebarTabs
 	tabName?: string
 }
 

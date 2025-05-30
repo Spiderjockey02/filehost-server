@@ -1,5 +1,6 @@
 import { UserHistoryWithFile } from '../database';
 import type { User } from 'better-auth';
+import { adminSidebarTabs } from '../pages';
 
 export type viewTypeTypes = 'List' | 'Tiles';
 
@@ -16,7 +17,7 @@ export interface FileSideBarProps extends FileNavBarProps {
 }
 
 export interface AdminSideBarProps {
-  activeTab: 'dashboard' | 'users' | 'files' | 'organisations' | 'logs' | 'payments' | 'network'
+  activeTab: adminSidebarTabs
   showSidebar: boolean
 }
 

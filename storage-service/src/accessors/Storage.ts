@@ -1,6 +1,6 @@
 import { StorageMedium } from '@prisma/client';
 import client from './prisma';
-import { createStorageMedium } from 'src/types/database/StorageMedium';
+import { createStorageMedium, updateStorageMedium } from 'src/types/database/StorageMedium';
 
 export default class StorageAccessor {
 	// Don't need any special caching as it's a set number
@@ -12,6 +12,15 @@ export default class StorageAccessor {
 
 	async create(data: createStorageMedium) {
 		return client.storageMedium.create({
+			data,
+		});
+	}
+
+	update(data: updateStorageMedium) {
+		return client.storageMedium.update({
+			where: {
+				id: data.id,
+			},
 			data,
 		});
 	}
@@ -43,8 +52,40 @@ export default class StorageAccessor {
 		return storage;
 	}
 
+	async fetchAvatarMedium() {
+		return client.storageMedium.findFirst({
+			where: {
+				avatarOnly: true,
+			},
+		});
+	}
+
+	async fetchThumbnailMedium() {
+		return client.storageMedium.findFirst({
+			where: {
+				thumbnailOnly: true,
+			},
+		});
+	}
+
 	async fetchAll() {
-		return client.storageMedium.findMany();
+		return client.storageMedium.findMany({
+			include: {
+				users: true,
+			},
+		});
+	}
+
+	async fetchCountPerType() {
+		const accounts = await client.storageMedium.findMany();
+
+		const mediumType: Record<string, number> = {};
+		for (const account of accounts) {
+			const type = account.type!;
+			mediumType[type] = (mediumType[type] || 0) + 1;
+		}
+
+		return mediumType;
 	}
 
 	async fetchCount() {
