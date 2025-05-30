@@ -4,7 +4,7 @@ import { Router } from 'express';
 const router = Router();
 
 export default function(client: Client) {
-	router.get('/avatar/:userId?', getAvatar(client));
+	router.get('/avatar/:userId', getAvatar(client));
 
 	router.get('/thumbnail/:userid/:path(*)', getThumbnail(client));
 

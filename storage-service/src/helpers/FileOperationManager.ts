@@ -414,7 +414,8 @@ export default class FileManager extends FileAccessor {
 		if (storage == null) throw 'Storage not found';
 		const fileProvider = this.storageManager.getProvider(storage);
 
-		fileProvider.sendFile(res, { path: await fileProvider.checkFileExists(`${userId}.webp`) ? `${userId}.webp` : 'default-avatar.webp', userId: '' } as File);
+		const hasCustomAvatar = await fileProvider.checkFileExists(`${userId}.webp`);
+		fileProvider.sendFile(res, { path: hasCustomAvatar ? `${userId}.webp` : 'default-avatar.webp', userId: '', mimetype: 'image/webp' } as File);
 	}
 
 	/**

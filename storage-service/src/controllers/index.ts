@@ -4,19 +4,10 @@ import { getSession } from '../middleware';
 import { Error, PATHS } from '../utils';
 import { User } from '@prisma/client';
 
-// Endpoint GET /avatar/:userId?
+// Endpoint GET /avatar/:userId
 export const getAvatar = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		let userId;
-		if (req.params.userId) {
-			userId = req.params.userId;
-		} else {
-			const session = await getSession(client, req);
-			if (!session?.user) return Error.InvalidSession(res);
-			userId = session.user.id;
-		}
-
-		client.FileManager.sendAvatar(res, userId);
+		client.FileManager.sendAvatar(res, req.params.userId);
 	};
 };
 
