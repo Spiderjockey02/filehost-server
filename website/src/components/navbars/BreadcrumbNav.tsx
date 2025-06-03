@@ -116,7 +116,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType, viewType, par
           	<div className="dropdown-menu dropdown-menu-right">
           		<input type="hidden" value="test" name="path" />
           		<label className="dropdown-item btn" id="fileHover">
-          			<FontAwesomeIcon icon={faArrowUpFromBracket} /> Upload<input type="file" hidden multiple name="sampleFile" className="upload-input" onChange={onFileUploadChange} />
+          			<FontAwesomeIcon icon={faArrowUpFromBracket} /> Upload Files<input type="file" hidden multiple name="sampleFile" className="upload-input" onChange={onFileUploadChange} />
           		</label>
           		<div className="dropdown-divider"></div>
           		<a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#createFolderModal">

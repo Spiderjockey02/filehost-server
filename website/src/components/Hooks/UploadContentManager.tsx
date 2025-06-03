@@ -1,9 +1,7 @@
+import type { UploadQueueContextType, UploadFile, UploadStatus } from '@/types/Components/Hooks';
 import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
 import axios, { AxiosRequestConfig } from 'axios';
-import { useSetFolder } from './FileManager';
-import { usePathname } from 'next/navigation';
-import type { UploadQueueContextType, UploadFile, UploadStatus } from '@/types/Components/Hooks';
-
+import { useFolderRefetch } from './FileManager';
 const UploadQueueContext = createContext<UploadQueueContextType | undefined>(undefined);
 
 export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -11,8 +9,7 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 	const controllerRef = useRef<AbortController | null>(null);
 	const [status, setStatus] = useState<UploadStatus>(null);
 	const isProcessingRef = useRef(false);
-	const setFolder = useSetFolder();
-	const path = usePathname();
+	const refreshFolder = useFolderRefetch();
 	const totalBytesRef = useRef(0);
 
 	const processQueue = async () => {
@@ -21,13 +18,18 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 		const startAt = Date.now();
 
 		while (queueRef.current.length > 0) {
-			const { file, parentId } = queueRef.current.shift()!;
-			setStatus({
-				filename: file.name,
-				progress: 0,
-				remaining: 'Calculating...',
-				error: undefined,
-			});
+			const forUploading = queueRef.current.shift();
+			if (!forUploading) break;
+			const { file, parentId } = forUploading;
+
+			if (status == null) {
+				setStatus({
+					filename: file.name,
+					progress: 0,
+					remaining: 'Calculating...',
+					error: undefined,
+				});
+			}
 
 			const formData = new FormData();
 			formData.append('media', file);
@@ -37,7 +39,7 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			let previousLoaded = 0;
 			try {
 				const options: AxiosRequestConfig = {
-					headers: { 'Content-Type': 'multipart/form-data', Accept: 'application/json' },
+					headers: { 'Content-Type': 'multipart/form-data' },
 					responseType: 'json',
 					signal: controllerRef.current.signal,
 					onUploadProgress: ({ loaded }) => {
@@ -80,8 +82,7 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 					continue;
 				}
 
-				const { data: { file: uploadedFile } } = await axios.get(`/api${path}`);
-				setFolder(uploadedFile);
+				refreshFolder();
 			} catch (err) {
 				if (axios.isAxiosError(err)) {
 					setStatus({
@@ -96,19 +97,17 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 		totalBytesRef.current = 0;
 		isProcessingRef.current = false;
+		setStatus(null);
 	};
 
-	const addToQueue = useCallback((files: FileList, parentId: string) => {
-		console.log('Adding files to queue:', files);
-		const fileObjects = Array.from(files).map((file) => ({ file, parentId }));
-		queueRef.current.push(...fileObjects);
-
-		for (const f of fileObjects) {
-			totalBytesRef.current += f.file.size;
+	const addToQueue = (files: FileList | File[], parentId: string) => {
+		for (const file of files) {
+			queueRef.current.push({ file, parentId });
+			totalBytesRef.current += file.size;
 		}
 
 		if (!isProcessingRef.current) processQueue();
-	}, []);
+	};
 
 	const cancelUpload = useCallback(() => {
 		console.log('Cancelling upload');

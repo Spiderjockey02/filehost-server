@@ -26,7 +26,6 @@ export default function DragUploadField({ children, parentId }: DragUploadFieldP
 		e.stopPropagation();
 		dragCounter.current -= 1;
 
-		// Ensure the overlay disappears only when completely leaving the drop zone
 		if (dragCounter.current === 0) {
 			setTimeout(() => {
 				setIsDragging(false);
@@ -40,26 +39,64 @@ export default function DragUploadField({ children, parentId }: DragUploadFieldP
 		setIsDragging(false);
 		dragCounter.current = 0;
 
-		const fileInput = e.dataTransfer;
-		if (!fileInput.files || fileInput.files.length === 0) {
-			return alert('Files list is empty');
+		const items = e.dataTransfer.items;
+		if (!items || items.length === 0) {
+			return alert('No items were dropped');
 		}
 
-		addToQueue(fileInput.files, parentId);
+		const files: File[] = [];
+		for (const item of items) {
+			const entry = item.webkitGetAsEntry?.();
+			if (entry) {
+				const collected = await traverseFileTree(entry);
+				files.push(...collected);
+			}
+		}
+		console.log(files);
+		addToQueue(files, parentId);
 	};
 
 	return (
 		<>
-			<div className='position-relative' style={{ border: isDragging ? '1px dashed #0d6efd' : '', backgroundColor: isDragging ? '#f8f9fa' : 'transparent', transition: 'all 0.3s ease-in-out' }} onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+			<div className='position-relative' style={{ border: isDragging ? '1px dashed #0d6efd' : '', backgroundColor: isDragging ? '#f8f9fa' : 'transparent', transition: 'all 0.3s ease-in-out', minHeight: '50vh' }} onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
 				{isDragging && (
 					<div className="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center text-white fw-bold fs-4 d-flex flex-column align-items-center justify-content-center text-primary">
 						<FontAwesomeIcon icon={faCloudArrowUp} />
 						<p className="mt-2 fw-bold">Release to upload</p>
 					</div>
 				)}
-				<input type="file" multiple hidden={true} id="fileInput" />
+				<input type="file" multiple hidden={true} id="fileInput" webkitdirectory="true" directory="true" />
 				{children}
 			</div>
 		</>
 	);
+}
+
+function traverseFileTree(entry: any, path = ''): Promise<File[]> {
+	return new Promise((resolve) => {
+		if (entry.isFile) {
+			entry.file((file: File) => {
+				const relativePath = path + file.name;
+
+				// Clone the file with updated name
+				const renamedFile = new File([file], relativePath, {
+					type: file.type,
+					lastModified: file.lastModified,
+				});
+
+				resolve([renamedFile]);
+			});
+		} else if (entry.isDirectory) {
+			const dirReader = entry.createReader();
+			dirReader.readEntries(async (entries: any[]) => {
+				const promises = entries.map((ent) =>
+					traverseFileTree(ent, path + entry.name + '/'),
+				);
+				const results = await Promise.all(promises);
+				resolve(results.flat());
+			});
+		} else {
+			resolve([]);
+		}
+	});
 }
