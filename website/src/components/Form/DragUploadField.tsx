@@ -78,7 +78,6 @@ function traverseFileTree(entry: any, path = ''): Promise<File[]> {
 			entry.file((file: File) => {
 				const relativePath = path + file.name;
 
-				// Clone the file with updated name
 				const renamedFile = new File([file], relativePath, {
 					type: file.type,
 					lastModified: file.lastModified,
@@ -88,13 +87,25 @@ function traverseFileTree(entry: any, path = ''): Promise<File[]> {
 			});
 		} else if (entry.isDirectory) {
 			const dirReader = entry.createReader();
-			dirReader.readEntries(async (entries: any[]) => {
-				const promises = entries.map((ent) =>
-					traverseFileTree(ent, path + entry.name + '/'),
-				);
-				const results = await Promise.all(promises);
-				resolve(results.flat());
-			});
+			const entries: any[] = [];
+
+			// readEntries has a cap of 100 so we must loop if we want more than 100 children
+			const readAllEntries = (): void => {
+				dirReader.readEntries(async (batch: any[]) => {
+					if (batch.length) {
+						entries.push(...batch);
+						readAllEntries();
+					} else {
+						const promises = entries.map((ent) =>
+							traverseFileTree(ent, path + entry.name + '/'),
+						);
+						const results = await Promise.all(promises);
+						resolve(results.flat());
+					}
+				});
+			};
+
+			readAllEntries();
 		} else {
 			resolve([]);
 		}
