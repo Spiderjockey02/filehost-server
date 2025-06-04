@@ -107,6 +107,39 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 			// Move the uploaded file away from temp folder to storage server
 			const buffer = await readFile(file.filepath);
 			await fileProvider.writeFileToSystem(`${path.join(user.id, dir.path, `${file.originalFilename}`.substring(lastSlashIndex + 1))}`, buffer);
+
+			// Notification
+			const max = Number(user.group?.maxStorageSize ?? 0);
+			if (max > 0) {
+				const currentUsage = Number(user.totalStorageSize);
+				const newUsage = currentUsage + file.size;
+
+				const thresholds = [
+					{ percent: 0.5, title: 'Storage Usage at 50%', text: 'You have used 50% of your allocated storage. No action is required, but it\'s a good time to plan ahead.' },
+					{ percent: 0.75, title: 'Storage Usage at 75%', text: 'You have used 75% of your allocated storage. Consider cleaning up or upgrading your storage plan.' },
+					{ percent: 0.9, title: 'Storage Usage at 90%', text: 'You are nearing full capacity. Please consider freeing up space or upgrading your plan.' },
+					{ percent: 1.0, title: 'Storage Full', text: 'You have reached your maximum storage capacity. You will not be able to upload new files until space is freed or your plan is upgraded.' },
+				];
+
+				for (const { percent, title, text } of thresholds) {
+					const wasBelow = currentUsage / max < percent;
+					const nowAbove = newUsage / max >= percent;
+
+					if (wasBelow && nowAbove) {
+						client.QueueManager.addToQueue('notifications', () =>
+							client.notificationManager.create({
+								title,
+								text,
+								url: '/files',
+								userId: user.id,
+							}),
+						);
+						break;
+					}
+				}
+			}
+
+			user.totalStorageSize += BigInt(file.size);
 		} catch (error) {
 			console.log(error);
 			// Delete the files that were uploaded
@@ -117,6 +150,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 			throw error;
 		}
 	}
+
 	return { fields, files };
 };
 
