@@ -283,6 +283,17 @@ export default class UserManager {
 			},
 		});
 	}
+	/**
+		* Gets the number of admins
+	*/
+	async fetchAdminTotal() {
+		const users = await client.user.groupBy({
+			by: ['role'],
+			_count: true,
+		});
+
+		return users.find(f => f.role == 'admin')?._count ?? 0;
+	}
 
 	/**
 		* Fetch the count of each provider the users have logged / registered in using.

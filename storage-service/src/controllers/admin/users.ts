@@ -151,15 +151,16 @@ export const getUserEmails = (client: Client) => {
 export const getUserStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const [userTotal, avgstorageUsage, banned] = await Promise.all([
+			const [userTotal, avgstorageUsage, banned, admins] = await Promise.all([
 				client.userManager.fetchTotal(),
 				client.userManager.fetchAverageStorageUsed(),
 				client.userManager.fetchBannedTotal(),
+				client.userManager.fetchAdminTotal(),
 			]);
 
 
 			res.json({
-				total: userTotal.total, new: userTotal.new, active: userTotal.active, avgstorageUsage: avgstorageUsage._avg.totalStorageSize, banned, admins: 0,
+				total: userTotal.total, new: userTotal.new, active: userTotal.active, avgstorageUsage: avgstorageUsage._avg.totalStorageSize, banned, admins,
 			});
 		} catch (err) {
 			client.logger.error(err);
@@ -236,4 +237,3 @@ export const getUserById = (client: Client) => {
 		}
 	};
 };
-
