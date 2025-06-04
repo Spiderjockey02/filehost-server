@@ -1,5 +1,5 @@
 import { TextViewerProps } from '@/types/Components/Views';
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
 export default function TextViewer({ path }: TextViewerProps) {
@@ -12,7 +12,8 @@ export default function TextViewer({ path }: TextViewerProps) {
 			const { data } = await axios.get(path, { signal: controller.signal });
 			setFileContent(data);
 		} catch (err) {
-			if (!axios.isCancel(err)) console.error('Error fetching file content:', err);
+			console.log(err);
+			setFileContent('Failed to load content');
 		}
 
 		return () => controller.abort();
