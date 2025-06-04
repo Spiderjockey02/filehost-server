@@ -41,6 +41,11 @@ export default class FileManager extends FileAccessor {
 		if (files == null && filePath == '') {
 			await this.create({ userId: user.id, path: '/', size: 0n, type: 'DIRECTORY', name: '/', mimetype: null, storageId: user.storageId });
 			await this.storageManager.getProvider(storage).createFolderOnSystem(`${user.id}/`, { recursive: true });
+			await this.client.notificationManager.create({
+				title: 'Welcome!',
+				text: 'Thank you for registering. You can now start uploading files, customizing your storage, and exploring all the features.',
+				userId: user.id,
+			});
 			files = await this.getByFilePath(user.id, filePath);
 		}
 
@@ -448,7 +453,7 @@ export default class FileManager extends FileAccessor {
 	}
 
 	async getFileSystemStatistics() {
-		const storages = await this.storageManager.fetchAll();
+		const storages = await this.storageManager.fetchAll({ page: 0 });
 		const data = storages.map(s => ({ name: s.name, stats: this.storageManager.getProvider(s).getFileSystemStatistics() }));
 		return data;
 	}
