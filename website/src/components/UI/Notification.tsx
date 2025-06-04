@@ -1,18 +1,19 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faClock, faInbox } from '@fortawesome/free-solid-svg-icons';
 import { NotificationProps } from '@/types/Components/UI';
 import { useIsMobile } from '../Hooks/IsMobile';
 import { authClient } from '@/auth/client';
 import Link from 'next/link';
 import axios from 'axios';
 import { format } from '@/utils/functions';
-
+import { SyntheticEvent } from 'react';
 
 export default function NotificationBell({ notifications }: NotificationProps) {
 	const { refetch } = authClient.useSession();
 	const isMobile = useIsMobile();
 
-	async function deleteNotification(id: string) {
+	async function deleteNotification(e: SyntheticEvent, id: string) {
+		e.stopPropagation();
 		try {
 			await axios.delete(`/api/session/notifications/${id}`);
 			refetch();
@@ -47,31 +48,42 @@ export default function NotificationBell({ notifications }: NotificationProps) {
 						}
 					</a>
 			}
-			<div className="dropdown-menu dropdown-menu-end" style={{ width: '300px' }}>
-				<h3 className="dropdown-header">Notifications - {notifications.length}</h3>
-				{
-					notifications.length > 0 ? (
-						notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((notification, index) => (
-							<div key={index} className="d-flex align-items-center px-3 py-2 border-bottom position-relative">
-								<div className="flex-grow-1">
-									<h6 className="mb-1 fw-bold">{notification.title}</h6>
-									{notification.url ?
-										<>
-											<Link className='mb-1 text-muted small' style={{ textDecoration: 'none' }} href={notification.url}>{notification.text}</Link>
-											<br />
-										</>
-										:
-										<p className="mb-1 text-muted small">{notification.text}</p>
-									}
-									<span className="text-primary small">{format(new Date().getTime() - (new Date().getTime() - new Date(notification.createdAt).getTime()))}</span>
-									<button className="btn-close position-absolute top-0 end-0" onClick={() => deleteNotification(notification.id)}></button>
-								</div>
+			<div className="dropdown-menu dropdown-menu-end shadow-sm p-0" style={{ width: '320px' }}>
+				<h6 className="dropdown-header bg-light fw-semibold">
+					<FontAwesomeIcon icon={faBell} className='me-2' />
+					Notifications - {notifications.length}
+				</h6>
+
+				{notifications.length > 0 ? (
+					notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((notification, index) => (
+						<div key={index} className="px-3 py-2 d-flex justify-content-between align-items-start border-bottom position-relative">
+							<div className="me-2 w-100 flex-grow-1">
+								<h6 className="mb-1 fw-bold">
+									{notification.url ? (
+										<Link href={notification.url} className="text-decoration-none text-dark">
+											{notification.title}
+										</Link>
+									) : (
+										notification.title
+									)}
+								</h6>
+								<p className="mb-1 text-muted small text-wrap">
+									{notification.text}
+								</p>
+								<small>
+									<FontAwesomeIcon icon={faClock} className='me-1' />
+									{format(new Date().getTime() - (new Date().getTime() - new Date(notification.createdAt).getTime()))}
+								</small>
 							</div>
-						))
-					) : (
-						<p className="dropdown-item text-center text-muted">You currently have no notifications.</p>
-					)
-				}
+							<button className="btn btn-sm btn-close ms-2 position-absolute top-25 end-0 translate-middle-y" aria-label="Close" onClick={(e) => deleteNotification(e, notification.id)} />
+						</div>
+					))
+				) : (
+					<div className="text-center text-muted py-3">
+						<FontAwesomeIcon icon={faInbox} className='me-2' />
+						No new notifications
+					</div>
+				)}
 			</div>
 		</li>
 	);

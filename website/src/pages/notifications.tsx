@@ -1,32 +1,73 @@
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
+import { faArrowRight, faBell, faCheckCircle, faClock, faInfoCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import axios from 'axios';
 import { User } from 'better-auth';
 import { GetServerSidePropsContext } from 'next';
+import Link from 'next/link';
 
 export default function Notifications() {
 	const { data: session } = authClient.useSession();
-	if (session == null) return null;
+	const { refetch } = authClient.useSession();
 
+	async function deleteNotification(id: string) {
+		try {
+			await axios.delete(`/api/session/notifications/${id}`);
+			refetch();
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	if (session == null) return null;
 	return (
 		<MainLayout user={session.user as User} tabName={`Notifications (${session.user?.notifications.length})`}>
-			<div style={{ minHeight: '68vh' }}>
-				<h1 className="text-center">Notifications ({session.user?.notifications.length})</h1>
-				<div className="accordion" id="accordionExample">
-					{session.user?.notifications.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((notification) => (
-						<div className="accordion-item" key={notification.id}>
-							<h2 className="accordion-header">
-								<button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target={notification.id} aria-expanded="true" aria-controls={notification.id}>
-									{notification.title}
-								</button>
-							</h2>
-							<div id={notification.id} className="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-								<div className="accordion-body">
-									{notification.text}
+			<div className="container py-4" style={{ minHeight: '70vh' }}>
+				<h1 className="text-center mb-4">
+					<FontAwesomeIcon icon={faBell} className='me-2' />
+					Notifications ({session.user?.notifications.length})
+				</h1>
+
+				{session.user?.notifications.length === 0 ? (
+					<div className="alert alert-info text-center" role="alert">
+						<FontAwesomeIcon icon={faCheckCircle} className="me-2"/>
+						You&apos;re all caught up! No new notifications.
+					</div>
+				) : (
+					<div className="row row-cols-1 g-3">
+						{session.user?.notifications
+							.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+							.map((notification) => (
+								<div className="col" key={notification.id}>
+									<div className="card shadow-sm border-0">
+										<div className="card-body">
+											<h5 className="card-title mb-2">
+												<FontAwesomeIcon icon={faInfoCircle} className="text-primary me-2" />
+												{notification.title}
+											</h5>
+											<p className="card-text text-muted small mb-2">
+												<FontAwesomeIcon icon={faClock} className='me-1' />
+												{new Date(notification.createdAt).toLocaleString()}
+											</p>
+											<p className="card-text">{notification.text}</p>
+											{notification.url && (
+												<Link href={notification.url} className="btn btn-sm btn-outline-primary mt-2">
+													<FontAwesomeIcon icon={faArrowRight} className="me-1" />
+													View Details
+												</Link>
+											)}
+											&nbsp;
+											<button className="btn btn-sm btn-outline-danger mt-2" onClick={() => deleteNotification(notification.id)}>
+												<FontAwesomeIcon icon={faTrash} className="me-1" />
+													Delete
+											</button>
+										</div>
+									</div>
 								</div>
-							</div>
-						</div>
-					))}
-				</div>
+							))}
+					</div>
+				)}
 			</div>
 		</MainLayout>
 	);
