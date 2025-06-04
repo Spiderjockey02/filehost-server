@@ -39,7 +39,7 @@ export default function AdminDatabaseBackupCard() {
 				Database Backups
 				<button className='btn btn-secondary' onClick={() => createBackup()}>Backup</button>
 			</Card.Header>
-			<Card.Body>
+			<Card.Body className='table-responsive' style={{ overflowY: 'scroll', maxHeight: '65vh' }}>
 				<Table>
 					<Table.HeaderRow>
 						<Table.Header>Name</Table.Header>
