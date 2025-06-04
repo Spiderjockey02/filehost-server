@@ -250,21 +250,29 @@ export default class FileSystemManager implements StorageProvider {
 	*/
 	private async _fetchDiskData() {
 		const platform = process.platform;
-		if (platform == 'win32') {
-			const { stdout } = await cmd('wmic logicaldisk get size,freespace,caption');
-			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
-			const filtered = parsed.filter(d => process.cwd().toUpperCase().startsWith(d[0].toUpperCase()));
+		try {
+			if (platform == 'win32') {
+				const { stdout } = await cmd('wmic logicaldisk get size,freespace,caption');
+				const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
+				const filtered = parsed.filter(d => process.cwd().toUpperCase().startsWith(d[0].toUpperCase()));
+				this.diskData = {
+					free: Number(filtered[0][1]),
+					total: Number(filtered[0][2]),
+				};
+			} else if (platform == 'linux') {
+				const { stdout } = await cmd('df -Pk --');
+				const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
+				const filtered = parsed.filter(() => true);
+				this.diskData = {
+					free: Number(filtered[0][3]),
+					total: Number(filtered[0][1]),
+				};
+			}
+		} catch (error) {
+			console.log(error);
 			this.diskData = {
-				free: Number(filtered[0][1]),
-				total: Number(filtered[0][2]),
-			};
-		} else if (platform == 'linux') {
-			const { stdout } = await cmd('df -Pk --');
-			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
-			const filtered = parsed.filter(() => true);
-			this.diskData = {
-				free: Number(filtered[0][3]),
-				total: Number(filtered[0][1]),
+				free: 0,
+				total: 0,
 			};
 		}
 	}
