@@ -37,7 +37,7 @@ export default function FileViewTable({ files, setFilePanelToShow, showMoreDetai
 		return sorted.sort((a, b) => {
 			switch (sortKey) {
 				case 'Name':
-					return isAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+					return isAscending ? a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }) : b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' });
 				case 'Size':
 					if (a.type === 'DIRECTORY' && b.type === 'DIRECTORY') {
 						return isAscending
