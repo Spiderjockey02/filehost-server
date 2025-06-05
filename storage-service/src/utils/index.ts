@@ -198,6 +198,7 @@ export function logUserActivity(client: Client) {
 							ipAddress: `${ipAddress}`,
 							userAgent: `${userAgent}`,
 							durationMs,
+							createdAt: new Date(),
 						}).catch(err => {
 							console.error('Failed to log user activity:', err);
 						}),

@@ -21,6 +21,7 @@ interface CreateUserActivity {
   userAgent?: string
   durationMs: number
   userId?: string
+	createdAt?: Date
 }
 
 export async function createUserActivity(data: CreateUserActivity) {
@@ -73,6 +74,7 @@ export async function createUserActivity(data: CreateUserActivity) {
 					id: data.userId,
 				},
 			},
+			createdAt: data.createdAt,
 		},
 	});
 }
