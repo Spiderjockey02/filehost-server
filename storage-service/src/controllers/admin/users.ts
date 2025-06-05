@@ -237,3 +237,17 @@ export const getUserById = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint GET /api/admin/users/:id/accounts
+export const getUserByIdAccounts = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const userId = req.params.id;
+			const accounts = await client.userManager.fetchAccountsByUserId(userId);
+			res.json({ accounts });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch user\'s accounts.');
+		}
+	};
+};

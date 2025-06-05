@@ -326,4 +326,11 @@ export default class UserManager {
 			},
 		});
 	}
+	async fetchAccountsByUserId(userId: string) {
+		return client.account.findMany({
+			where: {
+				userId,
+			},
+		});
+	}
 }

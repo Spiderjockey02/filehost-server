@@ -1,9 +1,27 @@
 import type { AdminUserIdProps } from '@/types/Components/Card';
-import { getStatusColor, formatBytes } from '@/utils/functions';
+import { getStatusColor, formatBytes, queryOptions } from '@/utils/functions';
 import { Card } from '@/components';
 import Image from 'next/image';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDiscord } from '@fortawesome/free-brands-svg-icons';
+import { useQuery } from '@tanstack/react-query';
+import { Account } from '@prisma/client';
+import Link from 'next/link';
 
 export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
+
+	const { data } = useQuery({
+		queryKey: ['userAccounts', user?.id],
+		queryFn: async ({ signal }) => {
+			const res = await fetch(`/api/admin/users/${user?.id}/accounts`, { signal });
+			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
+
+			const d = await res.json();
+			return d as { accounts: Account[] };
+		},
+		...queryOptions,
+	});
+
 	return (
 		<Card className='mb-4'>
 			<Card.Body>
@@ -99,9 +117,22 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 					}
 				</div>
 				<div>
-          Add stuff to edit the user (Ban, update group, send notification etc)
+					<strong>Accounts linked: </strong>
+					<br />
+					{data?.accounts.map(a => (
+						formatProvider(a.providerId)
+					))}
 				</div>
 			</Card.Body>
 		</Card>
 	);
+}
+
+function formatProvider(provider: string) {
+	switch(provider) {
+		case 'discord':
+			return <Link href="https://discord.com" className='btn btn-outline-secondary'><FontAwesomeIcon icon={faDiscord} /></Link>;
+		default:
+			return provider;
+	}
 }
