@@ -1,7 +1,5 @@
-import { CONSTANTS, PATHS } from '../utils';
+import { CONSTANTS } from '../utils';
 import type { File } from '@prisma/client';
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import Client from './Client';
 
 export default class TrashHandler {
@@ -34,6 +32,11 @@ export default class TrashHandler {
 			deletedAt: dateToDelete,
 		});
 
+		// Fetch the storage medium the file is stored on
+		const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
+		if (storage == null) throw new Error('Storage not found');
+		const medium = this.client.FileManager.storageManager.getProvider(storage);
+
 		// If it's a folder, process its children (don't move the folder itself again)
 		if (file.type === 'DIRECTORY') {
 			const children = await this.client.FileManager.getChildrenByParentId(file.id);
@@ -43,15 +46,12 @@ export default class TrashHandler {
 			}
 
 			// Delete the old folder now it should be empty
-			const oldFolderPath = path.join(PATHS.CONTENT, userId, file.path);
-			if ((await fs.readdir(oldFolderPath)).length === 0) {
-				await fs.rmdir(oldFolderPath);
+			if ((await medium.getNumberOfChildrenInFolder(`${userId}${file.path}`)) == 0) {
+				await medium.deleteFolderOnSystem(`${userId}${file.path}`);
 			}
 		} else {
 			// Make sure the folders exist
-			const targetDir = path.join(PATHS.TRASH, userId, file.path);
-			await fs.mkdir(path.dirname(targetDir), { recursive: true });
-			await fs.rename(path.join(PATHS.CONTENT, userId, file.path), path.join(PATHS.TRASH, userId, file.path));
+			await medium.renameOnSystem(`${userId}${file.path}`, `trash/${userId}${file.path}`);
 		}
 
 		// Return the deleted file
@@ -74,6 +74,11 @@ export default class TrashHandler {
 			deletedAt: null,
 		});
 
+		// Fetch the storage medium the file is stored on
+		const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
+		if (storage == null) throw new Error('Storage not found');
+		const medium = this.client.FileManager.storageManager.getProvider(storage);
+
 		// If it's a folder, process its children (don't move the folder itself again)
 		if (file.type === 'DIRECTORY') {
 			const children = await this.client.FileManager.getChildrenByParentId(file.id);
@@ -84,19 +89,15 @@ export default class TrashHandler {
 			}
 
 			// Delete the old folder now it should be empty
-			const oldFolderPath = path.join(PATHS.TRASH, userId, file.path);
-			if ((await fs.readdir(oldFolderPath)).length === 0) {
-				await fs.rmdir(oldFolderPath);
+			if ((await medium.getNumberOfChildrenInFolder(`${userId}${file.path}`)) == 0) {
+				await medium.deleteFolderOnSystem(`${userId}${file.path}`);
 			}
+
 			return file;
 		}
 
 		// Ensure the new folder structure exists on the file system
-		const newFileSystemPath = path.join(PATHS.CONTENT, userId, file.path);
-		await fs.mkdir(path.dirname(newFileSystemPath), { recursive: true });
-
-		// Move the file/folder on the file system
-		await fs.rename(path.join(PATHS.TRASH, userId, file.path), newFileSystemPath);
+		await medium.renameOnSystem(`trash/${userId}${file.path}`, `${userId}${file.path}`);
 		return file;
 	}
 
@@ -121,7 +122,12 @@ export default class TrashHandler {
 		if (file && file.deletedAt !== null) {
 			await this.client.FileManager.deleteFromDB(file.id);
 			await this.client.userManager.modifyStorageSize(userId, file.size, 'DECRE');
-			await fs.rm(`${PATHS.CONTENT}/${userId}${filePath}`, { recursive: true });
+			const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
+			if (storage !== null) {
+				const medium = this.client.FileManager.storageManager.getProvider(storage);
+				medium.deleteFileOnSystem(`${userId}${filePath}`);
+			}
+
 		}
 	}
 }

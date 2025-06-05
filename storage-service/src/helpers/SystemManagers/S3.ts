@@ -95,16 +95,18 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	async copyFileOnSystem(oldPath: string, newPath: string) {
-		const copySource = `${this.bucketName}/${oldPath}`;
+		const encodeKeyForCopySource = (key: string) => key.split('/').map(encodeURIComponent).join('/');
+
+		const copySource = `${this.bucketName}/${encodeKeyForCopySource(oldPath).replace(/\//g, '\\')}`;
 		const command = new CopyObjectCommand({
 			Bucket: this.bucketName,
 			CopySource: copySource,
-			Key: newPath,
+			Key: newPath.replace(/\//g, '\\'),
 		});
 		await this.s3.send(command);
 	}
 
-	async getNumberOfChildrenInFolder(folderPath: string): Promise<number> {
+	async getNumberOfChildrenInFolder(folderPath: string) {
 		const command = new ListObjectsV2Command({
 			Bucket: this.bucketName,
 			Prefix: folderPath.endsWith('/') ? folderPath : `${folderPath}/`,
