@@ -31,26 +31,8 @@ export async function createUserActivity(data: CreateUserActivity) {
 
 	return client.userActivity.create({
 		data: {
-			methodType: {
-				connectOrCreate: {
-					where: {
-						method: data.method,
-					},
-					create: {
-						method: data.method,
-					},
-				},
-			},
-			responseCode: {
-				connectOrCreate: {
-					where: {
-						code: data.statusCode,
-					},
-					create: {
-						code: data.statusCode,
-					},
-				},
-			},
+			method: data.method,
+			statusCode: data.statusCode,
 			endpoint: data.endpoint,
 			incomingBytes: data.incomingBytes,
 			outgoingBytes: data.outgoingBytes,
@@ -106,31 +88,27 @@ export async function getInboundOutboundBytes() {
 }
 
 export async function getHTTPMethods() {
-	const result = await client.activityMethod.findMany({
-		include: {
-			_count: {
-				select: {
-					history: true,
-				},
-			},
-		},
+	const result = await client.userActivity.groupBy({
+		by: ['method'],
+		_count: { method: true },
 	});
 
-	return result;
+	return result.map(r => ({
+		method: r.method,
+		_count: { history: r._count.method },
+	}));
 }
 
 export async function getHTTPStatus() {
-	const result = await client.activityStatusCode.findMany({
-		include: {
-			_count: {
-				select: {
-					history: true,
-				},
-			},
-		},
+	const result = await client.userActivity.groupBy({
+		by: ['statusCode'],
+		_count: { statusCode: true },
 	});
 
-	return result;
+	return result.map(r => ({
+		code: r.statusCode,
+		_count: { history: r._count.statusCode },
+	}));
 }
 
 export async function averageDuration() {

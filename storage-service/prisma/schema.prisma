@@ -208,12 +208,22 @@ model CronJob {
   schedule      String    @default("0 * * * *")
 }
 
+enum HTTPMethod {
+  CONNECT
+  DELETE
+  GET
+  HEAD
+  OPTIONS
+  PATCH
+  POST
+  PUT
+  TRACE
+}
+
 model UserActivity {
   id            String   @id          @default(cuid())
-  methodType    ActivityMethod        @relation(fields: [method], references: [method], onDelete: Cascade)
   method        HTTPMethod
   endpoint      String
-  responseCode  ActivityStatusCode    @relation(fields: [statusCode], references: [code], onDelete: Cascade)
   statusCode    Int
   incomingBytes Int
   outgoingBytes Int
@@ -228,31 +238,10 @@ model UserActivity {
 
   @@index([userId])
   @@index([statusCode])
+  @@index([method])
   @@index([ipAddress])
   @@index([userAgent])
   @@index([createdAt])
-}
-
-model ActivityStatusCode {
-  code          Int       @id
-  history       UserActivity[]
-}
-
-enum HTTPMethod {
-  CONNECT
-  DELETE
-  GET
-  HEAD
-  OPTIONS
-  PATCH
-  POST
-  PUT
-  TRACE
-}
-
-model ActivityMethod {
-  method        HTTPMethod      @id
-  history       UserActivity[]
 }
 
 model IpAddress {
