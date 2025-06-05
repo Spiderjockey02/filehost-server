@@ -223,17 +223,12 @@ export default class UserManager {
 	async fetchGroupCountsByLanguageCodes() {
 		const languageCode = await client.user.groupBy({
 			by: ['languageCode'],
+			_count: true,
 		});
 
-		const codesWithCount: {[ key: string ]: number} = {};
-		for (const code of languageCode) {
-			const count = await client.user.count({
-				where: {
-					languageCode: code.languageCode,
-				},
-			});
-
-			codesWithCount[code.languageCode] = count;
+		const codesWithCount: { [key: string]: number } = {};
+		for (const item of languageCode) {
+			codesWithCount[item.languageCode] = item._count;
 		}
 
 		return codesWithCount;
@@ -300,15 +295,17 @@ export default class UserManager {
 		* @returns An object of providers with values the number of users
 	*/
 	async fetchSignUpSource() {
-		const accounts = await client.account.findMany();
+		const result = await client.account.groupBy({
+			by: ['providerId'],
+			_count: true,
+		});
 
-		const domainCount: Record<string, number> = {};
-		for (const account of accounts) {
-			const providerId = account.providerId!;
-			domainCount[providerId] = (domainCount[providerId] || 0) + 1;
+		const providerCount: Record<string, number> = {};
+		for (const row of result) {
+			providerCount[row.providerId] = row._count;
 		}
 
-		return domainCount;
+		return providerCount;
 	}
 
 	/**

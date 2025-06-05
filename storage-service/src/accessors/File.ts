@@ -9,7 +9,7 @@ export default class FileAccessor {
 
 	constructor() {
 		this.cache = new LRUCache({
-			max: 100,
+			max: 10_000,
 			ttl: 1000 * 60 * 60,
 		});
 	}
@@ -47,7 +47,7 @@ export default class FileAccessor {
     * @param {updateFile} data The file data.
     * @returns {File} The updated file.
   */
-	async update(data: updateFile) {
+	async update(data: updateFile): Promise<FullFile> {
 		if (data.children !== undefined && data.children.mimetype !== null) await fetchOrCreateFileMediaType(data.children.mimetype);
 
 		const file = await client.file.update({
@@ -167,7 +167,12 @@ export default class FileAccessor {
 				},
 			},
 		});
-		if (file !== null) this.cache.set(`${userId}_${file.path.startsWith('/') ? file.path : `/${file.path}`}`, file);
+
+		if (file !== null) {
+			await this.getChildrenByParentId(file.id);
+			this.cache.set(`${userId}_${file.path.startsWith('/') ? file.path : `/${file.path}`}`, file);
+		}
+
 		return file;
 	}
 
@@ -188,12 +193,36 @@ export default class FileAccessor {
 		* @param {string} parentId The file id.
 		* @returns {File[]} The files.
 	*/
-	getChildrenByParentId(parentId: string): Promise<File[]> {
-		return client.file.findMany({
+	async getChildrenByParentId(parentId: string): Promise<File[]> {
+		const files = await client.file.findMany({
 			where: {
 				parentId,
 			},
+			include: {
+				children: {
+					where: {
+						deletedAt: null,
+					},
+					include: {
+						_count: {
+							select: {
+								children: {
+									where: {
+										deletedAt: null,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		});
+
+		for (const file of files) {
+			this.cache.set(`${file.userId}_${file.path}`, file);
+		}
+
+		return files;
 	}
 
 	/**
