@@ -28,6 +28,11 @@ model User {
   role              String  @default("user")
   storage           StorageMedium    @relation(fields: [storageId], references: [id])
   storageId         String
+
+  @@index([groupId])
+  @@index([storageId])
+  @@index([role])
+  @@index([createdAt])
 }
 
 model Session {
@@ -41,7 +46,10 @@ model Session {
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   impersonatedBy  String?
+
   @@unique([token])
+  @@index([userId])
+  @@index([expiresAt])
   @@map("session")
 }
 
@@ -61,6 +69,9 @@ model Account {
   createdAt             DateTime
   updatedAt             DateTime
 
+  @@index([userId])
+  @@index([providerId(length: 191)])
+  @@index([accountId(length: 191)])
   @@map("account")
 }
 
@@ -71,6 +82,9 @@ model Verification {
   expiresAt	    DateTime
   createdAt	    DateTime
   updatedAt	    DateTime
+
+  @@index([identifier])
+  @@index([expiresAt])
 }
 
 model Group {
@@ -88,6 +102,9 @@ model Notification {
   url         String?
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 enum FileType {
@@ -116,6 +133,11 @@ model File {
   recentlyViewedBy  RecentlyViewedFile[]
 
   @@unique([path, userId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([storageId])
+  @@index([deletedAt])
+  @@index([mimetype])
 }
 
 enum StorageType {
@@ -128,8 +150,7 @@ model StorageMedium {
   type          StorageType
   name          String
   basePath      String
-  latitude      Float?
-  longitude     Float?
+  location      String     @default("Europe")
   endpoint      String?
   maxSize       BigInt      @default(0)
   usedSize      BigInt      @default(0)
@@ -158,6 +179,8 @@ model RecentlyViewedFile {
   viewedAt    DateTime @default(now())
 
   @@unique([fileId, userId])
+  @@index([userId])
+  @@index([fileId])
 }
 
 enum Status {
@@ -173,6 +196,9 @@ model CronJobLog {
   duration  Int?        @default(0)
   cronJob   CronJob     @relation(fields: [jobName], references: [name], onDelete: Cascade)
   jobName   String
+
+  @@index([jobName])
+  @@index([ranAt])
 }
 
 model CronJob {
@@ -199,6 +225,12 @@ model UserActivity {
   createdAt     DateTime      @default(now())
   user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId        String?
+
+  @@index([userId])
+  @@index([statusCode])
+  @@index([ipAddress])
+  @@index([userAgent])
+  @@index([createdAt])
 }
 
 model ActivityStatusCode {
