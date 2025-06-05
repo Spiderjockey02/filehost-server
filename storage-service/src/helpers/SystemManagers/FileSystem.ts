@@ -1,7 +1,6 @@
 import { createReadStream, createWriteStream, existsSync, MakeDirectoryOptions, Mode, statSync } from 'node:fs';
 import type { File } from '@prisma/client';
 import { exec } from 'node:child_process';
-import { Error } from '../../utils';
 import type { Response } from 'express';
 import fs from 'node:fs/promises';
 import archiver from 'archiver';
@@ -53,13 +52,7 @@ export default class FileSystemManager implements StorageProvider {
 		archive.pipe(res);
 		archive.directory(path.join(this.basePath, userId, filePath), false);
 
-		try {
-			await archive.finalize();
-			res.end();
-		} catch (error) {
-			console.log(error);
-			Error.GenericError(res, 'Failed to create archive');
-		}
+		await archive.finalize();
 	}
 
 	/**
@@ -85,13 +78,7 @@ export default class FileSystemManager implements StorageProvider {
 			}
 		}
 
-		try {
-			await archive.finalize();
-			res.end();
-		} catch (error) {
-			console.log(error);
-			Error.GenericError(res, 'Failed to create archive');
-		}
+		await archive.finalize();
 	}
 
 	/**
@@ -207,14 +194,17 @@ export default class FileSystemManager implements StorageProvider {
 			if (mime.startsWith('video')) {
 				const stat = statSync(filePath);
 				const fileSize = stat.size;
+				const totalFileSize = Math.min(fileSize, Number(file.size));
 
 				if (range) {
-					const CHUNK_SIZE = 2 * 10 ** 6;
-					const start = Number(range.replace(/\D/g, ''));
-					const end = Math.min(start + CHUNK_SIZE, fileSize - 1);
+					const CHUNK_SIZE = 10 * 10 ** 6;
+					const match = range.match(/bytes=(\d+)-(\d*)/);
+					if (!match) throw new Error('Invalid Range header');
+					const start = parseInt(match[1], 10);
+					const end = match[2] ? Math.min(parseInt(match[2], 10), totalFileSize - 1) : Math.min(start + CHUNK_SIZE - 1, totalFileSize - 1);
 
 					const headers = {
-						'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+						'Content-Range': `bytes ${start}-${end}/${totalFileSize}`,
 						'Accept-Ranges': 'bytes',
 						'Content-Length': end - start + 1,
 						'Content-Type': mime,
@@ -224,7 +214,7 @@ export default class FileSystemManager implements StorageProvider {
 					createReadStream(filePath, { start, end }).pipe(res);
 				} else {
 					res.writeHead(200, {
-						'Content-Length': fileSize,
+						'Content-Length': totalFileSize,
 						'Content-Type': mime,
 					});
 					createReadStream(filePath).pipe(res);

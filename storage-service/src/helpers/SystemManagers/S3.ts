@@ -194,22 +194,26 @@ export default class S3Manager implements StorageProvider {
 		try {
 			const key = this.getKey(file.userId, file.path);
 			const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
+			const totalFileSize = Math.min(Number(head.ContentLength), Number(file.size));
 
 			if (file.mimetype?.startsWith('video')) {
 				if (range) {
 					const CHUNK_SIZE = 10 * 10 ** 6;
-					const start = Number(range.replace(/\D/g, ''));
-					const end = Math.min(start + CHUNK_SIZE, Number(file.size) - 1);
+					const match = range.match(/bytes=(\d+)-(\d*)/);
+					if (!match) throw new Error('Invalid Range header');
+					const start = parseInt(match[1], 10);
+					const end = match[2] ? Math.min(parseInt(match[2], 10), totalFileSize - 1) : Math.min(start + CHUNK_SIZE - 1, totalFileSize - 1);
 
 					const command = new GetObjectCommand({
 						Bucket: this.bucketName,
 						Key: key,
 						Range: `bytes=${start}-${end}`,
 					});
+
 					const result = await this.s3.send(command);
 					if (result.Body) {
 						res.writeHead(206, {
-							'Content-Range': `bytes ${start}-${end}/${head.ContentLength}`,
+							'Content-Range': `bytes ${start}-${end}/${totalFileSize}`,
 							'Accept-Ranges': 'bytes',
 							'Content-Length': end - start + 1,
 							'Content-Type': file.mimetype ?? 'application/octet-stream',
@@ -225,7 +229,7 @@ export default class S3Manager implements StorageProvider {
 					if (result.Body) {
 						res.writeHead(200, {
 							'Content-Type': file.mimetype ?? 'application/octet-stream',
-							'Content-Length': head.ContentLength ?? 0,
+							'Content-Length': totalFileSize ?? 0,
 						});
 						await pipeline(result.Body as stream.Readable, res);
 					}
@@ -236,7 +240,7 @@ export default class S3Manager implements StorageProvider {
 				if (result.Body) {
 					res.writeHead(200, {
 						'Content-Type': file.mimetype ?? 'application/octet-stream',
-						'Content-Length': head.ContentLength ?? 0,
+						'Content-Length': totalFileSize ?? 0,
 					});
 					await pipeline(result.Body as stream.Readable, res);
 				}
