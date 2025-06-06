@@ -6,11 +6,13 @@ interface QueuedTask<T> {
   reject: (reason?: any) => void;
 }
 
+type queueKeys = 'NOTIFICATIONS' | 'AUDIT_LOGS'
+
 export default class QueueManager {
 	private queues: Map<string, QueuedTask<any>[]> = new Map();
 	private processing: Map<string, boolean> = new Map();
 
-	async addToQueue<T>(key: string, task: Task<T>): Promise<T> {
+	async addToQueue<T>(key: queueKeys, task: Task<T>): Promise<T> {
 		return new Promise<T>((resolve, reject) => {
 			const queuedTask: QueuedTask<T> = { task, resolve, reject };
 
@@ -21,7 +23,7 @@ export default class QueueManager {
 		});
 	}
 
-	private async processNext(key: string): Promise<void> {
+	private async processNext(key: queueKeys): Promise<void> {
 		if (this.processing.get(key) || !this.queues.get(key)?.length) return;
 		this.processing.set(key, true);
 

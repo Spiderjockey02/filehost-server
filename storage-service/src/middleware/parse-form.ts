@@ -126,7 +126,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 					const nowAbove = newUsage / max >= percent;
 
 					if (wasBelow && nowAbove) {
-						client.QueueManager.addToQueue('notifications', () =>
+						client.QueueManager.addToQueue('NOTIFICATIONS', () =>
 							client.notificationManager.create({
 								title,
 								text,
