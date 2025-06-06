@@ -1,42 +1,57 @@
-import chalk from 'chalk';
-import moment from 'moment';
-import { createRollingFileLogger } from 'simple-node-logger';
-import type { loggerTypes, customRequest, customResponse } from '../types';
+import pino from 'pino';
 import onFinished from 'on-finished';
+import type { loggerTypes, customRequest, customResponse } from '../types';
+import { createRollingFileLogger } from 'simple-node-logger';
 import { getIP } from './';
-const log = createRollingFileLogger({
+
+const fileLogger = createRollingFileLogger({
 	logDirectory: './src/utils/logs',
 	fileNamePattern: 'roll-<DATE>.log',
 	dateFormat: 'YYYY.MM.DD',
 });
 
+const baseLogger = pino({
+	level: 'debug',
+	formatters: {
+		level(label) {
+			return { level: label };
+		},
+	},
+	timestamp: pino.stdTimeFunctions.isoTime,
+	transport: {
+		target: 'pino-pretty',
+		options: {
+			colorize: true,
+			ignore: 'pid,hostname',
+		},
+	},
+});
 
 export default class Logger {
+	private logger = baseLogger;
+
+	api = this.logger.child({ source: 'api' });
+	db = this.logger.child({ source: 'database' });
+
 	log(content: unknown, type: loggerTypes = 'log') {
-		const timestamp = `[${moment().format('HH:mm:ss:SSS')}]:`;
 		switch (type) {
+			case 'ready':
 			case 'log':
-				log.info(content);
-				console.log(`${timestamp} ${chalk.bgBlue(type.toUpperCase())} ${content} `);
+				this.logger.info(content);
+				fileLogger.info(content);
 				break;
 			case 'warn':
-				log.warn(content);
-				console.log(`${timestamp} ${chalk.black.bgYellow(type.toUpperCase())} ${content} `);
+				this.logger.warn(content);
+				fileLogger.warn(content);
 				break;
 			case 'error':
-				log.error(content);
-				console.log(`${timestamp} ${chalk.bgRed(type.toUpperCase())} ${content} `);
+				this.logger.error(content);
+				fileLogger.error(content);
 				break;
 			case 'debug':
 				if (!process.env.debug) return;
-				log.debug(content);
-				console.log(`${timestamp} ${chalk.green(type.toUpperCase())} ${content} `);
-				break;
-			case 'ready':
-				log.info(content);
-				console.log(`${timestamp} ${chalk.black.bgGreen(type.toUpperCase())} ${content}`);
-				break;
-			default:
+				this.logger.debug(content);
+				fileLogger.debug(content);
 				break;
 		}
 	}
@@ -78,20 +93,15 @@ export default class Logger {
 		const	method = req.method,
 			url = req.originalUrl || req.url,
 			status = res.statusCode,
-			color = status >= 500 ? 'bgRed' : status >= 400 ? 'bgMagenta' : status >= 300 ? 'bgCyan' : status >= 200 ? 'bgGreen' : 'dim',
 			requester = getIP(req);
 
 		// How long did it take for the page to load
 		let response_time;
 		if (res._endTime && req._endTime) response_time = (res._endTime + req._endTime) - (res._startTime + req._startTime);
 
-		if (['bgCyan', 'bgGreen', 'dim'].includes(color)) {
-			this.log(`${requester} ${method} ${url} ${chalk[color](status)} - ${(response_time ?? '?')} ms`, 'log');
-		} else if (color == 'bgMagenta') {
-			this.warn(`${requester} ${method} ${url} ${chalk[color](status)} - ${(response_time ?? '?')} ms`);
-		} else {
-			this.error(`${requester} ${method} ${url} ${chalk[color](status)} - ${(response_time ?? '?')} ms`);
-		}
-
+		const message = `${requester} ${method} ${url} ${status} - ${response_time ?? '?'} ms`;
+		if (status >= 500) this.error(message);
+		else if (status >= 400) this.warn(message);
+		else this.log(message, 'log');
 	}
 }
