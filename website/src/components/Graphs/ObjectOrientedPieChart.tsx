@@ -21,9 +21,9 @@ export function ObjectOrientedPieChart({ data }: ObjectOrientedPieChartProps) {
 			tooltip: {
 				callbacks: {
 					label: (tooltipItem) => {
-						const value = Number(tooltipItem.formattedValue || 0);
+						const value = Number(tooltipItem.raw || 0);
 						const percentage = ((value / Object.values(data).reduce((acc, val) => acc + val, 0)) * 100).toFixed(2);
-						return ` ${value} (${percentage}%)`;
+						return ` ${new Intl.NumberFormat().format(value)} (${percentage}%)`;
 					},
 				},
 			},
