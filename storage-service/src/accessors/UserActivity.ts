@@ -11,71 +11,150 @@ const cityReader = new Reader<CityResponse>(db);
 const asnReader = new Reader<AsnResponse>(db2);
 
 
-interface CreateUserActivity {
-	method: HTTPMethod
-  endpoint: string
-  statusCode: number
-  incomingBytes: number
-  outgoingBytes: number
-  ipAddress?: string
-  userAgent?: string
-  durationMs: number
-  userId?: string
-	createdAt?: Date
+type UserActivityInput = {
+	userId?: string;
+	method: HTTPMethod;
+	endpoint: string;
+	statusCode: number;
+	incomingBytes: number;
+	outgoingBytes: number;
+	ipAddress?: string;
+	userAgent?: string;
+	durationMs: number;
+	createdAt: Date;
+};
+
+export class UserActivityBatcher {
+	private buffer: UserActivityInput[] = [];
+	private flushInterval: NodeJS.Timeout;
+
+	constructor() {
+		this.flushInterval = setInterval(() => this.flush(), 5_000);
+	}
+
+	public add(activity: UserActivityInput) {
+		this.buffer.push(activity);
+	}
+
+	private async flush() {
+		if (this.buffer.length === 0) return;
+
+		const batch = [...this.buffer];
+		this.buffer.length = 0;
+
+		try {
+			await createUserActivity(batch);
+		} catch (err) {
+			console.error('Failed to flush user activity batch:', err);
+			this.buffer.push(...batch);
+		}
+	}
+
+	public stop() {
+		clearInterval(this.flushInterval);
+	}
 }
 
-export async function createUserActivity(data: CreateUserActivity) {
-	// Get metadata from the IP address and user agent
-	const city = cityReader.get(`${data.ipAddress}`);
-	const asn = asnReader.get(`${data.ipAddress}`);
-	const parsedUserAgent = new UAParser(data.userAgent);
+export async function createUserActivity(dataList: UserActivityInput[]) {
+	if (dataList.length === 0) return;
 
-	return client.userActivity.create({
-		data: {
-			method: data.method,
-			statusCode: data.statusCode,
-			endpoint: data.endpoint,
-			incomingBytes: data.incomingBytes,
-			outgoingBytes: data.outgoingBytes,
-			ipCon: data.ipAddress == undefined ? undefined : {
-				connectOrCreate: {
-					where: {
-						ip: data.ipAddress,
-					},
-					create: {
-						ip: data.ipAddress,
-						country: city?.country?.names.en || '',
-						city : city?.city?.names.en || '',
-						latitude: city?.location?.latitude || 0,
-						longitude: city?.location?.longitude || 0,
-						isp: asn?.autonomous_system_organization,
-						isVPN: false,
-						isCrawler: false,
-					},
-				},
-			},
-			UserAgentCon: data.userAgent == undefined ? undefined : {
-				connectOrCreate: {
-					where: {
-						agent: data.userAgent,
-					},
-					create: {
-						agent: data.userAgent,
-						browserName: parsedUserAgent.getBrowser().name || '',
-						browserVersion: parsedUserAgent.getBrowser().version || '',
-						osName: parsedUserAgent.getOS().name || '',
-						osVersion: parsedUserAgent.getOS().version || '',
-					},
-				},
-			},
-			durationMs: data.durationMs,
-			user: data.userId == undefined ? undefined : {
-				connect: {
-					id: data.userId,
-				},
-			},
-			createdAt: data.createdAt,
-		},
+	const ipDataMap = new Map<string, {
+		country: string;
+		city: string;
+		latitude: number;
+		longitude: number;
+		isp: string;
+		isVPN: boolean;
+		isCrawler: boolean;
+	}>();
+
+	const agentDataMap = new Map<string, {
+		browserName: string;
+		browserVersion: string;
+		osName: string;
+		osVersion: string;
+	}>();
+
+	for (const entry of dataList) {
+		if (entry.ipAddress && !ipDataMap.has(entry.ipAddress)) {
+			const city = cityReader.get(entry.ipAddress);
+			const asn = asnReader.get(entry.ipAddress);
+
+			ipDataMap.set(entry.ipAddress, {
+				country: city?.country?.names.en || '',
+				city: city?.city?.names.en || '',
+				latitude: city?.location?.latitude || 0,
+				longitude: city?.location?.longitude || 0,
+				isp: asn?.autonomous_system_organization || '',
+				isVPN: false,
+				isCrawler: false,
+			});
+		}
+
+		if (entry.userAgent && !agentDataMap.has(entry.userAgent)) {
+			const parsed = new UAParser(entry.userAgent);
+			agentDataMap.set(entry.userAgent, {
+				browserName: parsed.getBrowser().name || '',
+				browserVersion: parsed.getBrowser().version || '',
+				osName: parsed.getOS().name || '',
+				osVersion: parsed.getOS().version || '',
+			});
+		}
+	}
+
+	const uniqueIps = [...ipDataMap.keys()];
+	const uniqueAgents = [...agentDataMap.keys()];
+
+	// Insert missing IPs
+	if (uniqueIps.length > 0) {
+		const existingIps = await client.ipAddress.findMany({ where: { ip: { in: uniqueIps } } });
+		const existingIpSet = new Set(existingIps.map(ip => ip.ip));
+
+		const missingIps = uniqueIps.filter(ip => !existingIpSet.has(ip));
+		if (missingIps.length > 0) {
+			await client.ipAddress.createMany({
+				data: missingIps.map(ip => ({
+					ip,
+					...ipDataMap.get(ip)!,
+				})),
+				skipDuplicates: true,
+			});
+		}
+	}
+
+	// Insert missing UserAgents
+	if (uniqueAgents.length > 0) {
+		const existingAgents = await client.userAgent.findMany({ where: { agent: { in: uniqueAgents } } });
+		const existingAgentSet = new Set(existingAgents.map(agent => agent.agent));
+
+		const missingAgents = uniqueAgents.filter(agent => !existingAgentSet.has(agent));
+		if (missingAgents.length > 0) {
+			await client.userAgent.createMany({
+				data: missingAgents.map(agent => ({
+					agent,
+					...agentDataMap.get(agent)!,
+				})),
+				skipDuplicates: true,
+			});
+		}
+	}
+
+	// Create final batch
+	const rows = dataList.map(entry => ({
+		method: entry.method,
+		statusCode: entry.statusCode,
+		endpoint: entry.endpoint,
+		incomingBytes: entry.incomingBytes,
+		outgoingBytes: entry.outgoingBytes,
+		ipAddress: entry.ipAddress ?? null,
+		userAgent: entry.userAgent ?? null,
+		userId: entry.userId ?? null,
+		durationMs: entry.durationMs,
+		createdAt: entry.createdAt,
+	}));
+
+	await client.userActivity.createMany({
+		data: rows,
 	});
 }
 
