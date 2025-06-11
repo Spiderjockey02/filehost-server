@@ -21,7 +21,7 @@ export default class UserActivityManager {
 
 	constructor() {
 		this.ipCache = new LRUCache({
-			max: 10_000,
+			max: 100,
 			ttl: 1000 * 60 * 60,
 		});
 

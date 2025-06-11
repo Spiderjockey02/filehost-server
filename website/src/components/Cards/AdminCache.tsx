@@ -34,7 +34,7 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 			<Card.Header>
 				Cache
 			</Card.Header>
-			<Card.Body>
+			<Card.Body className='table-responsive'>
 				<Table>
 					<Table.HeaderRow>
 						<Table.Header>Name</Table.Header>
@@ -63,6 +63,15 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 										<td className="placeholder-glow">
 											<span className="placeholder col-12"></span>
 										</td>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
+										<td className="placeholder-glow">
+											<span className="placeholder col-12"></span>
+										</td>
 									</tr>
 								))
 							) : (
@@ -73,6 +82,13 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 										<td>{stats.files.max}</td>
 										<td>{convertMiliseconds(stats.files.ttl / 1000)}</td>
 										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('files')}>Reset</button></td>
+									</tr>
+									<tr>
+										<td>MIME types</td>
+										<td>{stats.mimeTypes.size}</td>
+										<td>{stats.mimeTypes.max}</td>
+										<td>{convertMiliseconds(stats.mimeTypes.ttl / 1000)}</td>
+										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('mimetype')}>Reset</button></td>
 									</tr>
 									<tr>
 										<td>Users</td>
@@ -94,6 +110,20 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 										<td>{stats.sessions.max}</td>
 										<td>{convertMiliseconds(stats.sessions.ttl / 1000)}</td>
 										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('sessions')}>Reset</button></td>
+									</tr>
+									<tr>
+										<td>IPs</td>
+										<td>{stats.ips.size}</td>
+										<td>{stats.ips.max}</td>
+										<td>{convertMiliseconds(stats.ips.ttl / 1000)}</td>
+										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('ips')}>Reset</button></td>
+									</tr>
+									<tr>
+										<td>User agents</td>
+										<td>{stats.userAgents.size}</td>
+										<td>{stats.userAgents.max}</td>
+										<td>{convertMiliseconds(stats.userAgents.ttl / 1000)}</td>
+										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('userAgents')}>Reset</button></td>
 									</tr>
 									<tr>
 										<td>Thumbnails</td>

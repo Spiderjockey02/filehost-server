@@ -1,26 +1,19 @@
 import { AdminUser } from '..';
 
+interface cacheStat {
+  size: number
+  max: number
+  ttl: number
+}
+
 export interface cacheStats {
-  files: {
-    size: number
-    max: number
-    ttl: number
-  }
-  users: {
-    size: number
-    max: number
-    ttl: number
-  }
-  userHistory: {
-    size: number
-    max: number
-    ttl: number
-  }
-  sessions: {
-    size: number
-    max: number
-    ttl: number
-  }
+  files: cacheStat
+  users: cacheStat
+  userHistory: cacheStat
+  sessions: cacheStat
+  mimeTypes: cacheStat
+  ips: cacheStat
+  userAgents: cacheStat
 }
 
 export interface thumbnailStats {
