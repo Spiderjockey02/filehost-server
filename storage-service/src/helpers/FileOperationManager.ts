@@ -1,7 +1,6 @@
 import { CONSTANTS, normalizePath, PATHS, sanitiseObject } from '../utils';
 import type { File, User } from '@prisma/client';
 import TrashHandler from './TrashHandler';
-import path from 'node:path';
 import Client from './Client';
 import FileAccessor from '../accessors/File';
 import StorageManager from './StorageManager';
@@ -9,6 +8,9 @@ import type { Response } from 'express';
 import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import ThumbnailCreator from './ThumbnailCreator';
+import { FullFile } from 'src/types/database/File';
+import archiver, { Archiver } from 'archiver';
+import { StorageProvider } from 'src/types';
 
 export default class FileManager extends FileAccessor {
 	TrashHandler: TrashHandler;
@@ -68,11 +70,6 @@ export default class FileManager extends FileAccessor {
 		* @param {string} newDirId The new file path.
 	*/
 	async move(user: User, fileId: string, newDirId: string) {
-		// Get storage and it's provider
-		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
-
 		// First Make sure they are not the same IDs
 		if (fileId === newDirId) throw 'Cannot move a file into itself.';
 
@@ -112,22 +109,8 @@ export default class FileManager extends FileAccessor {
 				for (const child of children) {
 					await this.move(user, child.id, oldFile.id);
 				}
-			} else {
-				await fileProvider.createFolderOnSystem(path.join(user.id, newFilePathInDb), { recursive: true });
 			}
-
-			// Delete the old folder now it should be empty
-			if (await fileProvider.getNumberOfChildrenInFolder(path.join(user.id, oldFile.path)) === 0) {
-				await fileProvider.deleteFolderOnSystem(path.join(user.id, oldFile.path));
-			}
-			return;
 		}
-
-		// Ensure the new folder structure exists on the file system
-		await fileProvider.createFolderOnSystem(path.dirname(path.join(user.id, newFilePathInDb)), { recursive: true });
-
-		// Move the file/folder on the file system
-		await fileProvider.renameOnSystem(path.join(user.id, oldFile.path), path.join(user.id, newFilePathInDb));
 	}
 
 	/**
@@ -137,11 +120,6 @@ export default class FileManager extends FileAccessor {
 		* @param {string} newName The new name for the file
 	*/
 	async rename(user: User, fileId: string, newName: string) {
-		// Get storage and it's provider
-		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
-
 		const file = await this.getById(fileId);
 		if (file == null) throw 'File not found';
 
@@ -164,21 +142,11 @@ export default class FileManager extends FileAccessor {
 		if (existingFile) throw 'A file with that name already exists in the same directory.';
 
 		// Will update to also support their children for path to be updated aswell (when it's a directory)
-		const newFile = await this.update({ id: file.id, name: newName, path: newPath });
+		await this.update({ id: file.id, name: newName, path: newPath });
 		if (file.type === 'DIRECTORY') await this.updateChildsPath({ parentId: file.id, userId: user.id, oldPath: file.path, newPath });
 
 		// Update file in the filesystem (If it fails rollback the database changes)
 		this.cache.delete(`${file.userId}_${file.path}`);
-		try {
-			// Rename the file in the filesystem
-			await fileProvider.renameOnSystem(path.join(user.id, file.path), path.join(user.id, newFile.path));
-		} catch (err) {
-			console.log(err);
-			// Rollback database changes on failure
-			await this.update({ id: file.id, name: file.name, path: file.path });
-			if (file.type === 'DIRECTORY') await this.updateChildsPath({ parentId: file.id, userId: user.id, oldPath: newPath, newPath: file.path });
-			throw 'Failed to rename file in filesystem.';
-		}
 	}
 
 	/**
@@ -214,11 +182,6 @@ export default class FileManager extends FileAccessor {
 		* @param {string} folderName The name of the folder.
 	*/
 	async createDirectory(user: User, parentId: string, folderName: string) {
-		// Get storage and it's provider
-		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
-
 		// Check if the folder name is longer than max chars
 		if (folderName.length > CONSTANTS.MAX_CHARS_FILE_NAME) throw `Folder name must be less than ${CONSTANTS.MAX_CHARS_FILE_NAME} characters.`;
 
@@ -233,7 +196,8 @@ export default class FileManager extends FileAccessor {
 		if (parentDir?.userId !== user.id) throw 'You do not have permission to rename this file.';
 
 		// Update the parent directory to include the new folder
-		await this.update({ id: parentDir.id,
+		const file = await this.update({
+			id: parentDir.id,
 			children: {
 				userId: user.id,
 				name: folderName,
@@ -244,7 +208,8 @@ export default class FileManager extends FileAccessor {
 				storageId: user.storageId,
 			},
 		});
-		return fileProvider.createFolderOnSystem(path.join(user.id, parentDir.path, folderName), { recursive: true });
+
+		return file.children.find(f => f.path == `${normalizePath(parentDir.path)}${folderName}`)!;
 	}
 
 	/**
@@ -267,22 +232,25 @@ export default class FileManager extends FileAccessor {
 		if (existingFile) throw 'A file with that name already exists in the same directory.';
 
 		// Create the new file entry in the database
-		const newFile = await this.create({
-			path: newFilePath,
-			name: oldFile.name,
-			size: oldFile.size,
-			userId: oldFile.userId,
-			type: oldFile.type,
-			parentId: newDir.id,
-			mimetype: oldFile.mimetype,
-			storageId: user.storageId,
-		});
+		let newFile: FullFile | null = null;
+		try {
+			newFile = await this.create({
+				path: newFilePath,
+				name: oldFile.name,
+				size: oldFile.size,
+				userId: oldFile.userId,
+				type: oldFile.type,
+				parentId: newDir.id,
+				mimetype: oldFile.mimetype,
+				storageId: user.storageId,
+			});
 
-		// Ensure the target directory exists on the filesystem
-		await fileProvider.createFolderOnSystem(path.join(user.id, newFile.path.substring(0, newFile.path.lastIndexOf('/'))), { recursive: true });
-
-		// Copy the actual file contents
-		await fileProvider.copyFileOnSystem(path.join(user.id, oldFile.path), path.join(user.id, newFile.path));
+			// Copy the actual file contents
+			await fileProvider.copyFileOnSystem(`${user.id}/${oldFile.id}`, `${user.id}/${newFile.id}`);
+		} catch (err) {
+			if (newFile?.id) await this.deleteFromDB(newFile.id);
+			throw err;
+		}
 	}
 
 	/**
@@ -292,11 +260,6 @@ export default class FileManager extends FileAccessor {
 		* @param {File} newDir The name of the folder.
 	*/
 	private async _copyDirectory(user: User, oldDir: File, newDir: File) {
-		// Get storage and it's provider
-		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
-
 		const newFilePath = `${newDir.path}${oldDir.path.substring(oldDir.path.lastIndexOf('/'))}`;
 
 		// Check if file already exists in the target directory
@@ -315,9 +278,6 @@ export default class FileManager extends FileAccessor {
 			storageId: user.storageId,
 		});
 
-		// / Create the directory on the filesystem as well
-		await fileProvider.createFolderOnSystem(path.join(user.id, newFolder.path), { recursive: true });
-
 		// Recursively copy files and subdirectories inside this folder
 		const children = await this.getChildrenByParentId(oldDir.id);
 
@@ -334,35 +294,52 @@ export default class FileManager extends FileAccessor {
 
 	/**
 	  * Download a single file
-	  * @param {Response} res The user's ID.
-	  * @param {User} user The user's ID.
-	  * @param {string} filePath The user's ID.
+	  * @param {Response} res The response to pipe files to
+	  * @param {User} user The user who requested the download.
+	  * @param {File} file The file to download
 	*/
-	async downloadFile(res: Response, user: User, filePath: string) {
+	async downloadFile(res: Response, user: User, file: FullFile) {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
 		if (storage == null) throw 'Storage not found';
 		const fileProvider = this.storageManager.getProvider(storage);
 
 		// Download the file
-		return fileProvider.downloadFile(res, user.id, filePath);
+		if (file.type == 'DIRECTORY') {
+			const archive = archiver('zip', { zlib: { level: 9 } });
+			res.setHeader('Content-Type', 'application/zip');
+			res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
+			archive.pipe(res);
+
+			// Now loop and get the children's files
+			for (const child of file.children) {
+				if (child.type == 'DIRECTORY') {
+					const newFile = await this.getByFilePath(user.id, child.path);
+					if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider, file.path);
+				} else {
+					archive.append(await fileProvider.readFileFromSystem(child), { name: child.path.replace(file.path, '') });
+				}
+			}
+
+			await archive.finalize();
+		} else {
+			fileProvider.downloadFile(res, file);
+		}
 	}
 
-	/**
-	  * Send the thumbnail of the file.
-	  * @param {Response} res The user's ID.
-	  * @param {User} user The user's ID.
-	  * @param {string} filePath The user's ID.
-	*/
-	async downloadDirectory(res: Response, user: User, filePath: string) {
-		// Get storage and it's provider
-		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
+	async traverseFilesForDownloading(archive: Archiver, file: FullFile, fileProvider: StorageProvider, parentFilePath: string) {
+		for (const child of file.children) {
+			if (child.type == 'DIRECTORY') {
+				const newFile = await this.getByFilePath(child.userId, child.path);
+				if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider, parentFilePath);
+			} else {
+				archive.append(await fileProvider.readFileFromSystem(child), { name: child.path.replace(parentFilePath, '') });
+			}
+		}
 
-		// Download the file
-		return fileProvider.downloadDirectory(res, user.id, filePath);
+		return archive;
 	}
+
 
 	/**
 	  * Send the thumbnail of the file.

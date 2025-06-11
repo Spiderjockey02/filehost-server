@@ -3,20 +3,22 @@ import type { File } from '@prisma/client';
 import archiver from 'archiver';
 import type { Response } from 'express';
 import stream from 'stream';
-import path from 'node:path';
 import { promisify } from 'node:util';
 import { storageMediumSize, StorageProvider } from 'src/types';
 import { parseS3Url } from '../../utils';
 const pipeline = promisify(stream.pipeline);
 import { Upload } from '@aws-sdk/lib-storage';
 import { PassThrough } from 'node:stream';
+import Client from '../Client';
+import { FullFile } from 'src/types/database/File';
 
 export default class S3Manager implements StorageProvider {
 	diskData: storageMediumSize;
+	client: Client;
 	private s3: S3Client;
 	private bucketName: string;
 
-	constructor(url: string) {
+	constructor(client: Client, url: string) {
 		const config = parseS3Url(url);
 
 		this.bucketName = config.bucket;
@@ -30,28 +32,25 @@ export default class S3Manager implements StorageProvider {
 			forcePathStyle: config.forcePathStyle,
 		});
 		this.diskData = { free: 0, total: 0 };
+		this.client = client;
 	}
 
-	private getKey(userId: string, filePath: string): string {
-		return path.join(userId, filePath);
-	}
-
-	async downloadFile(res: Response, userId: string, filePath: string) {
-		const key = this.getKey(userId, filePath);
+	async downloadFile(res: Response, file: FullFile) {
+		const key = `${file.userId}/${file.id}`;
 		const command = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
 		const s3Response = await this.s3.send(command);
-		res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
-		if (s3Response.Body) await pipeline(s3Response.Body as stream.Readable, res);
+		res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
+		if (s3Response.Body) await pipeline(s3Response.Body.transformToWebStream(), res);
 	}
 
-	async downloadFiles(res: Response, userId: string, files: File[]) {
+	async downloadFiles(res: Response, _userId: string, files: File[]) {
 		const archive = archiver('zip', { zlib: { level: 9 } });
 		res.setHeader('Content-Type', 'application/zip');
 		res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
 		archive.pipe(res);
 
 		for (const file of files) {
-			const key = this.getKey(userId, file.path);
+			const key = `${file.userId}/${file.id}`;
 			const command = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
 			const s3Response = await this.s3.send(command);
 			if (s3Response.Body) {
@@ -62,93 +61,42 @@ export default class S3Manager implements StorageProvider {
 		await archive.finalize();
 	}
 
-	async downloadDirectory(res: Response, userId: string, folderPath: string) {
-		const prefix = this.getKey(userId, folderPath).replace(/\/+$/, '') + '/';
-		const command = new ListObjectsV2Command({ Bucket: this.bucketName, Prefix: prefix });
-		const { Contents } = await this.s3.send(command);
-		const archive = archiver('zip', { zlib: { level: 9 } });
-
-		res.setHeader('Content-Type', 'application/zip');
-		res.setHeader('Content-Disposition', `attachment; filename="${path.basename(folderPath)}.zip"`);
-		archive.pipe(res);
-
-		for (const obj of Contents || []) {
-			const fileKey = obj.Key!;
-			const relativePath = fileKey.slice(prefix.length);
-			const fileCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: fileKey });
-			const s3Response = await this.s3.send(fileCommand);
-			if (s3Response.Body) {
-				archive.append(s3Response.Body as stream.Readable, { name: relativePath });
-			}
-		}
-
-		await archive.finalize();
-	}
-
-	async renameOnSystem(oldPath: string, newPath: string) {
-		await this.copyFileOnSystem(oldPath, newPath);
-		await this.deleteFileOnSystem(oldPath);
-	}
-
-	async createFolderOnSystem(): Promise<void> {
-		// No-op in S3 since folders are logical.
-	}
-
 	async copyFileOnSystem(oldPath: string, newPath: string) {
 		const encodeKeyForCopySource = (key: string) => key.split('/').map(encodeURIComponent).join('/');
+		const copySource = `${this.bucketName}/${encodeKeyForCopySource(oldPath)}`;
 
-		const copySource = `${this.bucketName}/${encodeKeyForCopySource(oldPath).replace(/\//g, '\\')}`;
 		const command = new CopyObjectCommand({
 			Bucket: this.bucketName,
 			CopySource: copySource,
-			Key: newPath.replace(/\//g, '\\'),
+			Key: newPath,
 		});
 		await this.s3.send(command);
-	}
-
-	async getNumberOfChildrenInFolder(folderPath: string) {
-		const command = new ListObjectsV2Command({
-			Bucket: this.bucketName,
-			Prefix: folderPath.endsWith('/') ? folderPath : `${folderPath}/`,
-		});
-		const { Contents } = await this.s3.send(command);
-		return Contents?.length ?? 0;
-	}
-
-	async deleteFolderOnSystem(folderPath: string) {
-		const prefix = folderPath.endsWith('/') ? folderPath : `${folderPath}/`;
-		const list = await this.s3.send(new ListObjectsV2Command({ Bucket: this.bucketName, Prefix: prefix }));
-		if (list.Contents) {
-			await Promise.all(list.Contents.map(obj =>
-				this.s3.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: obj.Key! })),
-			));
-		}
 	}
 
 	async deleteFileOnSystem(filePath: string) {
 		await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: filePath }));
 	}
 
-	uploadFileToSystem(userId: string, fileName: string) {
+	uploadFileToSystem(filePath: string) {
 		const pass = new PassThrough();
 
 		const upload = new Upload({
 			client: this.s3,
 			params: {
 				Bucket: this.bucketName,
-				Key: `uploads/${userId}/${fileName}`,
+				Key: `uploads/${filePath}`,
 				Body: pass,
 			},
 		});
 
 		upload.on('httpUploadProgress', (progress) => {
 			if (progress.total && progress.loaded) {
-				console.log(`Progress: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
+				this.client.logger.log(`${filePath} uploading: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
 			}
 		});
 
 		upload.done().catch(err => {
-			console.error('S3 upload error:', err);
+			this.client.logger.error(`S3 upload error: ${err}`);
 		});
 
 		return pass;
@@ -166,7 +114,7 @@ export default class S3Manager implements StorageProvider {
 
 		upload.on('httpUploadProgress', (progress) => {
 			if (progress.total && progress.loaded) {
-				console.log(`Progress: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
+				this.client.logger.log(`${filePath} uploading: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
 			}
 		});
 
@@ -178,7 +126,7 @@ export default class S3Manager implements StorageProvider {
 	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string | Buffer> {
 		const command = new GetObjectCommand({
 			Bucket: this.bucketName,
-			Key: this.getKey(file.userId, file.path),
+			Key: `${file.userId}/${file.id}`,
 			Range: (file.mimetype == null || !file.mimetype.split('/')[0].startsWith('video')) ? undefined : `bytes=${0}-${5 * 1024 * 1024}`,
 		 });
 		const s3Response = await this.s3.send(command);
@@ -194,7 +142,7 @@ export default class S3Manager implements StorageProvider {
 
 	async sendFile(res: Response, file: File, range?: string) {
 		try {
-			const key = this.getKey(file.userId, file.path);
+			const key = `${file.userId}/${file.id}`;
 			const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
 			const totalFileSize = Math.min(Number(head.ContentLength), Number(file.size));
 
@@ -268,7 +216,7 @@ export default class S3Manager implements StorageProvider {
 			);
 			return true;
 		} catch (err: any) {
-		// If the error is that the object does not exist, return false
+			// If the error is that the object does not exist, return false
 			if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
 				return false;
 			}
@@ -277,11 +225,21 @@ export default class S3Manager implements StorageProvider {
 		}
 	}
 
-	getFileSystemStatistics() {
-		return { free: 0, total: 0 };
+	async verifyConnection() {
+		try {
+			const command = new ListObjectsV2Command({
+				Bucket: this.bucketName,
+				MaxKeys: 1,
+			});
+			await this.s3.send(command);
+			return true;
+		} catch (error) {
+			console.error(error);
+			return false;
+		}
 	}
 
-	_verifyTraversal(userId: string, filePath: string) {
-		return filePath.startsWith(userId + '/');
+	getFileSystemStatistics() {
+		return { free: 0, total: 0 };
 	}
 }

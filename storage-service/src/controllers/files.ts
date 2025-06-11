@@ -136,15 +136,14 @@ export const postCopyFile = (client: Client) => {
 	};
 };
 
-// Endpoint GET /api/files/download
-export const getDownloadFile = (client: Client) => {
+// Endpoint POST /api/files/download
+export const postDownloadFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(client, req);
 			if (!session?.user) return Error.InvalidSession(res);
-
 			// Validate the file path
-			const { path: filePath } = req.query;
+			const { path: filePath } = req.body;
 			if (typeof filePath !== 'string' || filePath.length == 0) return Error.IncorrectQuery(res, 'File path is missing from request');
 
 			// Fetch file from database
@@ -152,14 +151,7 @@ export const getDownloadFile = (client: Client) => {
 			if (!file) return Error.MissingResource(res, 'File not found');
 
 			// Check if file is a file or actually a directory
-			switch (file.type) {
-				case 'FILE':
-					return client.FileManager.downloadFile(res, session.user, filePath);
-				case 'DIRECTORY':
-					return client.FileManager.downloadDirectory(res, session.user, filePath);
-				default:
-					return Error.GenericError(res, 'Invalid file type');
-			}
+			return client.FileManager.downloadFile(res, session.user, file);
 		} catch (error) {
 			client.logger.error(error);
 			Error.GenericError(res, 'Failed to download file.');
@@ -212,10 +204,10 @@ export const postRenameFile = (client: Client) => {
 // Endpoint POST /api/files/create-folder
 export const postCreateFolder = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		try {
-			const session = await getSession(client, req);
-			if (!session?.user) return Error.InvalidSession(res);
+		const session = await getSession(client, req);
+		if (!session?.user) return Error.InvalidSession(res);
 
+		try {
 			const { parentId, folderName } = req.body;
 			if (typeof folderName !== 'string' || folderName.trim().length == 0) return Error.IncorrectQuery(res, 'Folder name is not a string.');
 

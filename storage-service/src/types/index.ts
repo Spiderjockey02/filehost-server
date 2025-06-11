@@ -1,6 +1,5 @@
 import type { Request, Response } from 'express';
 import { User, File } from '@prisma/client';
-import { MakeDirectoryOptions, Mode } from 'node:fs';
 import { Writable } from 'node:stream';
 
 // For logger
@@ -30,23 +29,18 @@ export interface DatabaseMetadata {
 }
 
 export interface StorageProvider {
-  downloadFile(res: Response, userId: string, filePath: string): Promise<void>;
+  downloadFile(res: Response, file: File): Promise<void>;
   downloadFiles(res: Response, userId: string, files: File[]): Promise<void>;
-  downloadDirectory(res: Response, userId: string, folderPath: string): Promise<void>;
-  renameOnSystem(oldPath: string, newPath: string): Promise<void>;
-  createFolderOnSystem(folderPath: string, options?: Mode | MakeDirectoryOptions | null): Promise<void>;
   copyFileOnSystem(oldPath: string, newPath: string): Promise<void>;
-  getNumberOfChildrenInFolder(folderPath: string): Promise<number>;
-  deleteFolderOnSystem(folderPath: string): Promise<void>;
   deleteFileOnSystem(filePath: string): Promise<void>;
-  uploadFileToSystem(userId: string, fileName: string): Writable
+  uploadFileToSystem(filePath: string): Writable
   writeFileToSystem(filePath: string, data: Buffer | string): Promise<void>;
   readFileFromSystem(file: File): Promise<Buffer>;
 	readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
   readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string | Buffer>;
   sendFile(res: Response, file: File, range?: string): Promise<void>;
   getFileSystemStatistics(): storageMediumSize;
-  checkFileExists(filePath:string): Promise<boolean>
+  verifyConnection(): Promise<boolean>
 }
 
 export interface storageMediumSize {

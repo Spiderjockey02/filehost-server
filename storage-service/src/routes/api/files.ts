@@ -1,4 +1,4 @@
-import { postCopyFile, postCreateFolder, deleteFile, getDownloadFile, getFiles,
+import { postCopyFile, postCreateFolder, deleteFile, postDownloadFile, getFiles,
 	postMoveFile, postFileUpload, postRenameFile, getSearchFile, getAllDirectories,
 	getBulkDownload, deleteBulkFiles } from '../../controllers/files';
 import type Client from '../../helpers/Client';
@@ -19,7 +19,7 @@ export default function(client: Client) {
 	router.post('/copy', postCopyFile(client));
 
 	// Download folder
-	router.get('/download', getDownloadFile(client));
+	router.post('/download', postDownloadFile(client));
 
 	// Download multiple items at once
 	router.post('/bulk-download', getBulkDownload(client));

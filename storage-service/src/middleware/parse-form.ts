@@ -1,12 +1,13 @@
 import type { UserWithGroup } from 'src/types/database/User';
 import { cleanUpVideo } from '../utils/VideoPreprocessor';
-import { CONSTANTS, normalizePath } from '../utils';
+import { CONSTANTS, getIP, normalizePath } from '../utils';
 import type Client from '../helpers/Client';
 import type { File } from '@prisma/client';
 import type { Request } from 'express';
 import formidable from 'formidable';
-import path from 'node:path';
 import { readFile } from 'node:fs/promises';
+import { createAuditLog } from '../accessors/AuditLog';
+import { FullFile } from 'src/types/database/File';
 
 export default async (client: Client, req: Request, user: UserWithGroup) => {
 	// Make sure they haven't already uploaded past their max storage
@@ -38,7 +39,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 	if (metadata.parentId == undefined) throw 'No parentId provided';
 
 	for (const file of files.media ?? []) {
-		let uploadedFile = null;
+		let uploadedFile: FullFile | null = null;
 		try {
 			let dir = await client.FileManager.getById(metadata.parentId);
 			if (!dir) throw 'Missing parent directory 1';
@@ -63,16 +64,14 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 				dir = await ensureFolderExists(client, dir, user.id, folderPath, storage.id);
 				if (!dir) throw 'Missing parent directory 2';
 
-				await client.FileManager.update({
-					id: dir.id,
-					children: {
-						userId: user.id,
-						name: fileName,
-						path: `${dir.path}/${fileName}`,
-						size: BigInt(file.size),
-						mimetype: file.mimetype,
-						storageId: storage.id,
-					},
+				uploadedFile = await client.FileManager.create({
+					userId: user.id,
+					name: fileName,
+					path: `${dir.path}/${fileName}`,
+					size: BigInt(file.size),
+					mimetype: file.mimetype,
+					storageId: storage.id,
+					parentId: dir.id,
 				});
 			} else {
 				dir = await client.FileManager.getByFilePath(user.id, dir.path);
@@ -88,16 +87,14 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 					});
 				}
 
-				uploadedFile = await client.FileManager.update({
-					id: dir.id,
-					children: {
-						userId: user.id,
-						name: `${file.originalFilename}`,
-						path: `${normalizePath(dir.path)}${file.originalFilename}`,
-						size: BigInt(file.size),
-						mimetype: file.mimetype,
-						storageId: storage.id,
-					},
+				uploadedFile = await client.FileManager.create({
+					userId: user.id,
+					name: `${file.originalFilename}`,
+					path: `${normalizePath(dir.path)}${file.originalFilename}`,
+					size: BigInt(file.size),
+					mimetype: file.mimetype,
+					storageId: storage.id,
+					parentId: dir.id,
 				});
 			}
 
@@ -106,7 +103,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 
 			// Move the uploaded file away from temp folder to storage server
 			const buffer = await readFile(file.filepath);
-			await fileProvider.writeFileToSystem(`${path.join(user.id, dir.path, `${file.originalFilename}`.substring(lastSlashIndex + 1))}`, buffer);
+			await fileProvider.writeFileToSystem(`${user.id}/${uploadedFile.id}`, buffer);
 
 			// Notification
 			const max = Number(user.group?.maxStorageSize ?? 0);

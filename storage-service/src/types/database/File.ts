@@ -29,7 +29,7 @@ export interface updateFilePath {
 }
 
 export type FullFile = Prisma.FileGetPayload<{
-  include?: {
+  include: {
     children: true
   }
   _count?: {

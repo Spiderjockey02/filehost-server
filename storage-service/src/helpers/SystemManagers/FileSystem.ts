@@ -1,4 +1,4 @@
-import { createReadStream, createWriteStream, existsSync, MakeDirectoryOptions, Mode, statSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, statSync } from 'node:fs';
 import type { File } from '@prisma/client';
 import { exec } from 'node:child_process';
 import type { Response } from 'express';
@@ -7,6 +7,8 @@ import archiver from 'archiver';
 import path from 'node:path';
 import util from 'node:util';
 import { storageMediumSize, StorageProvider } from 'src/types';
+import Client from '../Client';
+import { FullFile } from 'src/types/database/File';
 const cmd = util.promisify(exec);
 
 /**
@@ -17,9 +19,11 @@ const cmd = util.promisify(exec);
 export default class FileSystemManager implements StorageProvider {
 	diskData: storageMediumSize;
 	basePath: string;
+	client: Client;
 
-	constructor(basePath: string) {
+	constructor(client: Client, basePath: string) {
 		this.basePath = basePath;
+		this.client = client;
 
 		// Fetch disk data & update every 5 minutes
 		this.diskData = { free: 0, total: 0 };
@@ -27,40 +31,10 @@ export default class FileSystemManager implements StorageProvider {
 		setInterval(() => this._fetchDiskData(), 1000 * 60 * 10);
 	}
 
-	/**
-	  * Send the thumbnail of the file.
-	  * @param {Response} res The user's ID.
-	  * @param {string} userId The user's ID.
-	  * @param {string} filePath The user's ID.
-	*/
-	async downloadFile(res: Response, userId: string, filePath: string) {
-		res.download(path.join(this.basePath, userId, filePath));
+	async downloadFile(res: Response, file: FullFile) {
+		res.download(path.join(this.basePath, file.userId, file.id));
 	}
 
-	/**
-	  * Send the thumbnail of the file.
-	  * @param {Response} res The user's ID.
-	  * @param {string} userId The user's ID.
-	  * @param {string} filePath The user's ID.
-	*/
-	async downloadDirectory(res: Response, userId: string, filePath: string) {
-		const archive = archiver('zip', { zlib: { level: 9 } });
-		res.setHeader('Content-Type', 'application/zip');
-		res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}.zip"`);
-
-		// Append directory to archive
-		archive.pipe(res);
-		archive.directory(path.join(this.basePath, userId, filePath), false);
-
-		await archive.finalize();
-	}
-
-	/**
-	  * Send the thumbnail of the file.
-	  * @param {Response} res The user's ID.
-	  * @param {string} userId The user's ID.
-	  * @param {File[]} filePaths The user's ID.
-	*/
 	async downloadFiles(res: Response, userId: string, files: File[]) {
 		const archive = archiver('zip', { zlib: { level: 9 } });
 		res.setHeader('Content-Type', 'application/zip');
@@ -82,39 +56,6 @@ export default class FileSystemManager implements StorageProvider {
 	}
 
 	/**
-	  * Rename a file on the system.
-	  * @param {string} oldPath The old file path.
-	  * @param {string} newPath The new file path.
-	*/
-	async renameOnSystem(oldPath: string, newPath: string) {
-		try {
-			const cleanedOldPath = path.isAbsolute(oldPath) ? oldPath : path.join(this.basePath, oldPath);
-			await fs.rename(cleanedOldPath, path.join(this.basePath, newPath));
-		} catch (error) {
-			if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
-				// Handle cross-device link error
-				await this.copyFileOnSystem(oldPath, newPath);
-				await this.deleteFileOnSystem(oldPath);
-			} else {
-				throw error;
-			}
-		}
-	}
-
-	/**
-	  * Creates a folder on the system.
-	  * @param {string} folderPath The folder path.
-		* @param {Mode | MakeDirectoryOptions | null} options The options for the folder creation.
-	*/
-	async createFolderOnSystem(folderPath: string, options?: Mode | MakeDirectoryOptions | null) {
-		try {
-			await fs.mkdir(path.join(this.basePath, folderPath), options);
-		} catch (error) {
-			if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-		}
-	}
-
-	/**
 	  * Copy a file on the system.
 	  * @param {string} oldPath The old file path.
 		* @param {string} newPath The new file path.
@@ -122,24 +63,6 @@ export default class FileSystemManager implements StorageProvider {
 	async copyFileOnSystem(oldPath: string, newPath: string) {
 		const cleanedOldPath = path.isAbsolute(oldPath) ? oldPath : path.join(this.basePath, oldPath);
 		return fs.copyFile(cleanedOldPath, path.join(this.basePath, newPath), fs.constants.COPYFILE_EXCL);
-	}
-
-	/**
-	  * Get the number of children in a folder.
-	  * @param {string} folderPath The old file path.
-		* @return {number} The number of children in the folder.
-	*/
-	async getNumberOfChildrenInFolder(folderPath: string): Promise<number> {
-		const files = await fs.readdir(path.join(this.basePath, folderPath));
-		return files.length;
-	}
-
-	/**
-	  * Delete a folder on the system.
-	  * @param {string} filePath The file path.
-	*/
-	async deleteFolderOnSystem(filePath: string) {
-		return fs.rmdir(path.join(this.basePath, filePath), { recursive: true });
 	}
 
 	/**
@@ -151,8 +74,9 @@ export default class FileSystemManager implements StorageProvider {
 		if (existsSync(cleanedFilePath)) return fs.unlink(cleanedFilePath);
 	}
 
-	uploadFileToSystem(_userId: string, fileName: string) {
-		return createWriteStream(fileName);
+	uploadFileToSystem(filePath: string) {
+		const cleanedFilePath = path.isAbsolute(filePath) ? filePath : path.join(this.basePath, filePath);
+		return createWriteStream(cleanedFilePath);
 	}
 
 	/**
@@ -235,6 +159,16 @@ export default class FileSystemManager implements StorageProvider {
 		return existsSync(cleanedFilePath);
 	}
 
+	async verifyConnection() {
+		try {
+			await fs.access(this.basePath);
+			return true;
+		} catch (err) {
+			this.client.logger.error(err);
+			return false;
+		}
+	}
+
 	/**
 	  * Fetches disk data
 	*/
@@ -258,8 +192,8 @@ export default class FileSystemManager implements StorageProvider {
 					total: Number(filtered[0][1]),
 				};
 			}
-		} catch (error) {
-			console.log(error);
+		} catch (err) {
+			this.client.logger.error(err);
 			this.diskData = {
 				free: 0,
 				total: 0,
