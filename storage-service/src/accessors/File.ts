@@ -1,15 +1,20 @@
 import type { createFile, FullFile, Pagination, updateFile, updateFilePath } from '../types/database/File';
-import { fetchOrCreateFileMediaType } from './FileMimeType';
-import type { File, FileType } from '@prisma/client';
+import type { File, FileType, MediaType } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
 
 export default class FileAccessor {
 	cache: LRUCache<string, FullFile>;
+	mimeTypeCache: LRUCache<string, MediaType>;
 
 	constructor() {
 		this.cache = new LRUCache({
 			max: 10_000,
+			ttl: 1000 * 60 * 60,
+		});
+
+		this.mimeTypeCache = new LRUCache({
+			max: 100,
 			ttl: 1000 * 60 * 60,
 		});
 	}
@@ -20,7 +25,7 @@ export default class FileAccessor {
     * @returns {File} The created file.
   */
 	async create(data: createFile): Promise<FullFile> {
-		if (data.mimetype !== null) await fetchOrCreateFileMediaType(data.mimetype);
+		if (data.mimetype !== null) await this.fetchOrCreateFileMediaType(data.mimetype);
 
 		const file = await client.file.create({
 			data: {
@@ -48,7 +53,7 @@ export default class FileAccessor {
     * @returns {File} The updated file.
   */
 	async update(data: updateFile): Promise<FullFile> {
-		if (data.children !== undefined && data.children.mimetype !== null) await fetchOrCreateFileMediaType(data.children.mimetype);
+		if (data.children !== undefined && data.children.mimetype !== null) await this.fetchOrCreateFileMediaType(data.children.mimetype);
 
 		const file = await client.file.update({
 			where: {
@@ -438,6 +443,79 @@ export default class FileAccessor {
 			_sum: {
 				size: true,
 			},
+		});
+	}
+
+	/**
+		* Fetches or creates a file media type in the database.
+		* @param mimeType The mime type to fetch or create.
+		* @returns The media type object.
+	*/
+	async fetchOrCreateFileMediaType(mimeType: string) {
+		let mediaType = this.mimeTypeCache.get(mimeType) ?? null;
+		if (mediaType == null) {
+			mediaType = await client.mediaType.upsert({
+				where: {
+					name: mimeType,
+				},
+				create: {
+					name: mimeType,
+				},
+				update: {},
+			});
+			if (mediaType !== null) this.mimeTypeCache.set(mimeType, mediaType);
+		}
+
+		return mediaType;
+	}
+
+	/**
+		* Fetches all media types from the database and the number of files associated with each type.
+	*/
+	async fetchFileMediaTypes(grouped: boolean = false) {
+		const res = await client.mediaType.findMany({
+			include: {
+				_count: {
+					select: {
+						files: true,
+					},
+				},
+			},
+		});
+
+		const group: { [ key: string ]: number } = {};
+		if (grouped) {
+			for (const type of res) {
+				const mimeName = `${type.name.split('/')[0]}/*`;
+
+				if (group[mimeName] === undefined) group[mimeName] = 0;
+				group[mimeName] += type._count.files;
+			}
+			return group;
+		} else {
+			for (const type of res) {
+				if (group[type.name] === undefined) group[type.name] = 0;
+				group[type.name] += type._count.files;
+			}
+			return group;
+		}
+	}
+
+	async fetchMostCommonFileTypes() {
+		return client.mediaType.findMany({
+			include: {
+				_count: {
+					select: {
+						files: true,
+					},
+				},
+			},
+			orderBy: {
+				files: {
+					_count: 'desc',
+				},
+			},
+			take: 10,
 		});
 	}
 }

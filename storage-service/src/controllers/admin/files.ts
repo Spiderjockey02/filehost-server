@@ -1,5 +1,4 @@
 import type { Request, Response } from 'express';
-import { fetchFileMediaTypes, fetchMostCommonFileTypes } from '../../accessors/FileMimeType';
 import Client from 'src/helpers/Client';
 import { Error, sanitiseObject } from '../../utils';
 type countEnum = { [key: string | number]: number }
@@ -11,7 +10,7 @@ export const getFiles = (client: Client) => {
 			const [{ files, folders, newFiles }, avgSize, mostCommonFileTypes, deletedFiles, { _sum: { size } }] = await Promise.all([
 				client.FileManager.fetchTotal(),
 				client.FileManager.fetchAverageSize(),
-				fetchMostCommonFileTypes(),
+				client.FileManager.fetchMostCommonFileTypes(),
 				client.FileManager.fetchTotalDeleted(),
 				client.FileManager.fetchTotalStorageUsed(),
 			]);
@@ -138,7 +137,7 @@ export const getMimeTypes = (client: Client) => {
 			if (grouped && typeof grouped !== 'string') return Error.IncorrectQuery(res, 'grouped must be a string.');
 			if (grouped && !['true', 'false'].includes(grouped)) return Error.IncorrectQuery(res, 'grouped must be either true or false.');
 
-			const mimeTypes = await fetchFileMediaTypes(grouped === 'true');
+			const mimeTypes = await client.FileManager.fetchFileMediaTypes(grouped === 'true');
 			res.json({ mimeTypes });
 		} catch (err) {
 			client.logger.error(err);
