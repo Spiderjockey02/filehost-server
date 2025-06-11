@@ -5,7 +5,6 @@ import { readdirSync, statSync } from 'fs';
 import { join, parse, sep } from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import Client from 'src/helpers/Client';
-import { UserActivityBatcher } from '../accessors/UserActivity';
 import { getSession } from '../middleware';
 import { HTTPMethod } from '@prisma/client';
 
@@ -14,7 +13,6 @@ interface FileOptions {
 	route: string,
 }
 
-export const userActivityBatcher = new UserActivityBatcher();
 export function generateRoutes(directory: string) {
 	const seperator = '/';
 	const results: FileOptions[] = [];
@@ -188,7 +186,7 @@ export function logUserActivity(client: Client) {
 				const sessionPromise = getSession(client, req);
 
 				sessionPromise.then(session => {
-					userActivityBatcher.add({
+					client.userActivityManager.add({
 						userId: session?.userId,
 						method: req.method as HTTPMethod,
 						endpoint: req.originalUrl,
@@ -200,7 +198,7 @@ export function logUserActivity(client: Client) {
 						durationMs,
 						createdAt: new Date(),
 					});
-				}).catch(console.error);
+				}).catch(client.logger.error);
 			});
 
 			return originalEnd(chunk, encoding, cb);

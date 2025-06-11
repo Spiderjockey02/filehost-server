@@ -1,7 +1,6 @@
 import { Error, sanitiseObject } from '../../utils';
 import type { Request, Response } from 'express';
 import type Client from '../../helpers/Client';
-import { fetchUsersWhoHadActivityBetweenTwoDates } from '../../accessors/UserActivity';
 
 type data = { [key: string]: boolean}
 type countEnum = { [key: string | number]: number }
@@ -209,7 +208,7 @@ export const getUserRetention = (client: Client) => {
 				const dateStr = start.toISOString().split('T')[0];
 				const [users, session] = await Promise.all([
 					client.userManager.fetchUsersWhoUploadedBetweenTwoDates(start, end),
-					fetchUsersWhoHadActivityBetweenTwoDates(start, end),
+					client.userActivityManager.fetchUsersWhoHadActivityBetweenTwoDates(start, end),
 				]);
 
 				days[dateStr] = users.length / total;

@@ -30,13 +30,13 @@ export default async function(client: Client) {
 
 	router.post('/cron-jobs/:name', await checkAdmin(client), postCronJobsByName(client));
 
-	router.get('/system/stats', await checkAdmin(client), getSystemStats());
+	router.get('/system/stats', await checkAdmin(client), getSystemStats(client));
 
 	router.get('/network/stats', await checkAdmin(client), getNetworkStats(client));
 
-	router.get('/network/requests', await checkAdmin(client), getActivityRequests());
+	router.get('/network/requests', await checkAdmin(client), getActivityRequests(client));
 
-	router.get('/network/traffic', await checkAdmin(client), getActivityTraffic());
+	router.get('/network/traffic', await checkAdmin(client), getActivityTraffic(client));
 
 	router.get('/network/list', await checkAdmin(client), getActivityList(client));
 

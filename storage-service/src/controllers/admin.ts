@@ -3,7 +3,6 @@ import type Client from '../helpers/Client';
 import { Error, PATHS } from '../utils';
 import os from 'os';
 import fs from 'fs/promises';
-import { calculateTransferBetweenTwoDates } from '../accessors/UserActivity';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
@@ -95,7 +94,7 @@ export const postCronJobsByName = (client: Client) => {
 };
 
 // Endpoint: GET /api/admin/system/stats
-export const getSystemStats = () => {
+export const getSystemStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		// Fetch all logs and total byte size
 		const logs = await fs.readdir(`${process.cwd()}/src/utils/logs`);
@@ -106,7 +105,7 @@ export const getSystemStats = () => {
 		const latestBackup = files.filter(a => a.endsWith('.json')).sort((a, b) => b.localeCompare(a))[0];
 		const backup = await fs.readFile(`${PATHS.DATABASE_BACKUPS}/${latestBackup}`, 'utf-8');
 
-		const lastSevenDays = await calculateTransferBetweenTwoDates(new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), new Date());
+		const lastSevenDays = await client.userActivityManager.calculateTransferBetweenTwoDates(new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), new Date());
 
 		res.json({
 			memory: {

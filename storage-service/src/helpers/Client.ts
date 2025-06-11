@@ -8,6 +8,7 @@ import Logger from '../utils/Logger';
 import CRONManager from './CRONManager';
 import QueueManager from './QueueManager';
 import StorageManager from './StorageManager';
+import UserActivityManager from '../accessors/UserActivity';
 
 export default class Client {
 	logger: Logger;
@@ -19,6 +20,7 @@ export default class Client {
 	sessionManager: SessionManager;
 	CRONManager: CRONManager;
 	QueueManager: QueueManager;
+	userActivityManager: UserActivityManager;
 
 	constructor() {
 		this.logger = new Logger();
@@ -26,9 +28,11 @@ export default class Client {
 		this.groupManager = new GroupManager();
 		this.notificationManager = new NotificationManager();
 		this.recentlyViewedFileManager = new RecentlyViewedFileManager();
-		this.FileManager = new FileManager(this, new StorageManager());
+		this.FileManager = new FileManager(this, new StorageManager(this));
 		this.sessionManager = new SessionManager();
 		this.CRONManager = new CRONManager(this);
 		this.QueueManager = new QueueManager();
+		this.userActivityManager = new UserActivityManager();
+
 	}
 }
