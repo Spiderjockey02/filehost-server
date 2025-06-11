@@ -44,6 +44,19 @@ export default class FileAccessor {
 		});
 
 		this.cache.set(`${file.userId}_${file.path}`, file);
+
+		// Have to do 2 layers (to get show proper children count)
+		if (file.parentId) {
+			const parent = await this.getById(file.parentId);
+			if (parent) {
+				this.cache.delete(`${parent.userId}_${parent.path}`);
+				if (parent.parentId) {
+					const grandparent = await this.getById(parent.parentId);
+					if (grandparent) this.cache.delete(`${grandparent.userId}_${grandparent.path}`);
+				}
+			}
+		}
+
 		return file;
 	}
 
