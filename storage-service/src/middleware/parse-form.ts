@@ -80,7 +80,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 					dir = await client.FileManager.create({
 						userId: user.id,
 						path: '/',
-						size: 0n,
+						size: CONSTANTS.FOLDER_SIZE,
 						type: 'DIRECTORY',
 						name: '/',
 						mimetype: null,

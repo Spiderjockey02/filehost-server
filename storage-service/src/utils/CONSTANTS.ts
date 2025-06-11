@@ -40,4 +40,7 @@ export const CONSTANTS = {
 
 	// How many days should log files stay on system before being deleted
 	RETENTION_POLICY_FOR_LOG_FILES_IN_DAYS: 90,
+
+	// Starting folder size (typically it's the size of a 'sector' on your hDD)
+	FOLDER_SIZE: 4096n,
 };

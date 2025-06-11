@@ -39,8 +39,7 @@ export default class FileManager extends FileAccessor {
 
 		// If it's user's first login, the directory doesn't exist so create it
 		if (files == null && filePath == '') {
-			await this.create({ userId: user.id, path: '/', size: 0n, type: 'DIRECTORY', name: '/', mimetype: null, storageId: user.storageId });
-			await this.storageManager.getProvider(storage).createFolderOnSystem(`${user.id}/`, { recursive: true });
+			await this.create({ userId: user.id, path: '/', size: CONSTANTS.FOLDER_SIZE, type: 'DIRECTORY', name: '/', mimetype: null, storageId: user.storageId });
 			await this.client.notificationManager.create({
 				title: 'Welcome!',
 				text: 'Thank you for registering. You can now start uploading files, customizing your storage, and exploring all the features.',
@@ -239,7 +238,7 @@ export default class FileManager extends FileAccessor {
 				userId: user.id,
 				name: folderName,
 				path: `${normalizePath(parentDir.path)}${folderName}`,
-				size: 4096n,
+				size: CONSTANTS.FOLDER_SIZE,
 				type: 'DIRECTORY',
 				mimetype: null,
 				storageId: user.storageId,
@@ -308,7 +307,7 @@ export default class FileManager extends FileAccessor {
 		const newFolder = await this.create({
 			path: newFilePath,
 			name: oldDir.name,
-			size: 0n,
+			size: CONSTANTS.FOLDER_SIZE,
 			userId: oldDir.userId,
 			type: 'DIRECTORY',
 			parentId: newDir.id,
