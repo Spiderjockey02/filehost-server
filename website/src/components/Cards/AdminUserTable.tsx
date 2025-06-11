@@ -10,11 +10,12 @@ import Link from 'next/link';
 export default function AdminUserTableCards() {
 	const [page, setPage] = useState(0);
 	const [total, setTotal] = useState(0);
+	const [name, setName] = useState('');
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['users', page],
+		queryKey: ['users', page, name],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/users?include=group&page=${page}`, { signal });
+			const res = await fetch(`/api/admin/users?include=group&page=${page}&name=${name}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
 
 			const d = await res.json();
@@ -28,7 +29,7 @@ export default function AdminUserTableCards() {
 		<>
 			<div className="form-inline mr-auto my-2 my-md-0 mw-100 col-lg-6">
 				<div className="input-group mb-3">
-					<input type="text" className="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Recipient's username" aria-describedby="basic-addon2" />
+					<input type="text" className="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Recipient's username" aria-describedby="basic-addon2" onChange={(e) => setName(e.target.value)} />
 					<button className="btn btn-outline-primary" type="button">
 						<FontAwesomeIcon icon={faSearch} />
 					</button>

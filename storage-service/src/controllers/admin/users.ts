@@ -9,7 +9,7 @@ type countEnum = { [key: string | number]: number }
 export const getUsers = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { page, include: rawFilters } = req.query;
+			const { page, include: rawFilters, name } = req.query;
 			const filters = (rawFilters !== undefined && Array.isArray(rawFilters)) ? rawFilters.map((filter) => filter.toString()) : [`${rawFilters}`];
 
 			// Parse the filters and validate them
@@ -22,7 +22,7 @@ export const getUsers = (client: Client) => {
 			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
 
 			// Fetch the database
-			const users = await client.userManager.fetchAll({ ...parsedFilters, page: isNaN(Number(page)) ? undefined : Number(page) });
+			const users = await client.userManager.fetchAll({ ...parsedFilters, page: isNaN(Number(page)) ? undefined : Number(page), name: name == undefined ? undefined : `${name}` });
 			const { total } = await client.userManager.fetchTotal();
 			res.json({ users: sanitiseObject(users), total });
 		} catch (err) {

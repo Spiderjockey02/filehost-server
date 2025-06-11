@@ -42,8 +42,13 @@ export default class UserManager {
 	  * @param {GetUsers} data The user data.
 		* @returns {UserWithGroup[]} The users.
 	*/
-	async fetchAll({ group, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
+	async fetchAll({ group, name, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
 		return client.user.findMany({
+			where: {
+				name: {
+					startsWith: name?.length == 0 ? undefined : name,
+				},
+			},
 			include: {
 				group: group,
 				notifications: true,

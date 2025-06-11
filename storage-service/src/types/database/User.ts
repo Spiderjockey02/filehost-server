@@ -5,6 +5,7 @@ export interface GetUsers {
 	recent?: boolean
 	delete?: boolean
 	analyse?: boolean
+	name?: string
 }
 
 export type fetchUserbyParam = {
