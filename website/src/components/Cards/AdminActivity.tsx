@@ -15,11 +15,14 @@ interface Props {
 export default function AdminActivityCard({ userId }: Props) {
 	const [page, setPage] = useState(0);
 	const [total, setTotal] = useState(0);
+	const [method, setMethod] = useState('');
+	const [status, setStatus] = useState('');
+
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: userId ? ['recentActivity', page ] : [`recentActivity_${userId}`, page, userId],
+		queryKey: userId ? ['recentActivity', page, method, status] : [`recentActivity_${userId}`, page, userId, method, status],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/network/list?page=${page}${userId ? `&userId=${userId}` : ''}`, { signal });
+			const res = await fetch(`/api/admin/network/list?page=${page}${userId ? `&userId=${userId}` : ''}&status=${status}&method=${method}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
 
 			const d = await res.json();
@@ -29,7 +32,6 @@ export default function AdminActivityCard({ userId }: Props) {
 		...queryOptions,
 	});
 
-	console.log(data, isLoading, error);
 	return (
 		<Card>
 			<Card.Header>
@@ -39,9 +41,30 @@ export default function AdminActivityCard({ userId }: Props) {
 				<div className='table-responsive'>
 					<Table>
 						<Table.HeaderRow>
-							<Table.Header>Method</Table.Header>
+							<Table.Header>
+								<select className="form-select" aria-label="Default select example" onChange={(e) => setMethod(e.target.value)}>
+									<option selected>Method</option>
+									<option value="GET">GET</option>
+									<option value="POST">POST</option>
+									<option value="PUT">PUT</option>
+									<option value="DELETE">DELETE</option>
+								</select>
+							</Table.Header>
 							<Table.Header>Endpoint</Table.Header>
-							<Table.Header className='text-center'>Status code</Table.Header>
+							<Table.Header>
+								<select className="form-select" aria-label="Default select example" onChange={(e) => setStatus(e.target.value)}>
+									<option selected>Status Code</option>
+									<option value="200">200</option>
+									<option value="206">206</option>
+									<option value="304">304</option>
+									<option value="401">401</option>
+									<option value="403">403</option>
+									<option value="404">404</option>
+									<option value="412">412</option>
+									<option value="416">416</option>
+									<option value="500">500</option>
+								</select>
+							</Table.Header>
 							<Table.Header>Timestamp</Table.Header>
 							{userId == undefined && <Table.Header>User ID</Table.Header>}
 							<Table.Header className='hide-on-mobile text-center'>Traffic</Table.Header>
@@ -80,8 +103,8 @@ export default function AdminActivityCard({ userId }: Props) {
 										data.activity.map((activity, index) => (
 											<tr key={index}>
 												<td>{activity.method}</td>
-												<td>{activity.endpoint}</td>
-												<td className='text-center'>{activity.statusCode}</td>
+												<td>{activity.endpoint.split('?')[0]}</td>
+												<td>{activity.statusCode}</td>
 												<td>{format(new Date().getTime() - (new Date().getTime() - new Date(activity.createdAt).getTime()))}</td>
 												{userId == undefined && <td><Link href={`/admin/users/${activity.userId}`}>{activity.userId}</Link></td>}
 												<td className='hide-on-mobile text-center'>{formatBytes(activity.outgoingBytes)} <FontAwesomeIcon icon={faUpLong} /> | {formatBytes(activity.incomingBytes)} <FontAwesomeIcon icon={faDownLong} /></td>

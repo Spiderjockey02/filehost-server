@@ -12,3 +12,9 @@ export type UserActivityInput = {
 	durationMs: number;
 	createdAt: Date;
 };
+
+export interface fetchActivity {
+	userId?: string
+	statusCode?: number
+	method?: HTTPMethod
+}

@@ -1,6 +1,7 @@
 import Client from 'src/helpers/Client';
 import type { Request, Response } from 'express';
 import { Error } from '../../utils';
+import { HTTPMethod } from '@prisma/client';
 
 // Endpoint: GET /api/admin/network/stats
 export const getNetworkStats = (client: Client) => {
@@ -11,7 +12,7 @@ export const getNetworkStats = (client: Client) => {
 				client.userActivityManager.getHTTPMethods(),
 				client.userActivityManager.getHTTPStatus(),
 				client.userActivityManager.averageDuration(),
-				client.userActivityManager.totalRequests(),
+				client.userActivityManager.totalRequests({}),
 			]);
 
 			res.json({ network, methods: methods.filter(s => s._count.history > 0).map(m => ({ method: m.method, count: m._count.history })), status: status.filter(s => s._count.history > 0).map(s => ({ status: s.code, count: s._count.history })), duration, total });
@@ -213,18 +214,30 @@ export const getActivityTraffic = (client: Client) => {
 		};
 	};
 };
+
 // Endpoint: GET /api/admin/network/list
 export const getActivityList = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			// Allow pagination
-			const { page, userId } = req.query;
+			const { page, userId, status, method } = req.query;
 
 			// Validate page
 			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
 
-			const activity = await client.userActivityManager.fetchActivity({ page: page ? Number(page) : undefined, userId: userId ? `${userId}` : undefined });
-			const total = await client.userActivityManager.totalRequests(userId ? `${userId}` : undefined);
+			// Validate `status` as a number
+			if (typeof status == 'string' && isNaN(Number(status))) return Error.IncorrectQuery(res, 'status if present must be a number.');
+			const validMethods = Object.values(HTTPMethod) as string[];
+			const parsedMethod = typeof method === 'string' && validMethods.includes(method) ? method as HTTPMethod : undefined;
+
+			const [activity, total] = await Promise.all([
+				client.userActivityManager.fetchActivity({
+					page: page ? Number(page) : undefined, userId: userId ? `${userId}` : undefined, statusCode: status?.length == 0 ? undefined : Number(status), method: parsedMethod,
+				}),
+				client.userActivityManager.totalRequests({
+					userId: userId ? `${userId}` : undefined, statusCode: status?.length == 0 ? undefined : Number(status), method: parsedMethod,
+				}),
+			]);
 			res.json({ activity, total });
 		} catch (err) {
 			client.logger.error(err);

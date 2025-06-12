@@ -5,7 +5,7 @@ import fs from 'fs';
 import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
 import { UAParser } from 'ua-parser-js';
 import { LRUCache } from 'lru-cache';
-import { UserActivityInput } from 'src/types/database/UserActivity';
+import { fetchActivity, UserActivityInput } from 'src/types/database/UserActivity';
 const db = fs.readFileSync('./assets/GeoLite2-City.mmdb');
 const db2 = fs.readFileSync('./assets/GeoLite2-ASN.mmdb');
 
@@ -200,10 +200,12 @@ export default class UserActivityManager {
 		return result._avg.durationMs;
 	}
 
-	async totalRequests(userId?: string) {
+	async totalRequests({ userId, statusCode, method }: fetchActivity) {
 		const result = await client.userActivity.count({
 			where: {
 				userId,
+				statusCode,
+				method,
 			},
 		});
 		return result;
@@ -236,10 +238,12 @@ export default class UserActivityManager {
 		return result._sum;
 	}
 
-	async fetchActivity({ page = 0, userId }: Pagination & { userId?: string }) {
+	async fetchActivity({ userId, statusCode, method, page = 0 }: fetchActivity & Pagination) {
 		return client.userActivity.findMany({
 			where: {
 				userId,
+				statusCode,
+				method,
 			},
 			orderBy: {
 				createdAt: 'desc',
