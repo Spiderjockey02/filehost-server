@@ -1,11 +1,12 @@
 import { authClient } from '@/auth/client';
-import { Card, Col, ErrorPopup, InfoPill, LineChart, PieChart, Row } from '@/components';
+import { Card, Col, ErrorPopup, InfoPill, LineChart, Row } from '@/components';
 import AdminActivityCard from '@/components/Cards/AdminActivity';
 import { ActivityTransferAreaChart } from '@/components/Graphs/ActivityTransferAreaChart';
+import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
 import AdminLayout from '@/layouts/admin';
 import { StringNumberObj } from '@/types';
 import { requestTimeFrames } from '@/types/pages';
-import { formatBytes, getRandomColor, headers } from '@/utils/functions';
+import { formatBytes, headers } from '@/utils/functions';
 import { faDownload, faEarthEurope, faStopwatch, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios from 'axios';
@@ -47,31 +48,8 @@ export default function AdminNetwork(data: Props) {
 	const { data: session } = authClient.useSession();
 	const [requestGrowth, setRequestGrowth] = useState(data.history);
 	const [requestGrowthFrame, setRequestGrowthFrame] = useState<requestTimeFrames>('hourly');
-
 	const [trafficGrowth, setTrafficGrowth] = useState(data.requests);
 	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('hourly');
-
-	const fileCategory = {
-		labels: data.methods.map(m => m.method),
-		datasets: [
-			{
-				label: 'Number of requests',
-				data: data.methods.map(m => m.count),
-				backgroundColor: Array.from({ length: 10 }, getRandomColor),
-			},
-		],
-	};
-
-	const asd = {
-		labels: data.status.map(m => m.status),
-		datasets: [
-			{
-				label: 'Number of requests',
-				data: data.status.map(m => m.count),
-				backgroundColor: Array.from({ length: 10 }, getRandomColor),
-			},
-		],
-	};
 
 	const RequestsOverTimeData = {
 		labels: Object.keys(requestGrowth),
@@ -88,7 +66,7 @@ export default function AdminNetwork(data: Props) {
 	async function updatedRequestGrowth(time: requestTimeFrames) {
 		if (time === requestGrowthFrame) return;
 		try {
-			const { data: p } = await axios.get(`/api/admin/network/growth?frame=${time}`);
+			const { data: p } = await axios.get(`/api/admin/network/requests?frame=${time}`);
 			const keys = Object.keys(p);
 			setRequestGrowth(p[keys[0]]);
 			setRequestGrowthFrame(time);
@@ -162,7 +140,7 @@ export default function AdminNetwork(data: Props) {
 							Traffic over time
 							<div className="dropdown">
 								<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-									{requestGrowthFrame}
+									{trafficGrowthFrame}
 								</button>
 								<ul className="dropdown-menu dropdown-menu-end">
 									<li><a className="dropdown-item" href="#" onClick={() => updatedTrafficGrowth('yearly')}>Yearly</a></li>
@@ -185,7 +163,10 @@ export default function AdminNetwork(data: Props) {
 							<Link href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods" className='fw-bold' target='_blank'>Method Distribution</Link>
 						</Card.Header>
 						<Card.Body>
-							<PieChart data={fileCategory} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
+							<ObjectOrientedPieChart data={data.methods.reduce((acc, item) => {
+								acc[item.method] = item.count;
+								return acc;
+							}, {})} />
 						</Card.Body>
 					</Card>
 				</Col>
@@ -195,7 +176,10 @@ export default function AdminNetwork(data: Props) {
 							<Link href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status" className='fw-bold' target='_blank'>Status Code Distribution</Link>
 						</Card.Header>
 						<Card.Body>
-							<PieChart data={asd} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
+							<ObjectOrientedPieChart data={data.status.reduce((acc, item) => {
+								acc[item.status] = item.count;
+								return acc;
+							}, {})} />
 						</Card.Body>
 					</Card>
 				</Col>
@@ -242,7 +226,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		} catch (err) {
 			console.log(err);
 			return { props: { network: { incomingBytes: 0,
-				outgoingBytes: 0 }, methods: {}, status: {}, error: 'API server currently unavailable' } };
+				outgoingBytes: 0 }, methods: [], status: [], duration: 0, total: 0, history: {}, requests: {}, error: 'API server currently unavailable' } };
 		}
 	}
 }
