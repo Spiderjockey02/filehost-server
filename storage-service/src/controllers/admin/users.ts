@@ -9,7 +9,7 @@ type countEnum = { [key: string | number]: number }
 export const getUsers = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { page, include: rawFilters, name } = req.query;
+			const { page, include: rawFilters, name, sortBy, sortOrder } = req.query;
 			const filters = (rawFilters !== undefined && Array.isArray(rawFilters)) ? rawFilters.map((filter) => filter.toString()) : [`${rawFilters}`];
 
 			// Parse the filters and validate them
@@ -18,11 +18,20 @@ export const getUsers = (client: Client) => {
 				if (['group', 'recent', 'delete', 'analyse', 'user'].includes(filter)) parsedFilters[filter] = true;
 			}
 
+			// Validate sorting
+			if (sortOrder !== undefined && (typeof sortOrder !== 'string' || (sortOrder !== 'asc' && sortOrder !== 'desc'))) {
+				return Error.IncorrectQuery(res, 'sortOrder must be \'asc\', \'desc\' or not present.');
+			}
+
+			if (sortBy !== undefined && (typeof sortBy !== 'string' || (sortBy !== 'createdAt' && sortBy !== 'lastActive' && sortBy !== 'uploadedFiles'))) {
+				return Error.IncorrectQuery(res, 'Invalid sortBy. Must be one of \'createdAt\', \'lastActive\', or \'uploadedFiles\'.');
+			}
+
 			// Valid page index (if present)
 			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
 
 			// Fetch the database
-			const users = await client.userManager.fetchAll({ ...parsedFilters, page: isNaN(Number(page)) ? undefined : Number(page), name: name == undefined ? undefined : `${name}` });
+			const users = await client.userManager.fetchAll({ ...parsedFilters, page: isNaN(Number(page)) ? undefined : Number(page), name: name == undefined ? undefined : `${name}`, sortBy, sortOrder });
 			const { total } = await client.userManager.fetchTotal();
 			res.json({ users: sanitiseObject(users), total });
 		} catch (err) {

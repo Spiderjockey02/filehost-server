@@ -1,6 +1,6 @@
 import { format, formatBytes, queryOptions } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { UserWithCount } from '@/types/database';
 import { useQuery } from '@tanstack/react-query';
 import { Table } from '@/components';
@@ -11,11 +11,13 @@ export default function AdminUserTableCards() {
 	const [page, setPage] = useState(0);
 	const [total, setTotal] = useState(0);
 	const [name, setName] = useState('');
+	const [dir, setDir] = useState<'desc' | 'asc'>('desc');
+	const [header, setHeader] = useState<'createdAt' | 'lastActive' | 'uploadedFiles' | 'name'>('createdAt');
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['users', page, name],
+		queryKey: ['users', page, name, dir, header],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/users?include=group&page=${page}&name=${name}`, { signal });
+			const res = await fetch(`/api/admin/users?include=group&page=${page}&name=${name}&sortBy=${header}&sortOrder=${dir}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
 
 			const d = await res.json();
@@ -24,6 +26,12 @@ export default function AdminUserTableCards() {
 		},
 		...queryOptions,
 	});
+
+	function updateSorting(head: 'createdAt' | 'lastActive' | 'uploadedFiles' | 'name') {
+		setDir(dir == 'asc' ? 'desc' : 'asc');
+		setHeader(head);
+	}
+
 
 	return (
 		<>
@@ -40,9 +48,21 @@ export default function AdminUserTableCards() {
 					<Table.HeaderRow>
 						<Table.Header>ID</Table.Header>
 						<Table.Header>Name</Table.Header>
-						<Table.Header>Joined</Table.Header>
-						<Table.Header>Last active</Table.Header>
-						<Table.Header>Uploaded files</Table.Header>
+						<Table.Header style={{ cursor: 'pointer' }} onClick={() => updateSorting('createdAt')}>
+							Joined
+							&nbsp;
+							<FontAwesomeIcon icon={header == 'createdAt' ? dir == 'asc' ? faSortUp : faSortDown : faSort} />
+						</Table.Header>
+						<Table.Header style={{ cursor: 'pointer' }} onClick={() => updateSorting('lastActive')}>
+							Last active
+							&nbsp;
+							<FontAwesomeIcon icon={header == 'lastActive' ? dir == 'asc' ? faSortUp : faSortDown : faSort} />
+						</Table.Header>
+						<Table.Header style={{ cursor: 'pointer' }} onClick={() => updateSorting('uploadedFiles')}>
+							Uploaded files
+							&nbsp;
+							<FontAwesomeIcon icon={header == 'uploadedFiles' ? dir == 'asc' ? faSortUp : faSortDown : faSort} />
+						</Table.Header>
 						<Table.Header>Utilisation</Table.Header>
 					</Table.HeaderRow>
 					<Table.Body>

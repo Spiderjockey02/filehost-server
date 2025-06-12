@@ -6,6 +6,8 @@ export interface GetUsers {
 	delete?: boolean
 	analyse?: boolean
 	name?: string
+	sortOrder?: 'desc' | 'asc'
+	sortBy?: 'createdAt' | 'lastActive' | 'uploadedFiles'
 }
 
 export type fetchUserbyParam = {

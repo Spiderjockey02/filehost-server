@@ -42,15 +42,14 @@ export default class UserManager {
 	  * @param {GetUsers} data The user data.
 		* @returns {UserWithGroup[]} The users.
 	*/
-	async fetchAll({ group, name, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
-		return client.user.findMany({
+	async fetchAll({ name, sortBy, sortOrder, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
+		// Fetch paginated users first
+		const users = await client.user.findMany({
 			where: {
-				name: {
-					startsWith: name?.length == 0 ? undefined : name,
-				},
+				name: name?.length ? { startsWith: name } : undefined,
 			},
 			include: {
-				group: group,
+				group: true,
 				notifications: true,
 				activity: {
 					take: 1,
@@ -64,12 +63,37 @@ export default class UserManager {
 					},
 				},
 			},
-			orderBy: {
-				createdAt: 'desc',
-			},
 			take: 20,
 			skip: page * 20,
 		});
+
+		// Sorting by uploaded file count
+		if (sortBy === 'uploadedFiles') {
+			users.sort((a, b) => {
+				const diff = (a._count.files ?? 0) - (b._count.files ?? 0);
+				return sortOrder === 'desc' ? -diff : diff;
+			});
+		}
+
+		// Sorting by user createdAt
+		if (sortBy === 'createdAt') {
+			users.sort((a, b) => {
+				const diff = a.createdAt.getTime() - b.createdAt.getTime();
+				return sortOrder === 'desc' ? -diff : diff;
+			});
+		}
+
+		// Sorting by last activity
+		if (sortBy === 'lastActive') {
+			users.sort((a, b) => {
+				const aActivity = a.activity[0] !== undefined ? a.activity[0].createdAt?.getTime() : a.updatedAt.getTime();
+				const bActivity = b.activity[0] !== undefined ? b.activity[0].createdAt?.getTime() : b.updatedAt.getTime();
+				const diff = aActivity - bActivity;
+				return sortOrder === 'desc' ? -diff : diff;
+			});
+		}
+
+		return users;
 	}
 
 	/**
