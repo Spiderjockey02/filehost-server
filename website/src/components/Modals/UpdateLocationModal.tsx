@@ -4,12 +4,41 @@ import axios from 'axios';
 import { useFolderRefetch } from '../Hooks/FileManager';
 import { File } from '@prisma/client';
 
+type FolderNode = {
+	name: string;
+	id?: string;
+	children?: Record<string, FolderNode>;
+};
+
+function buildFolderTree(dirs: File[]): FolderNode {
+	const root: FolderNode = { name: '', children: {} };
+
+	dirs.forEach((dir) => {
+		const parts = dir.path.split('/').filter(Boolean);
+		let current = root;
+		for (let i = 0; i < parts.length; i++) {
+			const part = parts[i];
+			current.children ??= {};
+			if (!current.children[part]) {
+				current.children[part] = { name: part, children: {} };
+			}
+			if (i === parts.length - 1) {
+				current.children[part].id = dir.id;
+			}
+			current = current.children[part];
+		}
+	});
+
+	return root;
+}
+
 export default function UpdateLocationModal({ file, closeContextMenu }: FileModalProps) {
 	const elementRef = useRef(null);
 	const [dirs, setDirs] = useState<File[]>([]);
 	const [action, setAction] = useState<'copy' | 'move' | ''>('');
 	const [selectedDestination, setSelectedDestination] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
+	const [currentPath, setCurrentPath] = useState<string[]>([]);
 	const refreshFolder = useFolderRefetch();
 
 	function closeModal(id: string) {
@@ -22,7 +51,6 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 
 	const handleActionSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();
-
 		try {
 			await axios.post(`/api/files/${action}`, {
 				newDirId: selectedDestination,
@@ -38,26 +66,30 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 
 	useEffect(() => {
 		const targetElement = elementRef.current;
-
 		if (!targetElement) return;
 
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
 				if ((mutation.target as HTMLDivElement).className.includes('show')) {
 					axios.get('/api/files/directories').then(({ data }) => {
-						setDirs(data.dirs);
+						setDirs(data.dirs.filter((d: File) => !d.path.startsWith(file.path)));
+						setCurrentPath([]);
 					});
 				}
 			});
 		});
 
-		// Start observing the target element for class changes
 		observer.observe(targetElement, { attributes: true, attributeFilter: ['class'] });
-
-		// Cleanup the observer on component unmount
 		return () => observer.disconnect();
-	}, []);
+	}, [file.path]);
 
+	const folderTree = buildFolderTree(dirs);
+	let node = folderTree;
+	for (const part of currentPath) {
+		node = node.children?.[part] ?? {};
+	}
+
+	const folderEntries = node.children ? Object.entries(node.children) : [];
 
 	return (
 		<div className="modal fade" ref={elementRef} id={`change_${file.id}`} role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
@@ -67,17 +99,45 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 						<h5 className="modal-title text-truncate" id="exampleModalLongTitle">Move or Copy {file.name}</h5>
 						<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
-					<form method='post' onSubmit={handleActionSubmit}>
+					<form method="post" onSubmit={handleActionSubmit}>
 						<div className="modal-body w-100">
-							<p>Select a destination folder.</p>
-							{dirs.filter(c => !c.path.startsWith(file.path)).map(dir => (
-								<div className="form-check" key={dir.id}>
-									<input className="form-check-input" type="radio" name='destination' id={dir.id} onChange={() => setSelectedDestination(dir.id)} disabled={file.parentId == dir.id} />
-									<label className="form-check-label" htmlFor={dir.id}>
-										{dir.path}
-									</label>
-								</div>
-							))}
+							<p>
+								Select a destination folder.
+								{currentPath.length > 0 && (
+									<span className="d-block text-muted small mt-1">
+										Current location: <strong>{['Home', ...currentPath].join(' > ')}</strong>
+									</span>
+								)}
+								{selectedDestination && (
+									<span className="d-block text-muted small">
+										Selected path: <strong>{dirs.find(d => d.id === selectedDestination)?.path ?? 'Unknown'}</strong>
+									</span>
+								)}
+							</p>
+
+							{currentPath.length > 0 && (
+								<button type="button" className="btn btn-sm btn-outline-secondary mb-2" onClick={() => setCurrentPath((prev) => prev.slice(0, -1))}>
+									← Back
+								</button>
+							)}
+
+							<ul className="list-group mb-2">
+								{folderEntries.map(([name, child]) => (
+									<li key={name} className="list-group-item d-flex justify-content-between align-items-center">
+										<div className="form-check">
+											<input className="form-check-input"	type="radio"	name="destination"	id={child.id ?? name}	onChange={() => setSelectedDestination(child.id ?? '')}	disabled={file.parentId === child.id || !child.id} />
+											<label className="form-check-label" htmlFor={child.id ?? name}>
+												{name}
+											</label>
+										</div>
+										{child.children && Object.keys(child.children).length > 0 && (
+											<button type="button" className="btn btn-sm btn-outline-primary" onClick={() => setCurrentPath((prev) => [...prev, name])}>
+												Browse
+											</button>
+										)}
+									</li>
+								))}
+							</ul>
 							{errorMsg && <div className="invalid-feedback" style={{ color: 'red', display: 'block' }}>{errorMsg}</div>}
 							<input type="hidden" value={action} name="action" />
 						</div>
