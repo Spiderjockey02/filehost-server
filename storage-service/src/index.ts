@@ -6,9 +6,19 @@ import { join } from 'path';
 import cors from 'cors';
 import Client from './helpers/Client';
 import onFinished from 'on-finished';
-const app = express();
-const client = new Client();
+import { createServer } from 'node:http';
+import { Server } from 'socket.io';
+import { getSession } from './middleware';
 
+const client = new Client();
+const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+	cors: {
+		origin: process.env.FRONTEND_URL,
+		methods: ['GET', 'POST'],
+	},
+});
 
 (async () => {
 	// Create 2 groups for normal users and admin
@@ -91,5 +101,18 @@ const client = new Client();
 	for (const endpoint of endpoints) {
 		app.use(endpoint.route, await (await import(endpoint.path)).default(client));
 	}
-	app.listen(process.env.PORT, () => client.logger.ready(`Started on PORT: ${process.env.PORT}`));
+
+	// Handle socket.io connections
+	io.on('connection', async (socket) => {
+		const session = await getSession(client, socket.handshake.headers);
+		if (session == null) {
+			client.logger.error('Invalid session for socket connection');
+			socket.disconnect();
+			return;
+		}
+
+		client.logger.log(`Socket connected: ${session.user.name} (${session.user.id})`);
+	});
+
+	server.listen(process.env.PORT, () => client.logger.ready(`Started on PORT: ${process.env.PORT}`));
 })();

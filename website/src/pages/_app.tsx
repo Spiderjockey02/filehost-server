@@ -1,5 +1,6 @@
 import { UploadQueueProvider } from '@/components/Hooks/UploadContentManager';
 import { FileProvider } from '@/components/Hooks/FileManager';
+import { SocketProvider } from '@/components/Hooks/SocketManager';
 import 'bootstrap/dist/css/bootstrap.css';
 import Header from '../components/header';
 import type { AppProps } from 'next/app';
@@ -18,11 +19,13 @@ export default function App({ Component, pageProps }: AppProps) {
 		<>
 			<Header />
 			<QueryClientProvider client={queryClient}>
-				<FileProvider>
-					<UploadQueueProvider>
-						<Component {...pageProps} />
-					</UploadQueueProvider>
-				</FileProvider>
+				<SocketProvider>
+					<FileProvider>
+						<UploadQueueProvider>
+							<Component {...pageProps} />
+						</UploadQueueProvider>
+					</FileProvider>
+				</SocketProvider>
 			</QueryClientProvider>
 		</>
 	);
