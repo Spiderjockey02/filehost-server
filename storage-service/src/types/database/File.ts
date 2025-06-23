@@ -28,6 +28,12 @@ export interface updateFilePath {
   newPath: string
 }
 
+export interface fetchByOwner {
+  userId: string
+  type?: FileType
+  isDeleted?: boolean
+}
+
 export type FullFile = Prisma.FileGetPayload<{
   include: {
     children: true

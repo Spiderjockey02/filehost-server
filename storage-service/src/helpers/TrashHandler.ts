@@ -108,7 +108,7 @@ export default class TrashHandler {
 	*/
 	async emptyTrash(userId: string): Promise<File[]> {
 		// First get all files in trash so the actual file can be moved back to the user's directory
-		const filesInTrash = await this.client.FileManager.getAllUsersDeletedFiles(userId);
+		const filesInTrash = await this.client.FileManager.fetchOwnedByUserId({ userId, isDeleted: true });
 		return Promise.all(filesInTrash.map(async f => await this.restoreFile(userId, f.path)));
 	}
 

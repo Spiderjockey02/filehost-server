@@ -1,4 +1,4 @@
-import type { createFile, FullFile, Pagination, updateFile, updateFilePath } from '../types/database/File';
+import type { createFile, fetchByOwner, FullFile, Pagination, updateFile, updateFilePath } from '../types/database/File';
 import type { File, FileType, MediaType } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
@@ -273,34 +273,21 @@ export default class FileAccessor {
 	}
 
 	/**
-		* Gets all of the user's directories
-		* @param {string} userId The user Id.
+		* Fetch files by user ID, filter for deleted only, or file type
 		* @returns {File[]} The files.
 	*/
-	async getAllUsersDirectories(userId: string): Promise<File[]> {
+	async fetchOwnedByUserId({ userId, type, isDeleted }: fetchByOwner): Promise<File[]> {
 		return client.file.findMany({
 			where: {
 				userId,
-				type: 'DIRECTORY',
+				type,
+				deletedAt: isDeleted ? {
+					not: null,
+				} : undefined,
 			},
 		});
 	}
 
-	/**
-		* Get all user's (pending) deleted files
-		* @param {string} userId The user Id.
-		* @returns {File[]} The files.
-	*/
-	async getAllUsersDeletedFiles(userId?: string): Promise<File[]> {
-		return client.file.findMany({
-			where: {
-				userId,
-				deletedAt: {
-					not: null,
-				},
-			},
-		});
-	}
 
 	/**
 		* Delete a file from the system

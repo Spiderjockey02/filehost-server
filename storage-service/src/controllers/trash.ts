@@ -10,7 +10,7 @@ export const getTrash = (client: Client) => {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			const files = await client.FileManager.getAllUsersDeletedFiles(session.user.id);
+			const files = await client.FileManager.fetchOwnedByUserId({ userId:  session.user.id, isDeleted: true });
 			res.json({ files: sanitiseObject(files) });
 		} catch (err) {
 			client.logger.error(err);
