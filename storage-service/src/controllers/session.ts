@@ -7,7 +7,7 @@ import type Client from '../helpers/Client';
 export const postChangeAvatar = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(client, req);
+			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Parse and save file(s)
@@ -28,7 +28,7 @@ export const postChangeAvatar = (client: Client) => {
 export const getRecentlyViewed = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(client, req);
+			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			const files = await client.recentlyViewedFileManager.fetchUserLatest(session.user.id);
@@ -44,7 +44,7 @@ export const getRecentlyViewed = (client: Client) => {
 export const deleteResetAvatar = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const session = await getSession(client, req);
+			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			await client.FileManager.deleteAvatar(session.user.id);
@@ -62,7 +62,7 @@ export const deleteNotification = (client: Client) => {
 		const notifId = req.params.id;
 
 		try {
-			const session = await getSession(client, req);
+			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Get the notification from the database and make sure it exists and is owned by the person in session.

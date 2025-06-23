@@ -17,11 +17,7 @@ export const getThumbnail = (client: Client) => {
 		const userId = req.params.userid;
 		const path = req.params.path;
 
-		try {
-			// Make sure they have access to view the thumbnail
-			const session = await getSession(client, req);
-			if (!session?.user) return Error.InvalidSession(res);
-			if (session.user.id !== userId) return Error.InvalidAccess(res);
+		const session = await getSession(client, req.headers);
 
 			await client.FileManager.sendThumbnail(res, userId, path);
 		} catch (error) {
@@ -34,7 +30,7 @@ export const getThumbnail = (client: Client) => {
 // Endpoint GET /content/:userid/:path(*)
 export const getContent = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req);
+		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
 
 		const userId = req.params.userid;
