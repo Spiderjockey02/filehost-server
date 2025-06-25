@@ -122,3 +122,21 @@ export const getSystemStats = (client: Client) => {
 		});
 	};
 };
+
+// Endpoint: POST /api/admin/notification
+export const postNotification = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const { text, title, url, userId } = req.body;
+
+		try {
+			const user = await client.userManager.fetchbyParam({ id: userId });
+			if (user == null) return Error.IncorrectQuery(res, 'UserId is not a valid user.');
+
+			const notification = await client.notificationManager.create({ text, title, url, userId });
+			res.json({ success: 'Notification created successfully.', notification });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to create / send new notification.');
+		}
+	};
+};

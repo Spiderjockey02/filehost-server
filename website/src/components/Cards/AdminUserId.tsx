@@ -1,12 +1,13 @@
 import type { AdminUserIdProps } from '@/types/Components/Card';
 import { getStatusColor, formatBytes, queryOptions } from '@/utils/functions';
-import { Card } from '@/components';
+import { Card, Col, Row } from '@/components';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Account } from '@prisma/client';
 import Link from 'next/link';
+import AdminNotificationCreateModal from '../Modals/AdminNotificationCreateModal';
 
 export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 
@@ -116,13 +117,29 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 						}).format(new Date(user.updatedAt))}</p>
 					}
 				</div>
-				<div>
-					<strong>Accounts linked: </strong>
-					<br />
-					{data?.accounts.map(a => (
-						formatProvider(a.providerId)
-					))}
-				</div>
+				<Row>
+					<Col lg={6}>
+						<strong>Accounts linked: </strong>
+						<br />
+						{data?.accounts.map(a => (
+							formatProvider(a.providerId)
+						))}
+					</Col>
+					<Col lg={6}>
+						<strong>Actions: </strong>
+						{isLoading || user == null ?
+							<span className='placeholder col-1'></span> : (
+								<>
+									<br />
+									<button className='btn btn-outline-secondary' data-bs-toggle="modal" data-bs-target="#createNotificationModal">Send Notification</button>
+									&nbsp;
+									<button className='btn btn-outline-danger'>Ban</button>
+									<AdminNotificationCreateModal userId={user.id} />
+								</>
+							)}
+
+					</Col>
+				</Row>
 			</Card.Body>
 		</Card>
 	);
