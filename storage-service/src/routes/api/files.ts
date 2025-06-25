@@ -40,7 +40,7 @@ export default function(client: Client) {
 	router.get('/directories', getAllDirectories(client));
 
 	// Fetch user's uploaded files
-	router.get('/?:path(*)', getFiles(client));
+	router.get('{*path}', getFiles(client));
 
 	return router;
 }

@@ -76,7 +76,8 @@ export const getUserGrowth = (client: Client) => {
 					cumulativeTotal += users;
 					years[currentYear - i] = cumulativeTotal;
 				}
-				return res.json({ years });
+				res.json({ years });
+				break;
 			}
 			case 'monthly': {
 				const months: countEnum = {};
@@ -98,7 +99,8 @@ export const getUserGrowth = (client: Client) => {
 					cumulativeTotal += users;
 					months[monthName] = cumulativeTotal;
 				}
-				return res.json({ months });
+				res.json({ months });
+				break;
 			}
 			case 'daily': {
 				const days: countEnum = {};
@@ -121,7 +123,8 @@ export const getUserGrowth = (client: Client) => {
 					cumulativeTotal += users;
 					days[dateStr] = cumulativeTotal;
 				}
-				return res.json({ days });
+				res.json({ days });
+				break;
 			}
 		}
 	};
@@ -223,8 +226,8 @@ export const getUserRetention = (client: Client) => {
 				days[dateStr] = users.length / total;
 				sessions[dateStr] = session.length / total;
 			}
-			return res.json({ retention: { files: days, sessions } });
 
+			res.json({ retention: { files: days, sessions } });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user.');

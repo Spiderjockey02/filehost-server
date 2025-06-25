@@ -14,8 +14,7 @@ export const postChangeAvatar = (client: Client) => {
 			const { files } = await avatarForm(client, req, session.user);
 			if (Object.keys(files).length == 0) throw 'No files uploaded';
 
-			return res
-				.json({ success: 'Successfully uploaded user\'s avatar' });
+			res.json({ success: 'Successfully uploaded user\'s avatar' });
 		} catch (err) {
 			client.logger.error(err);
 			if (typeof err == 'string') return Error.IncorrectQuery(res, err);

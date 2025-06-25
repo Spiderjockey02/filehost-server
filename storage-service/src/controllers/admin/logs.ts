@@ -16,7 +16,7 @@ export const getLogs = (client: Client) => {
 			res.json({ logs: logs.reverse(), totalLogSize });
 		} catch (error) {
 			client.logger.error(error);
-			return Error.GenericError(res, 'Failed to fetch logs.');
+			Error.GenericError(res, 'Failed to fetch logs.');
 		}
 	};
 };

@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import { getSession } from '../middleware';
-import { Error, PATHS } from '../utils';
+import { Error } from '../utils';
 import { User } from '@prisma/client';
 
 // Endpoint GET /avatar/:userId
@@ -15,15 +15,14 @@ export const getAvatar = (client: Client) => {
 export const getThumbnail = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const userId = req.params.userid;
-		const path = req.params.path;
+		const path = (req.params.path as unknown as string[]).join('/');
 
+		// Make sure they have access to view the thumbnail
 		const session = await getSession(client, req.headers);
+		if (!session?.user) return Error.InvalidSession(res);
+		if (session.user.id !== userId) return Error.InvalidAccess(res);
 
-			await client.FileManager.sendThumbnail(res, userId, path);
-		} catch (error) {
-			client.logger.error(error);
-			res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
-		}
+		client.FileManager.sendThumbnail(res, userId, path);
 	};
 };
 
@@ -34,11 +33,14 @@ export const getContent = (client: Client) => {
 		if (!session?.user) return Error.InvalidSession(res);
 
 		const userId = req.params.userid;
-		const path = req.params.path;
+		const path = (req.params.path as unknown as string[]).join('/');
 
 		// Fetch file from database
 		const file = await client.FileManager.getByFilePath(userId, path);
-		if (!file || file.userId !== session.user.id) return Error.MissingResource(res, 'File not found');
+		if (file == null) return Error.MissingResource(res, 'File not found');
+
+		// Make sure they have access to view the file
+		if (file.userId !== session.user.id) return Error.InvalidAccess(res);
 
 		// Update the user's recently viewed file history
 		try {

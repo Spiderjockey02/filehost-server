@@ -43,7 +43,8 @@ export const getActivityRequests = (client: Client) => {
 					cumulativeTotal += files;
 					years[currentYear - i] = cumulativeTotal;
 				}
-				return res.json({ years });
+				res.json({ years });
+				break;
 			}
 			case 'monthly': {
 				const months: countEnum = {};
@@ -65,7 +66,8 @@ export const getActivityRequests = (client: Client) => {
 					cumulativeTotal += files;
 					months[monthName] = cumulativeTotal;
 				}
-				return res.json({ months });
+				res.json({ months });
+				break;
 			}
 			case 'daily': {
 				const days: countEnum = {};
@@ -88,7 +90,8 @@ export const getActivityRequests = (client: Client) => {
 					cumulativeTotal += files;
 					days[dateStr] = cumulativeTotal;
 				}
-				return res.json({ days });
+				res.json({ days });
+				break;
 			}
 			case 'hourly': {
 				const hours: countEnum = {};
@@ -109,7 +112,8 @@ export const getActivityRequests = (client: Client) => {
 					cumulativeTotal += files;
 					hours[hourLabel] = cumulativeTotal;
 				}
-				return res.json({ hours });
+				res.json({ hours });
+				break;
 			}
 		}
 	};
@@ -143,7 +147,8 @@ export const getActivityTraffic = (client: Client) => {
 					if (data.outgoingBytes === null) data.outgoingBytes = 0;
 					years[currentYear - i] = data;
 				}
-				return res.json({ years });
+				res.json({ years });
+				break;
 			}
 			case 'monthly': {
 				const months: histoyrDtata = {};
@@ -165,7 +170,8 @@ export const getActivityTraffic = (client: Client) => {
 					if (data.outgoingBytes === null) data.outgoingBytes = 0;
 					months[monthName] = data;
 				}
-				return res.json({ months });
+				res.json({ months });
+				break;
 			}
 			case 'daily': {
 				const days: histoyrDtata = {};
@@ -188,7 +194,8 @@ export const getActivityTraffic = (client: Client) => {
 					if (data.outgoingBytes === null) data.outgoingBytes = 0;
 					days[dateStr] = data;
 				}
-				return res.json({ days });
+				res.json({ days });
+				break;
 			}
 			case 'hourly': {
 				const hours: histoyrDtata = {};
@@ -209,7 +216,8 @@ export const getActivityTraffic = (client: Client) => {
 
 					hours[hourLabel] = data;
 				}
-				return res.json({ hours });
+				res.json({ hours });
+				break;
 			}
 		};
 	};

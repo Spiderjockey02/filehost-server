@@ -7,7 +7,7 @@ export default class Error {
 		* @param {string} errMsg The error message
 	*/
 	public static GenericError(res: Response, errMsg: string) {
-		return res
+		res
 			.status(500)
 			.json({ error: `${errMsg} If this error keeps occurring, please contact support.` });
 	}
@@ -17,7 +17,7 @@ export default class Error {
 		* @param {Response} res The response to the requestee
 	*/
 	public static InvalidSession(res: Response) {
-		return res
+		res
 			.status(403)
 			.json({ error: 'Session is invalid, please try logout and sign in again.' });
 	}
@@ -27,7 +27,7 @@ export default class Error {
 		* @param {Response} res The response to the requestee
 	*/
 	public static InvalidAccess(res: Response) {
-		return res
+		res
 			.status(401)
 			.json({ error: 'You do not have permission to access this resource.' });
 	}
@@ -37,7 +37,7 @@ export default class Error {
 		* @param {Response} res The response to the requestee
 	*/
 	public static InvalidLogin(res: Response) {
-		return res
+		res
 			.status(401)
 			.json({ error: 'Invalid username or password.' });
 	}
@@ -48,7 +48,7 @@ export default class Error {
 		* @param {string} errMsg The error message to send
 	*/
 	public static MissingResource(res: Response, errMsg: string) {
-		return res
+		res
 			.status(404)
 			.json({ error: errMsg });
 	}
@@ -59,7 +59,7 @@ export default class Error {
 		* @param {string} errMsg The error message
 	*/
 	public static IncorrectQuery(res: Response, errMsg: any) {
-		return res
+		res
 			.status(412)
 			.json({ error: errMsg });
 	}

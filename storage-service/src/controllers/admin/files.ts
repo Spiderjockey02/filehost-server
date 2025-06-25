@@ -43,7 +43,8 @@ export const getFilesGrowth = (client: Client) => {
 					cumulativeTotal += files;
 					years[currentYear - i] = cumulativeTotal;
 				}
-				return res.json({ years });
+				res.json({ years });
+				break;
 			}
 			case 'monthly': {
 				const months: countEnum = {};
@@ -65,7 +66,8 @@ export const getFilesGrowth = (client: Client) => {
 					cumulativeTotal += files;
 					months[monthName] = cumulativeTotal;
 				}
-				return res.json({ months });
+				res.json({ months });
+				break;
 			}
 			case 'daily': {
 				const days: countEnum = {};
@@ -88,7 +90,8 @@ export const getFilesGrowth = (client: Client) => {
 					cumulativeTotal += files;
 					days[dateStr] = cumulativeTotal;
 				}
-				return res.json({ days });
+				res.json({ days });
+				break;
 			}
 		}
 	};

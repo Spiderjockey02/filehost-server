@@ -12,7 +12,7 @@ export const getFiles = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Fetch from cache
-			const filePath = req.params.path;
+			const filePath = (req.params.path as unknown as string[]).join('/');
 			const file = await client.FileManager.getDirectory(session.user, filePath);
 
 			res.json({ file });
@@ -34,7 +34,7 @@ export const postFileUpload = (client: Client) => {
 			const { files } = await parseForm(client, req, session.user);
 			if (Object.keys(files).length == 0) throw 'No files uploaded';
 
-			return res.json({ success: 'File(s) successfully uploaded.' });
+			res.json({ success: 'File(s) successfully uploaded.' });
 		} catch (err) {
 			client.logger.error(err);
 			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
@@ -250,10 +250,10 @@ export const getAllDirectories = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(client, req.headers);
-			if (!session?.user) return res.json({ error: 'Invalid session' });
+			if (!session?.user) return Error.InvalidSession(res);
 
 			const dirs = await client.FileManager.fetchOwnedByUserId({ userId: session.user.id, type: 'DIRECTORY' });
-			return res.json({ dirs: sanitiseObject(dirs) });
+			res.json({ dirs: sanitiseObject(dirs) });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to get all user\'s directories.');
