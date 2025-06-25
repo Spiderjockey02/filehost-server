@@ -9,6 +9,7 @@ import CRONManager from './CRONManager';
 import QueueManager from './QueueManager';
 import StorageManager from './StorageManager';
 import UserActivityManager from '../accessors/UserActivity';
+import { Server } from 'socket.io';
 
 export default class Client {
 	logger: Logger;
@@ -22,11 +23,11 @@ export default class Client {
 	QueueManager: QueueManager;
 	userActivityManager: UserActivityManager;
 
-	constructor() {
+	constructor(io: Server) {
 		this.logger = new Logger();
 		this.userManager = new UserManager();
 		this.groupManager = new GroupManager();
-		this.notificationManager = new NotificationManager();
+		this.notificationManager = new NotificationManager(io);
 		this.recentlyViewedFileManager = new RecentlyViewedFileManager();
 		this.FileManager = new FileManager(this, new StorageManager(this));
 		this.sessionManager = new SessionManager();
