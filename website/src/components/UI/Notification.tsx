@@ -6,11 +6,15 @@ import { authClient } from '@/auth/client';
 import Link from 'next/link';
 import axios from 'axios';
 import { format } from '@/utils/functions';
-import { SyntheticEvent } from 'react';
+import { SyntheticEvent, useEffect, useState } from 'react';
+import { useSocket } from '../Hooks/SocketManager';
+import { Notification } from '@prisma/client';
 
-export default function NotificationBell({ notifications }: NotificationProps) {
+export default function NotificationBell({ notifications: oldNotifs }: NotificationProps) {
+	const [notifications, setNotifications] = useState(oldNotifs);
 	const { refetch } = authClient.useSession();
 	const isMobile = useIsMobile();
+	const { socket } = useSocket();
 
 	async function deleteNotification(e: SyntheticEvent, id: string) {
 		e.stopPropagation();
@@ -21,6 +25,17 @@ export default function NotificationBell({ notifications }: NotificationProps) {
 			console.log(error);
 		}
 	}
+
+	useEffect(() => {
+		if (!socket) return;
+		socket.on('notification', (notification: Notification) => {
+			setNotifications((prev) => [...prev, notification]);
+		});
+
+		return () => {
+			socket.off('notification');
+		};
+	}, [socket]);
 
 	return (
 		<li className="navbar-nav dropdown">

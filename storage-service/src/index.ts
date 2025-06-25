@@ -10,7 +10,6 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { getSession } from './middleware';
 
-const client = new Client();
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
@@ -19,6 +18,7 @@ const io = new Server(server, {
 		methods: ['GET', 'POST'],
 	},
 });
+const client = new Client(io);
 
 (async () => {
 	// Create 2 groups for normal users and admin
@@ -112,6 +112,7 @@ const io = new Server(server, {
 		}
 
 		client.logger.log(`Socket connected: ${session.user.name} (${session.user.id})`);
+		socket.join(session.user.id);
 	});
 
 	server.listen(process.env.PORT, () => client.logger.ready(`Started on PORT: ${process.env.PORT}`));

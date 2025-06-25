@@ -2,15 +2,18 @@ import type { CreateNotification } from '../types/database/Notification';
 import { Notification } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
+import { Server } from 'socket.io';
 
 export default class NotificationManager {
 	cache: LRUCache<string, Notification>;
+	socket: Server;
 
-	constructor() {
+	constructor(io: Server) {
 		this.cache = new LRUCache({
 			max: 100,
 			ttl: 1000 * 60 * 60,
 		});
+		this.socket = io;
 	}
 
 	/**
@@ -31,6 +34,9 @@ export default class NotificationManager {
 				},
 			},
 		});
+
+		// Emit the notification to the user
+		this.socket.to(notification.userId).emit('notification', notification);
 		this.cache.set(notification.id, notification);
 		return notification;
 	}
