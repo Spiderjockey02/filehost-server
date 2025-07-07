@@ -253,3 +253,16 @@ export const getActivityList = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint: GET /api/admin/network/user-agents
+export const getUserAgents = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		try {
+			const agents = await client.userActivityManager.fetchUserAgents();
+			res.json({ agents });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch user agents.');
+		}
+	};
+};

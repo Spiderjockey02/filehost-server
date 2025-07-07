@@ -4,7 +4,7 @@ import { getLogs, getSpecificLog } from '../../controllers/admin/logs';
 import type Client from '../../helpers/Client';
 import { checkAdmin } from '../../middleware';
 import { Router } from 'express';
-import { getActivityList, getActivityRequests, getActivityTraffic, getNetworkStats } from '../../controllers/admin/network';
+import { getActivityList, getActivityRequests, getActivityTraffic, getNetworkStats, getUserAgents } from '../../controllers/admin/network';
 const router = Router();
 
 export default async function(client: Client) {
@@ -39,6 +39,8 @@ export default async function(client: Client) {
 	router.get('/network/traffic', await checkAdmin(client), getActivityTraffic(client));
 
 	router.get('/network/list', await checkAdmin(client), getActivityList(client));
+
+	router.get('/network/user-agents', await checkAdmin(client), getUserAgents(client));
 
 	router.post('/notification', await checkAdmin(client), postNotification(client));
 

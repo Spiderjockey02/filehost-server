@@ -266,4 +266,12 @@ export default class UserActivityManager {
 		const users = [...new Set(activity.map(s => s.userId).filter(s => s !== null))];
 		return users;
 	}
+
+	fetchUserAgents() {
+		return client.userAgent.findMany({
+			include: {
+				_count: true,
+			},
+		});
+	}
 }
