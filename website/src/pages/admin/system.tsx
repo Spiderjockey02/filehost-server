@@ -12,6 +12,7 @@ import AdminLayout from '@/layouts/admin';
 import { DatabaseBackup } from '@/types';
 import { User } from 'better-auth';
 import axios from 'axios';
+import AdminUserAgentCard from '@/components/Cards/AdminUserAgentCard';
 
 interface Props {
   error: string
@@ -84,6 +85,7 @@ export default function AdminEndpoints({ thumbnailCache, stats, error }: Props) 
 					<AdminCacheCard sizeInBytes={thumbnailCache.sizeInBytes} count={thumbnailCache.count} />
 				</Col>
 			</Row>
+			<AdminUserAgentCard />
 		</AdminLayout>
 	);
 }
