@@ -82,6 +82,9 @@ export const postCronJobsByName = (client: Client) => {
 				case 'RECALCULATE_USER_STORAGE':
 					await client.CRONManager.recalculateUserStorage();
 					break;
+				case 'RECALCULATE_STORAGE_USAGE':
+					await client.CRONManager.recalculateStorageUsage();
+					break;
 				default:
 					return Error.MissingResource(res, `${name} is not a valid CRON job.`);
 			}

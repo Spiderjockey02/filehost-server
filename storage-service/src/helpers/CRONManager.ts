@@ -24,7 +24,7 @@ export default class CRONManager extends CronJobAccessor {
 		await this.fetchAll();
 
 		// First ensure all CRON jobs exist on the database (Could be first time setup)
-		if ([...this.names.keys()].length != 4) {
+		if ([...this.names.keys()].length != 5) {
 			try {
 				// Daily at 2 AM
 				await	this.create({ name: 'BACKED_UP_DATABASE', schedule: '0 2 * * *' });
@@ -34,6 +34,8 @@ export default class CRONManager extends CronJobAccessor {
 				await	this.create({ name: 'DELETE_EXPIRED_SESSIONS', schedule: '0 * * * *' });
 				// Every 6 hours
 				await	this.create({ name: 'RECALCULATE_USER_STORAGE', schedule: '0 0,6,12,18 * * *' });
+				// Every hour
+				await this.create({ name: 'RECALCULATE_STORAGE_USAGE', schedule: '0 * * * *' });
 			} catch (err) {
 				this.client.logger.error(`[CRONMANAGER]: Failed to create CRON jobs: ${err}`);
 			}
@@ -57,6 +59,9 @@ export default class CRONManager extends CronJobAccessor {
 					break;
 				case 'RECALCULATE_USER_STORAGE':
 					this.scheduleJob(name, cronJob.schedule, this.recalculateUserStorage.bind(this));
+					break;
+				case 'RECALCULATE_STORAGE_USAGE':
+					this.scheduleJob(name, cronJob.schedule, this.recalculateStorageUsage.bind(this));
 					break;
 				default:
 					this.client.logger.error(`[CRONMANAGER]: ${name} is not a valid CRON job.`);
@@ -188,6 +193,32 @@ export default class CRONManager extends CronJobAccessor {
 		} catch (err) {
 			const duration = Date.now() - start;
 			return this.createLog({ jobName: 'RECALCULATE_USER_STORAGE', status: 'FAILURE', message: `${err}`, duration });
+		}
+	}
+
+	/**
+	  * Recalculate storage usage
+		* @returns {CronJobLog}
+	*/
+	async recalculateStorageUsage(): Promise<CronJobLog> {
+		const start = Date.now();
+
+		try {
+			const storages = await this.client.FileManager.storageManager.fetchAll({});
+			let updatedNum = 0;
+			for (const storage of storages) {
+				const size = await this.client.FileManager.fetchTotalStorageUsed(storage.id);
+				if (size._sum.size !== storage.maxSize) {
+					await this.client.FileManager.storageManager.update({ id: storage.id, usedSize: size._sum.size ?? 0n });
+					updatedNum++;
+				}
+			}
+
+			const duration = Date.now() - start;
+			return this.createLog({ jobName: 'RECALCULATE_STORAGE_USAGE', status: 'SUCCESS', message: `Recalculated usage for ${updatedNum} storages.`, duration });
+		} catch (err) {
+			const duration = Date.now() - start;
+			return this.createLog({ jobName: 'RECALCULATE_STORAGE_USAGE', status: 'FAILURE', message: `${err}`, duration });
 		}
 	}
 }

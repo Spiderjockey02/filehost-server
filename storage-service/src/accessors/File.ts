@@ -438,8 +438,11 @@ export default class FileAccessor {
 		});
 	}
 
-	async fetchTotalStorageUsed() {
+	async fetchTotalStorageUsed(storageId?: string) {
 		return client.file.aggregate({
+			where: {
+				storageId,
+			},
 			_sum: {
 				size: true,
 			},
