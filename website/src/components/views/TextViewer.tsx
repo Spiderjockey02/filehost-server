@@ -1,5 +1,6 @@
 import { TextViewerProps } from '@/types/Components/Views';
 import { useCallback, useEffect, useState } from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import axios from 'axios';
 
 export default function TextViewer({ path }: TextViewerProps) {
@@ -9,7 +10,10 @@ export default function TextViewer({ path }: TextViewerProps) {
 		const controller = new AbortController();
 
 		try {
-			const { data } = await axios.get(path, { signal: controller.signal });
+			const { data } = await axios.get(path, {
+				signal: controller.signal,
+				responseType: 'text',
+			});
 			setFileContent(data);
 		} catch (err) {
 			console.log(err);
@@ -23,7 +27,23 @@ export default function TextViewer({ path }: TextViewerProps) {
 		loadContent();
 	}, [loadContent]);
 
+	const getLanguageFromPath = (fileName: string) => {
+		if (fileName.endsWith('.json')) return 'json';
+		if (fileName.endsWith('.js')) return 'javascript';
+		if (fileName.endsWith('.ts')) return 'typescript';
+		if (fileName.endsWith('.css')) return 'css';
+		if (fileName.endsWith('.html')) return 'html';
+		if (fileName.endsWith('.md')) return 'markdown';
+		return 'text';
+	};
+
 	return (
-		<textarea rows={35} readOnly value={fileContent} style={{ width: '100%' }} />
+		<SyntaxHighlighter
+			language={getLanguageFromPath(path)}
+			wrapLines={true}
+			showLineNumbers={true}
+		>
+			{fileContent}
+		</SyntaxHighlighter>
 	);
 }
