@@ -37,29 +37,17 @@ const client = new Client(io);
 		// Where files will be stored (by default)
 		await client.FileManager.storageManager.create({
 			name: 'Default Storage Medium',
+			location: 'Europe',
 			type: 'FILE_SYSTEM',
 			basePath: PATHS.CONTENT,
-			latitude: 0,
-			longitude: 0,
-		});
-
-		// Where thumbnails will be stored
-		await client.FileManager.storageManager.create({
-			name: 'Thumbnails',
-			type: 'FILE_SYSTEM',
-			basePath: PATHS.THUMBNAIL,
-			latitude: 0,
-			longitude: 0,
-			thumbnailOnly: true,
 		});
 
 		// Where avatars will be stored
 		await client.FileManager.storageManager.create({
 			name: 'Avatars',
+			location: 'Europe',
 			type: 'FILE_SYSTEM',
 			basePath: PATHS.AVATAR,
-			latitude: 0,
-			longitude: 0,
 			avatarOnly: true,
 		});
 	}

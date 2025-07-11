@@ -1,11 +1,9 @@
-import { convertMiliseconds, formatBytes, queryOptions } from '@/utils/functions';
-import type { cacheStats, thumbnailStats } from '@/types/Components/Card';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfinity } from '@fortawesome/free-solid-svg-icons';
+import { convertMiliseconds, queryOptions } from '@/utils/functions';
+import type { cacheStat, cacheStats } from '@/types/Components/Card';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Table } from '@/components';
 
-export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
+export default function AdminCacheCard() {
 	const { data: stats, isLoading, refetch, error } = useQuery({
 		queryKey: ['cacheStats'],
 		queryFn: async ({ signal }) => {
@@ -38,10 +36,10 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 				<Table>
 					<Table.HeaderRow>
 						<Table.Header>Name</Table.Header>
-						<Table.Header>Size</Table.Header>
-						<Table.Header>Max</Table.Header>
-						<Table.Header>TTL</Table.Header>
-						<Table.Header>Actions</Table.Header>
+						<Table.Header className='text-center'>Size</Table.Header>
+						<Table.Header className='text-center'>Max</Table.Header>
+						<Table.Header className='text-center'>TTL</Table.Header>
+						<Table.Header className='text-center'>Actions</Table.Header>
 					</Table.HeaderRow>
 					<Table.Body>
 						{error == null ?
@@ -76,65 +74,15 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 								))
 							) : (
 								<>
-									<tr>
-										<td>Files</td>
-										<td>{stats.files.size}</td>
-										<td>{stats.files.max}</td>
-										<td>{convertMiliseconds(stats.files.ttl / 1000)}</td>
-										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('files')}>Reset</button></td>
-									</tr>
-									<tr>
-										<td>MIME types</td>
-										<td>{stats.mimeTypes.size}</td>
-										<td>{stats.mimeTypes.max}</td>
-										<td>{convertMiliseconds(stats.mimeTypes.ttl / 1000)}</td>
-										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('mimetype')}>Reset</button></td>
-									</tr>
-									<tr>
-										<td>Users</td>
-										<td>{stats.users.size}</td>
-										<td>{stats.users.max}</td>
-										<td>{convertMiliseconds(stats.users.ttl / 1000)}</td>
-										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('users')}>Reset</button></td>
-									</tr>
-									<tr>
-										<td>User History</td>
-										<td>{stats.userHistory.size}</td>
-										<td>{stats.userHistory.max}</td>
-										<td>{convertMiliseconds(stats.userHistory.ttl / 1000)}</td>
-										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('history')}>Reset</button></td>
-									</tr>
-									<tr>
-										<td>Sessions</td>
-										<td>{stats.sessions.size}</td>
-										<td>{stats.sessions.max}</td>
-										<td>{convertMiliseconds(stats.sessions.ttl / 1000)}</td>
-										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('sessions')}>Reset</button></td>
-									</tr>
-									<tr>
-										<td>IPs</td>
-										<td>{stats.ips.size}</td>
-										<td>{stats.ips.max}</td>
-										<td>{convertMiliseconds(stats.ips.ttl / 1000)}</td>
-										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('ips')}>Reset</button></td>
-									</tr>
-									<tr>
-										<td>User agents</td>
-										<td>{stats.userAgents.size}</td>
-										<td>{stats.userAgents.max}</td>
-										<td>{convertMiliseconds(stats.userAgents.ttl / 1000)}</td>
-										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('userAgents')}>Reset</button></td>
-									</tr>
-									<tr>
-										<td>Thumbnails</td>
-										<td>{thumbnailCache.count} ({formatBytes(thumbnailCache.sizeInBytes)})</td>
-										<td><FontAwesomeIcon icon={faInfinity} /></td>
-										<td><FontAwesomeIcon icon={faInfinity} /></td>
-										<td><button className='btn btn-danger btn-sm' onClick={() => deleteCache('thumbnails')}>Reset</button></td>
-									</tr>
+									{buildCacheRow('Files', stats.files, () => deleteCache('files'))}
+									{buildCacheRow('MIME types', stats.mimeTypes, () => deleteCache('mimetype'))}
+									{buildCacheRow('Users', stats.users, () => deleteCache('users'))}
+									{buildCacheRow('User history', stats.userHistory, () => deleteCache('history'))}
+									{buildCacheRow('Sessions', stats.sessions, () => deleteCache('sessions'))}
+									{buildCacheRow('IPs', stats.ips, () => deleteCache('ips'))}
+									{buildCacheRow('User agents', stats.userAgents, () => deleteCache('userAgents'))}
 								</>
-							)
-							:
+							) :
 							<tr>
 								<td colSpan={5} className="text-center text-danger fw-bold">
 									{error?.message ?? 'Failed to load cache stats'}
@@ -145,5 +93,17 @@ export default function AdminCacheCard(thumbnailCache: thumbnailStats) {
 				</Table>
 			</Card.Body>
 		</Card>
+	);
+}
+
+function buildCacheRow(type: string, stats: cacheStat, onClick: () => void) {
+	return (
+		<tr>
+			<td>{type}</td>
+			<td className='text-center'>{stats.size}</td>
+			<td className='text-center'>{stats.max}</td>
+			<td className='text-center'>{convertMiliseconds(stats.ttl / 1000)}</td>
+			<td className='text-center'><button className='btn btn-danger btn-sm' onClick={onClick}>Clear</button></td>
+		</tr>
 	);
 }

@@ -1,28 +1,6 @@
 import Client from 'src/helpers/Client';
-import fs from 'fs/promises';
-import { Error, PATHS } from '../../utils';
+import { Error } from '../../utils';
 import type { Request, Response } from 'express';
-import { existsSync } from 'fs';
-
-// Endpoint: GET /api/admin/cache/thumbnails
-export const getCachedThumbnailSize = (client: Client) => {
-	return async (_req: Request, res: Response) => {
-		try {
-			// Check if the thumbnail cache folder exists first (Might have been deleted)
-			if (!existsSync(PATHS.THUMBNAIL)) await fs.mkdir(PATHS.THUMBNAIL);
-			const folderSize = await buildFolderSizeRecursively(PATHS.THUMBNAIL, { sizeInBytes: 0, count: 0 });
-
-			// Update database for thumbnail cache
-			const storage = await client.FileManager.storageManager.fetchThumbnailMedium();
-			if (storage) await client.FileManager.storageManager.update({ id: storage.id, usedSize: folderSize.sizeInBytes });
-
-			res.json({ folderSize });
-		} catch (err) {
-			client.logger.error(err);
-			Error.GenericError(res, 'Failed to get thumbnail cache size.');
-		}
-	};
-};
 
 // Endpoint: DELETE /api/admin/cache/:name
 export const deleteCacheByName = (client: Client) => {
@@ -39,12 +17,6 @@ export const deleteCacheByName = (client: Client) => {
 					break;
 				case 'history':
 					client.recentlyViewedFileManager.cache.clear();
-					break;
-				case 'thumbnails':
-					// Complete delete thumbnail cache folder and then make empty folder
-					// TODO: Add a proper filter so it doesn't delete the default missing-file-icon.png
-					await fs.rm(PATHS.THUMBNAIL, { recursive: true });
-					await fs.mkdir(PATHS.THUMBNAIL);
 					break;
 				case 'sessions':
 					client.sessionManager.cache.clear();
@@ -122,25 +94,3 @@ export const getCachedStats = (client: Client) => {
 		}
 	};
 };
-
-interface folderStats {
-	sizeInBytes: number
-	count: number
-}
-
-// Get the total size of a folder recursively (look into sub-folders etc)
-async function buildFolderSizeRecursively(folderPath: string, size: folderStats) {
-	const children = await fs.readdir(folderPath);
-
-	for (const child of children) {
-		const stat = await fs.stat(`${folderPath}/${child}`);
-
-		if (stat.isDirectory()) {
-			await buildFolderSizeRecursively(`${folderPath}/${child}`, size);
-		} else {
-			size.count += 1;
-			size.sizeInBytes += stat.size;
-		}
-	}
-	return size;
-}
