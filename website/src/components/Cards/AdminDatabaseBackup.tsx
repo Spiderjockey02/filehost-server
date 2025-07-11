@@ -1,4 +1,4 @@
-import { faCheck, faX, faCircleInfo, faDownload, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faX, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { useDatabaseBackups } from '../Hooks/useDatabaseBackups';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminBackupModel } from '../Modals/AdminBackupModal';
@@ -46,7 +46,6 @@ export default function AdminDatabaseBackupCard() {
 						<Table.Header>Size</Table.Header>
 						<Table.Header className='text-center'>Status</Table.Header>
 						<Table.Header className='text-center'>Info</Table.Header>
-						<Table.Header className='text-center hide-on-mobile'>Actions</Table.Header>
 					</Table.HeaderRow>
 					<Table.Body>
 						{error == null ?
@@ -65,13 +64,10 @@ export default function AdminDatabaseBackupCard() {
 										<td className="placeholder-glow">
 											<span className="placeholder col-12"></span>
 										</td>
-										<td className="placeholder-glow">
-											<span className="placeholder col-12"></span>
-										</td>
 									</tr>
 								))
 							) : (
-								backups.map(backup => (
+								backups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(backup => (
 									<tr key={backup.filename}>
 										<td>{backup.filename}</td>
 										<td>{formatBytes(backup.sizeBytes)}</td>
@@ -82,16 +78,6 @@ export default function AdminDatabaseBackupCard() {
 											<button className='btn' data-bs-toggle="modal" data-bs-target={`#${new Date(backup.createdAt).getTime()}`}>
 												<FontAwesomeIcon size='lg' icon={faCircleInfo} />
 											</button>
-										</td>
-										<td className='hide-on-mobile'>
-											<div className='d-flex flex-row align-items-center justify-content-around'>
-												<button className='btn' onClick={() => downloadBackup(backup.filename)}>
-													<FontAwesomeIcon size='lg' icon={faDownload} />
-												</button>
-												<button className='btn' onClick={() => deleteBackup(backup.filename)}>
-													<FontAwesomeIcon size='lg' icon={faTrash} />
-												</button>
-											</div>
 										</td>
 									</tr>
 								))
