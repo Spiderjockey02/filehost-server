@@ -32,8 +32,6 @@ export default function AdminUserIdPage({ userId }: Props) {
 	});
 
 	if (session == null) return null;
-
-	console.log(data);
 	return (
 		<AdminLayout activeTab="users" user={session.user as User} tabName={`Admin user: ${data?.user.name}`}>
       &nbsp;
@@ -46,7 +44,6 @@ export default function AdminUserIdPage({ userId }: Props) {
 			<Row>
 				<Col lg={4}>
 					<AdminUserIdCard isLoading={isLoading} user={data?.user ?? null} />
-					<AdminRecentUploadsCards userId={userId} />
 				</Col>
 				<Col lg={8}>
 					<Card className='mb-4'>
@@ -93,6 +90,13 @@ export default function AdminUserIdPage({ userId }: Props) {
 							</Table>
 						</Card.Body>
 					</Card>
+				</Col>
+			</Row>
+			<Row>
+				<Col lg={4}>
+					<AdminRecentUploadsCards userId={userId} />
+				</Col>
+				<Col lg={8}>
 					<AdminActivityCard userId={userId} />
 				</Col>
 			</Row>

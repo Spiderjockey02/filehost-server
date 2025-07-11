@@ -1,5 +1,5 @@
-import { StringNumberObj } from '.';
-import { UserWithCount } from './database';
+import { DatabaseBackup, StringNumberObj } from '.';
+import { StorageWithCounts } from './database';
 
 export interface AdminPageProps {
   stats: {
@@ -18,22 +18,12 @@ export interface AdminPageProps {
     }
     uptime: number
   }
-  rawUserGrowth: StringNumberObj
-  rawUploadGrowth: StringNumberObj
   error?: string
 }
 
 export interface AdminUserPageProps {
-  users: UserWithCount[]
-  months: StringNumberObj
-  langaugeCodes: StringNumberObj
-  emails: StringNumberObj
-  rawUserGrowth: StringNumberObj
-  signupSource: StringNumberObj
-  retention: {
-    sessions: StringNumberObj
-    files: StringNumberObj
-  }
+ emails: StringNumberObj
+ signupSource: StringNumberObj
   userStats: {
     total: number
     new: number
@@ -42,6 +32,69 @@ export interface AdminUserPageProps {
     banned: number
     admins: number
   }
+  error?: string
+}
+
+export interface AdminSystemPageProps {
+  error: string
+  stats: {
+    memory: {
+      using: number
+      total: number
+    },
+    uptime: number
+    logs: {
+      totalByteSize: number
+      count: number
+    },
+    backup: DatabaseBackup | Record<never, never>
+    network: number
+  }
+}
+
+export interface AdminStoragePageProps {
+  error: string
+  storages: StorageWithCounts[]
+  avgFileCount: number
+  avgStorageUsage: number
+  MediumCounts: {
+    [key: string]: number
+  }
+}
+
+interface Methods {
+  method: string
+  count: number
+}
+
+interface Status {
+  status: number
+  count: number
+}
+
+export interface AdminNetworkPageProps {
+  error?: string
+  network: {
+    incomingBytes: number
+    outgoingBytes: number
+  }
+  methods: Methods[]
+  status: Status[]
+  duration: number
+  total: number
+  history: StringNumberObj
+}
+
+export interface AdminFilesPageProps {
+  files: number
+  folders: number
+  avgFileSize: number
+  deletedFiles: number
+  newFiles: number
+  totalStorageSize: number
+  mostCommonFileTypes: StringNumberObj
+  days: StringNumberObj
+  categories: StringNumberObj
   error?: string
 }
 

@@ -1,34 +1,22 @@
 import { authClient } from '@/auth/client';
-import { Card, Col, ErrorPopup, InfoPill, Row, Table } from '@/components';
-import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
-import { AdminCreateNewMediumModal } from '@/components/Modals/AdminCreateNewMediumModal';
+import { Card, Col, ErrorPopup, InfoPill, Row, ObjectOrientedPieChart } from '@/components';
+import AdminStorageTable from '@/components/Cards/AdminStorageTable';
 import AdminLayout from '@/layouts/admin';
+import { AdminStoragePageProps } from '@/types/pages';
 import { formatBytes, headers } from '@/utils/functions';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faFile, faFileImage, faHardDrive } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { StorageMedium } from '@prisma/client';
 import axios from 'axios';
 import { User } from 'better-auth';
 import { GetServerSidePropsContext } from 'next/types';
 
-interface Props {
-  error: string
-	storages: StorageMedium[]
-	MediumCounts: {
-		[key: string]: number
-	}
-}
-
-export default function AdminStorage({ error, storages, MediumCounts }: Props) {
+export default function AdminStoragePage({ error, storages, MediumCounts, avgFileCount, avgStorageUsage }: AdminStoragePageProps) {
 	const { data: session } = authClient.useSession();
 	if (session == null) return null;
 
-
-	const thumbnailMedium = storages.find(s => s.thumbnailOnly);
 	const avatarMedium = storages.find(s => s.avatarOnly);
-
 	return (
-		<AdminLayout activeTab='storage' user={session.user as User} tabName='Admin System'>
+		<AdminLayout activeTab='storage' user={session.user as User} tabName='Admin Storage'>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Storage Dashboard</h1>
@@ -38,11 +26,14 @@ export default function AdminStorage({ error, storages, MediumCounts }: Props) {
 			</div>
 			{error && <ErrorPopup text={error} />}
 			<Row>
-				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title={'Avatar Storage'} text={formatBytes(avatarMedium?.usedSize)} icon={faDownload} />
+				<Col xl={4} md={6} className="mb-4">
+					<InfoPill title="Avatar Storage" text={formatBytes(avatarMedium?.usedSize)} icon={faFileImage} />
 				</Col>
-				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title={'Thumbnail Storage'} text={formatBytes(thumbnailMedium?.usedSize)} icon={faDownload} />
+				<Col xl={4} md={6} className="mb-4">
+					<InfoPill title="Average file count" text={`${avgFileCount}`} icon={faFile} />
+				</Col>
+				<Col xl={4} md={6} className="mb-4">
+					<InfoPill title="Average usage" text={formatBytes(avgStorageUsage)} icon={faHardDrive} />
 				</Col>
 			</Row>
 			<Row>
@@ -57,47 +48,10 @@ export default function AdminStorage({ error, storages, MediumCounts }: Props) {
 					</Card>
 				</Col>
 			</Row>
-			<Card>
-				<Card.Header>
-					Storages Table
-				</Card.Header>
-				<Card.Body className='table-responsive'>
-					<Table>
-						<Table.HeaderRow>
-							<Table.Header>Name</Table.Header>
-							<Table.Header>Type</Table.Header>
-							<Table.Header>Utilisation</Table.Header>
-							<Table.Header>Attribute</Table.Header>
-							<Table.Header>Created at</Table.Header>
-						</Table.HeaderRow>
-						<Table.Body>
-							{storages.map((u) => (
-								<tr key={u.id}>
-									<td scope="row">{u.name}</td>
-									<td>{u.type}</td>
-									<td>{formatBytes(u.usedSize)} / {formatBytes(u.maxSize)}</td>
-									<td>{getAttribute(u)}</td>
-									<td>{new Date(u.createdAt).toLocaleDateString()}</td>
-								</tr>
-							))
-							}
-						</Table.Body>
-					</Table>
-					<button className='btn btn-success' data-bs-toggle="modal" data-bs-target="#AdminCreateNewMediumModal">Create new Medium</button>
-					<AdminCreateNewMediumModal />
-				</Card.Body>
-			</Card>
+			<AdminStorageTable />
 		</AdminLayout>
 	);
 }
-
-function getAttribute(storage: StorageMedium) {
-	if (storage.isPrivate) return 'Private access only.';
-	if (storage.thumbnailOnly) return 'Thumbnail use only.';
-	if (storage.avatarOnly) return 'Avatar use only.';
-	return 'Public use.';
-}
-
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
@@ -128,10 +82,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/storage/types`, headers(context.req)),
 			]);
 
-			return { props: { storages: storageData.storages, MediumCounts } };
+			return { props: { storages: storageData.storages, avgFileCount: storageData.avgFileCount, avgStorageUsage: storageData.avgStorageUsage, MediumCounts } };
 		} catch (err) {
 			console.log(err);
-			return { props: { storages: [], MediumCounts: {}, error: 'API server currently unavailable' } };
+			return { props: { storages: [], avgFileCount: 0, avgStorageUsage: 0, MediumCounts: {}, error: 'API server currently unavailable' } };
 		}
 	}
 }

@@ -1,63 +1,16 @@
-import { authClient } from '@/auth/client';
-import { Row, Col, InfoPill, BarChart, LineChart, Card, ErrorPopup } from '@/components';
-import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
-import AdminLayout from '@/layouts/admin';
-import { formatBytes, headers } from '@/utils/functions';
 import { faDownload, faFolderTree, faHardDrive, faMemory, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { Row, Col, InfoPill, BarChart, Card, ErrorPopup, ObjectOrientedPieChart, FileUploadLineChart } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import axios from 'axios';
-import { User } from 'better-auth';
+import { formatBytes, headers } from '@/utils/functions';
+import { AdminFilesPageProps } from '@/types/pages';
 import { GetServerSidePropsContext } from 'next';
-import { useEffect, useState } from 'react';
+import { authClient } from '@/auth/client';
+import AdminLayout from '@/layouts/admin';
+import { User } from 'better-auth';
+import axios from 'axios';
 
-interface MimeType {
-	mimeType: string
-	count: number
-}
-
-interface Props {
-	files: number
-	folders: number
-	avgFileSize: number
-	deletedFiles: number
-	newFiles: number
-	totalStorageSize: number
-	mostCommonFileTypes: MimeType[]
-	days: {
-		[key: string]: number
-	}
-	categories: {
-		[key: string]: number
-	}
-	rawUploadGrowth: {
-    [key: string]: number
-  }
-	error?: string
-}
-
-interface MimeTypeObject {
-	[key: string]: number;
-}
-
-type growthGraphType = 'daily' | 'monthly' | 'yearly'
-
-export default function AdminFiles(data: Props) {
+export default function AdminFilesPage(data: AdminFilesPageProps) {
 	const { data: session } = authClient.useSession();
-	const [mimeType, setMimeType] = useState<MimeTypeObject>({});
-	const [uploadGrowth, setUploadGrowth] = useState(data.rawUploadGrowth);
-	const [uploadGrowthFrame, setUploadGrowthFrame] = useState<growthGraphType>('daily');
-
-	const fileUploadData = {
-		labels: Object.keys(uploadGrowth),
-		datasets: [
-			{
-				label: 'Total files',
-				data: Object.values(uploadGrowth),
-				borderColor: 'rgb(255, 99, 132)',
-				backgroundColor: 'rgba(255, 99, 132, 0.5)',
-			},
-		],
-	};
 
 	const fileCategory = {
 		labels: Object.keys(data.categories),
@@ -71,28 +24,6 @@ export default function AdminFiles(data: Props) {
 		],
 	};
 
-	async function updatedUploadGrowth(time: 'daily' | 'monthly' | 'yearly') {
-		try {
-			const { data: p } = await axios.get(`/api/admin/files/growth?frame=${time}`);
-			const keys = Object.keys(p);
-			setUploadGrowth(p[keys[0]]);
-			setUploadGrowthFrame(time);
-		} catch (error) {
-			console.log(error);
-		}
-	}
-
-	useEffect(() => {
-		// Fetch recent files
-		(async () => {
-			try {
-				const { data: { mimeTypes } } = await axios.get('/api/admin/files/mimetypes?grouped=true');
-				setMimeType(mimeTypes);
-			} catch (err) {
-				console.error(err);
-			}
-		})();
-	}, []);
 	if (session == null) return null;
 	return (
 		<AdminLayout activeTab='files' user={session.user as User} tabName='Admin File'>
@@ -106,42 +37,25 @@ export default function AdminFiles(data: Props) {
 			{data.error && <ErrorPopup text={data.error} />}
 			<Row>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Total files'} text={data.files + data.folders} icon={faUsers} />
+					<InfoPill title="Total files" text={data.files + data.folders} icon={faUsers} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'New files (7 days)'} text={data.newFiles} icon={faFolderTree} />
+					<InfoPill title="New files (7 days)" text={data.newFiles} icon={faFolderTree} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Total Storage Used'} text={formatBytes(data.totalStorageSize)} icon={faHardDrive} />
+					<InfoPill title="Total Storage Used" text={formatBytes(data.totalStorageSize)} icon={faHardDrive} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Average File Size'} text={formatBytes(data.avgFileSize)} icon={faHardDrive} />
+					<InfoPill title="Average File Size" text={formatBytes(data.avgFileSize)} icon={faHardDrive} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Most Common File Type'} text={data.mostCommonFileTypes[0]?.mimeType} icon={faMemory} />
+					<InfoPill title="Most Common File Type" text={Object.keys(data.mostCommonFileTypes)[0]} icon={faMemory} />
 				</Col>
 				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
-					<InfoPill title={'Deleted Files Count'} text={data.deletedFiles} icon={faTrash} />
+					<InfoPill title="Deleted Files Count" text={data.deletedFiles} icon={faTrash} />
 				</Col>
 			</Row>
-			<Card className='mb-4'>
-				<Card.Header>
-					File Uploads Over Time
-					<div className="dropdown">
-						<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-							{uploadGrowthFrame}
-						</button>
-						<ul className="dropdown-menu dropdown-menu-end">
-							<li><a className="dropdown-item" href="#" onClick={() => updatedUploadGrowth('daily')}>Daily</a></li>
-							<li><a className="dropdown-item" href="#" onClick={() => updatedUploadGrowth('monthly')}>Monthly</a></li>
-							<li><a className="dropdown-item" href="#" onClick={() => updatedUploadGrowth('yearly')}>Yearly</a></li>
-						</ul>
-					</div>
-				</Card.Header>
-				<Card.Body>
-					<LineChart data={fileUploadData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
-				</Card.Body>
-			</Card>
+			<FileUploadLineChart />
 			<Row>
 				<Col xxl={4} xl={4} lg={12} md={12} className='mb-4'>
 					<Card>
@@ -156,20 +70,20 @@ export default function AdminFiles(data: Props) {
 				<Col xxl={4} xl={4} lg={12} md={12} className='mb-4'>
 					<Card>
 						<Card.Header>
-							Suspicious MIME Type Upload
+							System Content: Files vs Folders
 						</Card.Header>
 						<Card.Body>
-							<p>Make hard ban list and a soft ban list (suspicious)</p>
+							<ObjectOrientedPieChart data={{ files: data.files, folders: data.folders }} />
 						</Card.Body>
 					</Card>
 				</Col>
 				<Col xxl={4} xl={4} lg={12} md={12} className='mb-4'>
 					<Card>
 						<Card.Header>
-							File MIME types
+							File MIME Type Distribution
 						</Card.Header>
 						<Card.Body className='d-flex justify-content-center'>
-							<ObjectOrientedPieChart data={mimeType} />
+							<ObjectOrientedPieChart data={data.mostCommonFileTypes} />
 						</Card.Body>
 					</Card>
 				</Col>

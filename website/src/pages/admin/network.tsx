@@ -1,91 +1,19 @@
-import { authClient } from '@/auth/client';
-import { Card, Col, ErrorPopup, InfoPill, LineChart, Row } from '@/components';
-import AdminActivityCard from '@/components/Cards/AdminActivity';
-import { ActivityTransferAreaChart } from '@/components/Graphs/ActivityTransferAreaChart';
-import { ObjectOrientedPieChart } from '@/components/Graphs/ObjectOrientedPieChart';
-import AdminLayout from '@/layouts/admin';
-import { StringNumberObj } from '@/types';
-import { requestTimeFrames } from '@/types/pages';
-import { formatBytes, headers } from '@/utils/functions';
+import { Card, Col, ErrorPopup, InfoPill, Row, ActivityTransferAreaChart, ObjectOrientedPieChart } from '@/components';
 import { faDownload, faEarthEurope, faStopwatch, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import axios from 'axios';
-import { User } from 'better-auth';
+import AdminActivityCard from '@/components/Cards/AdminActivity';
+import { formatBytes, headers } from '@/utils/functions';
+import { AdminNetworkPageProps } from '@/types/pages';
 import { GetServerSidePropsContext } from 'next';
+import { authClient } from '@/auth/client';
+import AdminLayout from '@/layouts/admin';
+import { User } from 'better-auth';
+import axios from 'axios';
 import Link from 'next/link';
-import { useState } from 'react';
+import NetworkRequestsLineChart from '@/components/Graphs/NetworkRequestsLineChart';
 
-interface Methods {
-	method: string
-	count: number
-}
-
-interface Status {
-	status: number
-	count: number
-}
-
-interface Props {
-  error?: string
-	network: {
-		incomingBytes: number
-		outgoingBytes: number
-	}
-	methods: Methods[]
-	status: Status[]
-	duration: number
-	total: number
-	history: StringNumberObj
-	requests: {
-		[hour: string]: {
-    	incomingBytes: number;
-    	outgoingBytes: number;
-  	}
-	}
-}
-
-export default function AdminNetwork(data: Props) {
+export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 	const { data: session } = authClient.useSession();
-	const [requestGrowth, setRequestGrowth] = useState(data.history);
-	const [requestGrowthFrame, setRequestGrowthFrame] = useState<requestTimeFrames>('hourly');
-	const [trafficGrowth, setTrafficGrowth] = useState(data.requests);
-	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('hourly');
-
-	const RequestsOverTimeData = {
-		labels: Object.keys(requestGrowth),
-		datasets: [
-			{
-				label: 'Activities',
-				data: Object.values(requestGrowth),
-				borderColor: 'rgb(255, 99, 132)',
-				backgroundColor: 'rgba(255, 99, 132, 0.5)',
-			},
-		],
-	};
-
-	async function updatedRequestGrowth(time: requestTimeFrames) {
-		if (time === requestGrowthFrame) return;
-		try {
-			const { data: p } = await axios.get(`/api/admin/network/requests?frame=${time}`);
-			const keys = Object.keys(p);
-			setRequestGrowth(p[keys[0]]);
-			setRequestGrowthFrame(time);
-		} catch (err) {
-			console.log(err);
-		}
-	}
-
-	async function updatedTrafficGrowth(time: requestTimeFrames) {
-		if (time === trafficGrowthFrame) return;
-		try {
-			const { data: p } = await axios.get(`/api/admin/network/traffic?frame=${time}`);
-			const keys = Object.keys(p);
-			setTrafficGrowth(p[keys[0]]);
-			setTrafficGrowthFrame(time);
-		} catch (err) {
-			console.log(err);
-		}
-	}
 
 	if (session == null) return null;
 	return (
@@ -100,60 +28,24 @@ export default function AdminNetwork(data: Props) {
 			{data.error && <ErrorPopup text={data.error} />}
 			<Row>
 				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title={'Total Incoming Bytes'} text={formatBytes(data.network.incomingBytes)} icon={faDownload} />
+					<InfoPill title="Total Incoming Bytes" text={formatBytes(data.network.incomingBytes)} icon={faDownload} />
 				</Col>
 				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title={'Total Outgoing Bytes'} text={formatBytes(data.network.outgoingBytes)} icon={faUpload} />
+					<InfoPill title="Total Outgoing Bytes" text={formatBytes(data.network.outgoingBytes)} icon={faUpload} />
 				</Col>
 				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title={'Average Duration'} text={`${Number.parseFloat(`${data.duration}`).toFixed(1)}ms`} icon={faStopwatch} />
+					<InfoPill title="Average Duration" text={`${Number.parseFloat(`${data.duration}`).toFixed(1)}ms`} icon={faStopwatch} />
 				</Col>
 				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title={'Total Requests'} text={data.total} icon={faEarthEurope} />
+					<InfoPill title="Total Requests" text={data.total} icon={faEarthEurope} />
 				</Col>
 			</Row>
-			<Row>
+			<Row className='mb-4'>
 				<Col xl={6}>
-					<Card>
-						<Card.Header>
-							Requests over time
-							<div className="dropdown">
-								<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-									{requestGrowthFrame}
-								</button>
-								<ul className="dropdown-menu dropdown-menu-end">
-									<li><a className="dropdown-item" href="#" onClick={() => updatedRequestGrowth('yearly')}>Yearly</a></li>
-									<li><a className="dropdown-item" href="#" onClick={() => updatedRequestGrowth('monthly')}>Monthly</a></li>
-									<li><a className="dropdown-item" href="#" onClick={() => updatedRequestGrowth('daily')}>Daily</a></li>
-									<li><a className="dropdown-item" href="#" onClick={() => updatedRequestGrowth('hourly')}>Hourly</a></li>
-								</ul>
-							</div>
-						</Card.Header>
-						<Card.Body>
-							<LineChart data={RequestsOverTimeData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />
-						</Card.Body>
-					</Card>
+					<NetworkRequestsLineChart />
 				</Col>
 				<Col xl={6}>
-					<Card>
-						<Card.Header>
-							Traffic over time
-							<div className="dropdown">
-								<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-									{trafficGrowthFrame}
-								</button>
-								<ul className="dropdown-menu dropdown-menu-end">
-									<li><a className="dropdown-item" href="#" onClick={() => updatedTrafficGrowth('yearly')}>Yearly</a></li>
-									<li><a className="dropdown-item" href="#" onClick={() => updatedTrafficGrowth('monthly')}>Monthly</a></li>
-									<li><a className="dropdown-item" href="#" onClick={() => updatedTrafficGrowth('daily')}>Daily</a></li>
-									<li><a className="dropdown-item" href="#" onClick={() => updatedTrafficGrowth('hourly')}>Hourly</a></li>
-								</ul>
-							</div>
-						</Card.Header>
-						<Card.Body>
-							<ActivityTransferAreaChart data={trafficGrowth} />
-						</Card.Body>
-					</Card>
+					<ActivityTransferAreaChart />
 				</Col>
 			</Row>
 			<Row>
@@ -164,6 +56,7 @@ export default function AdminNetwork(data: Props) {
 						</Card.Header>
 						<Card.Body>
 							<ObjectOrientedPieChart data={data.methods.reduce((acc, item) => {
+								// @ts-expect-error stuff
 								acc[item.method] = item.count;
 								return acc;
 							}, {})} />
@@ -177,6 +70,7 @@ export default function AdminNetwork(data: Props) {
 						</Card.Header>
 						<Card.Body>
 							<ObjectOrientedPieChart data={data.status.reduce((acc, item) => {
+								// @ts-expect-error stuff
 								acc[item.status] = item.count;
 								return acc;
 							}, {})} />
@@ -213,20 +107,19 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		};
 	} else {
 		try {
-			const [{ data: stats }, { data: history }, { data: requestHistory }] = await Promise.all([
+			const [{ data: stats }, { data: history }] = await Promise.all([
 				// For the top bar of stats
 				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/network/stats`, headers(context.req)),
 				// For the Requests Over Time
 				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/network/requests?frame=hourly`, headers(context.req)),
 
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/network/traffic?frame=hourly`, headers(context.req)),
 			]);
 
-			return { props: { network: stats.network, methods: stats.methods, status: stats.status, duration: stats.duration, total: stats.total, history: history.hours, requests: requestHistory.hours } };
+			return { props: { network: stats.network, methods: stats.methods, status: stats.status, duration: stats.duration, total: stats.total, history: history.hours } };
 		} catch (err) {
 			console.log(err);
 			return { props: { network: { incomingBytes: 0,
-				outgoingBytes: 0 }, methods: [], status: [], duration: 0, total: 0, history: {}, requests: {}, error: 'API server currently unavailable' } };
+				outgoingBytes: 0 }, methods: [], status: [], duration: 0, total: 0, history: {}, error: 'API server currently unavailable' } };
 		}
 	}
 }

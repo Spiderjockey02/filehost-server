@@ -1,9 +1,9 @@
+import type { ObjectOrientedPieChartProps } from '@/types/Components/Chart';
+import { getRandomColor } from '@/utils/functions';
 import { ChartData, ChartOptions } from 'chart.js';
 import PieChart from '../Charts/Pie';
-import { getRandomColor } from '@/utils/functions';
-import type { ObjectOrientedPieChartProps } from '@/types/Components/Chart';
 
-export function ObjectOrientedPieChart({ data }: ObjectOrientedPieChartProps) {
+export default function ObjectOrientedPieChart({ data }: ObjectOrientedPieChartProps) {
 	const dataset = {
 		labels: Object.keys(data),
 		datasets: [
@@ -23,7 +23,7 @@ export function ObjectOrientedPieChart({ data }: ObjectOrientedPieChartProps) {
 					label: (tooltipItem) => {
 						const value = Number(tooltipItem.raw || 0);
 						const percentage = ((value / Object.values(data).reduce((acc, val) => acc + val, 0)) * 100).toFixed(2);
-						return ` ${new Intl.NumberFormat().format(value)} (${percentage}%)`;
+						return `${new Intl.NumberFormat().format(value)} (${percentage}%)`;
 					},
 				},
 			},
