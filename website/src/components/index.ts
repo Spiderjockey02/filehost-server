@@ -7,6 +7,14 @@ import BarChart from './Charts/Bar';
 import InputField from './Form/InputField';
 import DragUploadField from './Form/DragUploadField';
 
+// Graphs
+import ActivityTransferAreaChart from './Graphs/ActivityTransferAreaChart';
+import FileUploadLineChart from './Graphs/FileUploadLineChart';
+import LanguageDistributionPieChart from './Graphs/LanguageDistributionPieChart';
+import ObjectOrientedPieChart from './Graphs/ObjectOrientedPieChart';
+import UserGrowthLineChart from './Graphs/UserGrowthLineChart';
+import UserRetentionLineChart from './Graphs/UserRetentionLineChart';
+
 // Menus
 import FileContextMenu from './menus/FileContextMenu';
 import TrashContextMenu from './menus/TrashContextMenu';
@@ -60,5 +68,6 @@ export { InputField, FileContextMenu, TrashContextMenu, DeleteFileModal, RenameF
 	FileViewTable, ErrorPopup, SuccessPopup, UploadStatusToast, Row, Col, Modal, NotificationBell,
 	Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer, VideoPlayer, CreateFolderModal,
 	SearchFileModal, DragUploadField, AdminSideBar, AdminNavBar, InfoPill, InfoPillProgress, PieChart,
-	LineChart, BarChart, Card,
+	LineChart, BarChart, Card, ActivityTransferAreaChart, FileUploadLineChart, LanguageDistributionPieChart,
+	ObjectOrientedPieChart, UserGrowthLineChart, UserRetentionLineChart,
 };
