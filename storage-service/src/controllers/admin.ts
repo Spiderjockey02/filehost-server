@@ -67,6 +67,29 @@ export const getCronJobsByName = (client: Client) => {
 // Endpoint POST /api/admin/cron-jobs/:name
 export const postCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		try {
+			const cronJob = req.params.name;
+			const { schedule } = req.body;
+
+			const names = [...client.CRONManager.names.keys()];
+			if (!names.includes(cronJob)) return Error.MissingResource(res, `${cronJob} is not a valid CRON job.`);
+			if (schedule == null) return Error.IncorrectQuery(res, 'Schedule is required.');
+			if (typeof schedule !== 'string') return Error.IncorrectQuery(res, 'Schedule must be a string.');
+			if (!schedule.match(/^[0-9\-\*\/, ]+$/)) return Error.IncorrectQuery(res, 'Schedule must be a valid CRON expression.');
+
+			client.CRONManager.updateAndReschedule(req.params.name, req.body.schedule);
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to update CRON job.');
+
+		}
+	};
+};
+
+
+// Endpoint POST /api/admin/cron-jobs/:name/run
+export const postCronJobsByNameRun = (client: Client) => {
+	return async (req: Request, res: Response) => {
 		const name = req.params.name;
 		try {
 			switch (name) {

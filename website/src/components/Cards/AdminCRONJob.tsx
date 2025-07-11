@@ -21,7 +21,7 @@ export function AdminCRONJobCard() {
 
 	async function runCronJob(name: string) {
 		try {
-			await fetch(`/api/admin/cron-jobs/${name}`, {
+			await fetch(`/api/admin/cron-jobs/${name}/run`, {
 				method: 'POST',
 			});
 			await refetch();
@@ -40,7 +40,6 @@ export function AdminCRONJobCard() {
 					<Table.HeaderRow>
 						<Table.Header>Name</Table.Header>
 						<Table.Header className='text-center'>Latest Status</Table.Header>
-						<Table.Header className='text-center'>Action</Table.Header>
 						<Table.Header className='text-center'>Info</Table.Header>
 					</Table.HeaderRow>
 					<Table.Body>
@@ -48,9 +47,6 @@ export function AdminCRONJobCard() {
 							isLoading || data == null ? (
 								[0, 0, 0, 0].map((_, index) => (
 									<tr key={index}>
-										<td className="placeholder-glow">
-											<span className="placeholder col-12"></span>
-										</td>
 										<td className="placeholder-glow">
 											<span className="placeholder col-12"></span>
 										</td>
@@ -70,11 +66,6 @@ export function AdminCRONJobCard() {
 											<FontAwesomeIcon size='lg' icon={job.latestStatus == null ? faQuestion : job.latestStatus == 'SUCCESS' ? faCheck : faX } />
 										</td>
 										<td className='text-center'>
-											<button className='btn btn-secondary btn-sm' onClick={() => runCronJob(job.name)}>
-                    Re-run
-											</button>
-										</td>
-										<td className='text-center'>
 											<button className='btn' data-bs-toggle="modal" data-bs-target={`#${job.name}`}>
 												<FontAwesomeIcon size='lg' icon={faCircleInfo} />
 											</button>
@@ -90,7 +81,7 @@ export function AdminCRONJobCard() {
 						}
 					</Table.Body>
 				</Table>
-				{data?.cronJobs.map((job) => <AdminCRONJobLogsModal CRONJob={job} key={job.name} />)}
+				{data?.cronJobs.map((job) => <AdminCRONJobLogsModal CRONJob={job} key={job.name} onClickRun={() => runCronJob(job.name)} />)}
 			</Card.Body>
 		</Card>
 	);
