@@ -405,10 +405,10 @@ export default class FileManager extends FileAccessor {
 	*/
 	async sendThumbnail(res: Response, userId: string, filePath: string) {
 		const file = await this.getByFilePath(userId, filePath);
-		if (file == null) return res.sendFile(`${process.cwd}/assets/missing-file-icon.png`);
+		if (file == null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 
 		// Get the mimeType of the file
-		if (file.mimetype == null) return res.sendFile(`${process.cwd}/assets/missing-file-icon.png`);
+		if (file.mimetype == null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 
 		// Send thumbnail if it exists, create it if it doesn't
 		const storageProvider = await this.storageManager.getProviderById(file.storageId);
@@ -420,7 +420,7 @@ export default class FileManager extends FileAccessor {
 					await this.ThumbnailCreator.createThumbnail(file);
 					await storageProvider.sendFile(res, { ...file, id: `${file.id}.jpg` });
 				} catch {
-					return res.sendFile(`${process.cwd}/assets/missing-file-icon.png`);
+					return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 				}
 			}
 		}
