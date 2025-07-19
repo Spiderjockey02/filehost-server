@@ -3,6 +3,7 @@ import FileSystemManager from './SystemManagers/FileSystem';
 import { StorageMedium } from '@prisma/client';
 import S3Manager from './SystemManagers/S3';
 import Client from './Client';
+import { StorageProvider } from 'src/types';
 
 export default class StorageManager extends StorageAccessor {
 	client: Client;
@@ -12,7 +13,7 @@ export default class StorageManager extends StorageAccessor {
 		this.client = client;
 	}
 
-	getProvider(storage: StorageMedium) {
+	getProvider(storage: StorageMedium): StorageProvider {
 		switch (storage?.type) {
 			case 'FILE_SYSTEM': {
 				const system = new FileSystemManager(this.client, storage.basePath);
@@ -29,7 +30,7 @@ export default class StorageManager extends StorageAccessor {
 		}
 	}
 
-	async getProviderById(storageId: string) {
+	async getProviderById(storageId: string): Promise<StorageProvider> {
 		const storage = await this.fetchById(storageId);
 		if (storage == null) throw 'Storage is missing';
 
