@@ -10,12 +10,13 @@ export const getFiles = (client: Client) => {
 			const [{ files, folders, newFiles }, avgSize, mostCommonFileTypes, deletedFiles, { _sum: { size } }] = await Promise.all([
 				client.FileManager.fetchTotal(),
 				client.FileManager.fetchAverageSize(),
-				client.FileManager.fetchMostCommonFileTypes(),
+				client.FileManager.fetchFileMediaTypes(),
 				client.FileManager.fetchTotalDeleted(),
 				client.FileManager.fetchTotalStorageUsed(),
 			]);
 
-			res.json({ files, folders, avgFileSize: avgSize._avg.size, mostCommonFileTypes: mostCommonFileTypes.map(m => ({ mimeType: m.name, count: m._count.files })), deletedFiles, newFiles, totalStorageSize: Number(size) });
+			const mostCommonFileTypesCount = Object.fromEntries(Object.entries(mostCommonFileTypes).sort((a, b) => b[1] - a[1]).map(([type, count]) => [type, count]));
+			res.json({ files, folders, avgFileSize: avgSize._avg.size, mostCommonFileTypes: mostCommonFileTypesCount, deletedFiles, newFiles, totalStorageSize: Number(size) });
 		} catch (error) {
 			client.logger.error(error);
 			Error.GenericError(res, 'Failed to fetch files.');
