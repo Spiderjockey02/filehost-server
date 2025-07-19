@@ -20,7 +20,7 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		queryKey: ['folder', path],
 		queryFn: async ({ signal }) => {
 			const res = await fetch(`/api/files/${path.join('/')}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch cache stats: ${res.statusText}`);
+			if (!res.ok) throw new Error(`Failed to fetch user's files: ${res.statusText}`);
 
 			const { file } = await res.json();
 			return file as FileWithChildren;
