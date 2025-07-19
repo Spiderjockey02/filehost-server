@@ -13,12 +13,14 @@ export default function FileContextMenu({ x, y, closeContextMenu, selected, show
 	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
 	const handleDownload = async () => {
 		try {
-			const { data: blob } = await axios.get(`/api/files/download?path=${selected[0].path}`, {
-				headers: {
-					'Accept': 'application/zip',
-				},
-				responseType: 'blob',
-			});
+			const { data: blob } = await axios.post('/api/files/download',
+				{ path: `${selected[0].path}` },
+				{
+					headers: {
+						'Accept': 'application/zip',
+					},
+					responseType: 'blob',
+				});
 
 			if (blob.size > 0) {
 				const url = window.URL.createObjectURL(blob);
