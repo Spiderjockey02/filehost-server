@@ -149,6 +149,8 @@ function formatProvider(provider: string) {
 	switch(provider) {
 		case 'discord':
 			return <Link href="https://discord.com" className='btn btn-outline-secondary'><FontAwesomeIcon icon={faDiscord} /></Link>;
+		case 'credential':
+			return <span className='btn btn-outline-secondary'>Email</span>;
 		default:
 			return provider;
 	}
