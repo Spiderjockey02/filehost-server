@@ -1,12 +1,10 @@
-import { CONSTANTS, normalizePath, PATHS, sanitiseObject } from '../utils';
+import { CONSTANTS, normalizePath, sanitiseObject } from '../utils';
 import type { File, User } from '@prisma/client';
 import TrashHandler from './TrashHandler';
 import Client from './Client';
 import FileAccessor from '../accessors/File';
 import StorageManager from './StorageManager';
 import type { Response } from 'express';
-import { existsSync } from 'node:fs';
-import { mkdir } from 'node:fs/promises';
 import ThumbnailCreator from './ThumbnailCreator';
 import { FullFile } from 'src/types/database/File';
 import archiver, { Archiver } from 'archiver';
@@ -407,24 +405,24 @@ export default class FileManager extends FileAccessor {
 	*/
 	async sendThumbnail(res: Response, userId: string, filePath: string) {
 		const file = await this.getByFilePath(userId, filePath);
-		if (file == null) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+		if (file == null) return res.sendFile(`${process.cwd}/assets/missing-file-icon.png`);
 
 		// Get the mimeType of the file
-		const fileName = file.name.slice(0, file.name.lastIndexOf('.'));
-		if (file.mimetype == null) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+		if (file.mimetype == null) return res.sendFile(`${process.cwd}/assets/missing-file-icon.png`);
 
-		// Create folder (if needed to)
-		const folder = file.path.split('/').slice(0, -1).join('/');
-		const folderPath = `${PATHS.THUMBNAIL}/${userId}/${folder}`;
-		if (!existsSync(folderPath)) await mkdir(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
-
-		// Send or create the thumbnail
-		const thumbnailPath = `${folderPath}/${fileName}.jpg`;
-		if (existsSync(thumbnailPath)) {
-			res.sendFile(thumbnailPath);
-		} else {
-			await this.ThumbnailCreator.createThumbnail(file);
-			res.sendFile(existsSync(thumbnailPath) ? thumbnailPath : `${PATHS.THUMBNAIL}/missing-file-icon.png`);
+		// Send thumbnail if it exists, create it if it doesn't
+		const storageProvider = await this.storageManager.getProviderById(file.storageId);
+		try {
+			await storageProvider.sendFile(res, { ...file, id: `${file.id}.jpg` });
+		} catch (err: any) {
+			if (err.$metadata.httpStatusCode == 404) {
+				try {
+					await this.ThumbnailCreator.createThumbnail(file);
+					await storageProvider.sendFile(res, { ...file, id: `${file.id}.jpg` });
+				} catch {
+					return res.sendFile(`${process.cwd}/assets/missing-file-icon.png`);
+				}
+			}
 		}
 	}
 
