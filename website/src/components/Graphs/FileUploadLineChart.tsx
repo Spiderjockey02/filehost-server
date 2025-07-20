@@ -9,13 +9,17 @@ interface UserGrowth {
   [key: string]: number;
 }
 
-export default function FileUploadLineChart() {
+interface Props {
+	storageId?: string;
+}
+
+export default function FileUploadLineChart({ storageId }: Props) {
 	const [uploadGrowthFrame, setUploadGrowthFrame] = useState<requestTimeFrames>('daily');
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['fileUploads', uploadGrowthFrame],
+		queryKey: storageId ? ['fileUploads', uploadGrowthFrame, storageId] : ['fileUploads', uploadGrowthFrame],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/files/growth?frame=${uploadGrowthFrame}`, { signal });
+			const res = await fetch(`/api/admin/files/growth?frame=${uploadGrowthFrame}${storageId ? `&storageId=${storageId}` : ''}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch user growth: ${res.statusText}`);
 			const d = await res.json();
 			const firstKey = Object.keys(d)[0];
