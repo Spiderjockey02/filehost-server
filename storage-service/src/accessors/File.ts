@@ -376,12 +376,14 @@ export default class FileAccessor {
 		* Fetch the number of files uploaded between 2 dates
 		* @param {Date} oldDate The old date.
 		* @param {Date} newDate The new date.
+		* @param {?string} storageId The storage Id to filter by.
 		* @returns The number of files uploaded.
 	*/
-	async fetchUploadsBetweenTwoDates(oldDate: Date, newDate: Date) {
+	async fetchUploadsBetweenTwoDates(oldDate: Date, newDate: Date, storageId?: string) {
 		return client.file.count({
 			where: {
 				type: 'FILE',
+				storageId,
 				createdAt: {
 					gte: oldDate,
 					lte: newDate,

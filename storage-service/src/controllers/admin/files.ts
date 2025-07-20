@@ -28,19 +28,21 @@ export const getFiles = (client: Client) => {
 export const getFilesGrowth = (client: Client) => {
 	return async (req: Request, res: Response) => {
 	// Get time frame and validate it
-		const frame = req.query.frame;
+		const { frame, storageId } = req.query;
+
+		if (storageId && typeof storageId !== 'string') return Error.IncorrectQuery(res, 'storageId must be a string.');
 		if (!frame || typeof frame !== 'string' || !['yearly', 'monthly', 'daily'].includes(frame)) return Error.IncorrectQuery(res, `frame must be on one of the following: ${['yearly', 'monthly', 'daily'].join(', ')}`);
 
 		switch (frame) {
 			case 'yearly': {
 				const years: countEnum = {};
 				const currentYear = new Date().getFullYear();
-				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1));
+				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1), storageId);
 
 				for (let i = 9; i >= 0; i--) {
 					const start = new Date(currentYear - i, 0, 1);
 					const end = new Date(currentYear - i + 1, 0, 1);
-					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end);
+					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, storageId);
 					cumulativeTotal += files;
 					years[currentYear - i] = cumulativeTotal;
 				}
@@ -55,7 +57,7 @@ export const getFilesGrowth = (client: Client) => {
 				const firstMonthDate = new Date();
 				firstMonthDate.setMonth(current.getMonth() - 11);
 
-				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate));
+				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate), storageId);
 				for (let i = 11; i >= 0; i--) {
 					const start = new Date(current);
 					start.setMonth(current.getMonth() - i);
@@ -63,7 +65,7 @@ export const getFilesGrowth = (client: Client) => {
 					end.setMonth(start.getMonth() + 1);
 
 					const monthName = start.toLocaleString('default', { month: 'long' });
-					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end);
+					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, storageId);
 					cumulativeTotal += files;
 					months[monthName] = cumulativeTotal;
 				}
@@ -76,7 +78,7 @@ export const getFilesGrowth = (client: Client) => {
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);
 				frameStart.setDate(today.getDate() - 14);
-				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), frameStart);
+				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), frameStart, storageId);
 
 				for (let i = 14; i >= 0; i--) {
 					const end = new Date();
@@ -87,7 +89,7 @@ export const getFilesGrowth = (client: Client) => {
 					start.setDate(start.getDate() - 1);
 
 					const dateStr = start.toISOString().split('T')[0];
-					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end);
+					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, storageId);
 					cumulativeTotal += files;
 					days[dateStr] = cumulativeTotal;
 				}
