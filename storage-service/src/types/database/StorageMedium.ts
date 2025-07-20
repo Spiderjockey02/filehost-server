@@ -1,11 +1,10 @@
-import { StorageType } from '@prisma/client';
+import { Prisma, StorageType } from '@prisma/client';
 
 export interface createStorageMedium {
   type: StorageType
   name: string
   basePath: string
-  latitude: number
-  longitude: number
+  location: string
   endpoint?: string
   maxSize?: bigint
   usedSize?: bigint
@@ -16,12 +15,22 @@ export interface updateStorageMedium {
   id: string
   name?: string
   basePath?: string
-  latitude?: number
-  longitude?: number
+  location?: string
   endpoint?: string
-  maxSize?: number
-  usedSize?: number
+  maxSize?: bigint
+  usedSize?: bigint
   isPrivate?: boolean
   thumbnailOnly?: boolean
   avatarOnly?: boolean
 }
+
+export type StorageWithCounts = Prisma.StorageMediumGetPayload<{
+  include: {
+    _count: {
+      select: {
+        users: true
+        files: true
+      }
+    }
+  }
+}>

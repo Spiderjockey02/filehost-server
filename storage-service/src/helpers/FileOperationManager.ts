@@ -376,7 +376,7 @@ export default class FileManager extends FileAccessor {
 	*/
 	async deleteAvatar(userId: string) {
 		// Get storage and it's provider
-		const storage = await this.storageManager.fetchByName('Avatars');
+		const storage = await this.storageManager.fetchAvatarMedium();
 		if (storage == null) throw 'Storage not found';
 		const fileProvider = this.storageManager.getProvider(storage);
 		fileProvider.deleteFileOnSystem(`${userId}.webp`);
@@ -389,7 +389,7 @@ export default class FileManager extends FileAccessor {
 	*/
 	async sendAvatar(res: Response, userId: string) {
 		// Get storage and it's provider
-		const storage = await this.storageManager.fetchByName('Avatars');
+		const storage = await this.storageManager.fetchAvatarMedium();
 		if (storage == null) throw 'Storage not found';
 		const fileProvider = this.storageManager.getProvider(storage);
 
