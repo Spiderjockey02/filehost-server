@@ -1,6 +1,7 @@
 import { StorageMedium } from '@prisma/client';
 import client from './prisma';
 import { createStorageMedium, updateStorageMedium } from 'src/types/database/StorageMedium';
+import { storageDirection } from 'src/types/database/User';
 
 export default class StorageAccessor {
 	// Don't need any special caching as it's a set number
@@ -22,6 +23,28 @@ export default class StorageAccessor {
 				id: data.id,
 			},
 			data,
+		});
+	}
+
+	/**
+	  * Modify the storage size of a storage medium.
+	  * @param {string} storageId The ID of the storage
+	  * @param {bigint} size The size to modify the storage size by.
+	  * @param {storageDirection} direction The direction to modify the storage size.
+	  * @returns The updated storage.
+	*/
+	async modifyUsage(storageId: string, size: bigint, direction: storageDirection) {
+		return client.storageMedium.update({
+			where: {
+				id: storageId,
+			},
+			data: {
+				usedSize: {
+					set: direction === 'SET' ? size : undefined,
+					decrement: direction === 'DECRE' ? size : undefined,
+					increment: direction === 'INCRE' ? size : undefined,
+				},
+			},
 		});
 	}
 

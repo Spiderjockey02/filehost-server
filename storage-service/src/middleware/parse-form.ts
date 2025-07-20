@@ -1,12 +1,11 @@
 import type { UserWithGroup } from 'src/types/database/User';
 import { cleanUpVideo } from '../utils/VideoPreprocessor';
-import { CONSTANTS, getIP, normalizePath } from '../utils';
+import { CONSTANTS, normalizePath } from '../utils';
 import type Client from '../helpers/Client';
 import type { File } from '@prisma/client';
 import type { Request } from 'express';
 import formidable from 'formidable';
 import { readFile } from 'node:fs/promises';
-import { createAuditLog } from '../accessors/AuditLog';
 import { FullFile } from 'src/types/database/File';
 
 export default async (client: Client, req: Request, user: UserWithGroup) => {
@@ -53,6 +52,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 
 			// Update user's storage size
 			await client.userManager.modifyStorageSize(user.id, BigInt(file.size), 'INCRE');
+			await client.FileManager.storageManager.modifyUsage(storage.id, BigInt(file.size), 'INCRE');
 
 			// Check if a folder was uploaded
 			const lastSlashIndex = `${file.originalFilename}`.lastIndexOf('/');
