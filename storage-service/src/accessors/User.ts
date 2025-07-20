@@ -352,11 +352,32 @@ export default class UserManager {
 			},
 		});
 	}
+
+	/**
+		* Fetch accounts by user ID
+		* @param {string} userId The ID of the user
+		* @returns The accounts associated with the user.
+	*/
 	async fetchAccountsByUserId(userId: string) {
 		return client.account.findMany({
 			where: {
 				userId,
 			},
+		});
+	}
+
+	/**
+		* Fetch users by storage ID
+		* @param {string} storageId The ID of the storage
+		* @returns The users associated with the storage.
+	*/
+	async fetchByStorageId({ storageId, page = 0 }: {storageId: string} & Pagination) {
+		return client.user.findMany({
+			where: {
+				storageId,
+			},
+			take: 20,
+			skip: page * 20,
 		});
 	}
 }
