@@ -22,6 +22,23 @@ export const getStorages = (client: Client) => {
 	};
 };
 
+// Endpoint: GET /api/admin/storage/:storageId
+export const getStorageById = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const storageId = req.params.storageId;
+
+		try {
+			const storage = await client.FileManager.storageManager.fetchById(storageId);
+			if (!storage) return Error.IncorrectQuery(res, 'Storage not found.');
+			res.json({ storage: sanitiseObject(storage) });
+		} catch (error) {
+			client.logger.error(error);
+			return Error.GenericError(res, 'Failed to fetch storage medium.');
+		}
+	};
+};
+
+
 // Endpoint: POST /api/admin/storage
 export const postStorage = (client: Client) => {
 	return async (req: Request, res: Response) => {
