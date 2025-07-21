@@ -22,13 +22,20 @@ model User {
   recentlyViewed    RecentlyViewedFile[]
   files             File[]
   activity          UserActivity[]
+  logs              AuditLog[]
+  bans              UserBans[]  @relation("bannedUser")
+  issuedBans        UserBans[]  @relation("issuedUser")
   groupId           String?
   group             Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   totalStorageSize  Int  @default(0)
   role              String  @default("user")
-  banned            Boolean @default(false)
-  banReason         String?
-  banExpires        DateTime?
+  storage           StorageMedium    @relation(fields: [storageId], references: [id])
+  storageId         String
+
+  @@index([groupId])
+  @@index([storageId])
+  @@index([role])
+  @@index([createdAt])
 }
 
 model Session {
@@ -42,7 +49,10 @@ model Session {
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   impersonatedBy  String?
+
   @@unique([token])
+  @@index([userId])
+  @@index([expiresAt])
   @@map("session")
 }
 
@@ -62,6 +72,9 @@ model Account {
   createdAt             DateTime
   updatedAt             DateTime
 
+  @@index([userId])
+  @@index([providerId(length: 191)])
+  @@index([accountId(length: 191)])
   @@map("account")
 }
 
@@ -72,6 +85,9 @@ model Verification {
   expiresAt	    DateTime
   createdAt	    DateTime
   updatedAt	    DateTime
+
+  @@index([identifier])
+  @@index([expiresAt])
 }
 
 model Group {
@@ -89,6 +105,9 @@ model Notification {
   url         String?
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 enum FileType {
@@ -112,9 +131,40 @@ model File {
   userId      String
   mediatype   MediaType? @relation(fields: [mimetype], references: [name])
   mimetype    String?
+  storage     StorageMedium    @relation(fields: [storageId], references: [id])
+  storageId   String
   recentlyViewedBy  RecentlyViewedFile[]
 
   @@unique([path, userId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([storageId])
+  @@index([deletedAt])
+  @@index([mimetype])
+}
+
+enum StorageType {
+  FILE_SYSTEM
+  S3
+}
+
+model StorageMedium {
+  id            String      @id     @default(cuid())
+  type          StorageType
+  name          String
+  basePath      String
+  location      String     @default("Europe")
+  endpoint      String?
+  maxSize       Int      @default(0)
+  usedSize      Int      @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  isPrivate     Boolean     @default(false)
+  avatarOnly    Boolean     @default(false)
+
+  files         File[]
+  users         User[]
 }
 
 model MediaType {
@@ -131,6 +181,8 @@ model RecentlyViewedFile {
   viewedAt    DateTime @default(now())
 
   @@unique([fileId, userId])
+  @@index([userId])
+  @@index([fileId])
 }
 
 enum Status {
@@ -141,11 +193,14 @@ enum Status {
 model CronJobLog {
   id        Int         @id   @default(autoincrement())
   status    Status
-  message   String?
+  message   String
   ranAt     DateTime    @default(now())
   duration  Int?        @default(0)
   cronJob   CronJob     @relation(fields: [jobName], references: [name], onDelete: Cascade)
   jobName   String
+
+  @@index([jobName])
+  @@index([ranAt])
 }
 
 model CronJob {
@@ -153,28 +208,6 @@ model CronJob {
   latestStatus  Status? 
   CronJobLog    CronJobLog[]
   schedule      String    @default("0 * * * *")
-}
-
-model UserActivity {
-  id            String   @id          @default(cuid())
-  methodType    ActivityMethod        @relation(fields: [method], references: [method], onDelete: Cascade)
-  method        HTTPMethod
-  endpoint      String
-  responseCode  ActivityStatusCode    @relation(fields: [statusCode], references: [code], onDelete: Cascade)
-  statusCode    Int
-  incomingBytes Int
-  outgoingBytes Int
-  ipAddress     String?
-  userAgent     String?
-  durationMs    Int
-  createdAt     DateTime      @default(now())
-  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  userId        String?
-}
-
-model ActivityStatusCode {
-  code          Int       @id
-  history       UserActivity[]
 }
 
 enum HTTPMethod {
@@ -189,7 +222,102 @@ enum HTTPMethod {
   TRACE
 }
 
-model ActivityMethod {
-  method        HTTPMethod      @id
-  history       UserActivity[]
+model UserActivity {
+  id            String   @id          @default(cuid())
+  method        HTTPMethod
+  endpoint      String
+  statusCode    Int
+  incomingBytes Int
+  outgoingBytes Int
+  ipCon         IpAddress?    @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
+  ipAddress     String?
+  UserAgentCon  UserAgent?    @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
+  userAgent     String?
+  durationMs    Int
+  createdAt     DateTime      @default(now())
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId        String?
+
+  @@index([userId])
+  @@index([statusCode])
+  @@index([method])
+  @@index([ipAddress])
+  @@index([userAgent])
+  @@index([createdAt])
+}
+
+model IpAddress {
+  ip        String      @id
+  country   String?
+  city      String?
+  latitude  Float?
+  longitude Float?
+  isp       String?
+  isVPN     Boolean    @default(false)
+  isCrawler Boolean    @default(false)
+  
+  activity        UserActivity[]
+  logs            AuditLog[]
+}
+
+model UserAgent {
+  agent           String    @id
+  browserName     String?
+  browserVersion  String?
+  osName          String?
+  osVersion       String?
+  isBot           Boolean   @default(false)
+
+  activity        UserActivity[]
+  logs            AuditLog[]
+}
+
+enum AuditLogResourceType {
+  FILE
+  USER
+  STORAGE
+  SYSTEM
+}
+
+enum AuditLogEventType {
+  FILE_UPLOAD
+  FILE_RENAME
+  FILE_COPY
+  FILE_MOVE
+  FILE_DELETE 
+  FOLDER_CREATE
+  NOTIFICATION_SENT
+}
+
+model AuditLog {
+  id           String         @id @default(cuid())
+  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId       String?
+  eventType    AuditLogEventType
+  description  String
+  resourceType AuditLogResourceType
+  resourceId   String?
+  success      Boolean
+  errorMessage String?
+  ipCon        IpAddress?    @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
+  ipAddress    String?
+  UserAgentCon UserAgent?    @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([eventType])
+  @@index([resourceType])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserBans {
+  id            String    @id   @default(cuid())
+  user          User      @relation("bannedUser", fields: [userId], references: [id])
+  userId        String
+  issuedByUser  User      @relation("issuedUser", fields: [issuedBy], references: [id])
+  issuedBy      String
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  reason        String
 }

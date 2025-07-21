@@ -1,6 +1,8 @@
 import { Error, sanitiseObject } from '../../utils';
 import type { Request, Response } from 'express';
 import type Client from '../../helpers/Client';
+import { getSession } from '../../middleware';
+import type { FullSession } from 'src/types/database/Session';
 
 type data = { [key: string]: boolean}
 type countEnum = { [key: string | number]: number }
@@ -240,8 +242,12 @@ export const getUserById = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const userId = req.params.id;
-			const user = await client.userManager.fetchbyParam({ id: userId, force: true });
-			res.json({ user: sanitiseObject(user) });
+			const [user, bannedStatus] = await Promise.all([
+				client.userManager.fetchbyParam({ id: userId, force: true }),
+				client.userManager.fetchBanStatus(userId),
+			]);
+
+			res.json({ user: sanitiseObject(user), bannedStatus });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user.');
@@ -259,6 +265,36 @@ export const getUserByIdAccounts = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user\'s accounts.');
+		}
+	};
+};
+
+// Endpoint POST /api/admin/users/:id/ban
+export const banUserById = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const adminUser = await getSession(client, req.headers) as FullSession;
+			const userId = req.params.id;
+			const { expiresAt, reason } = req.body;
+
+			// Validate inputs
+			if (adminUser.userId === userId) return Error.IncorrectQuery(res, 'You cannot ban yourself.');
+			if (!expiresAt || !reason) return Error.IncorrectQuery(res, 'expiresAt and reason are required.');
+			const expiresDate = new Date(expiresAt);
+			if (isNaN(expiresDate.getTime())) return Error.IncorrectQuery(res, 'expiresAt must be a valid date.');
+			if (expiresDate <= new Date()) return Error.IncorrectQuery(res, 'expiresAt must be a future date.');
+			if (typeof reason !== 'string' || reason.trim().length === 0) return Error.IncorrectQuery(res, 'reason must be a non-empty string.');
+
+			const ban = await client.userManager.setBanStatus({
+				userId,
+				expiresAt: expiresDate,
+				reason,
+				issuedByUserId: adminUser.userId,
+			});
+			res.json({ ban });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to ban user.');
 		}
 	};
 };

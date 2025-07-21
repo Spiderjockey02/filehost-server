@@ -22,6 +22,8 @@ model User {
   recentlyViewed    RecentlyViewedFile[]
   files             File[]
   activity          UserActivity[]
+  bans              UserBans[]  @relation("bannedUser")
+  issuedBans        UserBans[]  @relation("issuedUser")
   groupId           String?
   group             Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   totalStorageSize  BigInt  @default(0)
@@ -264,4 +266,15 @@ model UserAgent {
   osVersion       String?
   isBot           Boolean   @default(false)
   activity        UserActivity[]
+}
+
+model UserBans {
+  id            String    @id   @default(cuid())
+  user          User      @relation("bannedUser", fields: [userId], references: [id])
+  userId        String
+  issuedByUser  User      @relation("issuedUser", fields: [issuedBy], references: [id])
+  issuedBy      String
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  reason        String
 }

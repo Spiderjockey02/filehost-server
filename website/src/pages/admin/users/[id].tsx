@@ -8,6 +8,7 @@ import { AdminUser } from '@/types';
 import { parseUserAgent, queryOptions } from '@/utils/functions';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { UserBans } from '@prisma/client';
 import { useQuery } from '@tanstack/react-query';
 import { User } from 'better-auth';
 import { GetServerSidePropsContext } from 'next';
@@ -26,7 +27,7 @@ export default function AdminUserIdPage({ userId }: Props) {
 			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
 
 			const d = await res.json();
-			return d as { user: AdminUser };
+			return d as { user: AdminUser, bannedStatus: UserBans | null };
 		},
 		...queryOptions,
 	});
@@ -43,7 +44,7 @@ export default function AdminUserIdPage({ userId }: Props) {
 			</div>
 			<Row>
 				<Col lg={4}>
-					<AdminUserIdCard isLoading={isLoading} user={data?.user ?? null} />
+					<AdminUserIdCard isLoading={isLoading} user={data?.user ?? null} bannedStatus={data?.bannedStatus ?? null} />
 				</Col>
 				<Col lg={8}>
 					<Card className='mb-4'>
