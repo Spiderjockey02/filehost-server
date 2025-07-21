@@ -53,7 +53,6 @@ export default function AdminUserTableCards({ storageId }: Props) {
 				<div className="table-responsive">
 					<Table>
 						<Table.HeaderRow>
-							<Table.Header>ID</Table.Header>
 							<Table.Header>Name</Table.Header>
 							<Table.Header style={{ cursor: 'pointer' }} onClick={() => updateSorting('createdAt')}>
 								Joined
@@ -92,16 +91,12 @@ export default function AdminUserTableCards({ storageId }: Props) {
 											<td className="placeholder-glow">
 												<span className="placeholder col-12"></span>
 											</td>
-											<td className="placeholder-glow">
-												<span className="placeholder col-12"></span>
-											</td>
 										</tr>
 									))
 								) : (
 									data?.users.map((u) => (
 										<tr key={u.id}>
-											<td scope="row"><Link href={`/admin/users/${u.id}`}>{u.id}</Link></td>
-											<td>{u.name}</td>
+											<td scope="row"><Link href={`/admin/users/${u.id}`}>{u.name}</Link></td>
 											<td>{new Date(u.createdAt).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
 											<td>{format(new Date().getTime() - (new Date().getTime() - new Date(u.activity[0]?.createdAt ?? u.updatedAt).getTime()))}</td>
 											<td>{u._count?.files}</td>
