@@ -1,22 +1,29 @@
-import imageThumbnail from 'image-thumbnail';
-import { spawn } from 'node:child_process';
-import type { File } from '@prisma/client';
+import { exec, spawn } from 'node:child_process';
+import type { File, StorageMedium } from '@prisma/client';
+import { pipeline as _pipeline, Readable } from 'node:stream';
 import { createCanvas } from 'canvas';
-import { PDFImage } from 'pdf-image';
-import fs from 'node:fs/promises';
-import { PATHS } from '../utils';
+import { CONSTANTS } from '../utils';
 import sharp from 'sharp';
-import FileSystemManager from './FileSystemManager';
+import { join } from 'node:path';
+import FileManager from './FileOperationManager';
+import { createWriteStream } from 'node:fs';
+import { promisify } from 'util';
+import { tmpdir } from 'node:os';
+import { randomUUID } from 'node:crypto';
+import { handleFFMPEGEncoding } from '../utils/Streams';
+const pipeline = promisify(_pipeline);
 
 export default class ThumbnailCreator {
 	width: number;
 	height: number;
-	FileSystemManager: FileSystemManager
+	fileExtension: string;
+	SystemManager: FileManager;
 
-	constructor(FileSystemManager: FileSystemManager) {
-		this.width = 400;
-		this.height = 520;
-		this.FileSystemManager = FileSystemManager;
+	constructor(fileSystemManager: FileManager) {
+		this.width = CONSTANTS.THUMBNAIL.WIDTH;
+		this.height = CONSTANTS.THUMBNAIL.HEIGHT;
+		this.fileExtension = CONSTANTS.THUMBNAIL.EXTENSION;
+		this.SystemManager = fileSystemManager;
 	}
 
 	/**
@@ -24,31 +31,44 @@ export default class ThumbnailCreator {
 	  * @param {File} file The file object
 	*/
 	async createThumbnail(file: File) {
-		// Create file's parent folder but in thumbnail dir
-		const folder = file.path.split('/').slice(0, -1).join('/');
-		await this.FileSystemManager.createFolderOnSystem(`${PATHS.THUMBNAIL}/${file.userId}/${folder}`);
-
+		console.log(`Creating thumbnail for file ${file.id} with mimetype ${file.mimetype}`);
 		// Check if mimetype is null (indicates folder)
-		if (file.mimetype == null) return `${PATHS.THUMBNAIL}/missing-file-icon.png`;
+		if (file.mimetype == null) return;
 
 		// Check for generic file types
 		switch (file.mimetype.split('/')[0]) {
 			case 'image':
-				await this.createFromImage(file);
-				break;
+				return this.createFromImage(file);
 			case 'video':
-				await this.createFromVideo(file);
-				break;
+				return this.createFromVideo(file);
 			case 'text':
-				await this.generateTextThumbnail(file);
-				break;
+				return this.generateTextThumbnail(file);
 		}
 
-		// Check for specific file types
-		if (file.mimetype === 'application/pdf') {
-			await this.createFromPDF(file);
-		} else {
-			return `${PATHS.THUMBNAIL}/missing-file-icon.png`;
+		switch (file.mimetype) {
+			case 'application/json':
+			case 'application/xml':
+			case 'application/javascript':
+			case 'application/x-httpd-php':
+			case 'application/x-yaml':
+			case 'application/rtf':
+				return this.generateTextThumbnail(file);
+			case 'application/pdf':
+				return this.createFromPDF(file);
+			case 'application/msword':
+			case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+		  case 'application/vnd.oasis.opendocument.text':
+			case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+			case 'application/vnd.oasis.opendocument.presentation':
+			case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+			case 'application/vnd.oasis.opendocument.spreadsheet':
+			case 'application/vnd.ms-excel':
+			case 'application/vnd.ms-powerpoint':
+			case 'application/rtf':
+			case 'application/vnd.apple.pages':
+			case 'application/vnd.apple.numbers':
+			case 'application/vnd.apple.keynote':
+				return this.createFromDoc(file);
 		}
 	}
 
@@ -56,18 +76,30 @@ export default class ThumbnailCreator {
 	  * Create a thumbnail from a given image
 	  * @param {File} file The file object
 	*/
-	private async createFromImage({ userId, path }: File) {
+	private async createFromImage(file: File) {
 		try {
-			// @ts-ignore Broken types
-			const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, {
-				responseType: 'buffer',
-				width: this.width,
-				height: this.height,
-				fit: 'cover',
+			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
+			const buffer = await fileProvider.readFileFromSystem(file);
+			const { stream: outputStream, done } = fileProvider.uploadFileToSystem(`${file.userId}/thumbnails/${file.id}.jpg`);
+
+			await new Promise((resolve, reject) => {
+				const transformer = sharp(buffer)
+					.resize(this.width, this.height, {
+						fit: 'cover',
+						background: { r: 0, g: 0, b: 0 },
+					})
+					.jpeg({ quality: 90 });
+
+				transformer.on('error', reject);
+				outputStream.on('error', reject);
+				outputStream.on('finish', resolve);
+
+				// Save thumbnail to file system
+				transformer.pipe(outputStream);
 			});
-			await fs.writeFile(`${PATHS.THUMBNAIL}/${userId}/${path.replace(/\.[^/.]+$/, '')}.jpg`, thumbnail);
+			await done;
 		} catch (err) {
-			console.error(`Error creating image thumbnail: ${err}`);
+			this.SystemManager.client.logger.error(`Error creating image thumbnail: ${err}`);
 		}
 	}
 
@@ -75,36 +107,118 @@ export default class ThumbnailCreator {
 	  * Create a thumbnail from a given video
 	  * @param {File} file The file object
 	*/
-	private async createFromVideo({ userId, path }: File) {
+	private async createFromVideo(file: File) {
 		try {
-			const outputFilePath = `${PATHS.THUMBNAIL}/${userId}/${path.replace(/\.[^/.]+$/, '')}.jpg`;
-			const child = spawn('ffmpeg', [
-				'-i', `${PATHS.CONTENT}/${userId}/${path}`,
+			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
+			const buffer = await fileProvider.readFileFromSystem(file);
+			const { stream: outputStream, done } = fileProvider.uploadFileToSystem(`${file.userId}/thumbnails/${file.id}.jpg`);
+			const partialBuffer = buffer.subarray(0, 5 * 1024 * 1024);
+			const stream = Readable.from(partialBuffer);
+
+			await handleFFMPEGEncoding([
+				'-analyzeduration', '1000M',
+				'-probesize', '1000M',
+				'-i', 'pipe:0',
 				'-ss', '00:00:00.750',
 				'-vframes', '1',
-				outputFilePath,
+				'-vf', `scale=${this.width}:${this.height}:force_original_aspect_ratio=decrease,pad=${this.width}:${this.height}:(ow-iw)/2:(oh-ih)/2`,
+				'-f', 'image2pipe',
+				'pipe:1',
+			], stream, outputStream);
+			await done;
+		} catch(err) {
+			this.SystemManager.client.logger.error(`Error creating video thumbnail: ${err}`);
+		}
+	}
+
+	/**
+	  * Create a thumbnail from a given PDF
+	  * @param {File} file The file object
+	*/
+	private async createFromPDF(file: File) {
+		try {
+			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
+			const { stream: outputStream, done } = fileProvider.uploadFileToSystem(`${file.userId}/thumbnails/${file.id}.jpg`);
+			const gsBinary = process.platform === 'win32' ? 'gswin64c' : 'gs';
+
+			const gs = spawn(gsBinary, [
+				'-q', '-dQUIET',
+				'-dNOPAUSE', '-dBATCH',
+				'-sDEVICE=jpeg',
+				'-dFirstPage=1',
+				'-dLastPage=1',
+				'-dJPEGQ=100',
+				'-r300',
+				`-g${this.width}x${this.height}`,
+				'-dPDFFitPage',
+				'-sOutputFile=%stdout',
+				'-_',
+			]);
+
+			gs.stderr.on('data', data => this.SystemManager.client.logger.error(`[Ghostscript] ${data.toString()}`));
+			gs.stdin.on('error', err => this.SystemManager.client.logger.warn(`Ghostscript stdin error: ${err.message}`));
+
+			await Promise.all([
+				pipeline(Readable.from(await fileProvider.readFileFromSystem(file)), gs.stdin),
+				pipeline(gs.stdout, outputStream),
 			]);
 
 			await new Promise((resolve, reject) => {
-				child.on('close', resolve);
-				child.on('error', reject);
+				gs.on('close', code => {
+					if (code === 0) resolve(null);
+					else reject(new Error(`Ghostscript exited with code ${code}`));
+				});
 			});
+			await done;
 		} catch (err) {
-			console.error(`Error creating video thumbnail: ${err}`);
+			this.SystemManager.client.logger.error(`Error creating PDF thumbnail: ${err}`);
 		}
 	}
 
 	/**
-	  * Create a thumbnail from a given video
+	  * Create a thumbnail from a given document-based file
 	  * @param {File} file The file object
 	*/
-	private async createFromPDF({ userId, path }: File) {
+	private async createFromDoc(file: File) {
 		try {
-			const pdfImage = new PDFImage(`${PATHS.CONTENT}/${userId}${path}`);
-			const imagePath = await pdfImage.convertPage(0);
-			await fs.rename(imagePath, `${PATHS.THUMBNAIL}/${userId}/${path.replace(/\.[^/.]+$/, '')}.jpg`);
+			const storageMedium = await this.SystemManager.storageManager.fetchById(file.storageId) as StorageMedium;
+			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
+
+			// As FILE_SYSTEM is local, no need to make temp file and stream
+			if (storageMedium.type == 'FILE_SYSTEM') {
+				// Convert the document to PDF using LibreOffice
+				const folder = join(storageMedium.basePath, file.userId, file.path.substring(0, file.path.lastIndexOf('/')));
+				await new Promise((resolve, reject) => {
+					exec(`"${process.env.LIBREOFFICE_PATH}" --headless --convert-to "pdf:writer_pdf_Export" "${join(storageMedium.basePath, file.userId, file.path)}" --outdir "${folder}"`, (err) => {
+						if (err) reject(err);
+						else resolve(null);
+					});
+				});
+			} else {
+				// Make temp file, use that, delete temp file
+				const buffer = await fileProvider.readFileFromSystem(file);
+				const tempInputPath = join(tmpdir(), `${randomUUID()}.${file.path.split('.').pop()!}`);
+				await pipeline(Readable.from(buffer), createWriteStream(tempInputPath));
+
+				await new Promise((resolve, reject) => {
+					exec(`"${process.env.LIBREOFFICE_PATH}" --headless --convert-to "pdf:writer_pdf_Export" "${tempInputPath}" --outdir "${tmpdir()}"`, (err, stderr) => {
+						if (err) {
+							this.SystemManager.client.logger.error(`LibreOffice stderr: ${stderr}`);
+							return reject(err);
+						}
+						resolve(null);
+					},
+					);
+				});
+			}
+
+			// Now convert the PDF to an image
+			await this.createFromPDF({ ...file, path: file.path.replace(/\.[^/.]+$/, '.pdf') });
+
+			// Delete the PDF file
+			await fileProvider.deleteFileOnSystem(`/${file.userId}/${file.path.replace(/\.[^/.]+$/, '')}.pdf`);
 		} catch (err) {
-			console.error(`Error creating PDF thumbnail: ${err}`);
+			this.SystemManager.client.logger.error(`Error creating document thumbnail: ${err}`);
 		}
 	}
 
@@ -112,10 +226,10 @@ export default class ThumbnailCreator {
 	  * Create a thumbnail from a given text file
 	  * @param {File} file The file object
 	*/
-	private async generateTextThumbnail({ userId, path }: File) {
+	private async generateTextThumbnail(file: File) {
 		try {
-			const text = await fs.readFile(`${PATHS.CONTENT}/${userId}/${path}`, 'utf8');
-
+			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
+			const text = await fileProvider.readFileFromSystem(file, 'utf-8');
 			// Canvas setup
 			const canvas = createCanvas(this.width, this.height);
 			const ctx = canvas.getContext('2d');
@@ -126,21 +240,21 @@ export default class ThumbnailCreator {
 
 			// Text properties
 			ctx.fillStyle = '#000000';
-			ctx.font = '24px Arial';
+			ctx.font = '14px Arial';
 			ctx.textAlign = 'left';
 			ctx.textBaseline = 'top';
 
-			const padding = 10;
+			const padding = 5;
 			const maxWidth = this.width - 2 * padding;
 
 			// Split text into multiple lines if it overflows
 			const words = text.split('\n');
 			let line = '';
-			const lineHeight = 28;
+			const lineHeight = 16;
 			let yPosition = padding;
 
-			words.forEach(word => {
-				if (yPosition >= this.height) return;
+			for (const word of words) {
+				if (yPosition >= this.height) break;
 
 				const testLine = `${line}${word} `;
 				const testWidth = ctx.measureText(testLine).width;
@@ -149,11 +263,10 @@ export default class ThumbnailCreator {
 					ctx.fillText(line, padding, yPosition);
 					line = `${word} `;
 					yPosition += lineHeight;
-					console.log(yPosition);
 				} else {
 					line = testLine;
 				}
-			});
+			}
 
 			// Draw the last line
 			ctx.fillText(line, padding, yPosition);
@@ -162,7 +275,7 @@ export default class ThumbnailCreator {
 			const textImageBuffer = canvas.toBuffer('image/png');
 
 			// Composite the text image over the white background using sharp
-			await sharp({
+			const buffer = await sharp({
 				create: {
 					width: this.width,
 					height: this.height,
@@ -170,16 +283,14 @@ export default class ThumbnailCreator {
 					background: { r: 255, g: 255, b: 255 },
 				},
 			})
-				.composite([
-					{
-						input: textImageBuffer,
-						top: 0,
-						left: 0,
-					},
-				])
-				.toFile(`${PATHS.THUMBNAIL}/${userId}/${path.replace(/\.[^/.]+$/, '')}.jpg`);
+				.jpeg()
+				.composite([{ input: textImageBuffer, top: 0, left: 0 }])
+				.toBuffer();
+
+			await fileProvider.writeFileToSystem(`${file.userId}/thumbnails/${file.id}.jpg`, buffer);
 		} catch (err) {
-			console.error(`Error generating text thumbnail: ${err}`);
+			console.log(err);
+			this.SystemManager.client.logger.error(`Error creating text thumbnail: ${err}`);
 		}
 	}
 }

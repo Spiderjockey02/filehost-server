@@ -413,12 +413,12 @@ export default class FileManager extends FileAccessor {
 		// Send thumbnail if it exists, create it if it doesn't
 		const storageProvider = await this.storageManager.getProviderById(file.storageId);
 		try {
-			await storageProvider.sendFile(res, { ...file, id: `${file.id}.jpg` });
+			await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.jpg` });
 		} catch (err: any) {
-			if (err.$metadata.httpStatusCode == 404) {
+			if (err.$metadata?.httpStatusCode == 404) {
 				try {
 					await this.ThumbnailCreator.createThumbnail(file);
-					await storageProvider.sendFile(res, { ...file, id: `${file.id}.jpg` });
+					await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.jpg` });
 				} catch {
 					return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 				}
