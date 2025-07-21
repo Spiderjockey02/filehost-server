@@ -119,22 +119,3 @@ export const postStorageByStorageId = (client: Client) => {
 		}
 	};
 };
-
-// Endpoint: GET /api/admin/storage/:storageId/users
-export const getUsersByStorageId = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		const storageId = req.params.storageId;
-
-		// Valid page index (if present)
-		const { page } = req.query;
-		if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
-
-		try {
-			const users = await client.userManager.fetchByStorageId({ storageId, page: isNaN(Number(page)) ? undefined : Number(page) });
-			res.json({ users: sanitiseObject(users) });
-		} catch (error) {
-			client.logger.error(error);
-			return Error.GenericError(res, 'Failed to fetch storage mediums.');
-		}
-	};
-};
