@@ -85,18 +85,7 @@ export default function AdminUsersPage({ emails, signupSource, userStats, error 
 					</Card>
 				</Col>
 			</Row>
-			<Row>
-				<Col lg={12}>
-					<Card>
-						<Card.Header>
-							All users
-						</Card.Header>
-						<Card.Body>
-							<AdminUserTableCards />
-						</Card.Body>
-					</Card>
-				</Col>
-			</Row>
+			<AdminUserTableCards />
 		</AdminLayout>
 	);
 }
