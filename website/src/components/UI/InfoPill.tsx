@@ -5,7 +5,7 @@ import Card from './Card';
 export default function InfoPill({ title, text, icon, colour }: InfoPillProps) {
 	const randomColor = colour ?? `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 	return (
-		<Card className='shadow h-75' style={{ borderLeft: `.25rem solid ${randomColor}` }}>
+		<Card className='shadow h-100' style={{ borderLeft: `.25rem solid ${randomColor}` }}>
 			<Card.Body>
 				<div className="row no-gutters align-items-center">
 					<div className="col mr-2">

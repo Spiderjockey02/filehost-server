@@ -14,6 +14,7 @@ export interface AdminBackupModalProps {
 
 export interface AdminCRONJobLogsModalProps {
   CRONJob: CronJob
+  onClickRun: () => void
 }
 
 export interface CreateFolderModalProps {

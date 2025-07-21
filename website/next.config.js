@@ -7,6 +7,9 @@ const nextConfig = {
 		config.resolve.fallback = { fs: false };
 		return config;
 	},
+	images: {
+		remotePatterns: [new URL('https://cdn.discordapp.com/**') ],
+	},
 	rewrites: async () => {
 		return [
 		 {

@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function BreadcrumbNav({ path, isFile, setviewType, viewType, parentId }: BreadcrumbNavProps) {
 	const splitPath = path.split('/');
-	const [errorMsg, setErrorMsg] = useState('');
+	const [errorMsg] = useState('');
 	const containerRef = useRef<HTMLOListElement>(null);
 	const dropdownRef = useRef<HTMLUListElement>(null);
 	const [isOverflowing, setIsOverflowing] = useState(false);
@@ -132,7 +132,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType, viewType, par
 				<CreateFolderModal parentId={parentId} />
 				<UploadStatusToast />
 			</div>
-			{errorMsg.length > 0 && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
+			{errorMsg.length > 0 && <ErrorPopup text={errorMsg} />}
 		</>
 	);
 }

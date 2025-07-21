@@ -4,6 +4,7 @@ import { FileWithChildren } from '../database';
 
 export interface FileDetailCellProps {
   file: File
+  disableClick?: boolean
 }
 
 export interface FileItemRowProps {

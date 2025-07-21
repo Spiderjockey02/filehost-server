@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { GetServerSidePropsContext } from 'next';
 import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
-import { auth } from '@/auth/server';
 import axios from 'axios';
 import { File } from '@prisma/client';
 import { User } from 'better-auth';
@@ -141,7 +140,7 @@ export default function Trash() {
 							<td className="text-center">
 								<input className="form-check-input" type="checkbox" checked={selected.includes(file)} onChange={() => handleCheckboxToggle(file)} aria-label={`Select file ${file.path}`} />
 							</td>
-							<FileDetailCell file={file} />
+							<FileDetailCell file={file} disableClick={true} />
 							<td>{format(new Date(file.deletedAt))}</td>
 						</tr>
 					))}
@@ -152,13 +151,23 @@ export default function Trash() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	// Last check to ensure the user is authenticated
-	const session = await auth.api.getSession({
-		headers: new Headers({
+	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+		headers: {
 			cookie: context.req.headers.cookie || '',
-		}),
+		},
 	});
-	if (session == null) return;
 
-	return { props: { query: context.query } };
+	const data = await res.json();
+	if (data == null) {
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
+	} else {
+		// Get the path from the URL
+		const path = [context.params?.files].flat();
+		return { props: { path: path.join('/') } };
+	}
 }

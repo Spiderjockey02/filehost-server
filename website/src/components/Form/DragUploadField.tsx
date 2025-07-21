@@ -2,7 +2,7 @@ import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState, useRef, DragEvent } from 'react';
 import { useUploadQueue } from '../Hooks/UploadContentManager';
-import type { DragUploadFieldProps } from '@/types/Components/Form';
+import type { DragUploadFieldProps, FileSystemDirectoryEntry, FileSystemFileEntry, FileSystemEntry } from '@/types/Components/Form';
 
 export default function DragUploadField({ children, parentId }: DragUploadFieldProps) {
 	const [isDragging, setIsDragging] = useState(false);
@@ -46,7 +46,7 @@ export default function DragUploadField({ children, parentId }: DragUploadFieldP
 
 		const files: File[] = [];
 		for (const item of items) {
-			const entry = item.webkitGetAsEntry?.();
+			const entry = item.webkitGetAsEntry?.() as FileSystemFileEntry | null;
 			if (entry) {
 				const collected = await traverseFileTree(entry);
 				files.push(...collected);
@@ -65,14 +65,14 @@ export default function DragUploadField({ children, parentId }: DragUploadFieldP
 						<p className="mt-2 fw-bold">Release to upload</p>
 					</div>
 				)}
-				<input type="file" multiple hidden={true} id="fileInput" webkitdirectory="true" directory="true" />
+				<input type="file" multiple hidden={true} id="fileInput" {...{ webkitdirectory: 'true', mozdirectory: 'true', directory: 'true' }} />
 				{children}
 			</div>
 		</>
 	);
 }
 
-function traverseFileTree(entry: any, path = ''): Promise<File[]> {
+function traverseFileTree(entry: FileSystemDirectoryEntry | FileSystemFileEntry, path = ''): Promise<File[]> {
 	return new Promise((resolve) => {
 		if (entry.isFile) {
 			entry.file((file: File) => {
@@ -87,17 +87,17 @@ function traverseFileTree(entry: any, path = ''): Promise<File[]> {
 			});
 		} else if (entry.isDirectory) {
 			const dirReader = entry.createReader();
-			const entries: any[] = [];
+			const entries: FileSystemEntry[] = [];
 
 			// readEntries has a cap of 100 so we must loop if we want more than 100 children
 			const readAllEntries = (): void => {
-				dirReader.readEntries(async (batch: any[]) => {
+				dirReader.readEntries(async (batch) => {
 					if (batch.length) {
 						entries.push(...batch);
 						readAllEntries();
 					} else {
 						const promises = entries.map((ent) =>
-							traverseFileTree(ent, path + entry.name + '/'),
+							traverseFileTree(ent as FileSystemDirectoryEntry | FileSystemFileEntry, path + entry.name + '/'),
 						);
 						const results = await Promise.all(promises);
 						resolve(results.flat());

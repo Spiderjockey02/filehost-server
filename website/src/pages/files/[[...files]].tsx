@@ -35,11 +35,10 @@ export default function Files({ path = '/' }: FilePageProps) {
 
 	if (session == null) return null;
 
-	console.log(file);
 	return (
 		<FileLayout user={session.user as User} activeTab='files' tabName={file?.name}>
 			<BreadcrumbNav path={path} isFile={file?.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={`${file?.id}`} />
-			{errorMsg && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
+			{errorMsg && <ErrorPopup text={errorMsg} />}
 			{(path.length == 0 && recents.length > 0) &&
 				<RecentNavbar files={recents} />
 			}

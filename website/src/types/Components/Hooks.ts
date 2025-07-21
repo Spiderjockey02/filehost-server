@@ -22,7 +22,7 @@ export type UploadStatus = {
 } | null;
 
 export interface UploadQueueContextType {
-  addToQueue: (file: FileList, parentId: string) => void;
+  addToQueue: (file: FileList | File[], parentId: string) => void;
   status: UploadStatus;
   cancelUpload: () => void;
 };

@@ -2,7 +2,7 @@ import { GridLayoutProps } from '@/types/Components/Layout';
 
 function Card({ children, style, className }: GridLayoutProps) {
 	return (
-		<div className={`card mb-4 ${className ?? ''}`} style={style}>
+		<div className={`card mb-2 ${className ?? ''}`} style={style}>
 			{children}
 		</div>
 	);

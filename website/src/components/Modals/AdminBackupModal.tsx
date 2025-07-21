@@ -36,7 +36,7 @@ export function AdminBackupModel({ backup, deleteBackup, downloadBackup }: Admin
 							Download <FontAwesomeIcon size='lg' icon={faDownload} />
 						</button>
 						&nbsp;
-						<button className='btn btn-secondary' onClick={deleteBackup}>
+						<button className='btn btn-danger' onClick={deleteBackup}>
 							Delete <FontAwesomeIcon size='lg' icon={faTrash} />
 						</button>
 					</div>

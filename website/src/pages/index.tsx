@@ -31,7 +31,7 @@ export default function Home() {
 	}, []);
 
 	return (
-		<MainLayout user={data?.user}>
+		<MainLayout user={data?.user} tabName='Home page'>
 			<section id="hero" className="d-flex align-items-center large-padding">
 				<div className="container">
 					<h1>Welcome to <span>{config.company.name}</span></h1>

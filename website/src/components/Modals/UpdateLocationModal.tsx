@@ -86,7 +86,7 @@ export default function UpdateLocationModal({ file, closeContextMenu }: FileModa
 	const folderTree = buildFolderTree(dirs);
 	let node = folderTree;
 	for (const part of currentPath) {
-		node = node.children?.[part] ?? {};
+		node = node.children?.[part] ?? { name: '', children: {} };
 	}
 
 	const folderEntries = node.children ? Object.entries(node.children) : [];

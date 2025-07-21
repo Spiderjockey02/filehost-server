@@ -16,7 +16,7 @@ interface FileOptions {
 export function generateRoutes(directory: string) {
 	const seperator = '/';
 	const results: FileOptions[] = [];
-	for(const path of searchDirectory(directory)) {
+	for (const path of searchDirectory(directory)) {
 		const { dir, name } = parse(path);
 		const basePath = directory.split(sep).pop() as string;
 		const dirIndex = dir.indexOf(basePath);
@@ -183,7 +183,7 @@ export function logUserActivity(client: Client) {
 
 				const durationMs = Date.now() - startTime;
 
-				const sessionPromise = getSession(client, req);
+				const sessionPromise = getSession(client, req.headers);
 
 				sessionPromise.then(session => {
 					client.userActivityManager.add({

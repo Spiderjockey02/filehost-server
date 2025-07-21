@@ -22,14 +22,12 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			if (!forUploading) break;
 			const { file, parentId } = forUploading;
 
-			if (status == null) {
-				setStatus({
-					filename: file.name,
-					progress: 0,
-					remaining: 'Calculating...',
-					error: undefined,
-				});
-			}
+			setStatus(prev => ({
+				filename: file.name,
+				progress: prev?.progress ?? 0,
+				remaining: prev?.remaining ?? 'Calculating...',
+				error: undefined,
+			}));
 
 			const formData = new FormData();
 			formData.append('media', file);
@@ -95,9 +93,11 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			}
 		}
 
-		totalBytesRef.current = 0;
 		isProcessingRef.current = false;
-		setStatus(null);
+		setTimeout(() => {
+			totalBytesRef.current = 0;
+			setStatus(null);
+		}, 500);
 	};
 
 	const addToQueue = (files: FileList | File[], parentId: string) => {

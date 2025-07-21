@@ -56,7 +56,7 @@ export default function SignIn() {
 			<section className='d-flex flex-row align-items-center' style={{ 'backgroundColor': '#eee', padding: '0', minHeight: '100vh' }}>
 				<div className="container h-100">
 					{errors.find(e => e.type == 'misc') && (
-						<ErrorPopup text={`${errors.find(e => e.type == 'misc')?.message}`} onClose={() => setErrors([])}/>
+						<ErrorPopup text={`${errors.find(e => e.type == 'misc')?.message}`} />
 					)}
 					<div className="row d-flex justify-content-center align-items-center h-100">
 						<div className="col-lg-8 col-xl-7">

@@ -18,7 +18,7 @@ export default function FileItemRow({ file, isChecked, openContextMenu, handleCh
 		<>
 			<tr key={file.name} style={{ cursor: 'pointer' }} onContextMenu={(e) => openContextMenu(e, file)} onClick={handleRowClick}>
 				<th className='text-center hide-on-mobile'>
-					<input className="form-check-input" type="checkbox" id={encodeURI(file.name)} checked={isChecked} onClick={(e) => handleCheckboxToggle(e, file)} />
+					<input className="form-check-input" type="checkbox" id={encodeURI(file.name)} checked={isChecked} readOnly={true} onClick={(e) => handleCheckboxToggle(e, file)} />
 				</th>
 				<th scope="row" className="text-truncate" style={{ maxWidth: '50vw' }}>
 					{showMoreDetail ?

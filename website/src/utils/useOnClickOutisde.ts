@@ -2,7 +2,7 @@ import { RefObject, useEffect } from 'react';
 
 type Event = MouseEvent | TouchEvent
 
-export const useOnClickOutside = <T extends HTMLDivElement = HTMLDivElement>(
+export const useOnClickOutside = <T extends HTMLElement = HTMLElement>(
 	ref: RefObject<T>,
 	handler: (event: Event) => void,
 ) => {
@@ -10,6 +10,7 @@ export const useOnClickOutside = <T extends HTMLDivElement = HTMLDivElement>(
 		const listener = (event: Event) => {
 			const el = ref?.current;
 			if (!el || el.contains((event?.target as Node) || null)
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				|| ((event as any).delegateTarget && [...(event as any)?.delegateTarget?.classList]?.includes('modal'))) return;
 
 			handler(event);
