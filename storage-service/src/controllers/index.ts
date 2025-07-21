@@ -3,6 +3,7 @@ import type Client from '../helpers/Client';
 import { getSession } from '../middleware';
 import { Error } from '../utils';
 import { User } from '@prisma/client';
+import { S3ServiceException } from '@aws-sdk/client-s3';
 
 // Endpoint GET /avatar/:userId
 export const getAvatar = (client: Client) => {
@@ -49,8 +50,20 @@ export const getContent = (client: Client) => {
 			client.logger.error(error);
 		}
 
-		const owner = await client.userManager.fetchbyParam({ id: file.userId }) as User;
-		client.FileManager.sendFile(res, owner, file, req.headers.range);
+		try {
+			const owner = await client.userManager.fetchbyParam({ id: file.userId }) as User;
+			await client.FileManager.sendFile(res, owner, file, req.headers.range);
+		} catch (err) {
+			if (err instanceof S3ServiceException) {
+				client.logger.error(`S3 error: ${err}`);
+				if (err.name == 'NotFound') return Error.MissingResource(res, 'File not found on storage server.');
+			} else {
+				client.logger.error(`Non-S3 error: ${err}`);
+				res.status(500).json({
+					error: 'Failed to send file',
+				});
+			}
+		}
 	};
 };
 
