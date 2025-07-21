@@ -1,13 +1,10 @@
 import { Prisma } from '@prisma/client';
 
 export interface GetUsers {
-	group?: boolean
-	recent?: boolean
-	delete?: boolean
-	analyse?: boolean
 	name?: string
 	sortOrder?: 'desc' | 'asc'
 	sortBy?: 'createdAt' | 'lastActive' | 'uploadedFiles'
+	storageId?: string
 }
 
 export type fetchUserbyParam = {

@@ -42,11 +42,12 @@ export default class UserManager {
 	  * @param {GetUsers} data The user data.
 		* @returns {UserWithGroup[]} The users.
 	*/
-	async fetchAll({ name, sortBy, sortOrder, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
+	async fetchAll({ name, sortBy, sortOrder, storageId, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
 		// Fetch paginated users first
 		const users = await client.user.findMany({
 			where: {
 				name: name?.length ? { startsWith: name } : undefined,
+				storageId,
 			},
 			include: {
 				group: true,
@@ -177,15 +178,22 @@ export default class UserManager {
 
 	/**
 	  * Fetch the total count of users
+		* @param {string} storageId The ID of the storage to filter by.
 		* @returns The total count of users.
 	*/
-	async fetchTotal() {
+	async fetchTotal(storageId?: string) {
+		// Fetch users that have been created in the last week
 		const last7days = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
 
 		const [total, active, newUser] = await Promise.all([
-			client.user.count(),
 			client.user.count({
 				where: {
+					storageId,
+				},
+			}),
+			client.user.count({
+				where: {
+					storageId,
 					sessions: {
 						some: {
 							createdAt: {
@@ -197,8 +205,8 @@ export default class UserManager {
 			}),
 			client.user.count({
 				where: {
+					storageId,
 					createdAt: {
-						// Fetch users that have been created in the last week
 						gte: last7days,
 					},
 				},
