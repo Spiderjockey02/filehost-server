@@ -46,6 +46,9 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			// Ensure the file would not bring the user over their max storage
 			if ((BigInt(file.size) + user.totalStorageSize) >= user.plan.maxStorageSize) throw 'File is too large';
 
+			// Make sure the storage medium has enough space aswell
+			if ((BigInt(file.size) + storage.usedSize) >= storage.maxSize) throw 'Storage medium does not have enough space';
+
 			// Check the file isn't already in the directory (Upload CONFLICT)
 			const existingFile = await client.FileManager.getByFilePath(user.id, `${dir.path}${file.originalFilename}`);
 			if (existingFile) throw 'File with that name already exists';
