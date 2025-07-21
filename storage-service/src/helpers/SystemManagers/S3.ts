@@ -84,7 +84,7 @@ export default class S3Manager implements StorageProvider {
 			client: this.s3,
 			params: {
 				Bucket: this.bucketName,
-				Key: `uploads/${filePath}`,
+				Key: filePath,
 				Body: pass,
 			},
 		});
@@ -95,11 +95,11 @@ export default class S3Manager implements StorageProvider {
 			}
 		});
 
-		upload.done().catch(err => {
+		const uploadPromise = upload.done().catch(err => {
 			this.client.logger.error(`S3 upload error: ${err}`);
-		});
+		}).then(() => {}) as Promise<void>;
 
-		return pass;
+		return { stream: pass, done: uploadPromise };
 	}
 
 	async writeFileToSystem(filePath: string, data: Buffer | string) {
@@ -141,52 +141,40 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	async sendFile(res: Response, file: File, range?: string) {
-		try {
-			const key = `${file.userId}/${file.id}`;
-			const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
-			const totalFileSize = Math.min(Number(head.ContentLength), Number(file.size));
+		const key = `${file.userId}/${file.id}`;
+		const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
+		const totalFileSize = Math.min(Number(head.ContentLength), Number(file.size));
 
-			if (file.mimetype?.startsWith('video')) {
-				if (range) {
-					const CHUNK_SIZE = 10 * 10 ** 6;
-					const match = range.match(/bytes=(\d+)-(\d*)/);
-					if (!match) throw new Error('Invalid Range header');
-					const start = parseInt(match[1], 10);
-					const end = match[2] ? Math.min(parseInt(match[2], 10), totalFileSize - 1) : Math.min(start + CHUNK_SIZE - 1, totalFileSize - 1);
+		if (file.mimetype?.startsWith('video')) {
+			if (range) {
+				const CHUNK_SIZE = 10 * 10 ** 6;
+				const match = range.match(/bytes=(\d+)-(\d*)/);
+				if (!match) throw new Error('Invalid Range header');
+				const start = parseInt(match[1], 10);
+				const end = match[2] ? Math.min(parseInt(match[2], 10), totalFileSize - 1) : Math.min(start + CHUNK_SIZE - 1, totalFileSize - 1);
 
-					const command = new GetObjectCommand({
-						Bucket: this.bucketName,
-						Key: key,
-						Range: `bytes=${start}-${end}`,
+				const command = new GetObjectCommand({
+					Bucket: this.bucketName,
+					Key: key,
+					Range: `bytes=${start}-${end}`,
+				});
+
+				const result = await this.s3.send(command);
+				if (result.Body) {
+					res.writeHead(206, {
+						'Content-Range': `bytes ${start}-${end}/${totalFileSize}`,
+						'Accept-Ranges': 'bytes',
+						'Content-Length': end - start + 1,
+						'Content-Type': file.mimetype ?? 'application/octet-stream',
 					});
-
-					const result = await this.s3.send(command);
-					if (result.Body) {
-						res.writeHead(206, {
-							'Content-Range': `bytes ${start}-${end}/${totalFileSize}`,
-							'Accept-Ranges': 'bytes',
-							'Content-Length': end - start + 1,
-							'Content-Type': file.mimetype ?? 'application/octet-stream',
-						});
-						await pipeline(result.Body as stream.Readable, res);
-					}
-				} else {
-					const command = new GetObjectCommand({
-						Bucket: this.bucketName,
-						Key: key,
-					});
-					const result = await this.s3.send(command);
-					if (result.Body) {
-						res.writeHead(200, {
-							'Content-Type': file.mimetype ?? 'application/octet-stream',
-							'Content-Length': totalFileSize ?? 0,
-						});
-						await pipeline(result.Body as stream.Readable, res);
-					}
+					await pipeline(result.Body as stream.Readable, res);
 				}
 			} else {
-				const streamCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
-				const result = await this.s3.send(streamCommand);
+				const command = new GetObjectCommand({
+					Bucket: this.bucketName,
+					Key: key,
+				});
+				const result = await this.s3.send(command);
 				if (result.Body) {
 					res.writeHead(200, {
 						'Content-Type': file.mimetype ?? 'application/octet-stream',
@@ -195,13 +183,15 @@ export default class S3Manager implements StorageProvider {
 					await pipeline(result.Body as stream.Readable, res);
 				}
 			}
-
-		} catch (err: any) {
-			if (err.code !== 'ERR_STREAM_PREMATURE_CLOSE') console.error('Pipeline error:', err);
-			if (!res.headersSent) {
-				res.status(404).send('File not found or inaccessible');
-			} else {
-				res.destroy();
+		} else {
+			const streamCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
+			const result = await this.s3.send(streamCommand);
+			if (result.Body) {
+				res.writeHead(200, {
+					'Content-Type': file.mimetype ?? 'application/octet-stream',
+					'Content-Length': totalFileSize ?? 0,
+				});
+				await pipeline(result.Body as stream.Readable, res);
 			}
 		}
 	}

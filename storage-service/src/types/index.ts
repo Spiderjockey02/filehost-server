@@ -33,7 +33,7 @@ export interface StorageProvider {
   downloadFiles(res: Response, userId: string, files: File[]): Promise<void>;
   copyFileOnSystem(oldPath: string, newPath: string): Promise<void>;
   deleteFileOnSystem(filePath: string): Promise<void>;
-  uploadFileToSystem(filePath: string): Writable
+  uploadFileToSystem(filePath: string): { stream: Writable, done: Promise<void> };
   writeFileToSystem(filePath: string, data: Buffer | string): Promise<void>;
   readFileFromSystem(file: File): Promise<Buffer>;
 	readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
@@ -41,6 +41,7 @@ export interface StorageProvider {
   sendFile(res: Response, file: File, range?: string): Promise<void>;
   getFileSystemStatistics(): storageMediumSize;
   verifyConnection(): Promise<boolean>
+  checkFileExists(path: string): Promise<boolean>
 }
 
 export interface storageMediumSize {

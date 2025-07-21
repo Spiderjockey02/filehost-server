@@ -76,7 +76,15 @@ export default class FileSystemManager implements StorageProvider {
 
 	uploadFileToSystem(filePath: string) {
 		const cleanedFilePath = path.isAbsolute(filePath) ? filePath : path.join(this.basePath, filePath);
-		return createWriteStream(cleanedFilePath);
+		const stream = createWriteStream(cleanedFilePath);
+
+		// Create a Promise that resolves when the file is fully written
+		const done = new Promise<void>((resolve, reject) => {
+			stream.on('finish', resolve);
+			stream.on('error', reject);
+		});
+
+		return { stream, done };
 	}
 
 	/**
