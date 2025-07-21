@@ -1,6 +1,7 @@
+import { UserBans } from '@prisma/client';
 import { AdminUser } from '..';
 
-interface cacheStat {
+export interface cacheStat {
   size: number
   max: number
   ttl: number
@@ -16,12 +17,8 @@ export interface cacheStats {
   userAgents: cacheStat
 }
 
-export interface thumbnailStats {
-  sizeInBytes: number
-  count: number
-}
-
 export interface AdminUserIdProps {
   isLoading: boolean
   user: AdminUser | null
+  bannedStatus: UserBans | null
 }

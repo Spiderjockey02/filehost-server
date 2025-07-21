@@ -3,6 +3,7 @@ import { customSession, organization, admin } from 'better-auth/plugins';
 import { nextCookies } from 'better-auth/next-js';
 import { betterAuth } from 'better-auth';
 import client from './prisma';
+import { APIError } from 'better-auth/api';
 
 export const auth = betterAuth({
 	plugins: [
@@ -17,39 +18,11 @@ export const auth = betterAuth({
 					id: user.id,
 				},
 				include: {
-					group: true,
+					plan: true,
 					notifications: true,
 				},
 			});
-			if (updatedUser == null) return { user: null, session: '' };
-
-			// Check for group
-			if (updatedUser.group == null) {
-				const group = await client.group.upsert({
-					where: {
-						name: 'Free',
-					},
-					create: {
-						name: 'Free',
-					},
-					update: {},
-				});
-
-				await client.user.update({
-					where: {
-						id: updatedUser.id,
-					},
-					data: {
-						group: {
-							connect: {
-								id: group.id,
-							},
-						},
-					} });
-
-				updatedUser.group = group;
-				updatedUser.groupId = group.id;
-			}
+			if (updatedUser == null) return { user: null, session: null };
 
 			return {
 				user: {
@@ -82,6 +55,12 @@ export const auth = betterAuth({
 				input: false,
 				defaultValue: 'user',
 			},
+			storageId: {
+				type: 'string',
+				required: true,
+				input: false,
+				defaultValue: 'user',
+			},
 		},
 	},
 	session: {
@@ -100,6 +79,36 @@ export const auth = betterAuth({
 		discord: {
 			clientId: process.env.DISCORD_CLIENT_ID as string,
 			clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
+		},
+	},
+	databaseHooks: {
+		user: {
+			create: {
+				before: async (user) => {
+					const storage = await client.storageMedium.findFirst({
+						where: {
+							avatarOnly: false,
+							isPrivate: false,
+						},
+					});
+					if (storage == null) throw new APIError('BAD_REQUEST', { message: 'Storage mediums have not been setup' });
+
+					const plan = await client.plan.findFirst({
+						where: {
+							isDefault: true,
+						},
+					});
+					if (plan == null) throw new APIError('BAD_REQUEST', {	message: 'Subscription plans have not been setup' });
+
+					return {
+						data: {
+							...user,
+							storageId: storage.id,
+							planId: plan.id,
+						},
+					};
+				},
+			},
 		},
 	},
 });

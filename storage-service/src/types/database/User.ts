@@ -20,22 +20,29 @@ export interface updateUser {
 	updatedAt?: Date
 }
 
-export interface UserToGroupProps {
+export type AddToPlanProps = {
 	userId: string
-	groupId: string
+	planId: string
 }
 
 export type FullUser = Prisma.UserGetPayload<{
   include: {
-    group: true
+		plan: true
 		notifications: true
   }
 }>
 
-export type UserWithGroup = Prisma.UserGetPayload<{
+export type UserWithPlan = Prisma.UserGetPayload<{
   include: {
-    group: true
+    plan: true
   }
 }>
 
 export type storageDirection = 'DECRE' | 'INCRE' | 'SET'
+
+export type setUserBan = {
+	userId: string
+	issuedByUserId: string
+	expiresAt: Date
+	reason: string
+}

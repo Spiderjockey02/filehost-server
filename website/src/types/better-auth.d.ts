@@ -1,4 +1,4 @@
-import type { Group, Notification } from '@prisma/client';
+import type { Plan, Notification } from '@prisma/client';
 
 declare module 'better-auth' {
   export interface User {
@@ -13,8 +13,7 @@ declare module 'better-auth' {
     totalStorageSize: number
     role: string
     notifications: Notification[]
-    group: Group | null
-    banned: boolean
+    plan: Plan
   }
 }
 

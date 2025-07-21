@@ -65,7 +65,7 @@ export default class SessionManager {
 				include: {
 					user: {
 						include: {
-							group: true,
+							plan: true,
 						},
 					},
 				},

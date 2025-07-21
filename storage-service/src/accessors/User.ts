@@ -1,4 +1,4 @@
-import type { GetUsers, fetchUserbyParam, updateUser, UserToGroupProps, FullUser, storageDirection } from '../types/database/User';
+import type { GetUsers, fetchUserbyParam, updateUser, FullUser, storageDirection, setUserBan, AddToPlanProps } from '../types/database/User';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
 import { Pagination } from 'src/types/database/File';
@@ -29,7 +29,7 @@ export default class UserManager {
 				updatedAt: data.updatedAt,
 			},
 			include: {
-				group: true,
+				plan: true,
 				notifications: true,
 			},
 		});
@@ -50,7 +50,7 @@ export default class UserManager {
 				storageId,
 			},
 			include: {
-				group: true,
+				plan: true,
 				notifications: true,
 				activity: {
 					take: 1,
@@ -99,23 +99,23 @@ export default class UserManager {
 
 	/**
 	  * Update a user's group
-	  * @param {UserToGroupProps} data The user data.
+	  * @param {AddToPlanProps} data The user data.
 		* @returns {UserWithGroup} The updated user.
 	*/
-	async addUserToGroup(data: UserToGroupProps): Promise<FullUser> {
+	async addToPlan(data: AddToPlanProps): Promise<FullUser> {
 		return client.user.update({
 			where: {
 				id: data.userId,
 			},
 			data: {
-				group: {
+				plan: {
 					connect: {
-						id: data.groupId,
+						id: data.planId,
 					},
 				},
 			},
 			include: {
-				group: true,
+				plan: true,
 				notifications: true,
 			},
 		});
@@ -135,7 +135,7 @@ export default class UserManager {
 					id: data.id,
 				},
 				include: {
-					group: true,
+					plan: true,
 					notifications: true,
 					sessions: true,
 					_count: {
@@ -170,7 +170,7 @@ export default class UserManager {
 				},
 			},
 			include: {
-				group: true,
+				plan: true,
 				notifications: true,
 			},
 		});
@@ -308,13 +308,54 @@ export default class UserManager {
 		* Gets the average file size
 		* @returns The average file size.
 	*/
-	fetchBannedTotal() {
-		return client.user.count({
+	async fetchBannedTotal() {
+		const bans = await client.userBans.groupBy({
+			by: 'userId',
+		});
+
+		return bans.length;
+	}
+
+	/**
+		* Fetch the ban status of a user
+		* @param {string} userId The ID of the user
+		* @returns The ban status of the user.
+	*/
+	async fetchBanStatus(userId: string) {
+		return client.userBans.findFirst({
 			where: {
-				banned: true,
+				userId,
+				expiresAt: {
+					gte: new Date(),
+				},
 			},
 		});
 	}
+
+	/**
+		* Set the ban status of a user
+		* @param {setUserBan} data The ban data
+		* @returns The created ban record.
+	*/
+	async setBanStatus(data: setUserBan) {
+		return client.userBans.create({
+			data: {
+				expiresAt: data.expiresAt,
+				reason: data.reason,
+				user: {
+					connect: {
+						id: data.userId,
+					},
+				},
+				issuedByUser: {
+					connect: {
+						id: data.issuedByUserId,
+					},
+				},
+			},
+		});
+	}
+
 	/**
 		* Gets the number of admins
 	*/

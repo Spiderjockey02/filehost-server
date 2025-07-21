@@ -1,4 +1,3 @@
-import type { UserWithGroup } from 'src/types/database/User';
 import { cleanUpVideo } from '../utils/VideoPreprocessor';
 import { CONSTANTS, normalizePath } from '../utils';
 import type Client from '../helpers/Client';
@@ -7,10 +6,11 @@ import type { Request } from 'express';
 import formidable from 'formidable';
 import { readFile } from 'node:fs/promises';
 import { FullFile } from 'src/types/database/File';
+import { UserWithPlan } from 'src/types/database/User';
 
-export default async (client: Client, req: Request, user: UserWithGroup) => {
+export default async (client: Client, req: Request, user: UserWithPlan) => {
 	// Make sure they haven't already uploaded past their max storage
-	if (user.totalStorageSize >= (user.group?.maxStorageSize ?? 0)) throw 'Max storage reached';
+	if (user.totalStorageSize >= user.plan.maxStorageSize) throw 'Max storage reached';
 
 	// Get storage and it's provider
 	const storage = await client.FileManager.storageManager.fetchById(user.storageId);
@@ -44,7 +44,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 			if (!dir) throw 'Missing parent directory 1';
 
 			// Ensure the file would not bring the user over their max storage
-			if ((BigInt(file.size) + user.totalStorageSize) >= (user.group?.maxStorageSize ?? 0n)) throw 'File is too large';
+			if ((BigInt(file.size) + user.totalStorageSize) >= user.plan.maxStorageSize) throw 'File is too large';
 
 			// Check the file isn't already in the directory (Upload CONFLICT)
 			const existingFile = await client.FileManager.getByFilePath(user.id, `${dir.path}${file.originalFilename}`);
@@ -106,7 +106,7 @@ export default async (client: Client, req: Request, user: UserWithGroup) => {
 			await fileProvider.writeFileToSystem(`${user.id}/${uploadedFile.id}`, buffer);
 
 			// Notification
-			const max = Number(user.group?.maxStorageSize ?? 0);
+			const max = Number(user.plan.maxStorageSize);
 			if (max > 0) {
 				const currentUsage = Number(user.totalStorageSize);
 				const newUsage = currentUsage + file.size;

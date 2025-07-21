@@ -8,8 +8,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Account } from '@prisma/client';
 import Link from 'next/link';
 import AdminNotificationCreateModal from '../Modals/AdminNotificationCreateModal';
+import AdminUserCreateBanModal from '../Modals/AdminUserCreateBanModal';
 
-export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
+export default function AdminUserIdCard({ isLoading, user, bannedStatus }: AdminUserIdProps) {
 
 	const { data } = useQuery({
 		queryKey: ['userAccounts', user?.id],
@@ -55,7 +56,7 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 
 				<ul className="list-unstyled mt-3 mb-2 small">
 					<li><strong>Language: </strong>{isLoading || user == null ? <span className='placeholder col-1'></span> : user.languageCode}</li>
-					<li><strong>Plan: </strong>{isLoading || user == null ? <span className='placeholder col-1'></span> : user.group?.name}</li>
+					<li><strong>Plan: </strong>{isLoading || user == null ? <span className='placeholder col-1'></span> : user.plan.name}</li>
 					<li>
 						<strong>Email Verified: </strong>
 						{isLoading || user == null ? <span className='placeholder col-1'></span> :
@@ -67,8 +68,10 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 					<li>
 						<strong>Account Status: </strong>
 						{isLoading || user == null ? <span className='placeholder col-1'></span> :
-							user?.banned ? (
-								<span className="text-danger">Banned</span>
+							bannedStatus !== null ? (
+								<span className="text-danger">Banned ({new Intl.DateTimeFormat('en-GB', {
+									dateStyle: 'full',
+								}).format(new Date(bannedStatus.expiresAt))})</span>
 							) : (
 								<span className="text-success">Active</span>
 							)
@@ -87,16 +90,16 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 						:	<>
 							<div className="progress" style={{ height: '8px' }}>
 								<div
-									className={`progress-bar ${getStatusColor(user?.totalStorageSize, user?.group?.maxStorageSize)}`}
+									className={`progress-bar ${getStatusColor(user?.totalStorageSize, user?.plan.maxStorageSize)}`}
 									role="progressbar"
-									style={{ width: `${(user?.totalStorageSize / (user?.group?.maxStorageSize ?? 1)) * 100}%` }}
+									style={{ width: `${(user?.totalStorageSize / (user?.plan.maxStorageSize ?? 1)) * 100}%` }}
 									aria-valuenow={user?.totalStorageSize}
 									aria-valuemin={0}
-									aria-valuemax={user?.group?.maxStorageSize}
+									aria-valuemax={user?.plan.maxStorageSize}
 								></div>
 							</div>
 							<div className="text-muted small mt-1">
-								{formatBytes(user?.totalStorageSize)} / {formatBytes(user?.group?.maxStorageSize)}
+								{formatBytes(user?.totalStorageSize)} / {formatBytes(user?.plan.maxStorageSize)}
 							</div>
 						</>
 					}
@@ -133,7 +136,8 @@ export default function AdminUserIdCard({ isLoading, user }: AdminUserIdProps) {
 									<br />
 									<button className='btn btn-outline-secondary' data-bs-toggle="modal" data-bs-target="#createNotificationModal">Send Notification</button>
 									&nbsp;
-									<button className='btn btn-outline-danger'>Ban</button>
+									<button className='btn btn-outline-danger' data-bs-toggle="modal" data-bs-target="#AdminUserCreateBanModal">Ban</button>
+									<AdminUserCreateBanModal userId={user.id} />
 									<AdminNotificationCreateModal userId={user.id} />
 								</>
 							)}

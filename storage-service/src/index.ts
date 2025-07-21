@@ -9,6 +9,7 @@ import onFinished from 'on-finished';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { getSession } from './middleware';
+import { createPlan, fetchDefaultPlan } from './accessors/Plan';
 
 const app = express();
 const server = createServer(app);
@@ -21,16 +22,17 @@ const io = new Server(server, {
 const client = new Client(io);
 
 (async () => {
-	// Create 2 groups for normal users and admin
-	const groups = await client.groupManager.fetchAll();
-	if (groups.length == 0) {
-		try {
-			await Promise.all([client.groupManager.create({ name: 'Free' }), client.groupManager.create({ name: 'Admin' })]);
-			client.logger.log('Successfully created group(s): Free, Admin.');
-		} catch (err) {
-			client.logger.error(err);
-		}
+	// Create plans if not present
+	const defaultPlan = await fetchDefaultPlan();
+	if (defaultPlan == null) {
+		await createPlan({
+			name: 'Free',
+			price: 0,
+			maxStorageSize: BigInt(5 * 1024 * 1024 * 1024),
+			isDefault: true,
+		});
 	}
+
 
 	// Create a storage medium (if not exists) where files will be stored
 	if (await client.FileManager.storageManager.fetchCount() < 3) {

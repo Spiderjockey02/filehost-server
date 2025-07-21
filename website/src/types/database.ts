@@ -41,3 +41,24 @@ export type UserWithCount = Prisma.UserGetPayload<{
 export type DeletedFile = {
   deletedAt: Date
 } & File
+
+export type StorageWithCounts = Prisma.StorageMediumGetPayload<{
+  include: {
+    _count: {
+      select: {
+        users: true
+        files: true
+      }
+    }
+  }
+}>
+
+export type UserAgentWithCounts = Prisma.UserAgentGetPayload<{
+  include: {
+    _count: {
+      select: {
+        activity: true
+      }
+    }
+  }
+}>

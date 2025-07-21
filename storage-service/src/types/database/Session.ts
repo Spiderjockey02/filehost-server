@@ -4,7 +4,7 @@ export type FullSession = Prisma.SessionGetPayload<{
   include: {
     user: {
       include: {
-        group: true
+        plan: true
       }
     }
   }

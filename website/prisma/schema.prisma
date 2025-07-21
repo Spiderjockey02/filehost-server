@@ -25,14 +25,14 @@ model User {
   logs              AuditLog[]
   bans              UserBans[]  @relation("bannedUser")
   issuedBans        UserBans[]  @relation("issuedUser")
-  groupId           String?
-  group             Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  plan              Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId            String
   totalStorageSize  Int  @default(0)
   role              String  @default("user")
   storage           StorageMedium    @relation(fields: [storageId], references: [id])
   storageId         String
 
-  @@index([groupId])
+  @@index([planId])
   @@index([storageId])
   @@index([role])
   @@index([createdAt])
@@ -88,13 +88,6 @@ model Verification {
 
   @@index([identifier])
   @@index([expiresAt])
-}
-
-model Group {
-  id              String    @id     @default(cuid())
-  name            String    @unique
-  users           User[]
-  maxStorageSize  Int       @default(5368709120)
 }
 
 model Notification {
@@ -320,4 +313,13 @@ model UserBans {
   createdAt     DateTime  @default(now())
   expiresAt     DateTime
   reason        String
+}
+
+model Plan {
+  id              String    @id   @default(cuid())
+  name            String
+  maxStorageSize  Int    @default(5368709120)
+  price           Decimal   @default(0.00)
+  isDefault       Boolean   @default(false)
+  users           User[]
 }
