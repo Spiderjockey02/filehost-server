@@ -153,7 +153,6 @@ model StorageMedium {
   updatedAt     DateTime    @updatedAt
   
   isPrivate     Boolean     @default(false)
-  thumbnailOnly Boolean     @default(false)
   avatarOnly    Boolean     @default(false)
 
   files         File[]
@@ -186,7 +185,7 @@ enum Status {
 model CronJobLog {
   id        Int         @id   @default(autoincrement())
   status    Status
-  message   String?
+  message   String
   ranAt     DateTime    @default(now())
   duration  Int?        @default(0)
   cronJob   CronJob     @relation(fields: [jobName], references: [name], onDelete: Cascade)
