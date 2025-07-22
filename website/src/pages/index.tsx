@@ -13,17 +13,17 @@ export default function Home() {
 	const { data } = authClient.useSession();
 	const [stats, setStats] = useState({
 		totalUsers: 0,
-		storageUsed: 0,
+		totalUsage: 0,
 		totalFiles: 0,
 	});
 
 	useEffect(() => {
 		async function fetchData() {
 			const res = await fetch('/api/statistics');
-			const { totalUsers, diskData, totalFileCount } = await res.json();
+			const { totalUsers, totalUsage, totalFileCount } = await res.json();
 
 			setStats({
-				totalUsers: totalUsers.total, storageUsed: diskData.total - diskData.free, totalFiles: totalFileCount,
+				totalUsers: totalUsers.total, totalUsage, totalFiles: totalFileCount,
 			});
 		}
 
@@ -85,21 +85,21 @@ export default function Home() {
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faUsers} />
-									<CountUp end={stats.totalUsers} className='purecounter' duration={10} />
+									<CountUp end={stats.totalUsers} className='purecounter' duration={5} />
 									<p>Happy users</p>
 								</div>
 							</Col>
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faFile} />
-									<CountUp end={stats.totalFiles} className='purecounter' duration={10} />
+									<CountUp end={stats.totalFiles} className='purecounter' duration={5} />
 									<p>Total files</p>
 								</div>
 							</Col>
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faHardDrive} />
-									<CountUp end={stats.storageUsed} className='purecounter' formattingFn={(n) => formatBytes(n)} duration={10} />
+									<CountUp end={stats.totalUsage} className='purecounter' formattingFn={(n) => formatBytes(n)} duration={5} />
 									<p>Total storage used</p>
 								</div>
 							</Col>

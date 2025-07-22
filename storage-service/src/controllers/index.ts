@@ -67,12 +67,13 @@ export const getContent = (client: Client) => {
 	};
 };
 
+// Endpoint GET /statistics
 export const getStatistics = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const [totalUsers, diskData, totalFileCount] = await Promise.all([client.userManager.fetchTotal(), client.FileManager.getFileSystemStatistics(), client.FileManager.fetchTotal()]);
+			const [totalUsers, totalUsage, totalFileCount] = await Promise.all([client.userManager.fetchTotal(), client.FileManager.storageManager.fetchGlobalUsage(), client.FileManager.fetchTotal()]);
 
-			res.json({ totalUsers, diskData, totalFileCount: totalFileCount.files + totalFileCount.folders });
+			res.json({ totalUsers, totalUsage: Number(totalUsage._sum.usedSize ?? 0), totalFileCount: totalFileCount.files + totalFileCount.folders });
 		} catch (error) {
 			client.logger.error(error);
 			return Error.GenericError(res, 'Failed to get statistics');

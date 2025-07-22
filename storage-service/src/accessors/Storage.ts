@@ -203,4 +203,16 @@ export default class StorageAccessor {
 		// Now calculate average
 		return groups.map(g => g._sum.size).reduce((a, b) => Number(a) + Number(b), 0) / groups.length;
 	}
+
+	/**
+	  * Fetch global storage usage
+		* @returns The global storage usage.
+	*/
+	async fetchGlobalUsage() {
+		return client.storageMedium.aggregate({
+			_sum: {
+				usedSize: true,
+			},
+		});
+	}
 }
