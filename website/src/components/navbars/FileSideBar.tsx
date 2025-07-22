@@ -2,11 +2,23 @@ import { faBars, faClock, faFolder, faTrash } from '@fortawesome/free-solid-svg-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FileSideBarProps } from '@/types/Components/Navbars';
 import { formatBytes, getStatusColor } from '@/utils/functions';
-import Link from 'next/link';
+import { useEffect } from 'react';
 import config from '@/config';
+import Link from 'next/link';
 
 export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
-	const size = Number(user.totalStorageSize) ?? 0;
+	const size = user.totalStorageSize;
+
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			import('bootstrap/dist/js/bootstrap.js').then((bootstrap) => {
+				const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+				[...tooltipTriggerList].forEach((el) => {
+					new bootstrap.Tooltip(el);
+				});
+			});
+		}
+	}, []);
 
 	return (
 		<nav id="sidebar">
@@ -31,13 +43,13 @@ export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 					<ul className="list-unstyled components">
 						<li>
 							<Link href="/files" className={`btn sidebar-btn ${activeTab === 'files' ? 'active' : ''}`}>
-								<FontAwesomeIcon icon={faFolder} data-bs-toggle="tooltip" data-bs-placement="right" title="All files" />
+								<FontAwesomeIcon icon={faFolder} />
 								<span> All files</span>
 							</Link>
 						</li>
 						<li>
 							<Link href="/recent" className={`btn sidebar-btn ${activeTab === 'recent' ? 'active' : ''}`}>
-								<FontAwesomeIcon icon={faClock} data-bs-toggle="tooltip" data-bs-placement="right" title="Recents" />
+								<FontAwesomeIcon icon={faClock} />
 								<span> Recents</span>
 							</Link>
 						</li>
@@ -59,13 +71,13 @@ export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 			<ul className="list-unstyled components">
 				<li>
 					<Link href="/files" className={`btn sidebar-btn ${activeTab === 'files' ? 'active' : ''}`}>
-						<FontAwesomeIcon icon={faFolder} data-bs-toggle="tooltip" data-bs-placement="right" title="All files" />
+						<span data-bs-toggle="tooltip" data-bs-placement="right" title="All files"><FontAwesomeIcon icon={faFolder} /></span>
 						<span className="side-text"> All files</span>
 					</Link>
 				</li>
 				<li>
 					<Link href="/recent" className={`btn sidebar-btn ${activeTab === 'recent' ? 'active' : ''}`}>
-						<FontAwesomeIcon icon={faClock} data-bs-toggle="tooltip" data-bs-placement="right" title="Recents" />
+						<span data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"><FontAwesomeIcon icon={faClock} /></span>
 						<span className="side-text"> Recents</span>
 					</Link>
 				</li>
@@ -77,7 +89,7 @@ export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 						</div>
 					</div>
 					<Link href="/trash" className={`btn sidebar-btn ${activeTab === 'bin' ? 'active' : ''}`} style={{ marginTop: '0.5rem' }}>
-						<FontAwesomeIcon icon={faTrash} />
+						<span data-bs-toggle="tooltip" data-bs-placement="right" title="Bin"><FontAwesomeIcon icon={faTrash} /></span>
 						<span className="side-text"> Bin</span>
 					</Link>
 				</li>

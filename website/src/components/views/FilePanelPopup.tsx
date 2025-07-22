@@ -1,14 +1,15 @@
-import Image from 'next/image';
 import { faCopy, faDownload, faFileSignature, faFolderOpen, faShareAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import type { FilePanelPopupProps } from '@/types/Components/Views';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import path from 'path';
-import { formatBytes } from '@/utils/functions';
-import { useRouter } from 'next/router';
-import axios from 'axios';
 import ChangeModal from '../Modals/UpdateLocationModal';
 import DeleteFileModal from '../Modals/DeleteFileModal';
 import RenameModal from '../Modals/RenameFileModal';
-import type { FilePanelPopupProps } from '@/types/Components/Views';
+import { formatBytes } from '@/utils/functions';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
+import Image from 'next/image';
+import axios from 'axios';
+import path from 'path';
 
 export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupProps) {
 	const router = useRouter();
@@ -67,6 +68,17 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 		}
 	};
 
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			import('bootstrap/dist/js/bootstrap.js').then((bootstrap) => {
+				const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+				[...tooltipTriggerList].forEach((el) => {
+					new bootstrap.Tooltip(el);
+				});
+			});
+		}
+	}, []);
+
 	return (
 		<>
 			<RenameModal key={file.id} file={file} />
@@ -89,22 +101,22 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 					</div>
 					<div className='d-flex flex-wrap justify-content-evenly'>
 						<button className='btn'>
-							<FontAwesomeIcon icon={faShareAlt} />
+							<span data-bs-toggle="tooltip" data-bs-placement="top" title="Share"><FontAwesomeIcon icon={faShareAlt} /></span>
 						</button>
-						<button className='btn' onClick={handleCopyURL}>
-							<FontAwesomeIcon icon={faCopy} />
+						<button className='btn' onClick={handleCopyURL} >
+							<span data-bs-toggle="tooltip" data-bs-placement="top" title="Copy"><FontAwesomeIcon icon={faCopy} /></span>
 						</button>
-						<button className='btn' onClick={handleDownload}>
-							<FontAwesomeIcon icon={faDownload} />
+						<button className='btn' onClick={handleDownload} >
+							<span data-bs-toggle="tooltip" data-bs-placement="top" title="Download"><FontAwesomeIcon icon={faDownload}/></span>
 						</button>
 						<button className='btn' data-bs-toggle="modal" data-bs-target={`#delete_${file.id}`}>
-							<FontAwesomeIcon icon={faTrash} />
+							<span data-bs-toggle="tooltip" data-bs-placement="top" title="Delete"><FontAwesomeIcon icon={faTrash} /></span>
 						</button>
 						<button className='btn' data-bs-toggle="modal" data-bs-target={`#change_${file.id}`}>
-							<FontAwesomeIcon icon={faFolderOpen} />
+							<span data-bs-toggle="tooltip" data-bs-placement="top" title="Change"><FontAwesomeIcon icon={faFolderOpen} /></span>
 						</button>
 						<button className="btn" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${file.id}`}>
-							<FontAwesomeIcon icon={faFileSignature} />
+							<span data-bs-toggle="tooltip" data-bs-placement="top" title="Rename"><FontAwesomeIcon icon={faFileSignature} /></span>
 						</button>
 					</div>
 				</div>
