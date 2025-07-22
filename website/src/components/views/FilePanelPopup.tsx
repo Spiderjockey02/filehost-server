@@ -6,7 +6,6 @@ import DeleteFileModal from '../Modals/DeleteFileModal';
 import RenameModal from '../Modals/RenameFileModal';
 import { formatBytes } from '@/utils/functions';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
 import path from 'path';
@@ -67,17 +66,6 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 			unsecuredCopyToClipboard(url);
 		}
 	};
-
-	useEffect(() => {
-		if (typeof window !== 'undefined') {
-			import('bootstrap/dist/js/bootstrap.js').then((bootstrap) => {
-				const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-				[...tooltipTriggerList].forEach((el) => {
-					new bootstrap.Tooltip(el);
-				});
-			});
-		}
-	}, []);
 
 	return (
 		<>

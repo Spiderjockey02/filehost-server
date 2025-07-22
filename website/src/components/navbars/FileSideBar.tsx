@@ -2,23 +2,11 @@ import { faBars, faClock, faFolder, faTrash } from '@fortawesome/free-solid-svg-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FileSideBarProps } from '@/types/Components/Navbars';
 import { formatBytes, getStatusColor } from '@/utils/functions';
-import { useEffect } from 'react';
 import config from '@/config';
 import Link from 'next/link';
 
 export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 	const size = user.totalStorageSize;
-
-	useEffect(() => {
-		if (typeof window !== 'undefined') {
-			import('bootstrap/dist/js/bootstrap.js').then((bootstrap) => {
-				const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-				[...tooltipTriggerList].forEach((el) => {
-					new bootstrap.Tooltip(el);
-				});
-			});
-		}
-	}, []);
 
 	return (
 		<nav id="sidebar">
