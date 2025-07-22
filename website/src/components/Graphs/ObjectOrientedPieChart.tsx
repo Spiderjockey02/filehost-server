@@ -22,8 +22,8 @@ export default function ObjectOrientedPieChart({ data }: ObjectOrientedPieChartP
 				callbacks: {
 					label: (tooltipItem) => {
 						const value = Number(tooltipItem.raw || 0);
-						const percentage = ((value / Object.values(data).reduce((acc, val) => acc + val, 0)) * 100).toFixed(2);
-						return `${new Intl.NumberFormat().format(value)} (${percentage}%)`;
+						const percentage = (value / Object.values(data).reduce((acc, val) => acc + val, 0)) * 100;
+						return `${new Intl.NumberFormat().format(value)} (${percentage < 0.01 ? '<0.01' : percentage.toFixed(2)}%)`;
 					},
 				},
 			},
