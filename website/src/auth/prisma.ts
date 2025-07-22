@@ -23,12 +23,13 @@ client.$on('error', (data) => {
 function convertBigIntToNumber(data: unknown): unknown {
 	if (typeof data === 'bigint') return Number(data);
 	if (Array.isArray(data)) return data.map((item) => convertBigIntToNumber(item));
-
+	if (data instanceof Date) return `${data}`;
 	if (data !== null && typeof data === 'object') {
 		return Object.fromEntries(
 			Object.entries(data).map(([key, value]) => [key, convertBigIntToNumber(value)]),
 		);
 	}
+
 	return data;
 }
 
