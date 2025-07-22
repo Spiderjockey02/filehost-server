@@ -62,6 +62,7 @@ export default function AdminActivityCard({ userId }: Props) {
 									<option value="404">404</option>
 									<option value="412">412</option>
 									<option value="416">416</option>
+									<option value="429">429</option>
 									<option value="500">500</option>
 								</select>
 							</Table.Header>
