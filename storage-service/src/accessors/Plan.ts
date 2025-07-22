@@ -14,3 +14,7 @@ export async function fetchDefaultPlan() {
 		},
 	});
 }
+
+export async function fetchAllPlans() {
+	return client.plan.findMany();
+}

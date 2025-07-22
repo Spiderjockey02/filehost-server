@@ -1,9 +1,10 @@
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import { getSession } from '../middleware';
-import { Error } from '../utils';
+import { Error, sanitiseObject } from '../utils';
 import { User } from '@prisma/client';
 import { S3ServiceException } from '@aws-sdk/client-s3';
+import { fetchAllPlans } from '../accessors/Plan';
 
 // Endpoint GET /avatar/:userId
 export const getAvatar = (client: Client) => {
@@ -77,6 +78,19 @@ export const getStatistics = (client: Client) => {
 		} catch (error) {
 			client.logger.error(error);
 			return Error.GenericError(res, 'Failed to get statistics');
+		}
+	};
+};
+
+// Endpoint GET /plans
+export const getPlans = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		try {
+			const plans = await fetchAllPlans();
+			res.json({ plans: sanitiseObject(plans) });
+		} catch (error) {
+			client.logger.error(error);
+			return Error.GenericError(res, 'Failed to get plans');
 		}
 	};
 };

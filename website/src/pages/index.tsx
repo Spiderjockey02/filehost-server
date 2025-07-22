@@ -1,37 +1,44 @@
 import { faCommentDots, faEarthEurope, faFile, faGauge, faHardDrive, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { formatBytes } from '@/utils/functions';
+import { formatBytes, queryOptions } from '@/utils/functions';
 import { Col, Row } from '@/components/UI/Grid';
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import config from '../config';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import CountUp from 'react-countup';
+import { useQuery } from '@tanstack/react-query';
+import { Plan } from '@prisma/client';
 
 export default function Home() {
-	const { data } = authClient.useSession();
-	const [stats, setStats] = useState({
-		totalUsers: 0,
-		totalUsage: 0,
-		totalFiles: 0,
+	const { data: session } = authClient.useSession();
+
+	const { data, isLoading } = useQuery({
+		queryKey: ['homePageStatistics'],
+		queryFn: async ({ signal }) => {
+			const res = await fetch('/api/statistics', { signal });
+			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
+
+			const d = await res.json();
+			return d as { totalUsers: { total: number }, totalUsage: number, totalFileCount: number };
+		},
+		...queryOptions,
 	});
 
-	useEffect(() => {
-		async function fetchData() {
-			const res = await fetch('/api/statistics');
-			const { totalUsers, totalUsage, totalFileCount } = await res.json();
+	const { data: plans, isLoading: isLoadingPlans } = useQuery({
+		queryKey: ['homePagePlans'],
+		queryFn: async ({ signal }) => {
+			const res = await fetch('/api/plans', { signal });
+			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
 
-			setStats({
-				totalUsers: totalUsers.total, totalUsage, totalFiles: totalFileCount,
-			});
-		}
-
-		fetchData();
-	}, []);
+			const d = await res.json();
+			return d as { plans: Plan[] };
+		},
+		...queryOptions,
+	});
 
 	return (
-		<MainLayout user={data?.user} tabName='Home page'>
+		<MainLayout user={session?.user} tabName='Home page'>
 			<section id="hero" className="d-flex align-items-center large-padding">
 				<div className="container">
 					<h1>Welcome to <span>{config.company.name}</span></h1>
@@ -85,21 +92,21 @@ export default function Home() {
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faUsers} />
-									<CountUp end={stats.totalUsers} className='purecounter' duration={5} />
+									<CountUp end={isLoading || data == undefined ? 0 : data.totalUsers.total} className='purecounter' duration={5} />
 									<p>Happy users</p>
 								</div>
 							</Col>
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faFile} />
-									<CountUp end={stats.totalFiles} className='purecounter' duration={5} />
+									<CountUp end={isLoading || data == undefined ? 0 : data.totalFileCount} className='purecounter' duration={5} />
 									<p>Total files</p>
 								</div>
 							</Col>
 							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
 									<FontAwesomeIcon icon={faHardDrive} />
-									<CountUp end={stats.totalUsage} className='purecounter' formattingFn={(n) => formatBytes(n)} duration={5} />
+									<CountUp end={isLoading || data == undefined ? 0 : data.totalUsage} className='purecounter' formattingFn={(n) => formatBytes(n)} duration={5} />
 									<p>Total storage used</p>
 								</div>
 							</Col>
@@ -114,76 +121,28 @@ export default function Home() {
 							<p>Compare {config.company.name} cloud storage pricing and plans</p>
 						</div>
 						<Row>
-							<Col lg={3} md={6} className='mb-5'>
-								<div className="box">
-									<h3>Free</h3>
-									<h4><sup>$</sup>0<span> / month</span></h4>
-									<ul>
-										<li><b>Storage only</b></li>
-										<li>5 GB</li>
-										<li></li>
-										<li><b>Services included</b></li>
-										<li>Photo album viewer</li>
-										<li className="na">Text editor</li>
-									</ul>
-									<div className="btn-wrap">
-										<Link href="/register" className="btn btn-primary">Sign up</Link>
-									</div>
-								</div>
-							</Col>
-							<Col lg={3} md={6} className='mb-5'>
-								<div className="box">
-									<h3>Developer</h3>
-									<h4><sup>$</sup>5<span> / month</span></h4>
-									<ul>
-										<li><b>Storage size</b></li>
-										<li>15 GB</li>
-										<li><b>Services included</b></li>
-										<li>File editor</li>
-										<li></li>
-										<li></li>
-										<li></li>
-									</ul>
-									<div className="btn-wrap">
-										<Link href="/register" className="btn btn-primary">Buy Now</Link>
-									</div>
-								</div>
-							</Col>
-							<Col lg={3} md={6} className='mb-5'>
-								<div className="box featured">
-									<h3>Business</h3>
-									<h4><sup>$</sup>10<span> / month</span></h4>
-									<ul>
-										<li><b>Storage size</b></li>
-										<li>1 TB</li>
-										<li>Nulla at volutpat dola</li>
-										<li>Pharetra massa</li>
-										<li className="na">Massa ultricies mi</li>
-										<li></li>
-									</ul>
-									<div className="btn-wrap">
-										<Link href="/register" className="btn btn-primary">Buy Now</Link>
-									</div>
-								</div>
-							</Col>
-							<Col lg={3} md={6} className='mb-5'>
-								<div className="box">
-									<span className="advanced">Advanced</span>
-									<h3>Ultimate</h3>
-									<h4><sup>$</sup>20<span> / month</span></h4>
-									<ul>
-										<li>Aida dere</li>
-										<li>Nec feugiat nisl</li>
-										<li>Nulla at volutpat dola</li>
-										<li>Pharetra massa</li>
-										<li>Massa ultricies mi</li>
-										<li></li>
-									</ul>
-									<div className="btn-wrap">
-										<Link href="/register" className="btn btn-primary">Buy Now</Link>
-									</div>
-								</div>
-							</Col>
+							{isLoadingPlans || plans == undefined ? (
+								<p>Loading plans...</p>
+							) : (
+								plans.plans.map((plan, index) => (
+									<Col lg={Math.min(Math.floor(12 / plans.plans.length), 6)} md={6} className='mb-5' key={index}>
+										<div className="box">
+											<h3>{plan.name}</h3>
+											<h4><sup>$</sup>{Number(plan.price)}<span> / month</span></h4>
+											<ul>
+												<li><b>Storage size</b></li>
+												<li>{formatBytes(plan.maxStorageSize)}</li>
+											</ul>
+											<div className="btn-wrap">
+												{plan.isDefault ?
+													<Link href="/register" className="btn btn-primary">Sign up</Link>
+													 : <Link href={`/plan/${plan.id}`} className="btn btn-primary">Buy Now</Link>
+												}
+											</div>
+										</div>
+									</Col>
+								))
+							)}
 						</Row>
 					</div>
 				</section>
