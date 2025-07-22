@@ -27,7 +27,7 @@ export default function Recent() {
 		try {
 			const { data } = await axios.get('/api/session/recently-viewed');
 			setHistory(data.files);
-			setFilters([...new Set((data.files as UserHistoryWithFile[]).map(c => c.file.name.split('.')[1]))]);
+			setFilters([...new Set((data.files as UserHistoryWithFile[]).map(c => `*.${c.file.name.split('.').at(-1)}`))]);
 		} catch (err) {
 			console.log(err);
 		}
@@ -74,7 +74,7 @@ export default function Recent() {
 				newFilteredHistory = (data.files as UserHistoryWithFile[]);
 			} else {
 				newFilteredHistory = (data.files as UserHistoryWithFile[]).filter(s => {
-					return newActiveFilters.includes(s.file.name.split('.')[1]);
+					return newActiveFilters.includes(`*.${s.file.name.split('.').at(-1)}`);
 				});
 			}
 
