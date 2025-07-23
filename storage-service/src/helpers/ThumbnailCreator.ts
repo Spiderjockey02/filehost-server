@@ -246,30 +246,18 @@ export default class ThumbnailCreator {
 
 			const padding = 5;
 			const maxWidth = this.width - 2 * padding;
-
-			// Split text into multiple lines if it overflows
 			const words = text.split('\n');
-			let line = '';
 			const lineHeight = 16;
 			let yPosition = padding;
 
-			for (const word of words) {
-				if (yPosition >= this.height) break;
-
-				const testLine = `${line}${word} `;
-				const testWidth = ctx.measureText(testLine).width;
-
-				if (testWidth > maxWidth && line !== '') {
-					ctx.fillText(line, padding, yPosition);
-					line = `${word} `;
-					yPosition += lineHeight;
-				} else {
-					line = testLine;
+			for (let word of words) {
+				while (ctx.measureText(word).width > maxWidth) {
+					word = word.slice(0, -1);
 				}
-			}
 
-			// Draw the last line
-			ctx.fillText(line, padding, yPosition);
+				yPosition += lineHeight;
+				ctx.fillText(word, padding, yPosition);
+			}
 
 			// Convert canvas to buffer
 			const textImageBuffer = canvas.toBuffer('image/png');
