@@ -143,7 +143,7 @@ export default class S3Manager implements StorageProvider {
 	async sendFile(res: Response, file: File, range?: string) {
 		const key = `${file.userId}/${file.id}`;
 		const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
-		const totalFileSize = Math.min(Number(head.ContentLength), Number(file.size));
+		const fileSize = Number(head.ContentLength || 0);
 
 		if (file.mimetype?.startsWith('video')) {
 			if (range) {
@@ -151,7 +151,7 @@ export default class S3Manager implements StorageProvider {
 				const match = range.match(/bytes=(\d+)-(\d*)/);
 				if (!match) throw new Error('Invalid Range header');
 				const start = parseInt(match[1], 10);
-				const end = match[2] ? Math.min(parseInt(match[2], 10), totalFileSize - 1) : Math.min(start + CHUNK_SIZE - 1, totalFileSize - 1);
+				const end = match[2] ? Math.min(parseInt(match[2], 10), fileSize - 1) : Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
 
 				const command = new GetObjectCommand({
 					Bucket: this.bucketName,
@@ -162,7 +162,7 @@ export default class S3Manager implements StorageProvider {
 				const result = await this.s3.send(command);
 				if (result.Body) {
 					res.writeHead(206, {
-						'Content-Range': `bytes ${start}-${end}/${totalFileSize}`,
+						'Content-Range': `bytes ${start}-${end}/${fileSize}`,
 						'Accept-Ranges': 'bytes',
 						'Content-Length': end - start + 1,
 						'Content-Type': file.mimetype ?? 'application/octet-stream',
@@ -178,7 +178,7 @@ export default class S3Manager implements StorageProvider {
 				if (result.Body) {
 					res.writeHead(200, {
 						'Content-Type': file.mimetype ?? 'application/octet-stream',
-						'Content-Length': totalFileSize ?? 0,
+						'Content-Length': fileSize ?? 0,
 					});
 					await pipeline(result.Body as stream.Readable, res);
 				}
@@ -189,7 +189,7 @@ export default class S3Manager implements StorageProvider {
 			if (result.Body) {
 				res.writeHead(200, {
 					'Content-Type': file.mimetype ?? 'application/octet-stream',
-					'Content-Length': totalFileSize ?? 0,
+					'Content-Length': fileSize ?? 0,
 				});
 				await pipeline(result.Body as stream.Readable, res);
 			}
