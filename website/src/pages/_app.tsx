@@ -14,6 +14,7 @@ export default function App({ Component, pageProps }: AppProps) {
 	const router = useRouter();
 
 	useEffect(() => {
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		const bootstrap = require('bootstrap/dist/js/bootstrap.bundle.min.js');
 
 		const handleRouteChange = () => {

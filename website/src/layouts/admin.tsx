@@ -17,7 +17,7 @@ export default function AdminLayout({ children, user, activeTab, tabName }: Prop
 	return (
 		<div className="wrapper" style={{ height: '100dvb', blockSize: '100dvb', overflow: 'hidden' }}>
 			<Head>
-				<title>{process.env.NEXT_PUBLIC_COMPANY_NAME} - {tabName}</title>
+				<title>{`${process.env.NEXT_PUBLIC_COMPANY_NAME} - ${tabName}`}</title>
 			</Head>
 			<AdminSideBar activeTab={activeTab} showSidebar={showSidebar} />
 			<div className='container-fluid' style={{ overflowY: 'scroll', padding: '0' }}>

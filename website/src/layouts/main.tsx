@@ -14,7 +14,7 @@ export default function MainLayout({ children, user, tabName }: Props) {
 		<>
 			<HomeNavbar user={user} />
 			<Head>
-				<title>{process.env.NEXT_PUBLIC_COMPANY_NAME} - {tabName}</title>
+				<title>{`${process.env.NEXT_PUBLIC_COMPANY_NAME} - ${tabName}`}</title>
 			</Head>
 			<div style={{ paddingTop: '60px' }}>
 				{children}
