@@ -21,4 +21,5 @@ export interface AdminUserIdProps {
   isLoading: boolean
   user: AdminUser | null
   bannedStatus: UserBans | null
+  isCurrentUser: boolean
 }

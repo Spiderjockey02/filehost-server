@@ -44,7 +44,7 @@ export default function AdminUserIdPage({ userId }: Props) {
 			</div>
 			<Row>
 				<Col lg={4}>
-					<AdminUserIdCard isLoading={isLoading} user={data?.user ?? null} bannedStatus={data?.bannedStatus ?? null} />
+					<AdminUserIdCard isLoading={isLoading} user={data?.user ?? null} bannedStatus={data?.bannedStatus ?? null} isCurrentUser={data?.user.id === session.user?.id} />
 				</Col>
 				<Col lg={8}>
 					<Card className='mb-4'>

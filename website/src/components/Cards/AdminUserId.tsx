@@ -10,7 +10,7 @@ import Link from 'next/link';
 import AdminNotificationCreateModal from '../Modals/AdminNotificationCreateModal';
 import AdminUserCreateBanModal from '../Modals/AdminUserCreateBanModal';
 
-export default function AdminUserIdCard({ isLoading, user, bannedStatus }: AdminUserIdProps) {
+export default function AdminUserIdCard({ isLoading, user, bannedStatus, isCurrentUser }: AdminUserIdProps) {
 
 	const { data } = useQuery({
 		queryKey: ['userAccounts', user?.id],
@@ -136,7 +136,7 @@ export default function AdminUserIdCard({ isLoading, user, bannedStatus }: Admin
 									<br />
 									<button className='btn btn-outline-secondary' data-bs-toggle="modal" data-bs-target="#createNotificationModal">Send Notification</button>
 									&nbsp;
-									<button className='btn btn-outline-danger' data-bs-toggle="modal" data-bs-target="#AdminUserCreateBanModal">Ban</button>
+									<button className={`btn btn-${isCurrentUser ? '' : 'outline-'}danger`} disabled={isCurrentUser} data-bs-toggle="modal" data-bs-target="#AdminUserCreateBanModal">Ban</button>
 									<AdminUserCreateBanModal userId={user.id} />
 									<AdminNotificationCreateModal userId={user.id} />
 								</>
