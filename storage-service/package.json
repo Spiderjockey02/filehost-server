@@ -45,6 +45,7 @@
     "on-finished": "^2.4.1",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
+    "rate-limiter-flexible": "^7.1.1",
     "sharp": "^0.34.1",
     "simple-node-logger": "^21.8.12",
     "socket.io": "^4.8.1",

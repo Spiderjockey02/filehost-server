@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { getSession } from './middleware';
 import { createPlan, fetchDefaultPlan } from './accessors/Plan';
+import { userPostRateLimit } from './middleware/rateLimiter';
 
 const app = express();
 const server = createServer(app);
@@ -84,6 +85,7 @@ const client = new Client(io);
 			// Display actually response
 			next();
 		})
+		.use(await userPostRateLimit(client))
 		.use(logUserActivity(client))
 		.use(express.json())
 		.use('/', (await import('./routes/index')).default(client));
