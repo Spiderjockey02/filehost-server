@@ -1,4 +1,4 @@
-import { inferAdditionalFields, organizationClient, adminClient, customSessionClient } from 'better-auth/client/plugins';
+import { inferAdditionalFields, organizationClient, adminClient, customSessionClient, twoFactorClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 import { auth } from './server';
 
@@ -9,6 +9,7 @@ export const authClient = createAuthClient({
 		organizationClient(),
 		inferAdditionalFields<typeof auth>(),
 		customSessionClient<typeof auth>(),
+		twoFactorClient(),
 	],
 });
 

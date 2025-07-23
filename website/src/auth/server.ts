@@ -1,5 +1,5 @@
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { customSession, organization, admin } from 'better-auth/plugins';
+import { customSession, organization, admin, twoFactor } from 'better-auth/plugins';
 import { nextCookies } from 'better-auth/next-js';
 import { betterAuth } from 'better-auth';
 import client from './prisma';
@@ -7,6 +7,7 @@ import { APIError } from 'better-auth/api';
 
 export const auth = betterAuth({
 	plugins: [
+		twoFactor(),
 		admin(),
 		nextCookies(),
 		organization({

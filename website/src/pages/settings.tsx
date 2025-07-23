@@ -7,6 +7,7 @@ import Image from 'next/image';
 import axios from 'axios';
 import { authClient } from '@/auth/client';
 import { GetServerSidePropsContext } from 'next';
+import User2FAModal from '@/components/Modals/User2FAModal';
 
 export default function Settings() {
 	const { data: session } = authClient.useSession();
@@ -152,6 +153,8 @@ export default function Settings() {
 														<InputField title="Repeat Password" name="repeat-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd2')?.text} onChange={(e) => setPasswords(p => ({ ...p, repeatNewPassword: e.target.value }))} />
 													</div>
 												</div>
+												<button className='btn btn-secondary' data-bs-toggle="modal" data-bs-target="#User2FAModal">Enable 2FA</button>
+												<User2FAModal />
 												<button type="submit" className="btn btn-primary float-end">Save Changes</button>
 											</form>
 										</div>

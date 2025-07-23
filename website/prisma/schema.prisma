@@ -31,6 +31,7 @@ model User {
   role              String  @default("user")
   storage           StorageMedium    @relation(fields: [storageId], references: [id])
   storageId         String
+  twoFactorEnabled  Boolean   @default(false)
 
   @@index([planId])
   @@index([storageId])
@@ -322,4 +323,11 @@ model Plan {
   price           Decimal   @default(0.00)
   isDefault       Boolean   @default(false)
   users           User[]
+}
+
+model twoFactor {
+  id              String    @id   @default(cuid())
+  userId          String
+  secret          String
+  backupCodes     String
 }

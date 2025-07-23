@@ -5,12 +5,14 @@ import type { BaseSyntheticEvent } from 'react';
 import { authClient } from '@/auth/client';
 import { LoginErrorTypes } from '@/types';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
 import { GetServerSidePropsContext } from 'next';
+import User2FAInputModal from '@/components/Modals/User2FAInputModal';
 
 export default function SignIn() {
+	const modalRef = useRef<HTMLDivElement>(null);
 	const [errors, setErrors] = useState<LoginErrorTypes[]>([]);
 	const [user, setUser] = useState({
 		email: '',
@@ -31,21 +33,32 @@ export default function SignIn() {
 		if (err.length !== 0) return setErrors(err);
 
 		// Try and sign in the user
-		const { error } = await authClient.signIn.email({
+		await authClient.signIn.email({
 			callbackURL: `${callbackUrl ?? window.location.origin}`,
 			email: user.email,
 			password: user.password,
-		});
+		}, {
+			onSuccess: async (context) => {
+				console.log(context);
+				if (context.data.twoFactorRedirect) {
+					const bootstrap = await import('bootstrap');
+					const Modal = bootstrap.Modal;
 
-		// Show errors if any
-		if (error) {
-			if (error.message == 'Invalid username or password.') {
-				return setErrors([
-					{ type: 'password', message: error.message }, { type: 'email', message: error.message },
-				]);
-			}
-			return setErrors([{ type: 'misc', message: 'Failed to login.' }]);
-		}
+					if (modalRef.current) {
+						const modal = new Modal(modalRef.current);
+						modal.show();
+					}
+				}
+			},
+			onError: ({ error: err }) => {
+				if (err.message == 'Invalid username or password.') {
+					return setErrors([
+						{ type: 'password', message: err.message }, { type: 'email', message: err.message },
+					]);
+				}
+				setErrors([{ type: 'misc', message: 'Failed to login.' }]);
+			},
+		});
 	};
 
 	return (
@@ -58,6 +71,7 @@ export default function SignIn() {
 					{errors.find(e => e.type == 'misc') && (
 						<ErrorPopup text={`${errors.find(e => e.type == 'misc')?.message}`} />
 					)}
+					<User2FAInputModal modalRef={modalRef} />
 					<div className="row d-flex justify-content-center align-items-center h-100">
 						<div className="col-lg-8 col-xl-7">
 							<div className="d-flex justify-content-center align-items-center vh-100">
