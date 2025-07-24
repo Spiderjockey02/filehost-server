@@ -77,6 +77,16 @@ export default function AdminUserIdCard({ isLoading, user, bannedStatus, isCurre
 							)
 						}
 					</li>
+					<li>
+						<strong>2FA Status: </strong>
+						{isLoading || user == null ? <span className='placeholder col-1'></span> :
+							data?.accounts.find(a => a.providerId == 'credential') == null ?
+								<span className="text-warning">Not required</span> :
+								user.twoFactorEnabled ?
+									<span className="text-success">Enabled</span> :
+									<span className="text-danger">Disabled</span>
+						}
+					</li>
 				</ul>
 				<div className="mb-2">
 					<label className="form-label mb-1 small"><strong>Storage Used:</strong></label>
