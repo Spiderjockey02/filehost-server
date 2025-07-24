@@ -54,7 +54,7 @@ export const deleteFile = (client: Client) => {
 			const { fileId } = req.body;
 			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
 
-			await client.FileManager.delete(session.user.id, fileId);
+			await client.FileManager.delete(session.user, fileId);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			client.logger.error(err);
@@ -79,7 +79,7 @@ export const deleteBulkFiles = (client: Client) => {
 		for (const filePath of paths) {
 			try {
 				// Delete file but also delete the access so no broken links in the recently viewed files
-				const file = await client.FileManager.delete(session.user.id, filePath);
+				const file = await client.FileManager.delete(session.user, filePath);
 				await client.recentlyViewedFileManager.delete(file.userId, file.id);
 				successfullyDeletion++;
 			} catch (err) {

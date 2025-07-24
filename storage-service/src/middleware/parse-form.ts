@@ -19,7 +19,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 	const form = formidable({
 		allowEmptyFiles: false,
-		maxFileSize: CONSTANTS.MAX_FILE_SIZE,
+		maxFileSize: Number(user.plan.maxFileSize),
 		// Make sure the uploaded file's mime type is allowed
 		filter: ({ mimetype }) => {
 			if (!mimetype) return false;

@@ -1,6 +1,7 @@
-import { CONSTANTS } from '../utils';
 import type { File } from '@prisma/client';
 import Client from './Client';
+import prismaClient from '../accessors/prisma';
+import { UserWithPlan } from 'src/types/database/User';
 
 export default class TrashHandler {
 	client: Client;
@@ -10,51 +11,53 @@ export default class TrashHandler {
 
 	/**
 	  * Move a file to the trash
-	  * @param {string} userId The user ID
+	  * @param {UserWithPlan} user The user
 	  * @param {string} fileId The file path
 	*/
-	async moveToTrash(userId: string, fileId: string) {
+	async moveToTrash(user: UserWithPlan, fileId: string) {
 		const file = await this.client.FileManager.getById(fileId);
 		if (file == null) throw 'Invalid File.';
 
 		// Check the owner of the file and folder
-		if (file.userId !== userId) throw 'You do not have permission to delete this file.';
+		if (file.userId !== user.id) throw 'You do not have permission to delete this file.';
 
 		// Check if the file is already in the trash
 		if (file.deletedAt != null) throw 'File already in the trash';
 
 		// Calculate how long the file should stay in the trash before being removed
 		const dateToDelete = new Date();
-		dateToDelete.setDate(dateToDelete.getDate() + CONSTANTS.RETENTION_POLICY_IN_DAYS);
+		dateToDelete.setDate(dateToDelete.getDate() + user.plan.deletedFileRetentionDays);
 
-		await this.client.FileManager.update({
-			id: file.id,
-			deletedAt: dateToDelete,
-		});
+		const fileUpdates: { id: string; deletedAt: Date | null }[] = [];
 
-		// Fetch the storage medium the file is stored on
-		const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
-		if (storage == null) throw new Error('Storage not found');
-		const medium = this.client.FileManager.storageManager.getProvider(storage);
+		// Start transaction
+		try {
+			await prismaClient.$transaction(async (tx) => {
+				await tx.file.update({
+					where: { id: file.id },
+					data: { deletedAt: dateToDelete },
+				});
+				fileUpdates.push({ id: file.id, deletedAt: null });
 
-		// If it's a folder, process its children (don't move the folder itself again)
-		if (file.type === 'DIRECTORY') {
-			const children = await this.client.FileManager.getChildrenByParentId(file.id);
-			// Move all child files/subfolders  (make sure no children are already moved to trash)
-			for (const child of children.filter(f => f.deletedAt == null)) {
-				await this.moveToTrash(userId, child.id);
+				if (file.type === 'DIRECTORY') {
+					const children = await this.client.FileManager.getChildrenByParentId(file.id);
+
+					for (const child of children.filter(c => c.deletedAt == null)) {
+						await this.moveToTrash(user, child.id);
+					}
+				}
+			});
+		} catch (err: any) {
+			for (const change of fileUpdates) {
+				await this.client.FileManager.update({
+					id: change.id,
+					deletedAt: change.deletedAt,
+				});
 			}
 
-			// Delete the old folder now it should be empty
-			if ((await medium.getNumberOfChildrenInFolder(`${userId}${file.path}`)) == 0) {
-				await medium.deleteFolderOnSystem(`${userId}${file.path}`);
-			}
-		} else {
-			// Make sure the folders exist
-			await medium.renameOnSystem(`${userId}${file.path}`, `trash/${userId}${file.path}`);
+			throw new Error(`Failed to move to trash: ${err.message}`);
 		}
 
-		// Return the deleted file
 		return file;
 	}
 
@@ -74,11 +77,6 @@ export default class TrashHandler {
 			deletedAt: null,
 		});
 
-		// Fetch the storage medium the file is stored on
-		const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
-		if (storage == null) throw new Error('Storage not found');
-		const medium = this.client.FileManager.storageManager.getProvider(storage);
-
 		// If it's a folder, process its children (don't move the folder itself again)
 		if (file.type === 'DIRECTORY') {
 			const children = await this.client.FileManager.getChildrenByParentId(file.id);
@@ -87,17 +85,8 @@ export default class TrashHandler {
 			for (const child of children.filter(f => f.deletedAt !== null)) {
 				await this.restoreFile(userId, child.path);
 			}
-
-			// Delete the old folder now it should be empty
-			if ((await medium.getNumberOfChildrenInFolder(`${userId}${file.path}`)) == 0) {
-				await medium.deleteFolderOnSystem(`${userId}${file.path}`);
-			}
-
-			return file;
 		}
 
-		// Ensure the new folder structure exists on the file system
-		await medium.renameOnSystem(`trash/${userId}${file.path}`, `${userId}${file.path}`);
 		return file;
 	}
 

@@ -273,12 +273,14 @@ model UserBans {
 }
 
 model Plan {
-  id              String    @id   @default(cuid())
-  name            String
-  maxStorageSize  BigInt    @default(5368709120)
-  price           Decimal   @default(0.00)
-  isDefault       Boolean   @default(false)
-  users           User[]
+  id                        String    @id       @default(cuid())
+  name                      String
+  maxStorageSize            BigInt    @default(5368709120)
+  maxFileSize               BigInt    @default(2147483648)
+  deletedFileRetentionDays  Int       @default(30)
+  price                     Decimal   @default(0.00)
+  isDefault                 Boolean   @default(false)
+  users                     User[]
 }
 
 model twoFactor {

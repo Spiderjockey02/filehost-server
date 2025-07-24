@@ -9,6 +9,7 @@ import ThumbnailCreator from './ThumbnailCreator';
 import { FullFile } from 'src/types/database/File';
 import archiver, { Archiver } from 'archiver';
 import { StorageProvider } from 'src/types';
+import { UserWithPlan } from 'src/types/database/User';
 
 export default class FileManager extends FileAccessor {
 	TrashHandler: TrashHandler;
@@ -53,12 +54,12 @@ export default class FileManager extends FileAccessor {
 
 	/**
 	  * Deletes a file
-	  * @param {string} userId The user's ID.
+	  * @param {UserWithPlan} user The user.
 	  * @param {string} fileId file path of the file.
 		* @returns {File} The deleted file
 	*/
-	async delete(userId: string, fileId: string): Promise<File> {
-		return this.TrashHandler.moveToTrash(userId, fileId);
+	async delete(user: UserWithPlan, fileId: string): Promise<File> {
+		return this.TrashHandler.moveToTrash(user, fileId);
 	}
 
 	/**
