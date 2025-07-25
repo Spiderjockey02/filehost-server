@@ -11,7 +11,7 @@ interface Props {
 export function AdminStorageManagementModal({ storage }: Props) {
 	const [data, setData] = useState({
 		name: storage.name,
-		maxBytes: storage.maxSize,
+		maxSize: storage.maxSize,
 		isPrivate: storage.isPrivate,
 	});
 
@@ -41,7 +41,7 @@ export function AdminStorageManagementModal({ storage }: Props) {
 							<ul className="list-group list-group-flush">
 								<li className="list-group-item">
 									<InputField title="Name" name="name" placeholder={storage.name} autocomplete='off' onChange={(e) => setData({ ...data, name: e.target.value })} />
-									<InputField title="Max Bytes (GB)" name="Max Bytes (GB)" type='number' placeholder={`${storage.maxSize}`} onChange={(e) => setData({ ...data, maxBytes: Number(e.target.value) })} />
+									<InputField title="Max Bytes (GB)" name="Max Bytes (GB)" type='number' placeholder={`${storage.maxSize}`} onChange={(e) => setData({ ...data, maxSize: Number(e.target.value) })} />
 									<div className="form-check">
 										<input className="form-check-input" type="checkbox" defaultChecked={storage.isPrivate} id="checkDefault" />
 										<label className="form-check-label" htmlFor="checkDefault" onClick={() => setData({ ...data, isPrivate: !data.isPrivate })}>
