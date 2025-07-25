@@ -62,7 +62,7 @@ export const postStorage = (client: Client) => {
 				basePath,
 				location,
 				endpoint,
-				maxSize: BigInt(Number(maxSize) * 1024 * 1024),
+				maxSize: BigInt(Number(maxSize) * (1024 ** 3)),
 			});
 
 			const medium = client.FileManager.storageManager.getProvider(storage);
@@ -109,7 +109,7 @@ export const postStorageByStorageId = (client: Client) => {
 			const newStorage = await client.FileManager.storageManager.update({
 				id: storageId,
 				name: name,
-				maxSize: maxSize,
+				maxSize: BigInt(Number(maxSize) * (1024 ** 3)),
 				isPrivate: isPrivate,
 			});
 			res.json({ success: 'Successfully updated storage.', storage: sanitiseObject(newStorage) });
