@@ -38,6 +38,26 @@ export const getStorageById = (client: Client) => {
 	};
 };
 
+// Endpoint: DELETE /api/admin/storage/:storageId
+export const deleteStorageById = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const { storageId } = req.params;
+			const storage = await client.FileManager.storageManager.fetchById(storageId);
+			if (storage == null) return Error.IncorrectQuery(res, 'storageId is invalid');
+
+			// Ensure no users or files are attached to this before deleting
+			if (storage._count.files > 0 || storage._count.users > 0) return Error.GenericError(res, 'Storage is not empty');
+			await client.FileManager.storageManager.delete(storage.id);
+
+			res.json({ success: 'Successfully deleted storage.' });
+		} catch (err) {
+			client.logger.error(err);
+			return Error.GenericError(res, 'Failed to delete storage medium.');
+		}
+	};
+};
+
 
 // Endpoint: POST /api/admin/storage
 export const postStorage = (client: Client) => {

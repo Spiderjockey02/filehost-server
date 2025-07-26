@@ -49,6 +49,19 @@ export default class StorageAccessor {
 	}
 
 	/**
+	  * Delete a storage medium.
+	  * @param {string} storageId The Id for deletion
+	  * @returns {StorageMedium} The deleted storage medium.
+	*/
+	async delete(storageId: string): Promise<StorageMedium> {
+		return client.storageMedium.delete({
+			where: {
+				id: storageId,
+			},
+		});
+	}
+
+	/**
 	  * Modify the storage size of a storage medium.
 	  * @param {string} storageId The ID of the storage
 	  * @param {bigint} size The size to modify the storage size by.

@@ -1,4 +1,4 @@
-import { getStorageById, getStorages, getStorageTypes, postStorage, postStorageByStorageId } from '../../../controllers/admin/storage';
+import { deleteStorageById, getStorageById, getStorages, getStorageTypes, postMigrateUserFromStorage, postStorage, postStorageByStorageId } from '../../../controllers/admin/storage';
 import type Client from '../../../helpers/Client';
 import { checkAdmin } from '../../../middleware';
 import { Router } from 'express';
@@ -14,6 +14,9 @@ export default async function(client: Client) {
 	router.post('/', await checkAdmin(client), postStorage(client));
 
 	router.post('/:storageId', await checkAdmin(client), postStorageByStorageId(client));
+
+	router.delete('/:storageId', await checkAdmin(client), deleteStorageById(client));
+
 
 	return router;
 }
