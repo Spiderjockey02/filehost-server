@@ -72,7 +72,7 @@ export const postStorage = (client: Client) => {
 		if (location !== undefined && typeof location !== 'string') return Error.IncorrectQuery(res, 'location must be a number if provided.');
 		if (endpoint !== undefined && typeof endpoint !== 'string') return Error.IncorrectQuery(res, 'endpoint must be a string if provided.');
 
-		if (maxSize !== undefined && (isNaN(maxSize) || maxSize < 0)) return Error.IncorrectQuery(res, 'maxSize must be a non-negative integer if provided.');
+		if (maxSize !== undefined && (isNaN(maxSize) || maxSize < 0 || !Number.isInteger(maxSize))) return Error.IncorrectQuery(res, 'maxSize must be a non-negative integer if provided.');
 		if (isPrivate !== undefined && typeof isPrivate !== 'boolean') return Error.IncorrectQuery(res, 'isPrivate must be a boolean if provided.');
 
 		try {
@@ -117,19 +117,20 @@ export const postStorageByStorageId = (client: Client) => {
 
 			if (storageId !== undefined && typeof storageId !== 'string') return Error.IncorrectQuery(res, 'storageId must be a valid string.');
 			if (name !== undefined && typeof name !== 'string') return Error.IncorrectQuery(res, 'name must be a valid string.');
-			if (maxSize !== undefined && (isNaN(maxSize) || maxSize < 0)) return Error.IncorrectQuery(res, 'maxSize must be a non-negative integer.');
+			if (maxSize !== undefined && (isNaN(maxSize) || maxSize < 0 || !Number.isInteger(maxSize))) return Error.IncorrectQuery(res, 'maxSize must be a non-negative integer.');
 			if (isPrivate !== undefined && typeof isPrivate !== 'boolean') return Error.IncorrectQuery(res, 'isPrivate must be a boolean.');
 
 			// Fetch storage to ensure new maxSize does not exceed current usage
 			const storage = await client.FileManager.storageManager.fetchById(storageId);
 			if (!storage) return Error.IncorrectQuery(res, 'Storage not found.');
-			if (maxSize !== undefined && maxSize < storage.usedSize) return Error.IncorrectQuery(res, 'maxSize must be greater than current usage.');
+			const newMaxSize = Number(maxSize) * (1024 ** 3);
+			if (newMaxSize < storage.usedSize) return Error.IncorrectQuery(res, 'maxSize must be greater than current usage.');
 
 			// Update storage
 			const newStorage = await client.FileManager.storageManager.update({
 				id: storageId,
 				name: name,
-				maxSize: BigInt(Number(maxSize) * (1024 ** 3)),
+				maxSize: BigInt(newMaxSize),
 				isPrivate: isPrivate,
 			});
 			res.json({ success: 'Successfully updated storage.', storage: sanitiseObject(newStorage) });
