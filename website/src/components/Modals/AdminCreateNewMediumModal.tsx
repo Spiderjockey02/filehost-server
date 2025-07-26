@@ -2,8 +2,16 @@ import axios from 'axios';
 import { BaseSyntheticEvent, useState } from 'react';
 import InputField from '../Form/InputField';
 import SuccessPopup from '../Toasts/SuccessPopup';
+import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
+import { StorageWithCounts } from '@/types/database';
 
-export function AdminCreateNewMediumModal() {
+interface Props {
+	refreshTable: (options?: RefetchOptions) => Promise<QueryObserverResult<{
+    storages: StorageWithCounts[];
+	}, Error>>
+}
+
+export function AdminCreateNewMediumModal({ refreshTable }: Props) {
 	const [storage, setStorage] = useState({
 		type: 'FILE_SYSTEM',
 		isPrivate: false,
@@ -17,6 +25,7 @@ export function AdminCreateNewMediumModal() {
 		try {
 			const { data } = await axios.post('/api/admin/storage', storage);
 			setSuccessMsg(data.success);
+			await refreshTable();
 		} catch (err) {
 			if (axios.isAxiosError(err)) return setErrorMsg(err.response?.data.error);
 			console.error(err);

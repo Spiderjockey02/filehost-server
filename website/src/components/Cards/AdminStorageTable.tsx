@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
 export default function AdminStorageTable() {
-  	const { data, isLoading, error } = useQuery({
+  	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['storages'],
 		queryFn: async ({ signal }) => {
 			const res = await fetch('/api/admin/storage', { signal });
@@ -92,8 +92,8 @@ export default function AdminStorageTable() {
 						}
 					</Table.Body>
 				</Table>
-				<AdminCreateNewMediumModal />
-				{data?.storages.map(s => (<AdminStorageManagementModal storage={s} key={s.id} />))}
+				<AdminCreateNewMediumModal refreshTable={refetch} />
+				{data?.storages.map(s => (<AdminStorageManagementModal storage={s} key={s.id} refreshTable={refetch} />))}
 			</Card.Body>
 		</Card>
 	);

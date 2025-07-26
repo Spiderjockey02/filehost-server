@@ -3,15 +3,19 @@ import InputField from '../Form/InputField';
 import { useState } from 'react';
 import type { MouseEvent } from 'react';
 import axios from 'axios';
+import { RefetchOptions, QueryObserverResult } from '@tanstack/react-query';
 
 interface Props {
 	storage: StorageWithCounts
+	refreshTable: (options?: RefetchOptions) => Promise<QueryObserverResult<{
+    storages: StorageWithCounts[];
+	}, Error>>
 }
 
-export function AdminStorageManagementModal({ storage }: Props) {
+export function AdminStorageManagementModal({ storage, refreshTable }: Props) {
 	const [data, setData] = useState({
 		name: storage.name,
-		maxSize: storage.maxSize,
+		maxSize: storage.maxSize / (1024 ** 3),
 		isPrivate: storage.isPrivate,
 	});
 
@@ -22,6 +26,7 @@ export function AdminStorageManagementModal({ storage }: Props) {
 			await axios.post(`/api/admin/storage/${storage.id}`, {
 				...data,
 			});
+			await refreshTable();
 		} catch (err) {
 			console.error('Error updating storage:', err);
 		}
@@ -41,7 +46,7 @@ export function AdminStorageManagementModal({ storage }: Props) {
 							<ul className="list-group list-group-flush">
 								<li className="list-group-item">
 									<InputField title="Name" name="name" placeholder={storage.name} autocomplete='off' onChange={(e) => setData({ ...data, name: e.target.value })} />
-									<InputField title="Max Bytes (GB)" name="Max Bytes (GB)" type='number' placeholder={`${storage.maxSize}`} onChange={(e) => setData({ ...data, maxSize: Number(e.target.value) })} />
+									<InputField title="Max Bytes (GB)" name="Max Bytes (GB)" type='number' placeholder={`${data.maxSize}`} onChange={(e) => setData({ ...data, maxSize: Number(e.target.value) })} />
 									<div className="form-check">
 										<input className="form-check-input" type="checkbox" defaultChecked={storage.isPrivate} id="checkDefault" />
 										<label className="form-check-label" htmlFor="checkDefault" onClick={() => setData({ ...data, isPrivate: !data.isPrivate })}>
