@@ -2,12 +2,13 @@ import { faChevronDown, faChevronUp, faClockRotateLeft } from '@fortawesome/free
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { RecentNavbarProps } from '@/types/Components/Navbars';
 import { useState } from 'react';
-import Image from 'next/image';
+import Image, { ImageLoaderProps } from 'next/image';
 import Link from 'next/link';
 import Card from '../UI/Card';
 
 export default function RecentNavbar({ files }: RecentNavbarProps) {
 	const [show, setShow] = useState(false);
+	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${src}`;
 
 	return (
 		<div className="recent-tab pb-1">
@@ -23,7 +24,7 @@ export default function RecentNavbar({ files }: RecentNavbarProps) {
 							<Link href={`/files${file.path}`} key={file.id} className="btn p-0 pt-1" style={{ width: '150px' }}>
 								<Card className='recentIcon'>
 									<div className="image-container">
-										<Image className="card-img-top" src={`/thumbnail/${file.userId}${file.path}`} alt={`Thumbnail for ${file.name}`} width={200} height={225} style={{ width: '100%', objectFit: 'cover' }} />
+										<Image className="card-img-top" loader={myLoader} src={`${file.userId}${file.path}`} alt={`Thumbnail for ${file.name}`} width={200} height={225} style={{ width: '100%', objectFit: 'cover' }} />
 									</div>
 									<Card.Body className='border-top p-1'>
 										<p className="text-truncate text-center">

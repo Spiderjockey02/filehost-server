@@ -40,9 +40,8 @@ export default function PhotoAlbum({ folder }: DirectoryProps) {
 								src={file.path}
 								alt={file.name}
 								width={200}
-								height={275}
+								height={file.type === 'DIRECTORY' ? 236 : 260}
 								style={{
-									maxHeight: file.type === 'DIRECTORY' ? '236px' : '260px',
 									borderRadius: '8px',
 								}}
 							/>
