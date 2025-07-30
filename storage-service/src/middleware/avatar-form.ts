@@ -10,7 +10,7 @@ export default async (client: Client, req: Request, user: User) => {
 	// Get storage and it's provider
 	const storage = await client.FileManager.storageManager.fetchAvatarMedium();
 	if (storage == null) throw 'Storage not found';
-	const fileProvider = client.FileManager.storageManager.getProvider(storage);
+	const fileProvider = await client.FileManager.storageManager.getProvider(storage);
 
 	const form = formidable({
 		multiples: false,

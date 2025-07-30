@@ -1,10 +1,10 @@
-import { S3Client, GetObjectCommand, DeleteObjectCommand, CopyObjectCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, DeleteObjectCommand, CopyObjectCommand, ListObjectsV2Command, HeadObjectCommand, S3ServiceException } from '@aws-sdk/client-s3';
 import type { File } from '@prisma/client';
 import archiver from 'archiver';
 import type { Response } from 'express';
 import stream from 'stream';
 import { promisify } from 'node:util';
-import { storageMediumSize, StorageProvider } from 'src/types';
+import { StorageProvider } from 'src/types';
 import { parseS3Url } from '../../utils';
 const pipeline = promisify(stream.pipeline);
 import { Upload } from '@aws-sdk/lib-storage';
@@ -13,13 +13,14 @@ import Client from '../Client';
 import { FullFile } from 'src/types/database/File';
 
 export default class S3Manager implements StorageProvider {
-	diskData: storageMediumSize;
 	client: Client;
+	isOnline: boolean;
 	private s3: S3Client;
 	private bucketName: string;
 
 	constructor(client: Client, url: string) {
 		const config = parseS3Url(url);
+		this.isOnline = true;
 
 		this.bucketName = config.bucket;
 		this.s3 = new S3Client({
@@ -31,11 +32,11 @@ export default class S3Manager implements StorageProvider {
 			endpoint: config.endpoint,
 			forcePathStyle: config.forcePathStyle,
 		});
-		this.diskData = { free: 0, total: 0 };
 		this.client = client;
 	}
 
 	async downloadFile(res: Response, file: FullFile) {
+		this.client.logger.debug(`[S3 Client]: Downloading file: ${file.id}`);
 		const key = `${file.userId}/${file.id}`;
 		const command = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
 		const s3Response = await this.s3.send(command);
@@ -44,6 +45,7 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	async downloadFiles(res: Response, _userId: string, files: File[]) {
+		this.client.logger.debug(`[S3 Client]: Downloading ${files.length} files.`);
 		const archive = archiver('zip', { zlib: { level: 9 } });
 		res.setHeader('Content-Type', 'application/zip');
 		res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
@@ -61,23 +63,24 @@ export default class S3Manager implements StorageProvider {
 		await archive.finalize();
 	}
 
-	async copyFileOnSystem(oldPath: string, newPath: string) {
-		const encodeKeyForCopySource = (key: string) => key.split('/').map(encodeURIComponent).join('/');
-		const copySource = `${this.bucketName}/${encodeKeyForCopySource(oldPath)}`;
+	async copyFileOnSystem(oldFileId: string, newFileId: string) {
+		this.client.logger.debug(`[S3 Client]: Copying file: ${oldFileId}`);
 
 		const command = new CopyObjectCommand({
 			Bucket: this.bucketName,
-			CopySource: copySource,
-			Key: newPath,
+			CopySource: `${this.bucketName}/${oldFileId}`,
+			Key: newFileId,
 		});
 		await this.s3.send(command);
 	}
 
-	async deleteFileOnSystem(filePath: string) {
-		await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: filePath }));
+	async deleteFileOnSystem(fileId: string) {
+		this.client.logger.debug(`[S3 Client]: Deleting file from system: ${fileId}`);
+		await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: fileId }));
 	}
 
 	uploadFileToSystem(filePath: string) {
+		this.client.logger.debug(`[S3 Client]: Starting upload for file: ${filePath}`);
 		const pass = new PassThrough();
 
 		const upload = new Upload({
@@ -91,18 +94,19 @@ export default class S3Manager implements StorageProvider {
 
 		upload.on('httpUploadProgress', (progress) => {
 			if (progress.total && progress.loaded) {
-				this.client.logger.log(`${filePath} uploading: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
+				this.client.logger.debug(`[S3 Client]: Uploading file: ${filePath} (${(progress.loaded / progress.total * 100).toFixed(2)}%)`);
 			}
 		});
 
 		const uploadPromise = upload.done().catch(err => {
-			this.client.logger.error(`S3 upload error: ${err}`);
-		}).then(() => {}) as Promise<void>;
+			this.client.logger.error(`[S3 Client] Error: ${err}`);
+		}).then(() => null) as Promise<void>;
 
 		return { stream: pass, done: uploadPromise };
 	}
 
 	async writeFileToSystem(filePath: string, data: Buffer | string) {
+		this.client.logger.debug(`[S3 Client]: Starting write for file: ${filePath}`);
 		const upload = new Upload({
 			client: this.s3,
 			params: {
@@ -114,7 +118,7 @@ export default class S3Manager implements StorageProvider {
 
 		upload.on('httpUploadProgress', (progress) => {
 			if (progress.total && progress.loaded) {
-				this.client.logger.log(`${filePath} uploading: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
+				this.client.logger.debug(`[S3 Client]: Starting write for file: ${filePath} (${(progress.loaded / progress.total * 100).toFixed(2)}%)`);
 			}
 		});
 
@@ -124,6 +128,7 @@ export default class S3Manager implements StorageProvider {
 	async readFileFromSystem(file: File): Promise<Buffer>;
 	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
 	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string | Buffer> {
+		this.client.logger.debug(`[S3 Client]: Reading file: ${file.id}`);
 		const command = new GetObjectCommand({
 			Bucket: this.bucketName,
 			Key: `${file.userId}/${file.id}`,
@@ -141,6 +146,7 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	async sendFile(res: Response, file: File, range?: string) {
+		this.client.logger.debug(`[S3 Client]: Sending file: ${file.id}`);
 		const key = `${file.userId}/${file.id}`;
 		const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
 		const fileSize = Number(head.ContentLength || 0);
@@ -197,6 +203,7 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	async checkFileExists(filePath: string) {
+		this.client.logger.debug(`[S3 Client]: Checking if file exist: ${filePath}`);
 		try {
 			await this.s3.send(
 				new HeadObjectCommand({
@@ -205,10 +212,10 @@ export default class S3Manager implements StorageProvider {
 				}),
 			);
 			return true;
-		} catch (err: any) {
-			// If the error is that the object does not exist, return false
-			if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
-				return false;
+		} catch (err) {
+			if (err instanceof S3ServiceException) {
+				// If the error is that the object does not exist, return false
+				if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) return false;
 			}
 			// Rethrow other unexpected errors
 			throw err;
@@ -216,20 +223,24 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	async verifyConnection() {
+		this.client.logger.debug('[S3 Client]: Verifying connection');
 		try {
 			const command = new ListObjectsV2Command({
 				Bucket: this.bucketName,
 				MaxKeys: 1,
 			});
 			await this.s3.send(command);
-			return true;
+			this.isOnline = true;
+			return this.isOnline;
 		} catch (error) {
-			console.error(error);
-			return false;
-		}
-	}
+			this.client.logger.error(error);
+			this.isOnline = false;
 
-	getFileSystemStatistics() {
-		return { free: 0, total: 0 };
+			// As it failed check in 5 minutes again, if it's back online
+			setTimeout(() => {
+				this.verifyConnection();
+			}, 5 * 60 * 1000);
+			return this.isOnline;
+		}
 	}
 }

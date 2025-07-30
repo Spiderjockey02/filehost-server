@@ -7,23 +7,35 @@ import { StorageProvider } from 'src/types';
 
 export default class StorageManager extends StorageAccessor {
 	client: Client;
+	mediums: Map<string, StorageProvider>;
 
 	constructor(client: Client) {
 		super();
 		this.client = client;
+		this.mediums = new Map();
 	}
 
-	getProvider(storage: StorageMedium): StorageProvider {
+	/**
+	 * Gets the storage medium
+	 * @param {StorageMedium} storage
+	 * @returns {StorageProvider}
+	 */
+	async getProvider(storage: StorageMedium): Promise<StorageProvider> {
+		let medium = this.mediums.get(storage.id) ?? null;
+		if (medium !== null) return medium;
+
 		switch (storage?.type) {
 			case 'FILE_SYSTEM': {
-				const system = new FileSystemManager(this.client, storage.basePath);
-				system.verifyConnection();
-				return system;
+				medium = new FileSystemManager(this.client, storage.basePath);
+				this.mediums.set(storage.id, medium);
+				await medium.verifyConnection();
+				return medium;
 			}
 			case 'S3': {
-				const system = new S3Manager(this.client, `${storage.endpoint}`);
-				system.verifyConnection();
-				return system;
+				medium = new S3Manager(this.client, `${storage.endpoint}`);
+				this.mediums.set(storage.id, medium);
+				await medium.verifyConnection();
+				return medium;
 			}
 			default:
 				throw new Error(`Unsupported storage type: ${storage?.type}`);

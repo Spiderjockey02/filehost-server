@@ -85,7 +85,7 @@ export const postStorage = (client: Client) => {
 				maxSize: BigInt(Number(maxSize) * (1024 ** 3)),
 			});
 
-			const medium = client.FileManager.storageManager.getProvider(storage);
+			const medium = await client.FileManager.storageManager.getProvider(storage);
 			await medium.verifyConnection();
 			res.json({ success: 'Successfully created new storage medium.', storage: sanitiseObject(storage) });
 		} catch (error) {

@@ -15,7 +15,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 	// Get storage and it's provider
 	const storage = await client.FileManager.storageManager.fetchById(user.storageId);
 	if (storage == null) throw 'Storage not found';
-	const fileProvider = client.FileManager.storageManager.getProvider(storage);
+	const fileProvider = await client.FileManager.storageManager.getProvider(storage);
 
 	const form = formidable({
 		allowEmptyFiles: false,

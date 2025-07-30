@@ -221,7 +221,7 @@ export default class FileManager extends FileAccessor {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
 		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
+		const fileProvider = await this.storageManager.getProvider(storage);
 
 		// Generate the new file path
 		const newFilePath = `${newDir.path}${oldFile.path.substring(oldFile.path.lastIndexOf('/'))}`;
@@ -301,7 +301,7 @@ export default class FileManager extends FileAccessor {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
 		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
+		const fileProvider = await this.storageManager.getProvider(storage);
 
 		// Download the file
 		if (file.type == 'DIRECTORY') {
@@ -350,7 +350,7 @@ export default class FileManager extends FileAccessor {
 	// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
 		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
+		const fileProvider = await this.storageManager.getProvider(storage);
 
 		// Download the file
 		return fileProvider.downloadFiles(res, user.id, files);
@@ -365,10 +365,13 @@ export default class FileManager extends FileAccessor {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
 		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
+
+		// Fetch the storage medium and check it's online
+		const storageProvider = await this.storageManager.getProviderById(file.storageId);
+		if (storageProvider.isOnline == false) return res.send('');
 
 		// Download the file
-		return fileProvider.sendFile(res, file, range);
+		return storageProvider.sendFile(res, file, range);
 	}
 
 	/**
@@ -379,7 +382,7 @@ export default class FileManager extends FileAccessor {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchAvatarMedium();
 		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
+		const fileProvider = await this.storageManager.getProvider(storage);
 		fileProvider.deleteFileOnSystem(`${userId}.webp`);
 	}
 
@@ -392,7 +395,7 @@ export default class FileManager extends FileAccessor {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchAvatarMedium();
 		if (storage == null) throw 'Storage not found';
-		const fileProvider = this.storageManager.getProvider(storage);
+		const fileProvider = await this.storageManager.getProvider(storage);
 
 		const hasCustomAvatar = await fileProvider.checkFileExists(`${userId}.webp`);
 		fileProvider.sendFile(res, { path: hasCustomAvatar ? `${userId}.webp` : 'default-avatar.webp', userId: '', mimetype: 'image/webp' } as File);
@@ -405,31 +408,35 @@ export default class FileManager extends FileAccessor {
 	  * @param {string} filePath The filepath of the file for the thumbnail
 	*/
 	async sendThumbnail(res: Response, userId: string, filePath: string) {
-		const file = await this.getByFilePath(userId, filePath);
-		if (file == null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
-
 		// Get the mimeType of the file
-		if (file.mimetype == null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+		const file = await this.getByFilePath(userId, filePath);
+		if (file == null || file.mimetype == null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+
+		// Fetch the storage medium and check it's online
+		const storageProvider = await this.storageManager.getProviderById(file.storageId);
+		if (storageProvider.isOnline == false) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 
 		// Send thumbnail if it exists, create it if it doesn't
-		const storageProvider = await this.storageManager.getProviderById(file.storageId);
 		try {
 			await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.jpg` });
-		} catch (err: any) {
-			if (err.$metadata?.httpStatusCode == 404) {
-				try {
-					await this.ThumbnailCreator.createThumbnail(file);
-					await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.jpg` });
-				} catch {
-					return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+		} catch (err) {
+			if (err instanceof S3ServiceException) {
+				if (err.$metadata?.httpStatusCode == 404) {
+					try {
+						await this.ThumbnailCreator.createThumbnail(file);
+						return storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.jpg` });
+					} catch {
+						return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+					}
 				}
 			}
+			return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 		}
 	}
 
 	async getFileSystemStatistics() {
 		const storages = await this.storageManager.fetchAll({ page: 0 });
-		const data = storages.map(s => ({ name: s.name, stats: this.storageManager.getProvider(s).getFileSystemStatistics() }));
+		const data = storages.map(s => ({ name: s.name, stats: this.storageManager.getProvider(s) }));
 		return data;
 	}
 }
