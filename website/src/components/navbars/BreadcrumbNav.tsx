@@ -8,7 +8,7 @@ import { useUploadQueue } from '../Hooks/UploadContentManager';
 import Link from 'next/link';
 
 export default function BreadcrumbNav({ path, isFile, setviewType, viewType, parentId }: BreadcrumbNavProps) {
-	const splitPath = path.split('/');
+	const splitPath = path.split('/').filter(s => s.length > 0);
 	const [errorMsg] = useState('');
 	const containerRef = useRef<HTMLOListElement>(null);
 	const dropdownRef = useRef<HTMLUListElement>(null);

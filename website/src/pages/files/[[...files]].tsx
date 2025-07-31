@@ -12,13 +12,12 @@ export default function Files({ path = '/' }: FilePageProps) {
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 	const file = useFolder();
 	const { isLoading, error } = useFolderLoading();
-
 	if (session == null) return null;
 
 	return (
 		<FileLayout user={session.user as User} activeTab='files' tabName={file?.name}>
 			<BreadcrumbNav path={path} isFile={file?.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={`${file?.id}`} />
-			<RecentNavbar />
+			{path == '/' && <RecentNavbar />}
 			<div style={{ paddingTop: '6px' }}>
 				{error == null ?
 					isLoading || file == null ?
@@ -55,7 +54,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		};
 	} else {
 		// Get the path from the URL
-		const path = [context.params?.files].flat();
-		return { props: { path: path.join('/') } };
+		const path = context.params?.files;
+		return { props: { path: path == undefined ? '/' : Array.isArray(path) ? path.join('/') : path } };
 	}
 }
