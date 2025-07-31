@@ -17,6 +17,7 @@ export default async function(client: Client) {
 
 	router.delete('/:storageId', await checkAdmin(client), deleteStorageById(client));
 
+	router.post('/:storageId/migrate', await checkAdmin(client), postMigrateUserFromStorage(client));
 
 	return router;
 }

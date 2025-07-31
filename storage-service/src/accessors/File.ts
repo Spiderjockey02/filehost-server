@@ -78,6 +78,7 @@ export default class FileAccessor {
 				size: data.size,
 				parentId: data.parentId,
 				deletedAt: data.deletedAt,
+				storageId: data.storageId,
 				children: {
 					create: data.children,
 				},
@@ -476,6 +477,7 @@ export default class FileAccessor {
 
 	/**
 		* Fetches all media types from the database and the number of files associated with each type.
+		* @param [grouped=false]
 	*/
 	async fetchFileMediaTypes(grouped: boolean = false) {
 		const res = await client.mediaType.findMany({
@@ -521,6 +523,14 @@ export default class FileAccessor {
 				},
 			},
 			take: 10,
+		});
+	}
+
+	fetchAllByUserId(userId: string) {
+		return client.file.findMany({
+			where: {
+				userId,
+			},
 		});
 	}
 }

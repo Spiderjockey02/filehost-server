@@ -31,6 +31,7 @@ model User {
   storage           StorageMedium    @relation(fields: [storageId], references: [id])
   storageId         String
   twoFactorEnabled  Boolean   @default(false)
+  isMigrating       Boolean   @default(false)
 
   @@index([planId])
   @@index([storageId])

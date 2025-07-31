@@ -140,3 +140,31 @@ export const postStorageByStorageId = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint: POST /api/admin/storage/:storageId/migrate
+export const postMigrateUserFromStorage = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const storageId = req.params.storageId;
+		const { userId } = req.query;
+		if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'userId must be string.');
+
+		// Fetch all user's files
+		const files = await client.FileManager.fetchAllByUserId(userId);
+		await client.userManager.update({ id: userId, isMigrating: true });
+
+		const storage = await client.FileManager.storageManager.fetchById(storageId);
+		if (storage == null) return Error.GenericError(res, 'storageId is invalid');
+
+		const newProvider = await client.FileManager.storageManager.getProviderById(storageId);
+		const isProviderOnline = await newProvider.verifyConnection();
+		if (!isProviderOnline) return Error.GenericError(res, 'Storage medium is not online');
+
+		// Make sure that if the all the files moved it won't go over the new storage medium usage limit
+		const totalFileSize = files.reduce((a, b) => a + b.size, 0n);
+		if (storage.usedSize + totalFileSize > storage.maxSize) return Error.GenericError(res, 'Total files exceed storage capabilities.');
+
+		res.json({ success: 'Successfully started migration of user' });
+
+		await client.FileManager.storageManager.migrateUser(client, files, storageId, newProvider);
+	};
+};

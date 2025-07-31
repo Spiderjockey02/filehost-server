@@ -19,6 +19,7 @@ export interface updateFile {
   deletedAt?: Date | null
   parentId?: string
   children?: createFile
+  storageId?: string
 }
 
 export interface updateFilePath {

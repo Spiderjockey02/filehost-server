@@ -30,6 +30,9 @@ export const postFileUpload = (client: Client) => {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
+			// User can't edit their files if they are migrating storages
+			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before uploading files.');
+
 			// Parse and save file(s)
 			const { files } = await parseForm(client, req, session.user);
 			if (Object.keys(files).length == 0) throw 'No files uploaded';
@@ -50,6 +53,9 @@ export const deleteFile = (client: Client) => {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
+			// User can't edit their files if they are migrating storages
+			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before deleting files.');
+
 			// Validate request body
 			const { fileId } = req.body;
 			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
@@ -69,6 +75,9 @@ export const deleteBulkFiles = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
+
+		// User can't edit their files if they are migrating storages
+		if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before deleting files.');
 
 		// Validate request body
 		const { paths } = req.body;
@@ -99,6 +108,9 @@ export const postMoveFile = (client: Client) => {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
+			// User can't edit their files if they are migrating storages
+			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before moving files.');
+
 			// Validate request body
 			const { newDirId, fileId } = req.body;
 			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, 'New directory ID is missing from request');
@@ -121,6 +133,9 @@ export const postCopyFile = (client: Client) => {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
+			// User can't edit their files if they are migrating storages
+			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before copying files.');
+
 			// Validate request body
 			const { newDirId, fileId } = req.body;
 			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, 'New directory ID is missing from request');
@@ -142,6 +157,7 @@ export const postDownloadFile = (client: Client) => {
 		try {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
+
 			// Validate the file path
 			const { path: filePath } = req.body;
 			if (typeof filePath !== 'string' || filePath.length == 0) return Error.IncorrectQuery(res, 'File path is missing from request');
@@ -187,6 +203,9 @@ export const postRenameFile = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 			const { fileId, newName } = req.body;
 
+			// User can't edit their files if they are migrating storages
+			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before renaming files.');
+
 			// Make sure newName is a non-empty string
 			if (typeof newName !== 'string' || newName.replace(/\.[^/.]+$/, '').length == 0) return Error.IncorrectQuery(res, 'New name must not be empty.');
 
@@ -204,10 +223,13 @@ export const postRenameFile = (client: Client) => {
 // Endpoint POST /api/files/create-folder
 export const postCreateFolder = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req.headers);
-		if (!session?.user) return Error.InvalidSession(res);
-
 		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			// User can't edit their files if they are migrating storages
+			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before creating a folder.');
+
 			const { parentId, folderName } = req.body;
 			if (typeof folderName !== 'string' || folderName.trim().length == 0) return Error.IncorrectQuery(res, 'Folder name is not a string.');
 
@@ -246,6 +268,7 @@ export const getSearchFile = (client: Client) => {
 	};
 };
 
+// Endpoint GET /api/files/directories
 export const getAllDirectories = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {

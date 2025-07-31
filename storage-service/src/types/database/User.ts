@@ -18,6 +18,7 @@ export interface updateUser {
 	email?: string
 	totalStorageSize?: bigint
 	updatedAt?: Date
+	isMigrating?: boolean
 }
 
 export type AddToPlanProps = {

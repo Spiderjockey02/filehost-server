@@ -27,6 +27,7 @@ export default class UserManager {
 				email: data.email,
 				totalStorageSize: data.totalStorageSize,
 				updatedAt: data.updatedAt,
+				isMigrating: data.isMigrating,
 			},
 			include: {
 				plan: true,
