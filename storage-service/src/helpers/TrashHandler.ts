@@ -114,7 +114,7 @@ export default class TrashHandler {
 			const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
 			if (storage !== null) {
 				const medium = await this.client.FileManager.storageManager.getProvider(storage);
-				medium.deleteFileOnSystem(`${userId}${filePath}`);
+				medium.deleteFile(`${userId}${filePath}`);
 			}
 
 		}

@@ -78,7 +78,7 @@ export default class StorageManager extends StorageAccessor {
 				let wasSuccessfull = false;
 				for (let i = 0; i < retryLimit; i++) {
 					// Fetch the file and write it to the new storage medium
-					const buffer = await oldProvider.readFileFromSystem(file).catch((err) => {
+					const buffer = await oldProvider.readFile(file).catch((err) => {
 						if (err instanceof S3ServiceException) {
 							if (err.$metadata.httpStatusCode == 404) {
 								client.logger.error(`${file.id} was not found on the storage medium, ignoring it.`);
@@ -90,11 +90,11 @@ export default class StorageManager extends StorageAccessor {
 					});
 
 					// Write the file to the new medium and check the buffer to ensure it wrote correctly
-					await newProvider.writeFileToSystem(`${file.userId}/${file.id}`, buffer);
-					const newBuffer = await newProvider.readFileFromSystem(file);
+					await newProvider.writeFile(`${file.userId}/${file.id}`, buffer);
+					const newBuffer = await newProvider.readFile(file);
 					if (buffer.equals(newBuffer)) {
 						await client.FileManager.update({ id: file.id, storageId: newStorageId });
-						await oldProvider.deleteFileOnSystem(`${file.userId}/${file.id}`);
+						await oldProvider.deleteFile(`${file.userId}/${file.id}`);
 						wasSuccessfull = true;
 						break;
 					} else {

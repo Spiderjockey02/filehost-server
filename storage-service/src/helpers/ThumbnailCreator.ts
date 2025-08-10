@@ -79,8 +79,8 @@ export default class ThumbnailCreator {
 	private async createFromImage(file: File) {
 		try {
 			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
-			const buffer = await fileProvider.readFileFromSystem(file);
-			const { stream: outputStream, done } = fileProvider.uploadFileToSystem(`${file.userId}/thumbnails/${file.id}.jpg`);
+			const buffer = await fileProvider.readFile(file);
+			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.jpg`);
 
 			await new Promise((resolve, reject) => {
 				const transformer = sharp(buffer)
@@ -110,8 +110,8 @@ export default class ThumbnailCreator {
 	private async createFromVideo(file: File) {
 		try {
 			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
-			const buffer = await fileProvider.readFileFromSystem(file);
-			const { stream: outputStream, done } = fileProvider.uploadFileToSystem(`${file.userId}/thumbnails/${file.id}.jpg`);
+			const buffer = await fileProvider.readFile(file);
+			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.jpg`);
 			const partialBuffer = buffer.subarray(0, 5 * 1024 * 1024);
 			const stream = Readable.from(partialBuffer);
 
@@ -138,7 +138,7 @@ export default class ThumbnailCreator {
 	private async createFromPDF(file: File) {
 		try {
 			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
-			const { stream: outputStream, done } = fileProvider.uploadFileToSystem(`${file.userId}/thumbnails/${file.id}.jpg`);
+			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.jpg`);
 			const gsBinary = process.platform === 'win32' ? 'gswin64c' : 'gs';
 
 			const gs = spawn(gsBinary, [
@@ -159,7 +159,7 @@ export default class ThumbnailCreator {
 			gs.stdin.on('error', err => this.SystemManager.client.logger.warn(`Ghostscript stdin error: ${err.message}`));
 
 			await Promise.all([
-				pipeline(Readable.from(await fileProvider.readFileFromSystem(file)), gs.stdin),
+				pipeline(Readable.from(await fileProvider.readFile(file)), gs.stdin),
 				pipeline(gs.stdout, outputStream),
 			]);
 
@@ -196,7 +196,7 @@ export default class ThumbnailCreator {
 				});
 			} else {
 				// Make temp file, use that, delete temp file
-				const buffer = await fileProvider.readFileFromSystem(file);
+				const buffer = await fileProvider.readFile(file);
 				const tempInputPath = join(tmpdir(), `${randomUUID()}.${file.path.split('.').pop()!}`);
 				await pipeline(Readable.from(buffer), createWriteStream(tempInputPath));
 
@@ -216,7 +216,7 @@ export default class ThumbnailCreator {
 			await this.createFromPDF({ ...file, path: file.path.replace(/\.[^/.]+$/, '.pdf') });
 
 			// Delete the PDF file
-			await fileProvider.deleteFileOnSystem(`/${file.userId}/${file.path.replace(/\.[^/.]+$/, '')}.pdf`);
+			await fileProvider.deleteFile(`/${file.userId}/${file.path.replace(/\.[^/.]+$/, '')}.pdf`);
 		} catch (err) {
 			this.SystemManager.client.logger.error(`Error creating document thumbnail: ${err}`);
 		}
@@ -229,7 +229,7 @@ export default class ThumbnailCreator {
 	private async generateTextThumbnail(file: File) {
 		try {
 			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
-			const text = await fileProvider.readFileFromSystem(file, 'utf-8');
+			const text = await fileProvider.readFile(file, 'utf-8');
 			// Canvas setup
 			const canvas = createCanvas(this.width, this.height);
 			const ctx = canvas.getContext('2d');
@@ -275,9 +275,8 @@ export default class ThumbnailCreator {
 				.composite([{ input: textImageBuffer, top: 0, left: 0 }])
 				.toBuffer();
 
-			await fileProvider.writeFileToSystem(`${file.userId}/thumbnails/${file.id}.jpg`, buffer);
+			await fileProvider.writeFile(`${file.userId}/thumbnails/${file.id}.jpg`, buffer);
 		} catch (err) {
-			console.log(err);
 			this.SystemManager.client.logger.error(`Error creating text thumbnail: ${err}`);
 		}
 	}

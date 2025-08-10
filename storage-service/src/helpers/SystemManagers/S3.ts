@@ -44,7 +44,7 @@ export default class S3Manager implements StorageProvider {
 		if (s3Response.Body) await pipeline(s3Response.Body.transformToWebStream(), res);
 	}
 
-	async downloadFiles(res: Response, _userId: string, files: File[]) {
+	async downloadFiles(res: Response, files: File[]) {
 		this.client.logger.debug(`[S3 Client]: Downloading ${files.length} files.`);
 		const archive = archiver('zip', { zlib: { level: 9 } });
 		res.setHeader('Content-Type', 'application/zip');
@@ -63,7 +63,7 @@ export default class S3Manager implements StorageProvider {
 		await archive.finalize();
 	}
 
-	async copyFileOnSystem(oldFileId: string, newFileId: string) {
+	async copyFile(oldFileId: string, newFileId: string) {
 		this.client.logger.debug(`[S3 Client]: Copying file: ${oldFileId}`);
 
 		const command = new CopyObjectCommand({
@@ -74,12 +74,12 @@ export default class S3Manager implements StorageProvider {
 		await this.s3.send(command);
 	}
 
-	async deleteFileOnSystem(fileId: string) {
+	async deleteFile(fileId: string) {
 		this.client.logger.debug(`[S3 Client]: Deleting file from system: ${fileId}`);
 		await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: fileId }));
 	}
 
-	uploadFileToSystem(filePath: string) {
+	uploadFile(filePath: string) {
 		this.client.logger.debug(`[S3 Client]: Starting upload for file: ${filePath}`);
 		const pass = new PassThrough();
 
@@ -105,7 +105,7 @@ export default class S3Manager implements StorageProvider {
 		return { stream: pass, done: uploadPromise };
 	}
 
-	async writeFileToSystem(filePath: string, data: Buffer | string) {
+	async writeFile(filePath: string, data: Buffer | string) {
 		this.client.logger.debug(`[S3 Client]: Starting write for file: ${filePath}`);
 		const upload = new Upload({
 			client: this.s3,
@@ -125,9 +125,9 @@ export default class S3Manager implements StorageProvider {
 		await upload.done();
 	}
 
-	async readFileFromSystem(file: File): Promise<Buffer>;
-	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
-	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string | Buffer> {
+	async readFile(file: File): Promise<Buffer>;
+	async readFile(file: File, encoding?: BufferEncoding): Promise<string>;
+	async readFile(file: File, encoding?: BufferEncoding): Promise<string | Buffer> {
 		this.client.logger.debug(`[S3 Client]: Reading file: ${file.id}`);
 		const command = new GetObjectCommand({
 			Bucket: this.bucketName,
@@ -146,7 +146,7 @@ export default class S3Manager implements StorageProvider {
 	}
 
 	async sendFile(res: Response, file: File, range?: string) {
-		this.client.logger.debug(`[S3 Client]: Sending file: ${file.id}`);
+		this.client.logger.debug(`[S3 Client]: Sending file: ${file.id} (${file.mimetype})`);
 		const key = `${file.userId}/${file.id}`;
 		const head = await this.s3.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
 		const fileSize = Number(head.ContentLength || 0);

@@ -1,4 +1,4 @@
-import { createReadStream, createWriteStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, mkdirSync, statSync } from 'node:fs';
 import type { File } from '@prisma/client';
 import type { Response } from 'express';
 import fs from 'node:fs/promises';
@@ -24,7 +24,7 @@ export default class FileSystemManager implements StorageProvider {
 		res.download(path.join(this.basePath, file.userId, file.id));
 	}
 
-	async downloadFiles(res: Response, userId: string, files: File[]) {
+	async downloadFiles(res: Response, files: File[]) {
 		this.client.logger.debug(`[FS Client]: Downloading ${files.length} files.`);
 		const archive = archiver('zip', { zlib: { level: 9 } });
 		res.setHeader('Content-Type', 'application/zip');
@@ -33,30 +33,33 @@ export default class FileSystemManager implements StorageProvider {
 
 		for (const file of files) {
 			if (file.type === 'FILE') {
-				archive.file(path.join(this.basePath, userId, file.path), { name: file.path });
+				archive.file(path.join(this.basePath, file.userId, file.id), { name: file.id });
 			} else {
-				archive.directory(path.join(this.basePath, userId, file.path), file.name);
+				archive.directory(path.join(this.basePath, file.userId, file.id), file.name);
 			}
 		}
 
 		await archive.finalize();
 	}
 
-	async copyFileOnSystem(oldFileId: string, newFileId: string) {
+	async copyFile(oldFileId: string, newFileId: string) {
 		this.client.logger.debug(`[FS Client]: Copying file: ${oldFileId}`);
 		const cleanedOldPath = path.isAbsolute(oldFileId) ? oldFileId : path.join(this.basePath, oldFileId);
 		return fs.copyFile(cleanedOldPath, path.join(this.basePath, newFileId), fs.constants.COPYFILE_EXCL);
 	}
 
-	async deleteFileOnSystem(filePath: string) {
+	async deleteFile(filePath: string) {
 		this.client.logger.debug(`[FS Client]: Deleting file from system: ${filePath}`);
 		const cleanedFilePath = path.isAbsolute(filePath) ? filePath : path.join(this.basePath, filePath);
 		if (existsSync(cleanedFilePath)) return fs.unlink(cleanedFilePath);
 	}
 
-	uploadFileToSystem(filePath: string) {
+	uploadFile(filePath: string) {
 		this.client.logger.debug(`[S3 Client]: Starting upload for file: ${filePath}`);
 		const cleanedFilePath = path.isAbsolute(filePath) ? filePath : path.join(this.basePath, filePath);
+
+		const dir = path.dirname(cleanedFilePath);
+	 	mkdirSync(dir, { recursive: true });
 		const stream = createWriteStream(cleanedFilePath);
 
 		// Create a Promise that resolves when the file is fully written
@@ -68,28 +71,32 @@ export default class FileSystemManager implements StorageProvider {
 		return { stream, done };
 	}
 
-	async writeFileToSystem(filePath: string, data: Buffer | string) {
+	async writeFile(filePath: string, data: Buffer | string) {
 		this.client.logger.debug(`[FS Client]: Starting write for file: ${filePath}`);
 		const cleanedFilePath = path.isAbsolute(filePath) ? filePath : path.join(this.basePath, filePath);
+
+		const dir = path.dirname(cleanedFilePath);
+		await fs.mkdir(dir, { recursive: true });
 		return fs.writeFile(cleanedFilePath, data);
 	}
 
-	async readFileFromSystem(file: File): Promise<Buffer>;
-	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
-	async readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<Buffer | string> {
+	async readFile(file: File): Promise<Buffer>;
+	async readFile(file: File, encoding?: BufferEncoding): Promise<string>;
+	async readFile(file: File, encoding?: BufferEncoding): Promise<Buffer | string> {
 		this.client.logger.debug(`[FS Client]: Reading file: ${file.id}`);
 		if (encoding) {
-			return fs.readFile(path.join(this.basePath, file.userId, file.path), encoding);
+			return fs.readFile(path.join(this.basePath, file.userId, file.id), encoding);
 		} else {
-			return fs.readFile(path.join(this.basePath, file.userId, file.path));
+			return fs.readFile(path.join(this.basePath, file.userId, file.id));
 		}
 	}
 
 	async sendFile(res: Response, file: File, range?: string | undefined) {
 		this.client.logger.debug(`[FS Client]: Sending file: ${file.id}`);
-		const filePath = path.join(this.basePath, file.userId, file.path);
+		const filePath = path.join(this.basePath, file.userId, file.id);
 		const mime = file.mimetype || 'application/octet-stream';
 
+		await fs.access(filePath);
 		if (mime.startsWith('video')) {
 			const stat = statSync(filePath);
 			const fileSize = stat.size;

@@ -245,7 +245,7 @@ export default class FileManager extends FileAccessor {
 			});
 
 			// Copy the actual file contents
-			await fileProvider.copyFileOnSystem(`${user.id}/${oldFile.id}`, `${user.id}/${newFile.id}`);
+			await fileProvider.copyFile(`${user.id}/${oldFile.id}`, `${user.id}/${newFile.id}`);
 		} catch (err) {
 			if (newFile?.id) await this.deleteFromDB(newFile.id);
 			throw err;
@@ -316,7 +316,7 @@ export default class FileManager extends FileAccessor {
 					const newFile = await this.getByFilePath(user.id, child.path);
 					if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider, file.path);
 				} else {
-					archive.append(await fileProvider.readFileFromSystem(child), { name: child.path.replace(file.path, '') });
+					archive.append(await fileProvider.readFile(child), { name: child.path.replace(file.path, '') });
 				}
 			}
 
@@ -332,7 +332,7 @@ export default class FileManager extends FileAccessor {
 				const newFile = await this.getByFilePath(child.userId, child.path);
 				if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider, parentFilePath);
 			} else {
-				archive.append(await fileProvider.readFileFromSystem(child), { name: child.path.replace(parentFilePath, '') });
+				archive.append(await fileProvider.readFile(child), { name: child.path.replace(parentFilePath, '') });
 			}
 		}
 
@@ -353,7 +353,7 @@ export default class FileManager extends FileAccessor {
 		const fileProvider = await this.storageManager.getProvider(storage);
 
 		// Download the file
-		return fileProvider.downloadFiles(res, user.id, files);
+		return fileProvider.downloadFiles(res, files);
 	}
 
 	/**
@@ -383,7 +383,7 @@ export default class FileManager extends FileAccessor {
 		const storage = await this.storageManager.fetchAvatarMedium();
 		if (storage == null) throw 'Storage not found';
 		const fileProvider = await this.storageManager.getProvider(storage);
-		fileProvider.deleteFileOnSystem(`${userId}.webp`);
+		fileProvider.deleteFile(`${userId}.webp`);
 	}
 
 	/**

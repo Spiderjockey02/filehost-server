@@ -29,22 +29,82 @@ export interface DatabaseMetadata {
 }
 
 export interface StorageProvider {
-  downloadFile(res: Response, file: File): Promise<void>;
-  downloadFiles(res: Response, userId: string, files: File[]): Promise<void>;
-  copyFileOnSystem(oldPath: string, newPath: string): Promise<void>;
-  deleteFileOnSystem(filePath: string): Promise<void>;
-  uploadFileToSystem(filePath: string): { stream: Writable, done: Promise<void> };
-  writeFileToSystem(filePath: string, data: Buffer | string): Promise<void>;
-  readFileFromSystem(file: File): Promise<Buffer>;
-	readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string>;
-  readFileFromSystem(file: File, encoding?: BufferEncoding): Promise<string | Buffer>;
-  sendFile(res: Response, file: File, range?: string): Promise<void>;
-  getFileSystemStatistics(): storageMediumSize;
-  verifyConnection(): Promise<boolean>
-  checkFileExists(path: string): Promise<boolean>
-}
+  isOnline: boolean
 
-export interface storageMediumSize {
-  free: number
-  total: number
+  /**
+    * Download a single file
+    * @param {Response} res The response to pipe the file to, for downloading
+    * @param {File} file The file to find on the system to pipe back
+  */
+  downloadFile(res: Response, file: File): Promise<void>;
+
+  /**
+    * Download a list of files
+    * @param {Response} res The response to pipe the file to, for downloading
+    * @param {File[]} files The files to find on the system to pipe back
+  */
+  downloadFiles(res: Response, files: File[]): Promise<void>;
+
+  /**
+    * Copy a file
+    * @param {string} oldPath The file path of the file being copied
+    * @param {string} newPath The file path where the new file will be
+  */
+  copyFile(oldPath: string, newPath: string): Promise<void>;
+
+  /**
+    * Delete a file
+    * @param {string} filePath The file path of the file being deleted
+  */
+  deleteFile(filePath: string): Promise<void>;
+
+  /**
+    * Upload a file
+    * @param {string} filePath The file path where the file will be uploaded to
+    * @returns {{ stream: Writable, done: Promise<void> }}
+  */
+  uploadFile(filePath: string): { stream: Writable, done: Promise<void> };
+
+  /**
+    * Write a file
+    * @param {string} filePath The file path where the file will be written to
+    * @param {Buffer | string} data The data of the file
+  */
+  writeFile(filePath: string, data: Buffer | string): Promise<void>;
+
+	/**
+	  * Read a file
+	  * @param {File} file The file being read
+		* @return {Buffer} The data read from the file.
+	*/
+  readFile(file: File): Promise<Buffer>;
+
+	/**
+	  * Read a file
+	  * @param {File} file The file being read
+    * @param {BufferEncoding?} encoding The type of encoding to read the file
+		* @return {string} The data read from the file.
+	*/
+	readFile(file: File, encoding?: BufferEncoding): Promise<string>;
+
+  /**
+	  * Send a file to the user.
+	  * @param {Response} res The response to pipe the file to, for downloading
+		* @param {File} file The file to send.
+		* @param {string} [range] The range of the file to send.
+	*/
+  sendFile(res: Response, file: File, range?: string): Promise<void>;
+
+  /**
+    * Check if a file exists on the storage medium
+    * @param {string} path the file path
+    * @returns {boolean} If it found a file or not
+  */
+  checkFileExists(path: string): Promise<boolean>
+
+  /**
+    * Verify the connection to a storage medium
+    * @returns {boolean} If it connected successfully or not
+  */
+  verifyConnection(): Promise<boolean>
 }
