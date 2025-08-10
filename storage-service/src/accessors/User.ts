@@ -1,7 +1,8 @@
-import type { GetUsers, fetchUserbyParam, updateUser, FullUser, storageDirection, setUserBan, AddToPlanProps } from '../types/database/User';
+import type { GetUsers, fetchUserbyParam, updateUser, FullUser, storageDirection, setUserBan, AddToPlanProps, fetchByStorageIdParams } from '../types/database/User';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
 import { Pagination } from 'src/types/database/File';
+import { Account, User, UserBans } from '@prisma/client';
 
 export default class UserManager {
 	cache: LRUCache<string, FullUser>;
@@ -297,7 +298,7 @@ export default class UserManager {
 		* Gets the average file size
 		* @returns The average file size.
 	*/
-	fetchAverageStorageUsed() {
+	async fetchAverageStorageUsed() {
 		return client.user.aggregate({
 			_avg: {
 				totalStorageSize: true,
@@ -322,7 +323,7 @@ export default class UserManager {
 		* @param {string} userId The ID of the user
 		* @returns The ban status of the user.
 	*/
-	async fetchBanStatus(userId: string) {
+	async fetchBanStatus(userId: string): Promise<UserBans | null> {
 		return client.userBans.findFirst({
 			where: {
 				userId,
@@ -338,7 +339,7 @@ export default class UserManager {
 		* @param {setUserBan} data The ban data
 		* @returns The created ban record.
 	*/
-	async setBanStatus(data: setUserBan) {
+	async setBanStatus(data: setUserBan): Promise<UserBans> {
 		return client.userBans.create({
 			data: {
 				expiresAt: data.expiresAt,
@@ -408,7 +409,7 @@ export default class UserManager {
 		* @param {string} userId The ID of the user
 		* @returns The accounts associated with the user.
 	*/
-	async fetchAccountsByUserId(userId: string) {
+	async fetchAccountsByUserId(userId: string): Promise<Account[]> {
 		return client.account.findMany({
 			where: {
 				userId,
@@ -421,7 +422,7 @@ export default class UserManager {
 		* @param {string} storageId The ID of the storage
 		* @returns The users associated with the storage.
 	*/
-	async fetchByStorageId({ storageId, page = 0 }: {storageId: string} & Pagination) {
+	async fetchByStorageId({ storageId, page = 0 }: fetchByStorageIdParams): Promise<User[]> {
 		return client.user.findMany({
 			where: {
 				storageId,

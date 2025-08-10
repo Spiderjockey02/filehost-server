@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { Pagination } from './File';
 
 export interface GetUsers {
 	name?: string
@@ -47,3 +48,7 @@ export type setUserBan = {
 	expiresAt: Date
 	reason: string
 }
+
+export type fetchByStorageIdParams = {
+	storageId: string
+} & Pagination
