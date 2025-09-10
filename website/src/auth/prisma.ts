@@ -8,6 +8,30 @@ const client = new PrismaClient({ errorFormat: 'pretty',
 	],
 });
 
+const extendedClient = client.$extends({
+	query: {
+		user: {
+			async create({ args, query }) {
+
+				if (!args.data.storageId) {
+					args.data.storage = {
+						connect: { id: args.data.storageId },
+					};
+					args.data.plan = {
+						connect: { id: args.data.planId },
+					};
+				}
+				const result = await query(args);
+				return convertBigIntToNumber(result);
+			},
+		},
+		async $allOperations({ args, query }) {
+			const result = await query(args);
+			return convertBigIntToNumber(result);
+		},
+	},
+});
+
 client.$on('info', (data) => {
 	console.log(data.message);
 });
@@ -33,23 +57,4 @@ function convertBigIntToNumber(data: unknown): unknown {
 	return data;
 }
 
-client.$use(async (params, next) => {
-	if (params.model === 'User' && params.action === 'create') {
-		console.log('Original args:', params);
-
-		// Creation needs to be overridde to set default storage and plan
-		if (!params.args.data.storageId) {
-			params.args.data.storage = {
-				connect: { id: params.args.data.storageId },
-			};
-			params.args.data.plan = {
-				connect: { id: params.args.data.planId },
-			};
-		}
-	}
-
-	const result = await next(params);
-	return convertBigIntToNumber(result);
-});
-
-export default client;
+export default extendedClient;
