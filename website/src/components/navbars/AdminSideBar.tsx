@@ -32,7 +32,7 @@ export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarPro
 					<span> Files</span>
 				</Link>
 			</li>
-			<li className={`nav-item ${activeTab == 'logs' ? 'active' : ''}`}>
+			<li className={`nav-item ${activeTab == 'system' ? 'active' : ''}`}>
 				<Link className="nav-link" href="/admin/system">
 					<FontAwesomeIcon icon={faCogs} />
 					<span> System</span>

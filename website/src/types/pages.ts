@@ -120,4 +120,4 @@ export type viewTypeTypes = 'List' | 'Tiles';
 
 export type requestTimeFrames = 'daily' | 'monthly' | 'yearly' | 'hourly'
 
-export type adminSidebarTabs = 'dashboard' | 'users' | 'files' | 'organisations' | 'logs' | 'payments' | 'network' | 'storage'
+export type adminSidebarTabs = 'dashboard' | 'users' | 'files' | 'system' | 'network' | 'storage' | 'subscriptions'
