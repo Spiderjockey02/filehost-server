@@ -8,11 +8,11 @@ export const getNetworkStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
 			const [network, methods, status, duration, total] = await Promise.all([
-				client.userActivityManager.getInboundOutboundBytes(),
-				client.userActivityManager.getHTTPMethods(),
-				client.userActivityManager.getHTTPStatus(),
+				client.userActivityManager.fetchTotalBytesInActivity(),
+				client.userActivityManager.fetchHTTPMethods(),
+				client.userActivityManager.fetchHTTPStatus(),
 				client.userActivityManager.averageDuration(),
-				client.userActivityManager.totalRequests({}),
+				client.userActivityManager.fetchTotal({}),
 			]);
 
 			res.json({ network, methods: methods.filter(s => s._count.history > 0).map(m => ({ method: m.method, count: m._count.history })), status: status.filter(s => s._count.history > 0).map(s => ({ status: s.code, count: s._count.history })), duration, total });
@@ -242,7 +242,7 @@ export const getActivityList = (client: Client) => {
 				client.userActivityManager.fetchActivity({
 					page: page ? Number(page) : undefined, userId: userId ? `${userId}` : undefined, statusCode: status?.length == 0 ? undefined : Number(status), method: parsedMethod,
 				}),
-				client.userActivityManager.totalRequests({
+				client.userActivityManager.fetchTotal({
 					userId: userId ? `${userId}` : undefined, statusCode: status?.length == 0 ? undefined : Number(status), method: parsedMethod,
 				}),
 			]);
