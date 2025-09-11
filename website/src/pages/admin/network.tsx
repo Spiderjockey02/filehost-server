@@ -1,5 +1,7 @@
 import { Card, Col, ErrorPopup, InfoPill, Row, ActivityTransferAreaChart, ObjectOrientedPieChart } from '@/components';
 import { faDownload, faEarthEurope, faStopwatch, faUpload } from '@fortawesome/free-solid-svg-icons';
+import NetworkRequestsLineChart from '@/components/Graphs/NetworkRequestsLineChart';
+import AdminUserAgentCard from '@/components/Cards/AdminUserAgentCard';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AdminActivityCard from '@/components/Cards/AdminActivity';
 import { formatBytes, headers } from '@/utils/functions';
@@ -10,7 +12,6 @@ import AdminLayout from '@/layouts/admin';
 import { User } from 'better-auth';
 import axios from 'axios';
 import Link from 'next/link';
-import NetworkRequestsLineChart from '@/components/Graphs/NetworkRequestsLineChart';
 
 export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 	const { data: session } = authClient.useSession();
@@ -79,6 +80,8 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 				</Col>
 			</Row>
 			<AdminActivityCard />
+			<AdminUserAgentCard />
+			<p>Display list of IPS, maybe?</p>
 		</AdminLayout>
 	);
 }

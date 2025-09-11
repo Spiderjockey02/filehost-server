@@ -7,19 +7,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AdminLogFileCard from '@/components/Cards/AdminLogFile';
 import AdminCacheCard from '@/components/Cards/AdminCache';
 import type { GetServerSidePropsContext } from 'next';
+import { AdminSystemPageProps } from '@/types/pages';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
 import { User } from 'better-auth';
 import axios from 'axios';
-import AdminUserAgentCard from '@/components/Cards/AdminUserAgentCard';
-import { AdminSystemPageProps } from '@/types/pages';
 
 export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) {
 	const { data: session } = authClient.useSession();
 	if (session == null) return null;
 
 	return (
-		<AdminLayout activeTab='logs' user={session.user as User} tabName='Admin System'>
+		<AdminLayout activeTab='system' user={session.user as User} tabName='Admin System'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">System Dashboard</h1>
@@ -54,8 +53,6 @@ export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) 
 					<AdminCacheCard />
 				</Col>
 			</Row>
-			<AdminUserAgentCard />
-			<p>Display list of IPS, maybe?</p>
 		</AdminLayout>
 	);
 }
