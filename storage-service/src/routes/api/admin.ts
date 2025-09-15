@@ -1,5 +1,5 @@
 import { getFiles, getFilesGrowth, getFileSizeCategories, getMimeTypes, getRecentlyUploaded } from '../../controllers/admin/files';
-import { getCronJobs, getCronJobsByName, getStats, getSystemStats, postCronJobsByName, postCronJobsByNameRun, postNotification } from '../../controllers/admin';
+import { getConfig, getCronJobs, getCronJobsByName, getMimeTypesSearch, getStats, getSystemStats, postConfig, postCronJobsByName, postCronJobsByNameRun, postNotification } from '../../controllers/admin';
 import { getLogs, getSpecificLog } from '../../controllers/admin/logs';
 import type Client from '../../helpers/Client';
 import { checkAdmin } from '../../middleware';
@@ -46,6 +46,11 @@ export default async function(client: Client) {
 
 	router.post('/notification', await checkAdmin(client), postNotification(client));
 
+	router.get('/config', await checkAdmin(client), getConfig(client));
+
+	router.post('/config', await checkAdmin(client), postConfig(client));
+
+	router.get('/mime-types/search', await checkAdmin(client), getMimeTypesSearch());
 
 	return router;
 }

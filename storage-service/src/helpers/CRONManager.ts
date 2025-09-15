@@ -2,7 +2,6 @@ import Client from './Client';
 import { CronJob } from 'cron';
 import CronJobAccessor from '../accessors/CronJob';
 import extendedClient from '../accessors/prisma';
-import { CONSTANTS } from '../utils/CONSTANTS';
 import fs from 'fs/promises';
 import { CronJobLog } from '@prisma/client';
 
@@ -128,7 +127,7 @@ export default class CRONManager extends CronJobAccessor {
 		* @returns {CronJobLog}
 	*/
 	async deleteOldLogFiles(): Promise<CronJobLog> {
-		const oldestDateToKeepFile = new Date(Date.now() - 1000 * 60 * 60 * 24 * CONSTANTS.RETENTION_POLICY_FOR_LOG_FILES_IN_DAYS);
+		const oldestDateToKeepFile = new Date(Date.now() - 1000 * 60 * 60 * 24 * this.client.config.get('RETENTION_POLICY_IN_DAYS.LOG_FILES'));
 		const start = Date.now();
 
 		try {

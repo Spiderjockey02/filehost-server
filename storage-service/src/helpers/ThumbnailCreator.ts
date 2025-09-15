@@ -2,7 +2,6 @@ import { exec, spawn } from 'node:child_process';
 import type { File, StorageMedium } from '@prisma/client';
 import { pipeline as _pipeline, Readable } from 'node:stream';
 import { createCanvas } from 'canvas';
-import { CONSTANTS } from '../utils';
 import sharp from 'sharp';
 import { join } from 'node:path';
 import FileManager from './FileOperationManager';
@@ -11,19 +10,18 @@ import { promisify } from 'util';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { handleFFMPEGEncoding } from '../utils/Streams';
+import Client from './Client';
 const pipeline = promisify(_pipeline);
 
 export default class ThumbnailCreator {
-	width: number;
-	height: number;
 	fileExtension: string;
 	SystemManager: FileManager;
+	client: Client;
 
 	constructor(fileSystemManager: FileManager) {
-		this.width = CONSTANTS.THUMBNAIL.WIDTH;
-		this.height = CONSTANTS.THUMBNAIL.HEIGHT;
-		this.fileExtension = CONSTANTS.THUMBNAIL.EXTENSION;
+		this.fileExtension = 'webp';
 		this.SystemManager = fileSystemManager;
+		this.client = fileSystemManager.client;
 	}
 
 	/**
@@ -31,7 +29,7 @@ export default class ThumbnailCreator {
 	  * @param {File} file The file object
 	*/
 	async createThumbnail(file: File) {
-		console.log(`Creating thumbnail for file ${file.id} with mimetype ${file.mimetype}`);
+		this.client.logger.debug(`Creating thumbnail for file ${file.id} with mimetype ${file.mimetype}`);
 		// Check if mimetype is null (indicates folder)
 		if (file.mimetype == null) return;
 
@@ -80,11 +78,11 @@ export default class ThumbnailCreator {
 		try {
 			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
 			const buffer = await fileProvider.readFile(file);
-			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.jpg`);
+			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.${this.fileExtension}`);
 
 			await new Promise((resolve, reject) => {
 				const transformer = sharp(buffer)
-					.resize(this.width, this.height, {
+					.resize(this.client.config.get('THUMBNAIL.WIDTH'), this.client.config.get('THUMBNAIL.HEIGHT'), {
 						fit: 'cover',
 						background: { r: 0, g: 0, b: 0 },
 					})
@@ -99,7 +97,7 @@ export default class ThumbnailCreator {
 			});
 			await done;
 		} catch (err) {
-			this.SystemManager.client.logger.error(`Error creating image thumbnail: ${err}`);
+			this.client.logger.error(`Error creating image thumbnail: ${err}`);
 		}
 	}
 
@@ -111,7 +109,7 @@ export default class ThumbnailCreator {
 		try {
 			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
 			const buffer = await fileProvider.readFile(file);
-			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.jpg`);
+			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.${this.fileExtension}`);
 			const partialBuffer = buffer.subarray(0, 5 * 1024 * 1024);
 			const stream = Readable.from(partialBuffer);
 
@@ -121,13 +119,13 @@ export default class ThumbnailCreator {
 				'-i', 'pipe:0',
 				'-ss', '00:00:00.750',
 				'-vframes', '1',
-				'-vf', `scale=${this.width}:${this.height}:force_original_aspect_ratio=decrease,pad=${this.width}:${this.height}:(ow-iw)/2:(oh-ih)/2`,
+				'-vf', `scale=${this.client.config.get('THUMBNAIL.WIDTH')}:${this.client.config.get('THUMBNAIL.HEIGHT')}:force_original_aspect_ratio=decrease,pad=${this.client.config.get('THUMBNAIL.WIDTH')}:${this.client.config.get('THUMBNAIL.HEIGHT')}: (ow-iw)/2:(oh-ih)/2`,
 				'-f', 'image2pipe',
 				'pipe:1',
 			], stream, outputStream);
 			await done;
 		} catch(err) {
-			this.SystemManager.client.logger.error(`Error creating video thumbnail: ${err}`);
+			this.client.logger.error(`Error creating video thumbnail: ${err}`);
 		}
 	}
 
@@ -138,7 +136,7 @@ export default class ThumbnailCreator {
 	private async createFromPDF(file: File) {
 		try {
 			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
-			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.jpg`);
+			const { stream: outputStream, done } = fileProvider.uploadFile(`${file.userId}/thumbnails/${file.id}.${this.fileExtension}`);
 			const gsBinary = process.platform === 'win32' ? 'gswin64c' : 'gs';
 
 			const gs = spawn(gsBinary, [
@@ -149,14 +147,14 @@ export default class ThumbnailCreator {
 				'-dLastPage=1',
 				'-dJPEGQ=100',
 				'-r300',
-				`-g${this.width}x${this.height}`,
+				`-g${this.client.config.get('THUMBNAIL.WIDTH')}x${this.client.config.get('THUMBNAIL.HEIGHT')}`,
 				'-dPDFFitPage',
 				'-sOutputFile=%stdout',
 				'-_',
 			]);
 
-			gs.stderr.on('data', data => this.SystemManager.client.logger.error(`[Ghostscript] ${data.toString()}`));
-			gs.stdin.on('error', err => this.SystemManager.client.logger.warn(`Ghostscript stdin error: ${err.message}`));
+			gs.stderr.on('data', data => this.client.logger.error(`[Ghostscript] ${data.toString()}`));
+			gs.stdin.on('error', err => this.client.logger.warn(`Ghostscript stdin error: ${err.message}`));
 
 			await Promise.all([
 				pipeline(Readable.from(await fileProvider.readFile(file)), gs.stdin),
@@ -171,7 +169,7 @@ export default class ThumbnailCreator {
 			});
 			await done;
 		} catch (err) {
-			this.SystemManager.client.logger.error(`Error creating PDF thumbnail: ${err}`);
+			this.client.logger.error(`Error creating PDF thumbnail: ${err}`);
 		}
 	}
 
@@ -203,7 +201,7 @@ export default class ThumbnailCreator {
 				await new Promise((resolve, reject) => {
 					exec(`"${process.env.LIBREOFFICE_PATH}" --headless --convert-to "pdf:writer_pdf_Export" "${tempInputPath}" --outdir "${tmpdir()}"`, (err, stderr) => {
 						if (err) {
-							this.SystemManager.client.logger.error(`LibreOffice stderr: ${stderr}`);
+							this.client.logger.error(`LibreOffice stderr: ${stderr}`);
 							return reject(err);
 						}
 						resolve(null);
@@ -218,7 +216,7 @@ export default class ThumbnailCreator {
 			// Delete the PDF file
 			await fileProvider.deleteFile(`/${file.userId}/${file.path.replace(/\.[^/.]+$/, '')}.pdf`);
 		} catch (err) {
-			this.SystemManager.client.logger.error(`Error creating document thumbnail: ${err}`);
+			this.client.logger.error(`Error creating document thumbnail: ${err}`);
 		}
 	}
 
@@ -231,12 +229,12 @@ export default class ThumbnailCreator {
 			const fileProvider = await this.SystemManager.storageManager.getProviderById(file.storageId);
 			const text = await fileProvider.readFile(file, 'utf-8');
 			// Canvas setup
-			const canvas = createCanvas(this.width, this.height);
+			const canvas = createCanvas(this.client.config.get('THUMBNAIL.WIDTH'), this.client.config.get('THUMBNAIL.HEIGHT'));
 			const ctx = canvas.getContext('2d');
 
 			// Fill background with white
 			ctx.fillStyle = '#FFFFFF';
-			ctx.fillRect(0, 0, this.width, this.height);
+			ctx.fillRect(0, 0, this.client.config.get('THUMBNAIL.WIDTH'), this.client.config.get('THUMBNAIL.HEIGHT'));
 
 			// Text properties
 			ctx.fillStyle = '#000000';
@@ -245,7 +243,7 @@ export default class ThumbnailCreator {
 			ctx.textBaseline = 'top';
 
 			const padding = 5;
-			const maxWidth = this.width - 2 * padding;
+			const maxWidth = this.client.config.get('THUMBNAIL.WIDTH') - 2 * padding;
 			const words = text.split('\n');
 			const lineHeight = 16;
 			let yPosition = padding;
@@ -265,8 +263,8 @@ export default class ThumbnailCreator {
 			// Composite the text image over the white background using sharp
 			const buffer = await sharp({
 				create: {
-					width: this.width,
-					height: this.height,
+					width: this.client.config.get('THUMBNAIL.WIDTH'),
+					height: this.client.config.get('THUMBNAIL.HEIGHT'),
 					channels: 3,
 					background: { r: 255, g: 255, b: 255 },
 				},
@@ -275,9 +273,9 @@ export default class ThumbnailCreator {
 				.composite([{ input: textImageBuffer, top: 0, left: 0 }])
 				.toBuffer();
 
-			await fileProvider.writeFile(`${file.userId}/thumbnails/${file.id}.jpg`, buffer);
+			await fileProvider.writeFile(`${file.userId}/thumbnails/${file.id}.${this.fileExtension}`, buffer);
 		} catch (err) {
-			this.SystemManager.client.logger.error(`Error creating text thumbnail: ${err}`);
+			this.client.logger.error(`Error creating text thumbnail: ${err}`);
 		}
 	}
 }

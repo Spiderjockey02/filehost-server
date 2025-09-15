@@ -3,6 +3,7 @@ import type Client from '../helpers/Client';
 import { Error, PATHS } from '../utils';
 import os from 'os';
 import fs from 'fs/promises';
+import MIMEList from '../../assets/MIME-list.json';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
@@ -164,5 +165,72 @@ export const postNotification = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to create / send new notification.');
 		}
+	};
+};
+
+// Endpoint: GET /api/admin/config
+export const getConfig = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		res.json(client.config.getAll());
+	};
+};
+
+// Endpoint: POST /api/admin/config
+export const postConfig = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const { MAX_AVATAR_SIZE, MAX_CHARS_FILE_NAME, DISALLOWED_MIME_TYPES, INVALID_CHARS_IN_FILE_NAME,
+			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE } = req.body;
+
+		// Validate MAX_AVATAR_SIZE and MAX_CHARS_FILE_NAME are positive integers
+		if (typeof MAX_AVATAR_SIZE !== 'number' || isNaN(MAX_AVATAR_SIZE) || MAX_AVATAR_SIZE < 1) return Error.IncorrectQuery(res, 'MAX_AVATAR_SIZE must be a valid number greater than or equal to 1.');
+		if (typeof MAX_CHARS_FILE_NAME !== 'number' || isNaN(MAX_CHARS_FILE_NAME) || MAX_CHARS_FILE_NAME < 1) return Error.IncorrectQuery(res, 'MAX_CHARS_FILE_NAME must be a valid number greater than or equal to 1.');
+
+		// Validate DISALLOWED_MIME_TYPES is an array of valid mime types
+		if (!Array.isArray(DISALLOWED_MIME_TYPES)) return Error.IncorrectQuery(res, 'DISALLOWED_MIME_TYPES must be an array of strings.');
+		for (const mimeType of DISALLOWED_MIME_TYPES) {
+			if (typeof mimeType !== 'string') return Error.IncorrectQuery(res, 'DISALLOWED_MIME_TYPES must be an array of strings.');
+			if (!MIMEList.includes(mimeType)) return Error.IncorrectQuery(res, `${mimeType} is not a valid mime type.`);
+		}
+
+		// Validate INVALID_CHARS_IN_FILE_NAME is an array of strings
+		if (!Array.isArray(INVALID_CHARS_IN_FILE_NAME)) return Error.IncorrectQuery(res, 'INVALID_CHARS_IN_FILE_NAME must be an array of strings.');
+		for (const char of INVALID_CHARS_IN_FILE_NAME) {
+			if (typeof char !== 'string') return Error.IncorrectQuery(res, 'INVALID_CHARS_IN_FILE_NAME must be an array of strings.');
+		}
+
+		// Validate KEEP_ORIGINAL_METADATA is a boolean
+		if (typeof KEEP_ORIGINAL_METADATA !== 'boolean') return Error.IncorrectQuery(res, 'KEEP_ORIGINAL_METADATA must be a boolean.');
+
+		// Validate THUMBNAIL is an object with WIDTH and HEIGHT as positive integers
+		if (typeof THUMBNAIL !== 'object' || THUMBNAIL == null) return Error.IncorrectQuery(res, 'THUMBNAIL must be an object.');
+		const { WIDTH, HEIGHT } = THUMBNAIL;
+		if (typeof WIDTH !== 'number' || isNaN(WIDTH) || WIDTH < 1) return Error.IncorrectQuery(res, 'THUMBNAIL.WIDTH must be a valid number greater than or equal to 1.');
+		if (typeof HEIGHT !== 'number' || isNaN(HEIGHT) || HEIGHT < 1) return Error.IncorrectQuery(res, 'THUMBNAIL.HEIGHT must be a valid number greater than or equal to 1.');
+
+		// Validate RETENTION_POLICY_IN_DAYS is an object with LOG_FILES, DATABASE_FILES, USER_ACTIVITY, AUDIT_LOGS as non-negative integers
+		if (typeof RETENTION_POLICY_IN_DAYS !== 'object' || RETENTION_POLICY_IN_DAYS == null) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS must be an object.');
+		const { LOG_FILES, DATABASE_FILES, USER_ACTIVITY, AUDIT_LOGS } = RETENTION_POLICY_IN_DAYS;
+		if (typeof LOG_FILES !== 'number' || isNaN(LOG_FILES) || LOG_FILES < 0) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS.LOG_FILES must be a valid number greater than or equal to 0.');
+		if (typeof DATABASE_FILES !== 'number' || isNaN(DATABASE_FILES) || DATABASE_FILES < 0) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS.DATABASE_FILES must be a valid number greater than or equal to 0.');
+		if (typeof USER_ACTIVITY !== 'number' || isNaN(USER_ACTIVITY) || USER_ACTIVITY < 0) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS.USER_ACTIVITY must be a valid number greater than or equal to 0.');
+		if (typeof AUDIT_LOGS !== 'number' || isNaN(AUDIT_LOGS) || AUDIT_LOGS < 0) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS.AUDIT_LOGS must be a valid number greater than or equal to 0.');
+
+		// Validate FOLDER_SIZE is a positive integer
+		if (typeof FOLDER_SIZE !== 'number' || isNaN(FOLDER_SIZE) || FOLDER_SIZE < 1) return Error.IncorrectQuery(res, 'FOLDER_SIZE must be a valid number greater than or equal to 1.');
+
+		client.config.setAll(req.body);
+		res.json({ success: 'Configuration updated successfully.' });
+	};
+};
+
+
+// Endpoint: GET /api/admin/mime-types/search
+export const getMimeTypesSearch = () => {
+	return async (req: Request, res: Response) => {
+		const { query } = req.query;
+		if (typeof query !== 'string') return Error.IncorrectQuery(res, 'query must be type string.');
+
+		const list = MIMEList.filter((a) => a.startsWith(query)).sort((a, b) => a.localeCompare(b)).slice(0, 9);
+		res.json({ list });
 	};
 };

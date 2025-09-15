@@ -17,7 +17,6 @@ export interface Session {
   expires?: Date
 }
 
-
 // Database backup metadata
 export interface DatabaseMetadata {
   createdAt: string;
@@ -27,6 +26,21 @@ export interface DatabaseMetadata {
   errorMessage: string | null;
   db: string;
 }
+
+export type NestedPaths<T, Prev extends string = ''> = {
+  [K in keyof T & string]: T[K] extends object
+    ? `${Prev}${K}` | NestedPaths<T[K], `${Prev}${K}.`>
+    : `${Prev}${K}`;
+}[keyof T & string];
+
+export type NestedValue<T, Path extends string> =
+  Path extends `${infer Key}.${infer Rest}`
+    ? Key extends keyof T
+      ? NestedValue<T[Key], Rest>
+      : never
+    : Path extends keyof T
+      ? T[Path]
+      : never;
 
 export interface StorageProvider {
   isOnline: boolean

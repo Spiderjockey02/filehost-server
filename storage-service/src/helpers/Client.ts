@@ -7,8 +7,9 @@ import Logger from '../utils/Logger';
 import CRONManager from './CRONManager';
 import QueueManager from './QueueManager';
 import StorageManager from './StorageManager';
-import UserActivityManager from '../accessors/UserActivity';
+import UserActivityManager from './UserActivityManager';
 import { Server } from 'socket.io';
+import { ConfigManager } from './ConfigManager';
 
 export default class Client {
 	logger: Logger;
@@ -20,8 +21,10 @@ export default class Client {
 	CRONManager: CRONManager;
 	QueueManager: QueueManager;
 	userActivityManager: UserActivityManager;
+	config: ConfigManager;
 
 	constructor(io: Server) {
+		this.config = new ConfigManager();
 		this.logger = new Logger();
 		this.userManager = new UserManager();
 		this.notificationManager = new NotificationManager(io);
@@ -31,6 +34,5 @@ export default class Client {
 		this.CRONManager = new CRONManager(this);
 		this.QueueManager = new QueueManager();
 		this.userActivityManager = new UserActivityManager();
-
 	}
 }

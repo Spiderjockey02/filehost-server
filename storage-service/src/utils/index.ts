@@ -1,4 +1,4 @@
-import { PATHS, ipRegex, CONSTANTS } from './CONSTANTS';
+import { PATHS, ipRegex } from './CONSTANTS';
 import Logger from './Logger';
 import Error from './Error';
 import { readdirSync, statSync } from 'fs';
@@ -208,4 +208,4 @@ export function logUserActivity(client: Client) {
 	};
 }
 
-export { PATHS, ipRegex, Logger, Error, CONSTANTS };
+export { PATHS, ipRegex, Logger, Error };

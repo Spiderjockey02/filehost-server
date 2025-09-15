@@ -1,4 +1,3 @@
-import { CONSTANTS } from '../utils';
 import type { Request } from 'express';
 import Client from '../helpers/Client';
 import formidable from 'formidable';
@@ -14,7 +13,7 @@ export default async (client: Client, req: Request, user: User) => {
 
 	const form = formidable({
 		multiples: false,
-		maxFileSize: CONSTANTS.MAX_AVATAR_SIZE,
+		maxFileSize: client.config.get('MAX_AVATAR_SIZE'),
 		allowEmptyFiles: false,
 		maxFiles: 1,
 		filename: () => `${user.id}.webp`,
@@ -40,10 +39,10 @@ export default async (client: Client, req: Request, user: User) => {
 
 		// Move to avatar directory, overwriting the old one
 		const buffer = await readFile(file[0].filepath);
-		await fileProvider.writeFileToSystem(`${user.id}.webp`, buffer);
+		await fileProvider.writeFile(`${user.id}.webp`, buffer);
 		return { fields, files };
 	} catch (error) {
-		await fileProvider.deleteFileOnSystem(file[0].filepath);
+		await fileProvider.deleteFile(file[0].filepath);
 		throw error;
 	}
 };

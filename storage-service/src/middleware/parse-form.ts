@@ -1,5 +1,5 @@
 import { cleanUpVideo } from '../utils/VideoPreprocessor';
-import { CONSTANTS, normalizePath } from '../utils';
+import { normalizePath } from '../utils';
 import type Client from '../helpers/Client';
 import type { File } from '@prisma/client';
 import type { Request } from 'express';
@@ -23,7 +23,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 		// Make sure the uploaded file's mime type is allowed
 		filter: ({ mimetype }) => {
 			if (!mimetype) return false;
-			return !CONSTANTS.DISALLOWED_MIME_TYPES.some((blocked) => {
+			return !client.config.get('DISALLOWED_MIME_TYPES').some((blocked) => {
 				// First check if it's a wildcard block
 				if (blocked.endsWith('/*')) return mimetype.startsWith(blocked.slice(0, -2));
 				return mimetype === blocked;
@@ -82,7 +82,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 					dir = await client.FileManager.create({
 						userId: user.id,
 						path: '/',
-						size: CONSTANTS.FOLDER_SIZE,
+						size: BigInt(client.config.get('FOLDER_SIZE')),
 						type: 'DIRECTORY',
 						name: '/',
 						mimetype: null,

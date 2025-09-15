@@ -1,4 +1,4 @@
-import { CONSTANTS, normalizePath, sanitiseObject } from '../utils';
+import { normalizePath, sanitiseObject } from '../utils';
 import type { File, User } from '@prisma/client';
 import TrashHandler from './TrashHandler';
 import Client from './Client';
@@ -10,6 +10,7 @@ import { FullFile } from 'src/types/database/File';
 import archiver, { Archiver } from 'archiver';
 import { StorageProvider } from 'src/types';
 import { UserWithPlan } from 'src/types/database/User';
+import { S3ServiceException } from '@aws-sdk/client-s3';
 
 export default class FileManager extends FileAccessor {
 	TrashHandler: TrashHandler;
@@ -40,7 +41,7 @@ export default class FileManager extends FileAccessor {
 
 		// If it's user's first login, the directory doesn't exist so create it
 		if (files == null && filePath == '') {
-			await this.create({ userId: user.id, path: '/', size: CONSTANTS.FOLDER_SIZE, type: 'DIRECTORY', name: '/', mimetype: null, storageId: user.storageId });
+			await this.create({ userId: user.id, path: '/', size: BigInt(this.client.config.get('FOLDER_SIZE')), type: 'DIRECTORY', name: '/', mimetype: null, storageId: user.storageId });
 			await this.client.notificationManager.create({
 				title: 'Welcome!',
 				text: 'Thank you for registering. You can now start uploading files, customizing your storage, and exploring all the features.',
@@ -131,10 +132,10 @@ export default class FileManager extends FileAccessor {
 		const newPath = pathSegs.join('/');
 
 		// Make sure the new name doesn't have any invalid characters in it
-		if (CONSTANTS.INVALID_CHARS_IN_FILE_NAME.some(c => newName.includes(c))) throw 'File name includes invalid characters.';
+		if (this.client.config.get('INVALID_CHARS_IN_FILE_NAME').some(c => newName.includes(c))) throw 'File name includes invalid characters.';
 
 		// Makes sure the new name is less than the max characters
-		if (newName.length > CONSTANTS.MAX_CHARS_FILE_NAME) throw `New name must be less than ${CONSTANTS.MAX_CHARS_FILE_NAME} characters.`;
+		if (newName.length > this.client.config.get('MAX_CHARS_FILE_NAME')) throw `New name must be less than ${this.client.config.get('MAX_CHARS_FILE_NAME')} characters.`;
 
 		// Make sure a file with the potential same name doesn't already exist
 		const existingFile = await this.getByFilePath(user.id, newPath);
@@ -182,10 +183,10 @@ export default class FileManager extends FileAccessor {
 	*/
 	async createDirectory(user: User, parentId: string, folderName: string) {
 		// Check if the folder name is longer than max chars
-		if (folderName.length > CONSTANTS.MAX_CHARS_FILE_NAME) throw `Folder name must be less than ${CONSTANTS.MAX_CHARS_FILE_NAME} characters.`;
+		if (folderName.length > this.client.config.get('MAX_CHARS_FILE_NAME')) throw `Folder name must be less than ${this.client.config.get('MAX_CHARS_FILE_NAME')} characters.`;
 
 		// Make sure the new name doesn't have any invalid characters in it
-		if (CONSTANTS.INVALID_CHARS_IN_FILE_NAME.some(c => folderName.includes(c))) throw 'Folder name includes invalid characters.';
+		if (this.client.config.get('INVALID_CHARS_IN_FILE_NAME').some(c => folderName.includes(c))) throw 'Folder name includes invalid characters.';
 
 		// Fetch the parent directory
 		const parentDir = await this.getById(parentId);
@@ -201,7 +202,7 @@ export default class FileManager extends FileAccessor {
 				userId: user.id,
 				name: folderName,
 				path: `${normalizePath(parentDir.path)}${folderName}`,
-				size: CONSTANTS.FOLDER_SIZE,
+				size: BigInt(this.client.config.get('FOLDER_SIZE')),
 				type: 'DIRECTORY',
 				mimetype: null,
 				storageId: user.storageId,
@@ -269,7 +270,7 @@ export default class FileManager extends FileAccessor {
 		const newFolder = await this.create({
 			path: newFilePath,
 			name: oldDir.name,
-			size: CONSTANTS.FOLDER_SIZE,
+			size: BigInt(this.client.config.get('FOLDER_SIZE')),
 			userId: oldDir.userId,
 			type: 'DIRECTORY',
 			parentId: newDir.id,
@@ -411,23 +412,29 @@ export default class FileManager extends FileAccessor {
 		// Get the mimeType of the file
 		const file = await this.getByFilePath(userId, filePath);
 		if (file == null || file.mimetype == null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
-
 		// Fetch the storage medium and check it's online
 		const storageProvider = await this.storageManager.getProviderById(file.storageId);
 		if (storageProvider.isOnline == false) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 
 		// Send thumbnail if it exists, create it if it doesn't
 		try {
-			await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.jpg` });
+			await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` });
 		} catch (err) {
 			if (err instanceof S3ServiceException) {
 				if (err.$metadata?.httpStatusCode == 404) {
 					try {
 						await this.ThumbnailCreator.createThumbnail(file);
-						return storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.jpg` });
+						return await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` });
 					} catch {
 						return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 					}
+				}
+			} else if (err instanceof Error && (err as NodeJS.ErrnoException).code === 'ENOENT') {
+				try {
+					await this.ThumbnailCreator.createThumbnail(file);
+					return await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` });
+				} catch {
+					return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 				}
 			}
 			return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);

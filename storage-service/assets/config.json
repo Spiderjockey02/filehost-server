@@ -1,0 +1,31 @@
+{
+    "MAX_AVATAR_SIZE": 5242880,
+    "MAX_CHARS_FILE_NAME": 32,
+    "DISALLOWED_MIME_TYPES": [
+        "image/bmp"
+    ],
+    "INVALID_CHARS_IN_FILE_NAME": [
+        "/",
+        "\\",
+        "?",
+        "%",
+        "*",
+        ":",
+        "|",
+        "\"",
+        "<",
+        ">"
+    ],
+    "KEEP_ORIGINAL_METADATA": true,
+    "THUMBNAIL": {
+        "WIDTH": 400,
+        "HEIGHT": 520
+    },
+    "RETENTION_POLICY_IN_DAYS": {
+        "LOG_FILES": 90,
+        "DATABASE_FILES": 30,
+        "USER_ACTIVITY": 90,
+        "AUDIT_LOGS": 90
+    },
+    "FOLDER_SIZE": 4096
+}
