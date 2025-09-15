@@ -41,7 +41,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 		let uploadedFile: FullFile | null = null;
 		try {
 			let dir = await client.FileManager.getById(metadata.parentId);
-			if (!dir) throw 'Missing parent directory 1';
+			if (!dir) throw 'Missing parent directory';
 
 			// Ensure the file would not bring the user over their max storage
 			if ((BigInt(file.size) + user.totalStorageSize) >= user.plan.maxStorageSize) throw 'File is too large';
@@ -102,11 +102,11 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			}
 
 			// Check if the uploaded file is a video
-			if (file.mimetype?.startsWith('video/')) await cleanUpVideo(file.filepath, `${file.originalFilename?.split('.').pop()}`);
+			if (file.mimetype?.startsWith('video/')) await cleanUpVideo(client, file.filepath, `${file.originalFilename?.split('.').pop()}`);
 
 			// Move the uploaded file away from temp folder to storage server
 			const buffer = await readFile(file.filepath);
-			await fileProvider.writeFileToSystem(`${user.id}/${uploadedFile.id}`, buffer);
+			await fileProvider.writeFile(`${user.id}/${uploadedFile.id}`, buffer);
 
 			// Notification
 			const max = Number(user.plan.maxStorageSize);
@@ -141,11 +141,13 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 			user.totalStorageSize += BigInt(file.size);
 		} catch (error) {
-			console.log(error);
-			// Delete the files that were uploaded
-			await fileProvider.deleteFileOnSystem(file.filepath);
-			const uploadedId = uploadedFile?.children.find(c => c.name == file.originalFilename);
-			if (uploadedId) client.FileManager.deleteFromDB(uploadedId.id);
+			// Delete the file from the storage system and/or database if it was created
+			if (uploadedFile) {
+				await client.FileManager.deleteFromDB(uploadedFile.id);
+				await fileProvider.deleteFile(uploadedFile?.id).catch((err) => {
+					console.error('Failed to delete file from system:', err);
+				});
+			}
 
 			throw error;
 		}

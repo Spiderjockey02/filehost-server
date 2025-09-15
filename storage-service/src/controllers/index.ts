@@ -24,7 +24,7 @@ export const getThumbnail = (client: Client) => {
 		if (!session?.user) return Error.InvalidSession(res);
 		if (session.user.id !== userId) return Error.InvalidAccess(res);
 
-		client.FileManager.sendThumbnail(res, userId, path);
+		await client.FileManager.sendThumbnail(res, userId, path);
 	};
 };
 

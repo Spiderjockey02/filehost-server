@@ -185,8 +185,10 @@ export const getBulkDownload = (client: Client) => {
 			// Validate request body
 			const { paths } = req.body;
 			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
+			const filePaths: string[] = paths;
 
-			client.FileManager.downloadFiles(res, session.user, paths);
+			const files = await Promise.all(filePaths.map(async (f) => await client.FileManager.getByFilePath(session?.user.id, f)));
+			client.FileManager.downloadFiles(res, session.user, files.filter(s => s !== null));
 		} catch (error) {
 			client.logger.error(error);
 			Error.GenericError(res, 'Failed to download files.');

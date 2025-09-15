@@ -187,7 +187,7 @@ export function logUserActivity(client: Client) {
 
 				sessionPromise.then(session => {
 					client.userActivityManager.add({
-						userId: session?.userId,
+						userId: session?.userId ?? null,
 						method: req.method as HTTPMethod,
 						endpoint: req.originalUrl,
 						statusCode: res.statusCode,

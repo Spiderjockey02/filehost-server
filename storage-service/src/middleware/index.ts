@@ -24,7 +24,7 @@ export async function getSession(client: Client, headers: IncomingHttpHeaders): 
 	try {
 		return client.sessionManager.fetchByToken(sessionToken.split('.')[0]);
 	} catch (err) {
-		console.log(err);
+		client.logger.error(err);
 		return null;
 	}
 }

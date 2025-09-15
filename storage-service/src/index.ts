@@ -34,7 +34,6 @@ const client = new Client(io);
 		});
 	}
 
-
 	// Create a storage medium (if not exists) where files will be stored
 	if (await client.FileManager.storageManager.fetchCount() < 3) {
 		// Where files will be stored (by default)
@@ -42,7 +41,7 @@ const client = new Client(io);
 			name: 'Default Storage Medium',
 			location: 'Europe',
 			type: 'FILE_SYSTEM',
-			basePath: PATHS.CONTENT,
+			basePath: `${process.cwd()}/src/uploads/content`,
 		});
 
 		// Where avatars will be stored
@@ -54,7 +53,6 @@ const client = new Client(io);
 			avatarOnly: true,
 		});
 	}
-
 
 	// Get all endpoints
 	const endpoints = generateRoutes(join(__dirname, './', 'routes')).filter(e => e.route !== '/index');
