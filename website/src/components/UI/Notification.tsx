@@ -20,7 +20,7 @@ export default function NotificationBell({ notifications: oldNotifs }: Notificat
 		e.stopPropagation();
 		try {
 			await axios.delete(`/api/session/notifications/${id}`);
-			refetch();
+			setNotifications((prev) => prev.filter((notif) => notif.id !== id));
 		} catch (error) {
 			console.log(error);
 		}
@@ -30,6 +30,7 @@ export default function NotificationBell({ notifications: oldNotifs }: Notificat
 		if (!socket) return;
 		socket.on('notification', (notification: Notification) => {
 			setNotifications((prev) => [...prev, notification]);
+			refetch();
 		});
 
 		return () => {
