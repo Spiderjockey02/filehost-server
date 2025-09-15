@@ -5,6 +5,8 @@ export interface InputFieldProps {
   name: string
   type?: HTMLInputTypeAttribute
   placeholder?: string
+	value?: string | number
+	checked?: boolean
   onChange?: ChangeEventHandler<HTMLInputElement>
   errorMsg?: string
   autocomplete?: HTMLInputAutoCompleteAttribute

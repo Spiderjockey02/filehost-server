@@ -12,6 +12,7 @@ import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
 import { User } from 'better-auth';
 import axios from 'axios';
+import AdminConfigCard from '@/components/Cards/AdminConfig';
 
 export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) {
 	const { data: session } = authClient.useSession();
@@ -43,13 +44,14 @@ export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) 
 			</Row>
 			<Row>
 				<Col lg={4}>
+					<AdminConfigCard />
+				</Col>
+				<Col lg={4}>
 					<AdminDatabaseBackupCard />
+					<AdminCRONJobCard />
 				</Col>
 				<Col lg={4}>
 					<AdminLogFileCard />
-				</Col>
-				<Col lg={4}>
-					<AdminCRONJobCard />
 					<AdminCacheCard />
 				</Col>
 			</Row>

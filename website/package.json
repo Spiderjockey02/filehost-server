@@ -26,6 +26,7 @@
     "react-countup": "^6.5.3",
     "react-dom": "^19.0.0",
     "react-qr-code": "^2.0.18",
+    "react-select": "^5.10.2",
     "react-syntax-highlighter": "^15.6.1",
     "sass": "^1.84.0",
     "socket.io-client": "^4.8.1",
