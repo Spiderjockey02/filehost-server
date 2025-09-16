@@ -53,10 +53,9 @@ export const getCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const name = req.params.name;
 		try {
-			const names = [...client.CRONManager.names.keys()];
-			if (!names.includes(name)) return Error.MissingResource(res, `${name} is not a valid CRON job.`);
-
+			if (!client.CRONManager.isValidCronJobName(name)) return Error.MissingResource(res, `${name} is not a valid CRON job.`);
 			const logs = await client.CRONManager.fetchAllLogs();
+
 			res.json({ logs: logs.filter(l => l.jobName == name) });
 		} catch (err) {
 			client.logger.error(err);
@@ -72,13 +71,12 @@ export const postCronJobsByName = (client: Client) => {
 			const cronJob = req.params.name;
 			const { schedule } = req.body;
 
-			const names = [...client.CRONManager.names.keys()];
-			if (!names.includes(cronJob)) return Error.MissingResource(res, `${cronJob} is not a valid CRON job.`);
+			if (!client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res, `${cronJob} is not a valid CRON job.`);
 			if (schedule == null) return Error.IncorrectQuery(res, 'Schedule is required.');
 			if (typeof schedule !== 'string') return Error.IncorrectQuery(res, 'Schedule must be a string.');
 			if (!schedule.match(/^[0-9\-\*\/, ]+$/)) return Error.IncorrectQuery(res, 'Schedule must be a valid CRON expression.');
 
-			client.CRONManager.updateAndReschedule(req.params.name, req.body.schedule);
+			client.CRONManager.updateAndReschedule(cronJob, req.body.schedule);
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to update CRON job.');

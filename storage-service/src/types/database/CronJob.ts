@@ -1,7 +1,7 @@
-import { Status } from '@prisma/client';
+import { CronJobNames, Status } from '@prisma/client';
 
 export interface createCronJobLogType {
-  jobName: string
+  jobName: CronJobNames
   status: Status
   message: string
   duration: number
@@ -9,7 +9,7 @@ export interface createCronJobLogType {
 
 
 export interface createCronJob {
-	name: string
+	name: CronJobNames
 	schedule?: string
   latestStatus?: Status
 }

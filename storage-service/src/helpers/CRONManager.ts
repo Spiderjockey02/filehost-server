@@ -3,7 +3,7 @@ import { CronJob } from 'cron';
 import CronJobAccessor from '../accessors/CronJob';
 import extendedClient from '../accessors/prisma';
 import fs from 'fs/promises';
-import { CronJobLog } from '@prisma/client';
+import { CronJobLog, CronJobNames } from '@prisma/client';
 
 export default class CRONManager extends CronJobAccessor {
 	client: Client;
@@ -93,7 +93,7 @@ export default class CRONManager extends CronJobAccessor {
 		this.activeJobs.set(name, job);
 	}
 
-	async updateAndReschedule(name: string, newSchedule: string) {
+	async updateAndReschedule(name: CronJobNames, newSchedule: string) {
 		// Check if name is valid
 		const job = this.activeJobs.get(name);
 		if (job == undefined) throw new Error(`CRON job: ${name} is not an active job.`);
@@ -219,5 +219,9 @@ export default class CRONManager extends CronJobAccessor {
 			const duration = Date.now() - start;
 			return this.createLog({ jobName: 'RECALCULATE_STORAGE_USAGE', status: 'FAILURE', message: `${err}`, duration });
 		}
+	}
+
+	isValidCronJobName(name: string): name is CronJobNames {
+		return this.names.has(name as CronJobNames);
 	}
 }

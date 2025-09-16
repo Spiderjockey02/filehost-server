@@ -191,14 +191,23 @@ model CronJobLog {
   ranAt     DateTime    @default(now())
   duration  Int?        @default(0)
   cronJob   CronJob     @relation(fields: [jobName], references: [name], onDelete: Cascade)
-  jobName   String
+  jobName   CronJobNames
 
   @@index([jobName])
   @@index([ranAt])
 }
 
+enum CronJobNames {
+  BACKED_UP_DATABASE
+  DELETE_OLD_BACKUPS
+  DELETE_OLD_LOG_FILES
+  DELETE_EXPIRED_SESSIONS
+  RECALCULATE_USER_STORAGE
+  RECALCULATE_STORAGE_USAGE
+}
+
 model CronJob {
-  name          String        @id
+  name          CronJobNames    @id
   latestStatus  Status? 
   CronJobLog    CronJobLog[]
   schedule      String    @default("0 * * * *")

@@ -1,9 +1,9 @@
 import { createCronJob, createCronJobLogType } from 'src/types/database/CronJob';
-import { CronJob, CronJobLog } from '@prisma/client';
+import { CronJob, CronJobLog, CronJobNames } from '@prisma/client';
 import client from './prisma';
 
 export default class CronJobAccessor {
-	names: Map<string, CronJob>;
+	names: Map<CronJobNames, CronJob>;
 
 	constructor() {
 		this.names = new Map();
