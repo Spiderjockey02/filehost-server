@@ -4,6 +4,7 @@ import CronJobAccessor from '../accessors/CronJob';
 import extendedClient from '../accessors/prisma';
 import fs from 'fs/promises';
 import { CronJobLog, CronJobNames } from '@prisma/client';
+import { CronJobList } from 'src/types/database/CronJob';
 
 export default class CRONManager extends CronJobAccessor {
 	client: Client;
@@ -22,21 +23,22 @@ export default class CRONManager extends CronJobAccessor {
 	private async setupCRONJobs() {
 		await this.fetchAll();
 
-		// First ensure all CRON jobs exist on the database (Could be first time setup)
-		if ([...this.names.keys()].length != 5) {
-			try {
-				// Daily at 2 AM
-				await	this.create({ name: 'BACKED_UP_DATABASE', schedule: '0 2 * * *' });
-				// Daily at 3 AM
-				await	this.create({ name: 'DELETE_OLD_LOG_FILES', schedule: '0 3 * * *' });
-				// Every hour
-				await	this.create({ name: 'DELETE_EXPIRED_SESSIONS', schedule: '0 * * * *' });
-				// Every 6 hours
-				await	this.create({ name: 'RECALCULATE_USER_STORAGE', schedule: '0 0,6,12,18 * * *' });
-				// Every hour
-				await this.create({ name: 'RECALCULATE_STORAGE_USAGE', schedule: '0 * * * *' });
-			} catch (err) {
-				this.client.logger.error(`[CRONMANAGER]: Failed to create CRON jobs: ${err}`);
+		const defaultJobs = [
+			{ name: 'BACKED_UP_DATABASE', schedule: '0 2 * * *' },
+			{ name: 'DELETE_OLD_BACKUPS', schedule: '0 4 * * *' },
+			{ name: 'DELETE_OLD_LOG_FILES', schedule: '0 3 * * *' },
+			{ name: 'DELETE_EXPIRED_SESSIONS', schedule: '0 * * * *' },
+			{ name: 'RECALCULATE_USER_STORAGE', schedule: '0 0,6,12,18 * * *' },
+			{ name: 'RECALCULATE_STORAGE_USAGE', schedule: '0 * * * *' },
+		] as CronJobList[];
+
+		for (const job of defaultJobs) {
+			if (!this.names.has(job.name)) {
+				try {
+					await this.create(job);
+				} catch (error) {
+					this.client.logger.error(`[CRONMANAGER]: Failed to create CRON job ${job.name}: ${error}`);
+				}
 			}
 		}
 
@@ -61,6 +63,9 @@ export default class CRONManager extends CronJobAccessor {
 					break;
 				case 'RECALCULATE_STORAGE_USAGE':
 					this.scheduleJob(name, cronJob.schedule, this.recalculateStorageUsage.bind(this));
+					break;
+				case 'DELETE_OLD_BACKUPS':
+					this.scheduleJob(name, cronJob.schedule, this.deleteOldBackups.bind(this));
 					break;
 				default:
 					this.client.logger.error(`[CRONMANAGER]: ${name} is not a valid CRON job.`);
@@ -121,6 +126,37 @@ export default class CRONManager extends CronJobAccessor {
 			return this.createLog({ jobName: 'BACKED_UP_DATABASE', status: 'FAILURE', message: `${err}`, duration });
 		}
 	}
+
+	/**
+	  * Delete old database backup files
+		* @returns {CronJobLog}
+	*/
+	async deleteOldBackups(): Promise<CronJobLog> {
+		const oldestDateToKeepBackup = new Date(Date.now() - 1000 * 60 * 60 * 24 * this.client.config.get('RETENTION_POLICY_IN_DAYS.DATABASE_FILES'));
+		const start = Date.now();
+
+		try {
+			const backupPath = `${process.cwd()}/prisma/backups`;
+			const backups = await fs.readdir(backupPath);
+			let deleteNum = 0;
+
+			for (const file of backups) {
+				const stats = await fs.stat(`${backupPath}/${file}`);
+				// Check when it was last modified
+				if (stats.ctimeMs < oldestDateToKeepBackup.getTime()) {
+					deleteNum++;
+					fs.unlink(`${backupPath}/${file}`);
+				}
+			}
+
+			const duration = Date.now() - start;
+			return this.createLog({ jobName: 'DELETE_OLD_BACKUPS', status: 'SUCCESS', message: `Deleted ${deleteNum / 2} old backup files.`, duration });
+		} catch (err) {
+			const duration = Date.now() - start;
+			return this.createLog({ jobName: 'DELETE_OLD_BACKUPS', status: 'FAILURE', message: `${err}`, duration });
+		}
+	}
+
 
 	/**
 	  * Delete old log files

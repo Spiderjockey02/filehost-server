@@ -46,7 +46,7 @@ export default class CronJobAccessor {
 			},
 			data: {
 				schedule: data.schedule,
-				latestStatus: 'SUCCESS',
+				latestStatus: data.latestStatus,
 			},
 		});
 	}
