@@ -79,7 +79,7 @@ export default class CRONManager extends CronJobAccessor {
 		* @param {Function} handler The function to run
 	  * @returns The updated user.
 	*/
-	private scheduleJob(name: string, cronExpr: string, handler: () => Promise<CronJobLog | null>) {
+	private scheduleJob(name: string, cronExpr: string, handler: () => Promise<CronJobLog>) {
 		// Check if it's already active (Might have been called due to a schedule being updated)
 		const existingJob = this.activeJobs.get(name);
 		if (existingJob) {
@@ -188,14 +188,14 @@ export default class CRONManager extends CronJobAccessor {
 
 	/**
 	  * Delete expired sessions
-		* @returns {CronJobLog | null}
+		* @returns {CronJobLog}
 	*/
-	async deleteExpiredSessions(): Promise<CronJobLog | null> {
+	async deleteExpiredSessions(): Promise<CronJobLog> {
 		const start = Date.now();
 
 		try {
 			const { count } = await this.client.sessionManager.deleteExpired();
-			if (count == 0) return null;
+			if (count == 0) return this.createLog({ jobName: 'DELETE_EXPIRED_SESSIONS', status: 'SUCCESS', message: 'No expired sessions found.', duration: 0 });
 
 			const duration = Date.now() - start;
 			return this.createLog({ jobName: 'DELETE_EXPIRED_SESSIONS', status: 'SUCCESS', message: `Deleted ${count} expired sessions.`, duration });
@@ -209,7 +209,7 @@ export default class CRONManager extends CronJobAccessor {
 	  * Recalculate user storage sizes
 		* @returns {CronJobLog}
 	*/
-	async recalculateUserStorage(): Promise<CronJobLog | null> {
+	async recalculateUserStorage(): Promise<CronJobLog> {
 		const start = Date.now();
 
 		try {

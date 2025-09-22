@@ -4,6 +4,7 @@ import { Error, PATHS } from '../utils';
 import os from 'os';
 import fs from 'fs/promises';
 import MIMEList from '../../assets/MIME-list.json';
+import { CronJobLog } from '@prisma/client';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
@@ -90,29 +91,33 @@ export const postCronJobsByName = (client: Client) => {
 export const postCronJobsByNameRun = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const name = req.params.name;
+		let log: CronJobLog;
+
 		try {
 			switch (name) {
 				case 'BACKED_UP_DATABASE':
-					await client.CRONManager.backupDatabase();
+					log = await client.CRONManager.backupDatabase();
 					break;
 				case 'DELETE_EXPIRED_SESSIONS':
-					await client.CRONManager.deleteExpiredSessions();
+					log = await client.CRONManager.deleteExpiredSessions();
 					break;
 				case 'DELETE_OLD_LOG_FILES':
-					await client.CRONManager.deleteOldLogFiles();
+					log = await client.CRONManager.deleteOldLogFiles();
 					break;
 				case 'RECALCULATE_USER_STORAGE':
-					await client.CRONManager.recalculateUserStorage();
+					log = await client.CRONManager.recalculateUserStorage();
 					break;
 				case 'RECALCULATE_STORAGE_USAGE':
-					await client.CRONManager.recalculateStorageUsage();
+					log = await client.CRONManager.recalculateStorageUsage();
 					break;
 				case 'DELETE_OLD_BACKUPS':
-					await client.CRONManager.deleteOldBackups();
+					log = await client.CRONManager.deleteOldBackups();
 					break;
 				default:
 					return Error.MissingResource(res, `${name} is not a valid CRON job.`);
 			}
+
+			if (log.status == 'FAILURE') throw log.message ?? 'CRON job failed to execute.';
 			res.json({ success: 'Successfully ran CRON job.' });
 		} catch (err) {
 			client.logger.error(err);
