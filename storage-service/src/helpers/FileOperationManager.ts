@@ -399,7 +399,12 @@ export default class FileManager extends FileAccessor {
 		const fileProvider = await this.storageManager.getProvider(storage);
 
 		const hasCustomAvatar = await fileProvider.checkFileExists(`${userId}.webp`);
-		fileProvider.sendFile(res, { path: hasCustomAvatar ? `${userId}.webp` : 'default-avatar.webp', userId: '', mimetype: 'image/webp' } as File);
+		const file = {
+			path: hasCustomAvatar ? `${userId}.webp` : 'default-avatar.webp', userId: '', mimetype: 'image/webp',
+			id: hasCustomAvatar ? `${userId}.webp` : 'default-avatar.webp',
+		} as File;
+
+		fileProvider.sendFile(res, file);
 	}
 
 	/**
