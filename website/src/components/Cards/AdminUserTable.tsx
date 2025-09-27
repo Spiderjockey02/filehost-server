@@ -13,7 +13,6 @@ interface Props {
 
 export default function AdminUserTableCards({ storageId }: Props) {
 	const [page, setPage] = useState(0);
-	const [total, setTotal] = useState(0);
 	const [name, setName] = useState('');
 	const [dir, setDir] = useState<'desc' | 'asc'>('desc');
 	const [header, setHeader] = useState<'createdAt' | 'lastActive' | 'uploadedFiles' | 'name'>('createdAt');
@@ -25,12 +24,12 @@ export default function AdminUserTableCards({ storageId }: Props) {
 			if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
 
 			const d = await res.json();
-			setTotal(d.total);
 			return d as { users: UserWithCount[], total: number };
 		},
 		...queryOptions,
 	});
 
+	console.log(isLoading, data);
 	function updateSorting(head: 'createdAt' | 'lastActive' | 'uploadedFiles' | 'name') {
 		setDir(dir == 'asc' ? 'desc' : 'asc');
 		setHeader(head);
@@ -113,39 +112,7 @@ export default function AdminUserTableCards({ storageId }: Props) {
 						</Table.Body>
 					</Table>
 				</div>
-				<div className="d-flex flex-row align-items-center mt-3">
-					<div className="d-flex align-items-center mb-2">
-						<p className="mb-0 me-2">
-            	Showing {page * 20} to {Math.min((page + 1) * 20, total)} out of {total}
-						</p>
-					</div>
-					{total > 20 ?
-						<nav aria-label="Page navigation">
-							<ul className="pagination">
-								<li className={`page-item ${page === 0 ? 'disabled' : ''}`}>
-									<button className="page-link" onClick={() => setPage(Math.max(1 - 1, 0))} aria-label="Previous">
-										<span aria-hidden="true">&laquo;</span>
-									</button>
-								</li>
-								<li className="page-item">
-									<button className="page-link" onClick={() => setPage(0)}>{0}</button>
-								</li>
-								<li className="page-item disabled">
-									<span className="page-link">{page}</span>
-								</li>
-								<li className="page-item">
-									<button className="page-link" onClick={() => setPage(Math.floor(total / 20))}>{Math.floor(total / 20)}</button>
-								</li>
-								<li className={`page-item ${page == Math.floor(total / 20) ? 'disabled' : ''}`}>
-									<button className="page-link" onClick={() => setPage(Math.min(page + 1, 20))} aria-label="Next">
-										<span aria-hidden="true">&raquo;</span>
-									</button>
-								</li>
-							</ul>
-						</nav>
-						: null
-					}
-				</div>
+				<Table.PaginationFooter isLoading={isLoading} data={data} page={page} setPage={setPage} />
 			</Card.Body>
 		</Card>
 	);

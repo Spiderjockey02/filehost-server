@@ -22,5 +22,12 @@ export interface FileViewProps {
   showMoreDetail?: boolean
 }
 
+export interface PaginationFooterProps {
+	isLoading: boolean;
+	data: { total: number } | undefined;
+	page: number;
+	setPage: (page: number) => void;
+}
+
 export type sortKeyTypes = 'Name' | 'Size' | 'Date_Mod';
 export type SortOrder = 'ascn' | 'dscn';
