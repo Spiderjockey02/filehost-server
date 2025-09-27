@@ -11,20 +11,21 @@ export const getDatabaseBackups = (client: Client) => {
 			// Check if the database backups folder exists
 			if (!existsSync(PATHS.DATABASE_BACKUPS)) await fs.mkdir(PATHS.DATABASE_BACKUPS, { recursive: true });
 
-			// Get list of files in the database backups folder
-			const files = await fs.readdir(PATHS.DATABASE_BACKUPS);
-			const backups = [];
+			// Get list of JSON files in the database backups folder
+			let files = await fs.readdir(PATHS.DATABASE_BACKUPS);
+			files = files.filter((f) => f.endsWith('.json'));
 
-			// Filter out files that are not .json files and get their stats
-			for (const file of files.filter((f) => f.endsWith('.json'))) {
-				const stats = await fs.stat(`${PATHS.DATABASE_BACKUPS}/${file}`);
-				if (stats.isFile()) {
-					const data = await fs.readFile(`${PATHS.DATABASE_BACKUPS}/${file}`, 'utf-8');
-					const metadata = JSON.parse(data);
-					backups.push({ ...metadata });
-				}
-			}
+			// Read each file and parse the JSON data
+			const backups = await Promise.all(
+				files.map(async (file) => {
+					const filePath = `${PATHS.DATABASE_BACKUPS}/${file}`;
+					const stats = await fs.stat(filePath);
+					if (!stats.isFile()) return null;
 
+					const data = await fs.readFile(filePath, 'utf-8');
+					return JSON.parse(data);
+				}),
+			);
 			res.json({ backups });
 		} catch (err) {
 			client.logger.error(err);
