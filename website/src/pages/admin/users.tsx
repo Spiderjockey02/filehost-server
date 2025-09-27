@@ -26,22 +26,22 @@ export default function AdminUsersPage({ emails, signupSource, userStats, error 
 			</div>
 			{error && <ErrorPopup text={error} />}
 			<Row>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Total Users" text={userStats.total} icon={faUsers} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="New users (7 days)" text={userStats.new} icon={faFolderTree} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Active users (7 days)" text={userStats.active} icon={faHardDrive} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Average Storage Used" text={formatBytes(userStats.avgstorageUsage)} icon={faHardDrive} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Banned users" text={userStats.banned} icon={faMemory} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Admins" text={userStats.admins} icon={faMemory} />
 				</Col>
 			</Row>

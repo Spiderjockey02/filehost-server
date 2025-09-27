@@ -36,22 +36,22 @@ export default function AdminFilesPage(data: AdminFilesPageProps) {
 			</div>
 			{data.error && <ErrorPopup text={data.error} />}
 			<Row>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Total files" text={data.files + data.folders} icon={faUsers} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="New files (7 days)" text={data.newFiles} icon={faFolderTree} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Total Storage Used" text={formatBytes(data.totalStorageSize)} icon={faHardDrive} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Average File Size" text={formatBytes(data.avgFileSize)} icon={faHardDrive} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Most Common File Type" text={Object.keys(data.mostCommonFileTypes)[0]} icon={faMemory} />
 				</Col>
-				<Col xxl={2} xl={3} lg={4} md={6} className='mb-4'>
+				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Deleted Files Count" text={data.deletedFiles} icon={faTrash} />
 				</Col>
 			</Row>
