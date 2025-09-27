@@ -31,12 +31,12 @@ export const deleteCacheByName = (client: Client) => {
 					client.userActivityManager.userAgentCache.clear();
 					break;
 				default:
-					return Error.IncorrectQuery(res, 'endpoint must only be users, files, history, cache or thumbnails');
+					return Error.IncorrectQuery(res, 'name must be one of users, files, history, sessions, mimetype, ips or userAgents.');
 			}
-			res.json({ success: `Successfully deleted cached ${name}.` });
+			res.json({ success: `Successfully reset cache: ${name}.` });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, `Failed to delete cached ${name}.`);
+			Error.GenericError(res, `Failed to reset cache: ${name}.`);
 		}
 	};
 };
