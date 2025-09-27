@@ -6,7 +6,7 @@ import { formatBytes } from '@/utils/functions';
 import { Table, Card } from '@/components';
 
 export default function AdminDatabaseBackupCard() {
-	const { backups, error, isLoading, isMutating, createBackup, deleteBackup } = useDatabaseBackups();
+	const { backups, error, isLoading, isMutating, deleteBackup } = useDatabaseBackups();
 
 	async function downloadBackup(backupName: string) {
 		try {
@@ -34,10 +34,9 @@ export default function AdminDatabaseBackupCard() {
 	}
 
 	return (
-		<Card>
+		<Card className='mb-4'>
 			<Card.Header>
 				Database Backups
-				<button className='btn btn-secondary' onClick={() => createBackup()}>Backup</button>
 			</Card.Header>
 			<Card.Body className='table-responsive' style={{ overflowY: 'scroll', maxHeight: '65vh' }}>
 				<Table>

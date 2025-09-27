@@ -1,4 +1,3 @@
-import extendedClient from '../../accessors/prisma';
 import type { Request, Response } from 'express';
 import { Error, PATHS } from '../../utils';
 import Client from 'src/helpers/Client';
@@ -30,20 +29,6 @@ export const getDatabaseBackups = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to get database backups.');
-		}
-	};
-};
-
-// Endpoint: POST /api/admin/database/backup
-export const postDatabaseBack = (client: Client) => {
-	return async (_req: Request, res: Response) => {
-
-		try {
-			const metadata = await extendedClient.$backup();
-			res.json({ success: 'Successfully backed up database.', metadata });
-		} catch (err) {
-			client.logger.error(err);
-			Error.GenericError(res, 'Failed to create backup of database.');
 		}
 	};
 };

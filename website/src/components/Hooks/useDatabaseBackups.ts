@@ -29,27 +29,13 @@ export function useDatabaseBackups() {
 		},
 	});
 
-	// Create backup
-	const createMutation = useMutation({
-		mutationFn: async () => {
-			const res = await fetch('/api/admin/database/backup', {
-				method: 'POST',
-			});
-			if (!res.ok) throw new Error('Failed to create backup');
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['databaseBackups'] });
-		},
-	});
-
 	return {
 		backups: data?.backups ?? [],
 		isLoading,
 		isFetching,
 		error,
 		refetch,
-		createBackup: createMutation.mutateAsync,
 		deleteBackup: deleteMutation.mutateAsync,
-		isMutating: createMutation.isPending || deleteMutation.isPending,
+		isMutating: deleteMutation.isPending,
 	};
 }
