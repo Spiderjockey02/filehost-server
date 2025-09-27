@@ -5,6 +5,7 @@ import extendedClient from '../accessors/prisma';
 import fs from 'fs/promises';
 import { CronJobLog, CronJobNames } from '@prisma/client';
 import { CronJobList } from 'src/types/database/CronJob';
+import { createAuditLogEntry } from '../accessors/AuditLog';
 
 export default class CRONManager extends CronJobAccessor {
 	client: Client;
@@ -91,13 +92,42 @@ export default class CRONManager extends CronJobAccessor {
 		const job = CronJob.from({
 			cronTime: cronExpr,
 			onTick: async () => {
-				await handler();
+				try {
+					const log = await handler();
+
+					if (log.status == 'FAILURE') throw log.message;
+					this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+						createAuditLogEntry({
+							eventType: 'CRONJOB_RAN',
+							resourceType: 'SYSTEM',
+							resourceId: name,
+							success: true,
+							message: `CRON job ${name} executed successfully.`,
+						});
+					});
+				} catch (err) {
+					this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+						createAuditLogEntry({
+							eventType: 'CRONJOB_RAN',
+							resourceType: 'SYSTEM',
+							resourceId: name,
+							success: false,
+							message: `CRON job ${name} failed with error: ${err}`,
+						});
+					});
+					this.client.logger.error(`[CRONMANAGER]: Error occurred while executing ${name}: ${err}`);
+				}
 			},
 			start: true,
 		});
 		this.activeJobs.set(name, job);
 	}
 
+	/**
+	 * Update the schedule of a CRON job and reschedule it
+	 * @param {CronJobNames} name The name of the CRON job
+	 * @param {string} newSchedule The new CRON schedule expression
+	*/
 	async updateAndReschedule(name: CronJobNames, newSchedule: string) {
 		// Check if name is valid
 		const job = this.activeJobs.get(name);

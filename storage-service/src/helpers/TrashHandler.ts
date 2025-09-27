@@ -2,6 +2,7 @@ import type { File } from '@prisma/client';
 import Client from './Client';
 import prismaClient from '../accessors/prisma';
 import { UserWithPlan } from 'src/types/database/User';
+import { createAuditLogEntry } from '../accessors/AuditLog';
 
 export default class TrashHandler {
 	client: Client;
@@ -47,7 +48,7 @@ export default class TrashHandler {
 					}
 				}
 			});
-		} catch (err: any) {
+		} catch (err) {
 			for (const change of fileUpdates) {
 				await this.client.FileManager.update({
 					id: change.id,
@@ -55,7 +56,7 @@ export default class TrashHandler {
 				});
 			}
 
-			throw new Error(`Failed to move to trash: ${err.message}`);
+			throw new Error(`Failed to move to trash: ${err}`);
 		}
 
 		return file;
@@ -87,6 +88,16 @@ export default class TrashHandler {
 			}
 		}
 
+		this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+			createAuditLogEntry({
+				eventType: 'FILE_RECOVERED',
+				resourceType: 'FILE',
+				resourceId: file.id,
+				success: true,
+				userId: file.userId,
+			});
+		});
+
 		return file;
 	}
 
@@ -109,14 +120,37 @@ export default class TrashHandler {
 	async removeFileFromSystem(userId: string, filePath: string) {
 		const file = await this.client.FileManager.getByFilePath(userId, filePath, true);
 		if (file && file.deletedAt !== null) {
-			await this.client.FileManager.deleteFromDB(file.id);
-			await this.client.userManager.modifyStorageSize(userId, file.size, 'DECRE');
-			const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
-			if (storage !== null) {
-				const medium = await this.client.FileManager.storageManager.getProvider(storage);
-				medium.deleteFile(`${userId}${filePath}`);
-			}
+			try {
+				await this.client.FileManager.deleteFromDB(file.id);
+				await this.client.userManager.modifyStorageSize(userId, file.size, 'DECRE');
+				const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
+				if (storage !== null) {
+					const medium = await this.client.FileManager.storageManager.getProvider(storage);
+					medium.deleteFile(`${userId}${filePath}`);
+				}
 
+				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+					createAuditLogEntry({
+						eventType: 'FILE_DELETE',
+						resourceType: 'FILE',
+						resourceId: file.id,
+						success: true,
+						userId: file.userId,
+					});
+				});
+			} catch (err) {
+				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+					createAuditLogEntry({
+						eventType: 'FILE_DELETE',
+						resourceType: 'FILE',
+						resourceId: file.id,
+						success: false,
+						message: `Failed to remove file from system: ${err}`,
+						userId: file.userId,
+					});
+				});
+				this.client.logger.error(`Failed to remove file from system: ${err}`);
+			}
 		}
 	}
 }

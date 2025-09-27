@@ -22,6 +22,7 @@ model User {
   recentlyViewed    RecentlyViewedFile[]
   files             File[]
   activity          UserActivity[]
+  logs              AuditLog[]
   bans              UserBans[]  @relation("bannedUser")
   issuedBans        UserBans[]  @relation("issuedUser")
   plan              Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
@@ -258,7 +259,9 @@ model IpAddress {
   isp       String?
   isVPN     Boolean    @default(false)
   isCrawler Boolean    @default(false)
-  activity  UserActivity[]
+  
+  activity        UserActivity[]
+  logs            AuditLog[]
 }
 
 model UserAgent {
@@ -268,7 +271,55 @@ model UserAgent {
   osName          String?
   osVersion       String?
   isBot           Boolean   @default(false)
+
   activity        UserActivity[]
+  logs            AuditLog[]
+}
+
+enum AuditLogResourceType {
+  FILE
+  USER
+  STORAGE
+  SYSTEM
+}
+
+enum AuditLogEventType {
+  FILE_UPLOAD
+  FILE_DOWNLOAD
+  FILE_RENAME
+  FILE_COPY
+  FILE_MOVE
+  FILE_DELETE
+  FILE_TRASHED
+  FILE_RECOVERED
+  FOLDER_CREATE
+  NOTIFICATION_SENT
+  CRONJOB_RAN
+  USER_REGISTERED
+  USER_LOGIN
+  USER_UPDATE
+  SYSTEM_ONLINE
+}
+
+model AuditLog {
+  id           String         @id @default(cuid())
+  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId       String?
+  eventType    AuditLogEventType
+  message      String?
+  resourceType AuditLogResourceType
+  resourceId   String?
+  success      Boolean
+  ipCon        IpAddress?    @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
+  ipAddress    String?
+  UserAgentCon UserAgent?    @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([eventType])
+  @@index([resourceType])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model UserBans {

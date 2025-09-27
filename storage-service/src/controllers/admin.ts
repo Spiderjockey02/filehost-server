@@ -92,7 +92,8 @@ export const postCronJobsByNameRun = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const name = req.params.name;
 		let log: CronJobLog;
-
+		const session = await getSession(client, req.headers);
+		if (!session?.user) return Error.InvalidSession(res);
 		try {
 			switch (name) {
 				case 'BACKED_UP_DATABASE':
@@ -118,8 +119,33 @@ export const postCronJobsByNameRun = (client: Client) => {
 			}
 
 			if (log.status == 'FAILURE') throw log.message ?? 'CRON job failed to execute.';
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				createAuditLogEntry({
+					eventType: 'CRONJOB_RAN',
+					resourceType: 'SYSTEM',
+					resourceId: name,
+					success: true,
+					message: `CRON job ${name} executed successfully.`,
+					userId: session.user?.id,
+					userAgent: req.headers['user-agent'],
+					ip: getIP(req),
+				});
+			});
 			res.json({ success: 'Successfully ran CRON job.' });
 		} catch (err) {
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				createAuditLogEntry({
+					eventType: 'CRONJOB_RAN',
+					resourceType: 'SYSTEM',
+					resourceId: name,
+					success: false,
+					message: `CRON job ${name} failed with error: ${err}`,
+					userId: session.user?.id,
+					userAgent: req.headers['user-agent'],
+					ip: getIP(req),
+				});
+			});
+
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
@@ -159,16 +185,44 @@ export const getSystemStats = (client: Client) => {
 // Endpoint: POST /api/admin/notification
 export const postNotification = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		// Validate body
 		const { text, title, url, userId } = req.body;
+		if (typeof text !== 'string' || text.length < 1) return Error.IncorrectQuery(res, 'text must be a string with at least 1 character.');
+		if (typeof title !== 'string' || title.length < 1) return Error.IncorrectQuery(res, 'title must be a string with at least 1 character.');
+		if (url != undefined && (typeof url !== 'string' || !url.startsWith('/'))) return Error.IncorrectQuery(res, 'url must be a string starting with /.');
+		if (typeof userId !== 'string' || userId.length < 1) return Error.IncorrectQuery(res, 'userId must be a string with at least 1 character.');
 
+		// Check session
+		const session = await getSession(client, req.headers);
+		if (!session?.user) return Error.InvalidSession(res);
+
+		const user = await client.userManager.fetchbyParam({ id: userId });
+		if (user == null) return Error.IncorrectQuery(res, 'UserId is not a valid user.');
 		try {
-			const user = await client.userManager.fetchbyParam({ id: userId });
-			if (user == null) return Error.IncorrectQuery(res, 'UserId is not a valid user.');
 
-			const notification = await client.notificationManager.create({ text, title, url, userId });
+			const notification = await client.notificationManager.create({ text, title, url, userId: user.id });
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				createAuditLogEntry({
+					eventType: 'NOTIFICATION_SENT',
+					resourceType: 'USER',
+					resourceId: notification.id,
+					success: true,
+					userId: session.user.id,
+				});
+			});
 			res.json({ success: 'Notification created successfully.', notification });
 		} catch (err) {
 			client.logger.error(err);
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				createAuditLogEntry({
+					eventType: 'NOTIFICATION_SENT',
+					resourceType: 'USER',
+					resourceId: user.id,
+					success: false,
+					userId: session.user.id,
+				});
+			});
 			Error.GenericError(res, 'Failed to create / send new notification.');
 		}
 	};

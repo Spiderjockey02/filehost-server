@@ -1,5 +1,5 @@
 import { cleanUpVideo } from '../utils/VideoPreprocessor';
-import { normalizePath } from '../utils';
+import { getIP, normalizePath } from '../utils';
 import type Client from '../helpers/Client';
 import type { File } from '@prisma/client';
 import type { Request } from 'express';
@@ -7,6 +7,7 @@ import formidable from 'formidable';
 import { readFile } from 'node:fs/promises';
 import { FullFile } from 'src/types/database/File';
 import { UserWithPlan } from 'src/types/database/User';
+import { createAuditLogEntry } from '../accessors/AuditLog';
 
 export default async (client: Client, req: Request, user: UserWithPlan) => {
 	// Make sure they haven't already uploaded past their max storage
@@ -65,7 +66,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 				// Add the file to the folder
 				dir = await ensureFolderExists(client, dir, user.id, folderPath, storage.id);
-				if (!dir) throw 'Missing parent directory 2';
+				if (!dir) throw 'Missing parent directory';
 
 				uploadedFile = await client.FileManager.create({
 					userId: user.id,
@@ -139,6 +140,20 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 				}
 			}
 
+			// Audit logs
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await createAuditLogEntry({
+					eventType: 'FILE_UPLOAD',
+					resourceType: 'FILE',
+					resourceId: uploadedFile?.id,
+					success: true,
+					userId: user.id,
+					ip: getIP(req),
+					userAgent: `${req.headers['user-agent']}`,
+					message: `File uploaded: ${file.originalFilename} (${file.size} bytes)`,
+				});
+			});
+
 			user.totalStorageSize += BigInt(file.size);
 		} catch (error) {
 			// Delete the file from the storage system and/or database if it was created
@@ -148,6 +163,20 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 					console.error('Failed to delete file from system:', err);
 				});
 			}
+
+			// Audit logs
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await createAuditLogEntry({
+					eventType: 'FILE_UPLOAD',
+					resourceType: 'FILE',
+					resourceId: uploadedFile?.id,
+					success: false,
+					userId: user.id,
+					ip: getIP(req),
+					userAgent: `${req.headers['user-agent']}`,
+					message: `File upload failed: ${file.originalFilename} - ${error}`,
+				});
+			});
 
 			throw error;
 		}

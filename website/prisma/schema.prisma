@@ -275,12 +275,20 @@ enum AuditLogResourceType {
 
 enum AuditLogEventType {
   FILE_UPLOAD
+  FILE_DOWNLOAD
   FILE_RENAME
   FILE_COPY
   FILE_MOVE
-  FILE_DELETE 
+  FILE_DELETE
+  FILE_TRASHED
+  FILE_RECOVERED
   FOLDER_CREATE
   NOTIFICATION_SENT
+  CRONJOB_RAN
+  USER_REGISTERED
+  USER_LOGIN
+  USER_UPDATE
+  SYSTEM_ONLINE
 }
 
 model AuditLog {
@@ -288,11 +296,10 @@ model AuditLog {
   user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId       String?
   eventType    AuditLogEventType
-  description  String
+  message      String?
   resourceType AuditLogResourceType
   resourceId   String?
   success      Boolean
-  errorMessage String?
   ipCon        IpAddress?    @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
   ipAddress    String?
   UserAgentCon UserAgent?    @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
