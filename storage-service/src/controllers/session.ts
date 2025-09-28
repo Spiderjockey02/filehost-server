@@ -77,3 +77,19 @@ export const deleteNotification = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint GET /api/session/accounts
+export const getLinkedAccounts = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+			const accounts = await client.userManager.fetchAccountsByUserId(session.user.id);
+
+			res.json({ accounts: sanitiseObject(accounts.map(a => ({ id: a.id, provider: a.providerId }))) });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch linked accounts.');
+		}
+	};
+};

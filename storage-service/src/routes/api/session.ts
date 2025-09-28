@@ -1,4 +1,4 @@
-import { deleteNotification, deleteResetAvatar, getRecentlyViewed, postChangeAvatar } from '../../controllers/session';
+import { deleteNotification, deleteResetAvatar, getLinkedAccounts, getRecentlyViewed, postChangeAvatar } from '../../controllers/session';
 import type Client from '../../helpers/Client';
 import { Router } from 'express';
 const router = Router();
@@ -12,5 +12,6 @@ export default function(client: Client) {
 
 	router.delete('/notifications/:id', deleteNotification(client));
 
+	router.get('/accounts', getLinkedAccounts(client));
 	return router;
 }
