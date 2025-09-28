@@ -12,15 +12,16 @@ const extendedClient = client.$extends({
 	query: {
 		user: {
 			async create({ args, query }) {
+				args.data.storage = {
+					connect: { id: args.data.storageId },
+				};
+				delete args.data.storageId;
 
-				if (!args.data.storageId) {
-					args.data.storage = {
-						connect: { id: args.data.storageId },
-					};
-					args.data.plan = {
-						connect: { id: args.data.planId },
-					};
-				}
+				args.data.plan = {
+					connect: { id: args.data.planId },
+				};
+
+				delete args.data.planId;
 				const result = await query(args);
 				return convertBigIntToNumber(result);
 			},
