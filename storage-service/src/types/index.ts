@@ -12,6 +12,27 @@ export interface IdParam {
   id: string
 }
 
+export interface FileOptions {
+	path: string
+	route: string
+}
+
+export interface MySQLConnectionOptions {
+  username: string
+	password: string
+	host: string
+	port: number
+	database: string
+}
+
+export interface S3Options {
+  endpoint: string
+  region: string
+  accessKeyId: string
+  secretAccessKey: string
+  bucket: string
+}
+
 export interface Session {
   user?: User
   expires?: Date

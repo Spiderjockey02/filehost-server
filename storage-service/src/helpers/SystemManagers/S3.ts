@@ -30,7 +30,6 @@ export default class S3Manager implements StorageProvider {
 				secretAccessKey: config.secretAccessKey,
 			},
 			endpoint: config.endpoint,
-			forcePathStyle: config.forcePathStyle,
 		});
 		this.client = client;
 	}
