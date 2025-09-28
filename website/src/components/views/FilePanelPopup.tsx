@@ -17,12 +17,14 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 
 	const handleDownload = async () => {
 		try {
-			const { data: blob } = await axios.get(`/api/files/download?path=${file.path}`, {
-				headers: {
-					'Accept': 'application/zip',
-				},
-				responseType: 'blob',
-			});
+			const { data: blob } = await axios.post('/api/files/download',
+				{ id: `${file.id}` },
+				{
+					headers: {
+						'Accept': 'application/zip',
+					},
+					responseType: 'blob',
+				});
 
 			if (blob.size > 0) {
 				const url = window.URL.createObjectURL(blob);
@@ -80,7 +82,7 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 				<div className="offcanvas-body" style={{ padding: '3px' }}>
 					<div className='container justify-content-center text-center'>
 						<span onClick={handleRowClick} style={{ cursor: 'pointer' }}>
-							<Image src={file.name} alt={file.name} style={{ maxWidth: '100%', height: 'auto', border: '1px solid black' }} width={300} height={600} loader={imageLoader} loading='lazy' />
+							<Image src={file.name} alt={file.name} style={{ maxWidth: '100%', height: 'auto', border: '1px solid black' }} width={300} height={390} loader={imageLoader} loading='lazy' />
 							<br />
 							<h4 className='text-break'>{file.name}</h4>
 						</span>
