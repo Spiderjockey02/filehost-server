@@ -115,6 +115,82 @@ export const auth = betterAuth({
 						},
 					};
 				},
+				after: async (user, ctx) => {
+					await client.auditLog.create({
+						data: {
+							user: {
+								connect: {
+									id: user.id,
+								},
+							},
+							eventType: 'USER_REGISTERED',
+							resourceType: 'USER',
+							resourceId: user.id,
+							UserAgentCon: {
+								connectOrCreate: {
+									where: {
+										agent: ctx?.request?.headers.get('user-agent') || '',
+									},
+									create: {
+										agent: ctx?.request?.headers.get('user-agent') || '',
+									},
+								},
+							},
+							ipCon: {
+								connectOrCreate: {
+									where: {
+										ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+									},
+									create: {
+										ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+									},
+								},
+							},
+							message: 'A new user has registered',
+							success: true,
+						},
+					});
+				},
+			},
+		},
+		session: {
+			create: {
+				after: async (session, ctx) => {
+					await client.auditLog.create({
+						data: {
+							user: {
+								connect: {
+									id: session.userId,
+								},
+							},
+							eventType: 'USER_LOGIN',
+							resourceType: 'USER',
+							resourceId: session.id,
+							UserAgentCon: {
+								connectOrCreate: {
+									where: {
+										agent: ctx?.request?.headers.get('user-agent') || '',
+									},
+									create: {
+										agent: ctx?.request?.headers.get('user-agent') || '',
+									},
+								},
+							},
+							ipCon: {
+								connectOrCreate: {
+									where: {
+										ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+									},
+									create: {
+										ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+									},
+								},
+							},
+							message: 'User has logged in',
+							success: true,
+						},
+					});
+				},
 			},
 		},
 	},
