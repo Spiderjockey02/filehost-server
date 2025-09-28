@@ -14,7 +14,7 @@ export default function FileContextMenu({ x, y, closeContextMenu, selected, show
 	const handleDownload = async () => {
 		try {
 			const { data: blob } = await axios.post('/api/files/download',
-				{ path: `${selected[0].path}` },
+				{ id: `${selected[0].id}` },
 				{
 					headers: {
 						'Accept': 'application/zip',
