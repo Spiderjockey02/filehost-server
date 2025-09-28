@@ -50,8 +50,8 @@ export default function User2FAModal() {
 							<>
 								<p>Backup Codes:</p>
 								<ul>
-									{data.backupCodes.map((code, index) => (
-										<li key={index}>{code}</li>
+									{data.backupCodes.map((txt, index) => (
+										<li key={index}>{txt}</li>
 									))}
 								</ul>
 								{data.totpURI ? <QRCode value={data.totpURI || ''} /> : null}

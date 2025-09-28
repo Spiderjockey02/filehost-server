@@ -14,6 +14,7 @@ declare module 'better-auth' {
     role: string
     notifications: Notification[]
     plan: Plan
+    twoFactorEnabled: boolean
   }
 }
 
