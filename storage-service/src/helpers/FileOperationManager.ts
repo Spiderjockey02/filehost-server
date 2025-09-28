@@ -446,9 +446,12 @@ export default class FileManager extends FileAccessor {
 		}
 	}
 
+	/**
+	 * Get file system statistics for all storages.
+	 * @returns An array of storage statistics including name, used size, and total size.
+	 */
 	async getFileSystemStatistics() {
 		const storages = await this.storageManager.fetchAll({ page: 0 });
-		const data = storages.map(s => ({ name: s.name, stats: this.storageManager.getProvider(s) }));
-		return data;
+		return storages.map(s => ({ name: s.name, used: Number(s.usedSize), total: Number(s.maxSize) }));
 	}
 }

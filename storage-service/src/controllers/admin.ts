@@ -1,16 +1,18 @@
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
-import { Error, PATHS } from '../utils';
+import { Error, getIP, PATHS } from '../utils';
 import os from 'os';
 import fs from 'fs/promises';
 import MIMEList from '../../assets/MIME-list.json';
 import { CronJobLog } from '@prisma/client';
+import { createAuditLogEntry } from '../accessors/AuditLog';
+import { getSession } from '../middleware';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const mediums = client.FileManager.getFileSystemStatistics();
+			const mediums = await client.FileManager.getFileSystemStatistics();
 			const { files } = await client.FileManager.fetchTotal();
 
 			res.json({
@@ -19,8 +21,8 @@ export const getStats = (client: Client) => {
 					mediums,
 				},
 				memory: {
-					using: Number((process.memoryUsage().heapUsed).toFixed(2)),
-					total:  Number((os.totalmem()).toFixed(2)),
+					using: Number(process.memoryUsage().heapUsed.toFixed(2)),
+					total:  Number(os.totalmem().toFixed(2)),
 				},
 				cpu: {
 					total: 0,
