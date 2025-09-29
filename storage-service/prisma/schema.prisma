@@ -299,6 +299,7 @@ enum AuditLogEventType {
   USER_LOGIN
   USER_UPDATE
   SYSTEM_ONLINE
+  RATE_LIMIT_ABUSE
 }
 
 model AuditLog {

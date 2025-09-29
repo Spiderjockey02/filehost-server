@@ -58,10 +58,21 @@ export default class Error {
 		* @param {Response} res The response to the requestee
 		* @param {string} errMsg The error message
 	*/
-	public static IncorrectQuery(res: Response, errMsg: any) {
+	public static IncorrectQuery(res: Response, errMsg: unknown) {
 		res
 			.status(412)
 			.json({ error: errMsg });
 	}
 
+	/**
+	  * Tell the requestee they are being rate limited
+	  * @param {Response} res The response to the requestee
+	*/
+	public static RateLimited(res: Response) {
+		res
+			.status(429)
+			.json({
+				error: 'Too many requests. Please wait a second and try again.',
+			});
+	}
 }
