@@ -129,6 +129,11 @@ export default function AdminConfigCard() {
 					{Object.entries(config.RETENTION_POLICY_IN_DAYS).map(([key, val]) => (
 						<InputField key={key} name={key} title={key.replace(/_/g, ' ')} type="number" value={val} onChange={(e) => handleNestedChange('RETENTION_POLICY_IN_DAYS', key as keyof Config['RETENTION_POLICY_IN_DAYS'], parseInt(e.target.value))} />
 					))}
+					<hr />
+					<h5>Rate limit</h5>
+					{Object.entries(config.RATE_LIMIT).map(([key, val]) => (
+						<InputField key={key} name={key} title={key.replace(/_/g, ' ')} type="number" value={val} onChange={(e) => handleNestedChange('RATE_LIMIT', key as keyof Config['RATE_LIMIT'], parseInt(e.target.value))} />
+					))}
 					<button type="submit" className="btn btn-success">
 						Save Changes
 					</button>

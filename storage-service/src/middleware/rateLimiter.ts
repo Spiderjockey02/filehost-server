@@ -12,11 +12,6 @@ interface Bucket {
 }
 
 const buckets: Map<string, Bucket> = new Map();
-const capacity = 50;
-const refillRate = 1;
-const abuseThreshold = 100;
-const abuseWindow = 1000;
-
 export async function userPostRateLimit(client: Client) {
 	return async (req: Request, res: Response, next: NextFunction) => {
 		// Get the client key and bucket
@@ -25,20 +20,20 @@ export async function userPostRateLimit(client: Client) {
 		const now = Date.now();
 		let bucket = buckets.get(key);
 		if (!bucket) {
-			bucket = { tokens: capacity, lastRefill: now, abuseLog: [] };
+			bucket = { tokens: client.config.get('RATE_LIMIT.CAPACITY'), lastRefill: now, abuseLog: [] };
 			buckets.set(key, bucket);
 		}
 
 		const elapsed = (now - bucket.lastRefill) / 1000;
 		if (elapsed > 0) {
-			const refill = elapsed * refillRate;
-			bucket.tokens = Math.min(capacity, bucket.tokens + refill);
+			const refill = elapsed * client.config.get('RATE_LIMIT.REFILL_RATE');
+			bucket.tokens = Math.min(client.config.get('RATE_LIMIT.CAPACITY'), bucket.tokens + refill);
 			bucket.lastRefill = now;
 		}
 
 		bucket.abuseLog.push(now);
-		bucket.abuseLog = bucket.abuseLog.filter((t) => now - t < abuseWindow);
-		if (bucket.abuseLog.length > abuseThreshold) {
+		bucket.abuseLog = bucket.abuseLog.filter((t) => now - t < client.config.get('RATE_LIMIT.ABUSE_WINDOW'));
+		if (bucket.abuseLog.length > client.config.get('RATE_LIMIT.ABUSE_THRESHOLD')) {
 			if (!bucket.lastAbuseLog || now - bucket.lastAbuseLog >= 1000) {
 				bucket.abuseLog.push(now);
 				bucket.lastAbuseLog = now;
@@ -61,15 +56,15 @@ export async function userPostRateLimit(client: Client) {
 		if (bucket.tokens >= 1) {
 			bucket.tokens -= 1;
 
-			res.setHeader('X-RateLimit-Limit', capacity.toString());
+			res.setHeader('X-RateLimit-Limit', client.config.get('RATE_LIMIT.CAPACITY').toString());
 			res.setHeader('X-RateLimit-Remaining', Math.floor(bucket.tokens).toString());
-			res.setHeader('X-RateLimit-Reset', ((capacity - bucket.tokens) / refillRate).toFixed(1));
+			res.setHeader('X-RateLimit-Reset', ((client.config.get('RATE_LIMIT.CAPACITY') - bucket.tokens) / client.config.get('RATE_LIMIT.REFILL_RATE')).toFixed(1));
 			return next();
 		}
 
-		res.setHeader('X-RateLimit-Limit', capacity.toString());
+		res.setHeader('X-RateLimit-Limit', client.config.get('RATE_LIMIT.CAPACITY').toString());
 		res.setHeader('X-RateLimit-Remaining', '0');
-		res.setHeader('X-RateLimit-Reset', ((capacity - bucket.tokens) / refillRate).toFixed(1));
+		res.setHeader('X-RateLimit-Reset', ((client.config.get('RATE_LIMIT.CAPACITY') - bucket.tokens) / client.config.get('RATE_LIMIT.REFILL_RATE')).toFixed(1));
 		res.setHeader('Retry-After', '1');
 		Error.RateLimited(res);
 	};

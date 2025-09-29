@@ -241,7 +241,7 @@ export const getConfig = (client: Client) => {
 export const postConfig = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const { MAX_AVATAR_SIZE, MAX_CHARS_FILE_NAME, DISALLOWED_MIME_TYPES, INVALID_CHARS_IN_FILE_NAME,
-			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE } = req.body;
+			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE, RATE_LIMIT } = req.body;
 
 		// Validate MAX_AVATAR_SIZE and MAX_CHARS_FILE_NAME are positive integers
 		if (typeof MAX_AVATAR_SIZE !== 'number' || isNaN(MAX_AVATAR_SIZE) || MAX_AVATAR_SIZE < 1) return Error.IncorrectQuery(res, 'MAX_AVATAR_SIZE must be a valid number greater than or equal to 1.');
@@ -279,6 +279,14 @@ export const postConfig = (client: Client) => {
 
 		// Validate FOLDER_SIZE is a positive integer
 		if (typeof FOLDER_SIZE !== 'number' || isNaN(FOLDER_SIZE) || FOLDER_SIZE < 1) return Error.IncorrectQuery(res, 'FOLDER_SIZE must be a valid number greater than or equal to 1.');
+
+		// Validate RATE_LIMIT is an object with WINDOW_SIZE and MAX_REQUESTS as positive integers
+		if (typeof RATE_LIMIT !== 'object' || RATE_LIMIT == null) return Error.IncorrectQuery(res, 'RATE_LIMIT must be an object.');
+		const { CAPACITY, REFILL_RATE, ABUSE_THRESHOLD, ABUSE_WINDOW } = RATE_LIMIT;
+		if (typeof CAPACITY !== 'number' || isNaN(CAPACITY) || CAPACITY < 1) return Error.IncorrectQuery(res, 'RATE_LIMIT.CAPACITY must be a valid number greater than or equal to 1.');
+		if (typeof REFILL_RATE !== 'number' || isNaN(REFILL_RATE) || REFILL_RATE < 1) return Error.IncorrectQuery(res, 'RATE_LIMIT.REFILL_RATE must be a valid number greater than or equal to 1.');
+		if (typeof ABUSE_THRESHOLD !== 'number' || isNaN(ABUSE_THRESHOLD) || ABUSE_THRESHOLD < 1) return Error.IncorrectQuery(res, 'RATE_LIMIT.ABUSE_THRESHOLD must be a valid number greater than or equal to 1.');
+		if (typeof ABUSE_WINDOW !== 'number' || isNaN(ABUSE_WINDOW) || ABUSE_WINDOW < 1) return Error.IncorrectQuery(res, 'RATE_LIMIT.ABUSE_WINDOW must be a valid number greater than or equal to 1.');
 
 		client.config.setAll(req.body);
 		res.json({ success: 'Configuration updated successfully.' });

@@ -27,5 +27,11 @@
         "USER_ACTIVITY": 90,
         "AUDIT_LOGS": 90
     },
-    "FOLDER_SIZE": 4096
+    "FOLDER_SIZE": 4096,
+    "RATE_LIMIT": {
+        "CAPACITY": 50,
+        "REFILL_RATE": 1,
+        "ABUSE_THRESHOLD": 100,
+        "ABUSE_WINDOW": 1000
+    }
 }
