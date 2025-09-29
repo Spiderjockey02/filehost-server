@@ -27,7 +27,7 @@ export default function User2FAInputModal({ modalRef }: Props) {
 			<div className="modal-dialog modal-dialog-centered modal-lg" role="document" style={{ maxWidth: '500px' }}>
 				<div className="modal-content">
 					<div className="modal-body">
-						<InputField title="Enter 2FA Code" name="Enter 2FA Code" onChange={(e) => setCode(e.target.value)} />
+						<InputField title="Enter 2FA Code" name="Enter 2FA Code" onChange={(e) => setCode(e.target.value)} autocomplete='off' />
 						<button className="btn btn-primary" style={{ float:'right' }} onClick={handleSubmit}>Login</button>
 					</div>
 				</div>
