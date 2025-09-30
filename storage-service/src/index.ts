@@ -61,6 +61,7 @@ const client = new Client(io);
 
 	// Add endpoints to app
 	app
+		.disable('x-powered-by')
 		.set('trust proxy', true)
 		.use(cors({
 			origin: process.env.FRONTEND_URL,
