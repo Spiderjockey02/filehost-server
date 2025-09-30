@@ -1,13 +1,57 @@
 import { PATHS, ipRegex } from './CONSTANTS';
 import Logger from './Logger';
 import Error from './Error';
-import { readdirSync, statSync } from 'fs';
+import { readdirSync, statSync, readFileSync } from 'fs';
 import { join, parse, sep } from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import Client from 'src/helpers/Client';
 import { getSession } from '../middleware';
 import { HTTPMethod } from '@prisma/client';
 import { FileOptions, MySQLConnectionOptions, S3Options } from 'src/types';
+import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
+import { UAParser } from 'ua-parser-js';
+
+// Setup MaxMind GeoIP
+const db = readFileSync('./assets/GeoLite2-City.mmdb');
+const db2 = readFileSync('./assets/GeoLite2-ASN.mmdb');
+const cityReader = new Reader<CityResponse>(db);
+const asnReader = new Reader<AsnResponse>(db2);
+
+/**
+  * Parses an IP address using MaxMind GeoIP databases.
+  * @param {string} ip - The IP address to parse.
+*/
+export function parseIP(ip: string) {
+	const city = cityReader.get(ip);
+	const asn = asnReader.get(ip);
+
+	return {
+		country: city?.country?.names.en || '',
+		city: city?.city?.names.en || '',
+		latitude: city?.location?.latitude || 0,
+		longitude: city?.location?.longitude || 0,
+		isp: asn?.autonomous_system_organization || '',
+		isVPN: false,
+		isCrawler: false,
+	};
+}
+
+/**
+  * Parses a user agent string using UAParser.
+  * @param {string} userAgent - The raw user agent string.
+*/
+export function parseUserAgent(userAgent: string) {
+	const parsed = new UAParser(userAgent);
+
+	return {
+		browserName: parsed.getBrowser().name || '',
+		browserVersion: parsed.getBrowser().version || '',
+		osName: parsed.getOS().name || '',
+		osVersion: parsed.getOS().version || '',
+		isBot: false,
+	};
+}
+
 
 /**
   * Generates route mappings from a given directory structure.

@@ -1,4 +1,5 @@
 import { AuditLogEventType, AuditLogResourceType } from '@prisma/client';
+import { parseIP, parseUserAgent } from '../utils';
 import client from './prisma';
 
 interface CreateAuditLogEntryParams {
@@ -13,6 +14,9 @@ interface CreateAuditLogEntryParams {
 }
 
 export async function createAuditLogEntry(params: CreateAuditLogEntryParams) {
+	const ip = params.ip ? parseIP(params.ip) : undefined;
+	const userAgent = params.userAgent ? parseUserAgent(params.userAgent) : undefined;
+
 	return client.auditLog.create({
 		data: {
 			eventType: params.eventType,
@@ -26,13 +30,23 @@ export async function createAuditLogEntry(params: CreateAuditLogEntryParams) {
 				},
 			} : undefined,
 			ipCon: params.ip ? {
-				connect: {
-					ip: params.ip,
+				connectOrCreate: {
+					where: {
+						ip: params.ip,
+					},
+					create: {
+						...ip, ip: params.ip,
+					},
 				},
 			} : undefined,
 			UserAgentCon: params.userAgent ? {
-				connect: {
-					agent: params.userAgent,
+				connectOrCreate: {
+					where: {
+						agent: params.userAgent,
+					},
+					create: {
+						...userAgent, agent: params.userAgent,
+					},
 				},
 			} : undefined,
 		},

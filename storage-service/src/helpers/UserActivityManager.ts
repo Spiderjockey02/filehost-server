@@ -1,16 +1,9 @@
-import { IpAddress, UserAgent } from '@prisma/client';
-import fs from 'fs';
-import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
-import { UAParser } from 'ua-parser-js';
-import { LRUCache } from 'lru-cache';
 import type { UserActivityInput } from 'src/types/database/UserActivity';
+import { IpAddress, UserAgent } from '@prisma/client';
 import UserActivity from '../accessors/UserActivity';
+import { parseIP, parseUserAgent } from '../utils';
 import client from '../accessors/prisma';
-
-const db = fs.readFileSync('./assets/GeoLite2-City.mmdb');
-const db2 = fs.readFileSync('./assets/GeoLite2-ASN.mmdb');
-const cityReader = new Reader<CityResponse>(db);
-const asnReader = new Reader<AsnResponse>(db2);
+import { LRUCache } from 'lru-cache';
 
 export default class UserActivityManager extends UserActivity {
 	ipCache: LRUCache<string, IpAddress>;
@@ -94,18 +87,7 @@ export default class UserActivityManager extends UserActivity {
 		const ipDataMap = new Map<string, Omit<IpAddress, 'ip'>>();
 		for (const ip of [...new Set(ips)]) {
 			if (!ipDataMap.has(ip) && !this.ipCache.has(ip)) {
-				const city = cityReader.get(ip);
-				const asn = asnReader.get(ip);
-
-				ipDataMap.set(ip, {
-					country: city?.country?.names.en || '',
-					city: city?.city?.names.en || '',
-					latitude: city?.location?.latitude || 0,
-					longitude: city?.location?.longitude || 0,
-					isp: asn?.autonomous_system_organization || '',
-					isVPN: false,
-					isCrawler: false,
-				});
+				ipDataMap.set(ip, parseIP(ip));
 			}
 		}
 
@@ -138,14 +120,7 @@ export default class UserActivityManager extends UserActivity {
 		const agentDataMap = new Map<string, Omit<UserAgent, 'agent'>>();
 		for (const agent of [...new Set(agents)]) {
 			if (!agentDataMap.has(agent) && !this.userAgentCache.has(agent)) {
-				const parsed = new UAParser(agent);
-				agentDataMap.set(agent, {
-					browserName: parsed.getBrowser().name || '',
-					browserVersion: parsed.getBrowser().version || '',
-					osName: parsed.getOS().name || '',
-					osVersion: parsed.getOS().version || '',
-					isBot: false,
-				});
+				agentDataMap.set(agent, parseUserAgent(agent));
 			}
 		}
 
