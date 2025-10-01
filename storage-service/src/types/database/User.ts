@@ -20,6 +20,7 @@ export interface updateUser {
 	totalStorageSize?: bigint
 	updatedAt?: Date
 	isMigrating?: boolean
+	image?: string | null
 }
 
 export type AddToPlanProps = {

@@ -1,7 +1,8 @@
 import { avatarForm, getSession } from '../middleware';
 import type { Request, Response } from 'express';
-import { Error, sanitiseObject } from '../utils';
+import { Error, getIP, sanitiseObject } from '../utils';
 import type Client from '../helpers/Client';
+import { createAuditLogEntry } from 'src/accessors/AuditLog';
 
 // Endpoint: POST /api/session/change-avatar
 export const postChangeAvatar = (client: Client) => {
@@ -42,14 +43,39 @@ export const getRecentlyViewed = (client: Client) => {
 // Endpoint DELETE /api/session/reset-avatar
 export const deleteResetAvatar = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		try {
-			const session = await getSession(client, req.headers);
-			if (!session?.user) return Error.InvalidSession(res);
+		const session = await getSession(client, req.headers);
+		if (!session?.user) return Error.InvalidSession(res);
 
+		try {
+			// Delete avatar and send audit log
 			await client.FileManager.deleteAvatar(session.user.id);
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				createAuditLogEntry({
+					resourceType: 'USER',
+					eventType: 'USER_AVATAR_CHANGE',
+					resourceId: session.user.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'],
+					success: true,
+					message: 'User reset their avatar',
+				});
+			});
+
 			res.json({ success: 'Successfully deleted avatar' });
 		} catch (err) {
 			client.logger.error(err);
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				createAuditLogEntry({
+					resourceType: 'USER',
+					eventType: 'USER_AVATAR_CHANGE',
+					resourceId: session.user.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'],
+					success: true,
+					message: `Failed to reset avatar: ${err}`,
+				});
+			});
 			Error.GenericError(res, 'Failed to delete user\'s avatar.');
 		}
 	};

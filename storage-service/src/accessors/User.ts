@@ -29,6 +29,7 @@ export default class UserManager {
 				totalStorageSize: data.totalStorageSize,
 				updatedAt: data.updatedAt,
 				isMigrating: data.isMigrating,
+				image: data.image,
 			},
 			include: {
 				plan: true,

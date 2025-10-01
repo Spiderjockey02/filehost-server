@@ -4,6 +4,8 @@ import formidable from 'formidable';
 import sharp from 'sharp';
 import { User } from '@prisma/client';
 import { readFile } from 'node:fs/promises';
+import { createAuditLogEntry } from '../accessors/AuditLog';
+import { getIP } from '../utils';
 
 export default async (client: Client, req: Request, user: User) => {
 	// Get storage and it's provider
@@ -40,8 +42,39 @@ export default async (client: Client, req: Request, user: User) => {
 		// Move to avatar directory, overwriting the old one
 		const buffer = await readFile(file[0].filepath);
 		await fileProvider.writeFile(`${user.id}.webp`, buffer);
+
+		// User could have an avatar from an oauth2 provider, so we need to clear that too
+		await client.userManager.update({
+			id: user.id,
+			image: null,
+		});
+
+		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+			await createAuditLogEntry({
+				resourceType: 'USER',
+				eventType: 'USER_AVATAR_CHANGE',
+				resourceId: user.id,
+				ip: getIP(req),
+				userAgent: req.headers['user-agent'],
+				success: true,
+				message: 'User updated their avatar',
+			});
+		});
+
 		return { fields, files };
 	} catch (error) {
+		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+			await createAuditLogEntry({
+				resourceType: 'USER',
+				eventType: 'USER_AVATAR_CHANGE',
+				resourceId: user.id,
+				ip: getIP(req),
+				userAgent: req.headers['user-agent'],
+				success: false,
+				message: `Failed to update avatar: ${error}`,
+			});
+		});
+
 		await fileProvider.deleteFile(file[0].filepath);
 		throw error;
 	}
