@@ -2,6 +2,7 @@ import { faSearch, faSlidersH } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { AutoComplete, FileNavBarProps } from '@/types/Components/Navbars';
 import { NotificationBell, SearchFileModal } from '@/components';
+import { signOutOptions } from '@/utils/functions';
 import { useState, ChangeEvent } from 'react';
 import { authClient } from '@/auth/client';
 import { useRouter } from 'next/router';
@@ -115,11 +116,7 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 							<Link className="dropdown-item text-dark" href="/files">My files</Link>
 							{user.role == 'admin' && <Link className="dropdown-item text-dark" href="/admin">Admin</Link>}
 							<div className="dropdown-divider"></div>
-							<a className="dropdown-item" href="#" onClick={() => authClient.signOut({ fetchOptions: {
-								onSuccess: () => {
-									router.push('/login');
-								},
-							} })} id="logout">Logout</a>
+							<a className="dropdown-item" href="#" onClick={() => authClient.signOut(signOutOptions(router))} id="logout">Logout</a>
 						</div>
 					</li>
 				</ul>

@@ -3,8 +3,12 @@ import NotificationBell from '../UI/Notification';
 import { authClient } from '@/auth/client';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { signOutOptions } from '@/utils/functions';
 
 export default function NavBar({ user }: HomeNavbarProps) {
+	const router = useRouter();
+
 	return (
 		<nav className="navbar navbar-expand fixed-top navbar-light" id="navBar" style={{ boxShadow: '0px 2px 5px 0px rgba(0,0,0,0.75)', backgroundColor: 'white' }}>
 			<Link className="navbar-brand btn" href="/">Home</Link>
@@ -28,7 +32,7 @@ export default function NavBar({ user }: HomeNavbarProps) {
 									<Link className="dropdown-item text-dark" href="/files">My files</Link>
 									{user.role == 'admin' && <Link className="dropdown-item text-dark" href="/admin">Admin</Link>}
 									<div className="dropdown-divider"></div>
-									<a className="dropdown-item" href="#" onClick={() => authClient.signOut()} id="logout">Logout</a>
+									<a className="dropdown-item" href="#" onClick={() => authClient.signOut(signOutOptions(router))} id="logout">Logout</a>
 								</div>
 							</li>
 						</>

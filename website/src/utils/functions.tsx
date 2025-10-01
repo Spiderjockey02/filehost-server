@@ -6,6 +6,7 @@ import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
 import { IncomingMessage } from 'http';
 import { NextApiRequestCookies } from 'next/dist/server/api-utils';
+import { NextRouter } from 'next/router';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -112,6 +113,16 @@ export function headers(req: IncomingMessage & { cookies: NextApiRequestCookies 
 		headers: {
 			cookie: `${req.headers.cookie}`,
 			'user-agent': `${req.headers['user-agent']}`,
+		},
+	};
+}
+
+export function signOutOptions(router: NextRouter) {
+	return {
+		fetchOptions: {
+			onSuccess: () => {
+				router.push('/login');
+			},
 		},
 	};
 }

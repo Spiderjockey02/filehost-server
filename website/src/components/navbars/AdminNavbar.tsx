@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { faX, faBars } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { AdminNavbarProps } from '@/types/Components/Navbars';
+import { signOutOptions } from '@/utils/functions';
 
 export default function AdminNavBar({ user, showSidebar, setShowSidebar }: AdminNavbarProps) {
 	const router = useRouter();
@@ -30,11 +31,7 @@ export default function AdminNavBar({ user, showSidebar, setShowSidebar }: Admin
 							<Link className="dropdown-item text-dark" href="/files">My files</Link>
 							{user.role == 'admin' && <Link className="dropdown-item text-dark" href="/admin">Admin</Link>}
 							<div className="dropdown-divider"></div>
-							<a className="dropdown-item" href="#" onClick={() => authClient.signOut({ fetchOptions: {
-								onSuccess: () => {
-									router.push('/login');
-								},
-							} })} id="logout">Logout</a>
+							<a className="dropdown-item" href="#" onClick={() => authClient.signOut(signOutOptions(router))} id="logout">Logout</a>
 						</div>
 					</li>
 				</ul>
