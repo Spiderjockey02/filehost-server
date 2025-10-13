@@ -17,6 +17,9 @@ export async function userPostRateLimit(client: Client) {
 		// Make sure the request isn't for content
 		if (req.path.startsWith('/thumbnail/') || req.path.startsWith('/content/')) return next();
 
+		// Make sure not to include upload endpoint
+		if (req.path == '/api/files/upload') return next();
+
 		// Get the client key and bucket
 		const session = await getSession(client, req.headers);
 		const key = session?.userId || getIP(req);

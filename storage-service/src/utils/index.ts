@@ -188,7 +188,7 @@ export function parseS3Url(s3Url: string): S3Options {
 	const secretAccessKey = decodeURIComponent(parsed.password);
 	const endpoint = `${parsed.protocol.slice(0, -1)}://${parsed.hostname}${parsed.port ? `:${parsed.port}` : ''}`;
 	const bucket = parsed.pathname.replace(/^\/+/, '').split('/')[0];
-	const region = parsed.searchParams.get('region') ?? '';
+	const region = parsed.searchParams.get('region') ?? 'eu-west-1';
 
 	return { endpoint, region, accessKeyId, secretAccessKey, bucket };
 }
