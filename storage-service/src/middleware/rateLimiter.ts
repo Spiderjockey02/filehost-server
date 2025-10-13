@@ -14,6 +14,9 @@ interface Bucket {
 const buckets: Map<string, Bucket> = new Map();
 export async function userPostRateLimit(client: Client) {
 	return async (req: Request, res: Response, next: NextFunction) => {
+		// Make sure the request isn't for content
+		if (req.path.startsWith('/thumbnail/') || req.path.startsWith('/content/')) return next();
+
 		// Get the client key and bucket
 		const session = await getSession(client, req.headers);
 		const key = session?.userId || getIP(req);
