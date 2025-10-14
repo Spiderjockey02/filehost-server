@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons';
-import { Card, ErrorPopup, InputField } from '@/components';
+import { Card, ErrorPopup, InputField, SuccessPopup } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { authClient } from '@/auth/client';
 import { LoginErrorTypes } from '@/types';
@@ -14,6 +14,7 @@ import User2FAInputModal from '@/components/Modals/User2FAInputModal';
 export default function SignIn() {
 	const modalRef = useRef<HTMLDivElement>(null);
 	const [errors, setErrors] = useState<LoginErrorTypes[]>([]);
+	const [success, setSuccess] = useState<null | string>(null);
 	const [user, setUser] = useState({
 		email: '',
 		password: '',
@@ -51,26 +52,48 @@ export default function SignIn() {
 				}
 			},
 			onError: ({ error: err }) => {
-				if (err.message == 'Invalid username or password.') {
-					return setErrors([
-						{ type: 'password', message: err.message }, { type: 'email', message: err.message },
-					]);
+				switch (err.code) {
+					case 'INVALID_EMAIL_OR_PASSWORD':
+						return setErrors([
+							{ type: 'password', message: err.message }, { type: 'email', message: err.message },
+						]);
+					case 'INVALID_EMAIL':
+						return setErrors([
+							{ type: 'email', message: 'We couldn\'t find an account with that email.' },
+						]);
+					default:
+						setErrors([{ type: 'misc', message: 'Failed to login.' }]);
 				}
-				setErrors([{ type: 'misc', message: 'Failed to login.' }]);
 			},
 		});
 	};
 
+	async function resetPassword() {
+		try {
+			const { data, error } = await authClient.requestPasswordReset({
+				email: user.email,
+				redirectTo: '/reset-password',
+			});
+
+			if (error) throw error;
+			if (data !== null) return setSuccess(data.message);
+		} catch (err) {
+			console.log(err);
+			setErrors([{ type: 'misc', message: 'Failed to request password reset' }]);
+		}
+	}
+
 	return (
 		<>
 			<Head>
-				<title>{process.env.NEXT_PUBLIC_COMPANY_NAME} - Login</title>
+				<title>{`${process.env.NEXT_PUBLIC_COMPANY_NAME} - Login`}</title>
 			</Head>
 			<section className='d-flex flex-row align-items-center' style={{ 'backgroundColor': '#eee', padding: '0', minHeight: '100vh' }}>
 				<div className="container h-100">
 					{errors.find(e => e.type == 'misc') && (
 						<ErrorPopup text={`${errors.find(e => e.type == 'misc')?.message}`} />
 					)}
+					{success !== null && <SuccessPopup text={success} />}
 					<User2FAInputModal modalRef={modalRef} />
 					<div className="row d-flex justify-content-center align-items-center h-100">
 						<div className="col-lg-8 col-xl-7">
@@ -82,9 +105,14 @@ export default function SignIn() {
 											<div className="mb-3 w-100">
 												<InputField title='Email' type="email" name='email' onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} errorMsg={errors.find(e => e.type == 'email')?.message} />
 											</div>
-											<div className="mb-3 w-100">
-												<InputField title='Password' type="password" name='password' autocomplete='current-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
-											</div>
+											<InputField title='Password' type="password" name='password' autocomplete='current-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
+											{errors.find((e) => e.type === 'password') && (
+												<div className="text-end">
+													<button type="button" onClick={resetPassword} className="btn btn-link p-0 text-decoration-none" style={{ fontSize: '0.9rem' }}>
+														Forgot password?
+													</button>
+												</div>
+											)}
 											<div className="d-flex justify-content-center mb-3">
 												<button type="submit" className="btn btn-primary btn-lg">Login</button>
 											</div>
@@ -126,8 +154,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		// Get the path from the URL
-		const path = [context.params?.files].flat();
-		return { props: { path: path.join('/') } };
+		return { props: { } };
 	}
 }

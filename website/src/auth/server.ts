@@ -6,6 +6,7 @@ import client from './prisma';
 import { APIError } from 'better-auth/api';
 
 export const auth = betterAuth({
+	appName: process.env.NEXT_PUBLIC_COMPANY_NAME,
 	plugins: [
 		twoFactor(),
 		admin(),
@@ -38,6 +39,15 @@ export const auth = betterAuth({
 	}),
 	emailAndPassword: {
 		enabled: true,
+		revokeSessionsOnPasswordReset: true,
+		sendResetPassword: async ({ user, url }) => {
+			console.log(user);
+			console.log(url);
+		},
+		onPasswordReset: async ({ user }) => {
+			// your logic here
+			console.log(`Password for user ${user.email} has been reset.`);
+		},
 	},
 	user: {
 		changeEmail: {
