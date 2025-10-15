@@ -45,8 +45,37 @@ export const auth = betterAuth({
 			console.log(url);
 		},
 		onPasswordReset: async ({ user }) => {
-			// your logic here
 			console.log(`Password for user ${user.email} has been reset.`);
+			try {
+				await Promise.all([
+					client.auditLog.create({
+						data: {
+							eventType: 'USER_PASSWORD_RESET',
+							resourceType: 'USER',
+							resourceId: user.id,
+							user: {
+								connect: {
+									id: user.id,
+								},
+							},
+							success: true,
+						},
+					}),
+					client.notification.create({
+						data: {
+							text: 'Your password was successfully reset. If this wasn\'t you, please change your password immediately or contact support.',
+							title: 'Password Reset Successful',
+							user: {
+								connect: {
+									id: user.id,
+								},
+							},
+						},
+					}),
+				]);
+			} catch (err) {
+				console.log(err);
+			}
 		},
 	},
 	user: {
