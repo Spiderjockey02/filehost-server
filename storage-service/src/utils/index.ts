@@ -154,7 +154,7 @@ export function getIP(req: Request): string {
   * @returns {string} The normalized file path.
 */
 export function normalizePath(path: string): string {
-	if (!path) return '/';
+	if (!path || path == '/') return '/';
 
 	// Convert backslashes to forward slashes and ensure single slashes at start and end
 	const unixPath = path.replace(/\\/g, '/');
