@@ -140,6 +140,7 @@ model File {
 
 enum StorageType {
   FILE_SYSTEM
+  SFTP
   S3
 }
 

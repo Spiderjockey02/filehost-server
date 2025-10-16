@@ -5,6 +5,7 @@ import S3Manager from './SystemManagers/S3';
 import Client from './Client';
 import { StorageProvider } from 'src/types';
 import { S3ServiceException } from '@aws-sdk/client-s3';
+import SFTPManager from './SystemManagers/SFTP';
 
 export default class StorageManager extends StorageAccessor {
 	client: Client;
@@ -34,6 +35,12 @@ export default class StorageManager extends StorageAccessor {
 			}
 			case 'S3': {
 				medium = new S3Manager(this.client, `${storage.endpoint}`);
+				this.mediums.set(storage.id, medium);
+				await medium.verifyConnection();
+				return medium;
+			}
+			case 'SFTP': {
+				medium = new SFTPManager(this.client, `${storage.endpoint}`);
 				this.mediums.set(storage.id, medium);
 				await medium.verifyConnection();
 				return medium;

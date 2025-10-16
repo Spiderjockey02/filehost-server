@@ -33,6 +33,14 @@ export interface S3Options {
   bucket: string
 }
 
+export interface SFTPOptions {
+  host: string
+  port: number
+  username: string
+  password: string | undefined
+  basePath: string | undefined
+}
+
 export interface Session {
   user?: User
   expires?: Date

@@ -7,7 +7,7 @@ import type { NextFunction, Request, Response } from 'express';
 import Client from 'src/helpers/Client';
 import { getSession } from '../middleware';
 import { HTTPMethod } from '@prisma/client';
-import { FileOptions, MySQLConnectionOptions, S3Options } from 'src/types';
+import { FileOptions, MySQLConnectionOptions, S3Options, SFTPOptions } from 'src/types';
 import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
 import { UAParser } from 'ua-parser-js';
 
@@ -192,6 +192,24 @@ export function parseS3Url(s3Url: string): S3Options {
 
 	return { endpoint, region, accessKeyId, secretAccessKey, bucket };
 }
+
+/**
+  * Parses an SFTP URL into its components.
+  * @param {string} sftpUrl The SFTP URL to parse.
+  * @returns {SFTPOptions} An object containing the parsed components.
+*/
+export function parseSFTPUrl(sftpUrl: string): SFTPOptions {
+	const url = new URL(sftpUrl);
+
+	return {
+		host: url.hostname,
+		port: url.port ? parseInt(url.port, 10) : 22,
+		username: url.username,
+		password: url.password || undefined,
+		basePath: url.pathname !== '/' ? url.pathname : undefined,
+	};
+}
+
 
 /**
   * Middleware to log user activity for each request.

@@ -64,7 +64,7 @@ export const postStorage = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const { type, name, basePath, location, endpoint, maxSize, isPrivate } = req.body;
 		// Required fields
-		if (!type || typeof type !== 'string' || (type !== 'S3' && type !== 'FILE_SYSTEM')) return Error.IncorrectQuery(res, `type is required and must be one of: ${['S3', 'FILE_SYSTEM'].join(', ')}.`);
+		if (!type || typeof type !== 'string' || (type !== 'S3' && type !== 'FILE_SYSTEM' && type !== 'SFTP')) return Error.IncorrectQuery(res, `type is required and must be one of: ${['S3', 'FILE_SYSTEM'].join(', ')}.`);
 		if (typeof name !== 'string' || name.trim() === '') return Error.IncorrectQuery(res, 'name is required and must be a non-empty string.');
 		if (typeof basePath !== 'string' || basePath.trim() === '') return Error.IncorrectQuery(res, 'basePath is required and must be a non-empty string.');
 
@@ -72,16 +72,12 @@ export const postStorage = (client: Client) => {
 		if (location !== undefined && typeof location !== 'string') return Error.IncorrectQuery(res, 'location must be a number if provided.');
 		if (endpoint !== undefined && typeof endpoint !== 'string') return Error.IncorrectQuery(res, 'endpoint must be a string if provided.');
 
-		if (maxSize !== undefined && (isNaN(maxSize) || maxSize < 0 || !Number.isInteger(maxSize))) return Error.IncorrectQuery(res, 'maxSize must be a non-negative integer if provided.');
+		if (maxSize !== undefined && (isNaN(maxSize) || maxSize < 0 || !Number.isInteger(Number(maxSize)))) return Error.IncorrectQuery(res, 'maxSize must be a non-negative integer if provided.');
 		if (isPrivate !== undefined && typeof isPrivate !== 'boolean') return Error.IncorrectQuery(res, 'isPrivate must be a boolean if provided.');
 
 		try {
 			const storage = await client.FileManager.storageManager.create({
-				type,
-				name,
-				basePath,
-				location,
-				endpoint,
+				type, name, basePath, location, endpoint,
 				maxSize: BigInt(Number(maxSize) * (1024 ** 3)),
 			});
 

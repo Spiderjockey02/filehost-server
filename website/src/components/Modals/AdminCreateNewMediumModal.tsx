@@ -50,21 +50,21 @@ export function AdminCreateNewMediumModal({ refreshTable }: Props) {
 									<label htmlFor="storageType" className="form-label">Type:</label>
 									<select className="form-select" id="storageType" required style={errorMsg.startsWith('type') ? { borderColor: 'red' } : {}} onChange={(e) => setStorage((s) => ({ ...s, type: e.target.value }))}>
 										<option value="FILE_SYSTEM">Local</option>
+										<option value="SFTP">SFTP</option>
 										<option value="S3">S3</option>
 									</select>
 									{errorMsg.startsWith('type') && <div className="invalid-feedback" style={{ color: 'red', display: 'block' }}>{errorMsg}</div>}
 								</div>
 
 								<InputField title='Base Path' name="Base Path" placeholder="/storage/medium1" errorMsg={errorMsg.startsWith('basePath') ? errorMsg : ''} onChange={(e) => setStorage((s) => ({ ...s, basePath: e.target.value }))} />
-
 								<InputField title='Location' name="Location" placeholder="Europe" errorMsg={errorMsg.startsWith('location') ? errorMsg : ''} onChange={(e) => setStorage((s) => ({ ...s, location: e.target.value }))} />
-
+								<InputField title='Max Size (GB)' name="Max Size (GB)" type="number" errorMsg={errorMsg.startsWith('maxSize') ? errorMsg : ''} onChange={(e) => setStorage((s) => ({ ...s, maxSize: e.target.value }))} />
 								<hr />
 								<h6 className="text-muted">Optional Fields</h6>
 
-								<InputField title='Endpoint' name="Endpoint" placeholder="s3://.../<bucket>" errorMsg={errorMsg.startsWith('endpoint') ? errorMsg : ''} onChange={(e) => setStorage((s) => ({ ...s, endpoint: e.target.value }))} />
-
-								<InputField title='Max Size (GB)' name="Max Size (GB)" type="number" errorMsg={errorMsg.startsWith('maxSize') ? errorMsg : ''} onChange={(e) => setStorage((s) => ({ ...s, maxSize: e.target.value }))} />
+								{storage.type !== 'FILE_SYSTEM' &&
+									<InputField title='Endpoint' name="Endpoint" placeholder={`${storage.type.toLowerCase()}://`} errorMsg={errorMsg.startsWith('endpoint') ? errorMsg : ''} onChange={(e) => setStorage((s) => ({ ...s, endpoint: e.target.value }))} />
+								}
 
 								<div className="form-check mb-3">
 									<input className="form-check-input" type="checkbox" id="isPrivate" onChange={(e) => setStorage((s) => ({ ...s, isPrivate: e.target.checked }))} />
