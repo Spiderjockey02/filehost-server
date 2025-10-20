@@ -1,11 +1,11 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDiscord } from '@fortawesome/free-brands-svg-icons';
+import { faDiscord, faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { Card, ErrorPopup, InputField, SuccessPopup } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { authClient } from '@/auth/client';
 import { LoginErrorTypes } from '@/types';
 import { useRouter } from 'next/router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
 import { GetServerSidePropsContext } from 'next';
@@ -21,6 +21,13 @@ export default function SignIn() {
 	});
 	const router = useRouter();
 	const { callbackUrl } = router.query;
+
+	// Get last used login method
+	const [lastMethod, setLastMethod] = useState<null | string>(null);
+	useEffect(() => {
+		const method = authClient.getLastUsedLoginMethod();
+		setLastMethod(method);
+	}, []);
 
 	const handleSubmit = async (event: BaseSyntheticEvent) => {
 		event.preventDefault();
@@ -83,6 +90,12 @@ export default function SignIn() {
 		}
 	}
 
+	async function loginWithProvider(provider: 'google' | 'discord') {
+		await authClient.signIn.social({
+			provider,
+		});
+	}
+
 	return (
 		<>
 			<Head>
@@ -104,8 +117,8 @@ export default function SignIn() {
 										<form className="w-100" onSubmit={handleSubmit}>
 											<div className="mb-3 w-100">
 												<InputField title='Email' type="email" name='email' onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} errorMsg={errors.find(e => e.type == 'email')?.message} />
+												<InputField title='Password' type="password" name='password' autocomplete='current-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
 											</div>
-											<InputField title='Password' type="password" name='password' autocomplete='current-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
 											{errors.find((e) => e.type === 'password') && (
 												<div className="text-end">
 													<button type="button" onClick={resetPassword} className="btn btn-link p-0 text-decoration-none" style={{ fontSize: '0.9rem' }}>
@@ -114,19 +127,37 @@ export default function SignIn() {
 												</div>
 											)}
 											<div className="d-flex justify-content-center mb-3">
-												<button type="submit" className="btn btn-primary btn-lg">Login</button>
+												<button type="submit" className="btn btn-primary btn-md">Continue</button>
 											</div>
-											<p className="text-center">Need an account? <Link href="/register">Register</Link></p>
+											<div className="d-flex align-items-center my-3 text-secondary">
+												<hr className="flex-grow-1" />
+												<span className="px-2">OR</span>
+												<hr className="flex-grow-1" />
+											</div>
 										</form>
-										<div className="d-flex justify-content-around w-100">
-											<button className='btn btn-secondary' type="submit" onClick={async () => {
-												await authClient.signIn.social({
-													provider: 'discord',
-												});
-											}}>
-												<FontAwesomeIcon icon={faDiscord}/> Discord
+										<div className="d-grid gap-2 mb-2">
+											<button className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-2 position-relative" onClick={() => loginWithProvider('google')}>
+												<FontAwesomeIcon icon={faGoogle}/>
+    										Continue with Google
+												{lastMethod == 'google' && (
+													<span className="position-absolute top-0 start-100 translate-middle badge rounded-pill"style={{ backgroundColor: 'rgba(80, 80, 80, 0.85)', color: 'lightgrey', fontSize: '0.75rem', backdropFilter: 'blur(2px)' }}>
+          									Last used
+														<span className="visually-hidden">last used provider</span>
+													</span>
+												)}
+											</button>
+											<button className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-2 position-relative" onClick={() => loginWithProvider('discord')}>
+												<FontAwesomeIcon icon={faDiscord}/>
+    										Continue with Discord
+												{lastMethod == 'discord' && (
+													<span className="position-absolute top-0 start-100 translate-middle badge rounded-pill"style={{ backgroundColor: 'rgba(80, 80, 80, 0.85)', color: 'lightgrey', fontSize: '0.75rem', backdropFilter: 'blur(2px)' }}>
+          									Last used
+														<span className="visually-hidden">last used provider</span>
+													</span>
+												)}
 											</button>
 										</div>
+										<p className="text-center">Don&apos;t have an account? <Link href="/register">Sign up</Link></p>
 									</Card.Body>
 								</Card>
 							</div>

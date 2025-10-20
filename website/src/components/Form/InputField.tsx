@@ -8,7 +8,7 @@ export default function InputField({ title, name, type, placeholder, value, chec
 	const [hidden, setHidden] = useState(false);
 
 	return (
-		<div className="mb-3">
+		<div className={errorMsg == undefined ? 'mb-3' : 'mb-1'}>
 			<label htmlFor={name} className="form-label">{title}:</label>
 			<div className={type == 'password' ? 'input-group' : ''}>
 				<input type={type == 'password' ? (hidden ? 'text' : 'password') : type} className={type == 'checkbox' ? 'form-check-input' : 'form-control'} style={errorMsg ? { borderColor: 'red' } : {}} id={name} placeholder={placeholder} defaultValue={value} defaultChecked={checked} onChange={onChange} autoComplete={autocomplete} />
