@@ -10,6 +10,7 @@ import StorageManager from './StorageManager';
 import UserActivityManager from './UserActivityManager';
 import { Server } from 'socket.io';
 import { ConfigManager } from './ConfigManager';
+import AuditLogAccessor from '../accessors/AuditLog';
 
 export default class Client {
 	logger: Logger;
@@ -22,6 +23,7 @@ export default class Client {
 	QueueManager: QueueManager;
 	userActivityManager: UserActivityManager;
 	config: ConfigManager;
+	AuditLogManager: AuditLogAccessor;
 
 	constructor(io: Server) {
 		this.config = new ConfigManager();
@@ -34,5 +36,6 @@ export default class Client {
 		this.CRONManager = new CRONManager(this);
 		this.QueueManager = new QueueManager();
 		this.userActivityManager = new UserActivityManager();
+		this.AuditLogManager = new AuditLogAccessor();
 	}
 }

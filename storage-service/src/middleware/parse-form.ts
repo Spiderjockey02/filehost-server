@@ -7,7 +7,6 @@ import formidable from 'formidable';
 import { readFile } from 'node:fs/promises';
 import { FullFile } from 'src/types/database/File';
 import { UserWithPlan } from 'src/types/database/User';
-import { createAuditLogEntry } from '../accessors/AuditLog';
 
 export default async (client: Client, req: Request, user: UserWithPlan) => {
 	// Make sure they haven't already uploaded past their max storage
@@ -142,7 +141,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 			// Audit logs
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					eventType: 'FILE_UPLOAD',
 					resourceType: 'FILE',
 					resourceId: uploadedFile?.id,
@@ -166,7 +165,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 			// Audit logs
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					eventType: 'FILE_UPLOAD',
 					resourceType: 'FILE',
 					resourceId: uploadedFile?.id,

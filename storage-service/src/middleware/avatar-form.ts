@@ -4,7 +4,6 @@ import formidable from 'formidable';
 import sharp from 'sharp';
 import { User } from '@prisma/client';
 import { readFile } from 'node:fs/promises';
-import { createAuditLogEntry } from '../accessors/AuditLog';
 import { getIP } from '../utils';
 
 export default async (client: Client, req: Request, user: User) => {
@@ -50,7 +49,7 @@ export default async (client: Client, req: Request, user: User) => {
 		});
 
 		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-			await createAuditLogEntry({
+			await client.AuditLogManager.create({
 				resourceType: 'USER',
 				eventType: 'USER_AVATAR_CHANGE',
 				resourceId: user.id,
@@ -64,7 +63,7 @@ export default async (client: Client, req: Request, user: User) => {
 		return { fields, files };
 	} catch (error) {
 		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-			await createAuditLogEntry({
+			await client.AuditLogManager.create({
 				resourceType: 'USER',
 				eventType: 'USER_AVATAR_CHANGE',
 				resourceId: user.id,

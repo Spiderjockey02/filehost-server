@@ -5,7 +5,6 @@ import extendedClient from '../accessors/prisma';
 import fs from 'fs/promises';
 import { CronJobLog, CronJobNames } from '@prisma/client';
 import { CronJobList } from 'src/types/database/CronJob';
-import { createAuditLogEntry } from '../accessors/AuditLog';
 
 export default class CRONManager extends CronJobAccessor {
 	client: Client;
@@ -97,7 +96,7 @@ export default class CRONManager extends CronJobAccessor {
 
 					if (log.status == 'FAILURE') throw log.message;
 					this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-						createAuditLogEntry({
+						await this.client.AuditLogManager.create({
 							eventType: 'CRONJOB_RAN',
 							resourceType: 'SYSTEM',
 							resourceId: name,
@@ -107,7 +106,7 @@ export default class CRONManager extends CronJobAccessor {
 					});
 				} catch (err) {
 					this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-						createAuditLogEntry({
+						await this.client.AuditLogManager.create({
 							eventType: 'CRONJOB_RAN',
 							resourceType: 'SYSTEM',
 							resourceId: name,

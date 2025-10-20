@@ -5,7 +5,6 @@ import os from 'os';
 import fs from 'fs/promises';
 import MIMEList from '../../assets/MIME-list.json';
 import { CronJobLog } from '@prisma/client';
-import { createAuditLogEntry } from '../accessors/AuditLog';
 import { getSession } from '../middleware';
 
 // Endpoint: GET /api/admin/stats
@@ -122,7 +121,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 
 			if (log.status == 'FAILURE') throw log.message ?? 'CRON job failed to execute.';
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				createAuditLogEntry({
+				await client.AuditLogManager.create({
 					eventType: 'CRONJOB_RAN',
 					resourceType: 'SYSTEM',
 					resourceId: name,
@@ -136,7 +135,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 			res.json({ success: 'Successfully ran CRON job.' });
 		} catch (err) {
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				createAuditLogEntry({
+				await client.AuditLogManager.create({
 					eventType: 'CRONJOB_RAN',
 					resourceType: 'SYSTEM',
 					resourceId: name,
@@ -205,7 +204,7 @@ export const postNotification = (client: Client) => {
 			const notification = await client.notificationManager.create({ text, title, url, userId: user.id });
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				createAuditLogEntry({
+				await client.AuditLogManager.create({
 					eventType: 'NOTIFICATION_SENT',
 					resourceType: 'USER',
 					resourceId: notification.id,
@@ -217,7 +216,7 @@ export const postNotification = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				createAuditLogEntry({
+				await client.AuditLogManager.create({
 					eventType: 'NOTIFICATION_SENT',
 					resourceType: 'USER',
 					resourceId: user.id,

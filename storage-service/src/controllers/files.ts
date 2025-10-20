@@ -3,7 +3,6 @@ import { Error, getIP, sanitiseObject } from '../utils';
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import { FileType } from '@prisma/client';
-import { createAuditLogEntry } from '../accessors/AuditLog';
 
 // Endpoint GET /api/files
 export const getFiles = (client: Client) => {
@@ -63,7 +62,7 @@ export const deleteFile = (client: Client) => {
 
 			await client.FileManager.delete(session.user, fileId);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_TRASHED',
@@ -78,7 +77,7 @@ export const deleteFile = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_TRASHED',
@@ -142,7 +141,7 @@ export const postMoveFile = (client: Client) => {
 		try {
 			await client.FileManager.move(session.user, fileId, newDirId);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_MOVE',
@@ -157,7 +156,7 @@ export const postMoveFile = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_MOVE',
@@ -191,7 +190,7 @@ export const postCopyFile = (client: Client) => {
 
 			await client.FileManager.copy(session.user, fileId, newDirId);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_COPY',
@@ -206,7 +205,7 @@ export const postCopyFile = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_COPY',
@@ -242,7 +241,7 @@ export const postDownloadFile = (client: Client) => {
 			const fullFile = await client.FileManager.getByFilePath(session.user.id, file.path);
 			await client.FileManager.downloadFile(res, session.user, fullFile!);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_DOWNLOAD',
@@ -256,7 +255,7 @@ export const postDownloadFile = (client: Client) => {
 		} catch (error) {
 			client.logger.error(error);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_DOWNLOAD',
@@ -311,7 +310,7 @@ export const postRenameFile = (client: Client) => {
 			// Rename file
 			await client.FileManager.rename(session.user, fileId, newName);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_RENAME',
@@ -325,7 +324,7 @@ export const postRenameFile = (client: Client) => {
 			res.json({ success: 'Successfully renamed item' });
 		} catch (err) {
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FILE_RENAME',
@@ -359,7 +358,7 @@ export const postCreateFolder = (client: Client) => {
 			// Decode & santise the referer path to ensure the folder is added to the correct path
 			await client.FileManager.createDirectory(session.user, parentId, folderName.trim());
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FOLDER_CREATE',
@@ -374,7 +373,7 @@ export const postCreateFolder = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await createAuditLogEntry({
+				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventType: 'FOLDER_CREATE',

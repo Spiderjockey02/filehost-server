@@ -2,7 +2,6 @@ import { avatarForm, getSession } from '../middleware';
 import type { Request, Response } from 'express';
 import { Error, getIP, sanitiseObject } from '../utils';
 import type Client from '../helpers/Client';
-import { createAuditLogEntry } from 'src/accessors/AuditLog';
 
 // Endpoint: POST /api/session/change-avatar
 export const postChangeAvatar = (client: Client) => {
@@ -50,7 +49,7 @@ export const deleteResetAvatar = (client: Client) => {
 			// Delete avatar and send audit log
 			await client.FileManager.deleteAvatar(session.user.id);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				createAuditLogEntry({
+				await client.AuditLogManager.create({
 					resourceType: 'USER',
 					eventType: 'USER_AVATAR_CHANGE',
 					resourceId: session.user.id,
@@ -66,7 +65,7 @@ export const deleteResetAvatar = (client: Client) => {
 			client.logger.error(err);
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				createAuditLogEntry({
+				await client.AuditLogManager.create({
 					resourceType: 'USER',
 					eventType: 'USER_AVATAR_CHANGE',
 					resourceId: session.user.id,

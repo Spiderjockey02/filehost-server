@@ -11,7 +11,6 @@ import { Server } from 'socket.io';
 import { getSession } from './middleware';
 import { createPlan, fetchDefaultPlan } from './accessors/Plan';
 import { userPostRateLimit } from './middleware/rateLimiter';
-import { createAuditLogEntry } from './accessors/AuditLog';
 
 const start = new Date();
 const app = express();
@@ -108,7 +107,7 @@ const client = new Client(io);
 		socket.join(session.user.id);
 	});
 
-	await createAuditLogEntry({
+	await client.AuditLogManager.create({
 		eventType: 'SYSTEM_ONLINE',
 		resourceType: 'SYSTEM',
 		success: true,

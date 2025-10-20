@@ -2,7 +2,6 @@ import type { File } from '@prisma/client';
 import Client from './Client';
 import prismaClient from '../accessors/prisma';
 import { UserWithPlan } from 'src/types/database/User';
-import { createAuditLogEntry } from '../accessors/AuditLog';
 
 export default class TrashHandler {
 	client: Client;
@@ -89,7 +88,7 @@ export default class TrashHandler {
 		}
 
 		this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-			createAuditLogEntry({
+			await this.client.AuditLogManager.create({
 				eventType: 'FILE_RECOVERED',
 				resourceType: 'FILE',
 				resourceId: file.id,
@@ -130,7 +129,7 @@ export default class TrashHandler {
 				}
 
 				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-					createAuditLogEntry({
+					await this.client.AuditLogManager.create({
 						eventType: 'FILE_DELETE',
 						resourceType: 'FILE',
 						resourceId: file.id,
@@ -140,7 +139,7 @@ export default class TrashHandler {
 				});
 			} catch (err) {
 				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-					createAuditLogEntry({
+					await this.client.AuditLogManager.create({
 						eventType: 'FILE_DELETE',
 						resourceType: 'FILE',
 						resourceId: file.id,

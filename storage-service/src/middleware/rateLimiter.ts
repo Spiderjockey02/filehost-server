@@ -1,4 +1,3 @@
-import { createAuditLogEntry } from '../accessors/AuditLog';
 import { Request, Response, NextFunction } from 'express';
 import Client from 'src/helpers/Client';
 import { Error, getIP } from '../utils';
@@ -46,7 +45,7 @@ export async function userPostRateLimit(client: Client) {
 				client.logger.warn(`⚠️ Abuse detected for key=${key}: ${bucket.abuseLog.length} req/s`);
 
 				client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-					await createAuditLogEntry({
+					await client.AuditLogManager.create({
 						eventType: 'RATE_LIMIT_ABUSE',
 						resourceType: 'USER',
 						resourceId: key,

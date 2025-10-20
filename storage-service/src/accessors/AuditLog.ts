@@ -1,54 +1,80 @@
-import { AuditLogEventType, AuditLogResourceType } from '@prisma/client';
+import { AuditLogResourceType } from '@prisma/client';
 import { parseIP, parseUserAgent } from '../utils';
 import client from './prisma';
+import { CreateAuditLogEntryParams } from 'src/types/database/AuditLogs';
 
-interface CreateAuditLogEntryParams {
-  eventType: AuditLogEventType;
-  message?: string;
-  resourceType: AuditLogResourceType;
-	resourceId?: string
-  success: boolean;
-  userId?: string;
-  ip?: string;
-  userAgent?: string;
-}
+export default class AuditLogAccessor {
+	async create(params: CreateAuditLogEntryParams) {
+		const ip = params.ip ? parseIP(params.ip) : undefined;
+		const userAgent = params.userAgent ? parseUserAgent(params.userAgent) : undefined;
 
-export async function createAuditLogEntry(params: CreateAuditLogEntryParams) {
-	const ip = params.ip ? parseIP(params.ip) : undefined;
-	const userAgent = params.userAgent ? parseUserAgent(params.userAgent) : undefined;
+		return client.auditLog.create({
+			data: {
+				eventType: params.eventType,
+				message: params.message,
+				resourceType: params.resourceType,
+				success: params.success,
+				resourceId: params.resourceId,
+				user: params.userId ? {
+					connect: {
+						id: params.userId,
+					},
+				} : undefined,
+				ipCon: params.ip ? {
+					connectOrCreate: {
+						where: {
+							ip: params.ip,
+						},
+						create: {
+							...ip, ip: params.ip,
+						},
+					},
+				} : undefined,
+				UserAgentCon: params.userAgent ? {
+					connectOrCreate: {
+						where: {
+							agent: params.userAgent,
+						},
+						create: {
+							...userAgent, agent: params.userAgent,
+						},
+					},
+				} : undefined,
+			},
+		});
+	}
 
-	return client.auditLog.create({
-		data: {
-			eventType: params.eventType,
-			message: params.message,
-			resourceType: params.resourceType,
-			success: params.success,
-			resourceId: params.resourceId,
-			user: params.userId ? {
-				connect: {
-					id: params.userId,
-				},
-			} : undefined,
-			ipCon: params.ip ? {
-				connectOrCreate: {
-					where: {
-						ip: params.ip,
-					},
-					create: {
-						...ip, ip: params.ip,
-					},
-				},
-			} : undefined,
-			UserAgentCon: params.userAgent ? {
-				connectOrCreate: {
-					where: {
-						agent: params.userAgent,
-					},
-					create: {
-						...userAgent, agent: params.userAgent,
-					},
-				},
-			} : undefined,
-		},
-	});
+	async getByResourceType(resourceType: AuditLogResourceType) {
+		return client.auditLog.findMany({
+			where: {
+				resourceType: resourceType,
+			},
+			orderBy: {
+				createdAt: 'desc',
+			},
+		});
+	}
+
+	async getByUserId(userId: string) {
+		return client.auditLog.findMany({
+			where: {
+				userId: userId,
+			},
+			orderBy: {
+				createdAt: 'desc',
+			},
+		});
+	}
+
+	async getCount() {
+		return client.auditLog.count();
+	}
+
+	async getCountByResourceType(resourceType: AuditLogResourceType) {
+		return client.auditLog.count({
+			where: {
+				resourceType: resourceType,
+			},
+		});
+	}
 }
