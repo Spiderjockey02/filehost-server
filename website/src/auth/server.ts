@@ -1,5 +1,5 @@
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { customSession, organization, admin, twoFactor, lastLoginMethod } from 'better-auth/plugins';
+import { customSession, organization, admin, twoFactor, lastLoginMethod, createAuthMiddleware } from 'better-auth/plugins';
 import { nextCookies } from 'better-auth/next-js';
 import { betterAuth } from 'better-auth';
 import client from './prisma';
@@ -168,7 +168,7 @@ export const auth = betterAuth({
 								},
 							},
 							eventType: 'USER_REGISTERED',
-							resourceType: 'USER',
+							resourceType: 'SESSION',
 							resourceId: user.id,
 							UserAgentCon: {
 								connectOrCreate: {
@@ -207,8 +207,8 @@ export const auth = betterAuth({
 									id: session.userId,
 								},
 							},
-							eventType: 'USER_LOGIN',
-							resourceType: 'USER',
+							eventType: 'USER_LOGIN_SUCCESS',
+							resourceType: 'SESSION',
 							resourceId: session.id,
 							UserAgentCon: {
 								connectOrCreate: {
@@ -237,5 +237,84 @@ export const auth = betterAuth({
 				},
 			},
 		},
+	},
+	hooks: {
+		after: createAuthMiddleware(async (ctx) => {
+			const userAgent = ctx.request?.headers.get('user-agent');
+			const ipAddress = ctx.request?.headers.get('x-forwarded-for');
+
+			if (ctx.path == '/sign-in/email') {
+				if (ctx.context.returned instanceof APIError) {
+					console.log(ctx.context.returned.body?.code);
+					switch (ctx.context.returned.body?.code) {
+						case 'INVALID_EMAIL_OR_PASSWORD':
+							await client.auditLog.create({
+								data: {
+									user: {
+										connect: {
+											email: ctx.body.email,
+										},
+									},
+									eventType: 'USER_LOGIN_FAILURE',
+									resourceType: 'SESSION',
+									UserAgentCon: {
+										connectOrCreate: {
+											where: {
+												agent: userAgent || '',
+											},
+											create: {
+												agent: userAgent || '',
+											},
+										},
+									},
+									ipCon: {
+										connectOrCreate: {
+											where: {
+												ip: ipAddress || '',
+											},
+											create: {
+												ip: ipAddress || '',
+											},
+										},
+									},
+									message: 'Failed login attempt due to invalid password.',
+									success: true,
+								},
+							});
+							break;
+						case 'INVALID_EMAIL':
+							await client.auditLog.create({
+								data: {
+									eventType: 'USER_LOGIN_FAILURE',
+									resourceType: 'SESSION',
+									UserAgentCon: {
+										connectOrCreate: {
+											where: {
+												agent: userAgent || '',
+											},
+											create: {
+												agent: userAgent || '',
+											},
+										},
+									},
+									ipCon: {
+										connectOrCreate: {
+											where: {
+												ip: ipAddress || '',
+											},
+											create: {
+												ip: ipAddress || '',
+											},
+										},
+									},
+									message: 'Failed login attempt due to invalid email.',
+									success: true,
+								},
+							});
+							break;
+					}
+				}
+			}
+		}),
 	},
 });
