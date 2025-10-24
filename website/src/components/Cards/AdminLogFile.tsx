@@ -9,7 +9,7 @@ export default function AdminLogFileCard() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['logFiles', fileName],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/logs/${fileName == null ? '' : fileName}`, { signal });
+			const res = await fetch(`/api/admin/logs/files/${fileName == null ? '' : fileName}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch log files: ${res.statusText}`);
 
 			const d = await res.json();

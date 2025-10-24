@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCogs, faFile, faHardDrive, faLaughWink, faTachometerAlt, faUsers, faWifi } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faFile, faFileLines, faHardDrive, faLaughWink, faSackDollar, faTachometerAlt, faUsers, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { AdminSideBarProps } from '@/types/Components/Navbars';
 
 export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarProps) {
@@ -48,6 +48,12 @@ export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarPro
 				<Link className="nav-link" href="/admin/storage">
 					<FontAwesomeIcon icon={faHardDrive} />
 					<span> Storage</span>
+				</Link>
+			</li>
+			<li className={`nav-item ${activeTab == 'subscriptions' ? 'active' : ''}`}>
+				<Link className="nav-link" href="/admin/logs">
+					<FontAwesomeIcon icon={faFileLines} />
+					<span> Audit logs</span>
 				</Link>
 			</li>
 			<hr className="sidebar-divider" />

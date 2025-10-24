@@ -62,3 +62,9 @@ export type UserAgentWithCounts = Prisma.UserAgentGetPayload<{
     }
   }
 }>
+
+export type FullAuditLogListener = Prisma.AuditLogListenerGetPayload<{
+  include: {
+    events: true
+  }
+}>
