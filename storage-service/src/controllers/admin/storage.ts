@@ -1,6 +1,7 @@
 import Client from 'src/helpers/Client';
 import type { Request, Response } from 'express';
-import { Error, sanitiseObject } from '../../utils';
+import { Error, getIP, sanitiseObject } from '../../utils';
+import { getSession } from '../../middleware';
 
 // Endpoint: GET /api/admin/storage
 export const getStorages = (client: Client) => {
@@ -14,7 +15,7 @@ export const getStorages = (client: Client) => {
 			const avgFileCount = await client.FileManager.storageManager.fetchAvgFileCount();
 			const storages = await client.FileManager.storageManager.fetchAll({ page: isNaN(Number(page)) ? undefined : Number(page) });
 
-			res.json({ storages: sanitiseObject(storages), avgFileCount, avgStorageUsage });
+			res.json({ storages: sanitiseObject(storages), avgFileCount: parseInt(`${avgFileCount}`), avgStorageUsage });
 		} catch (error) {
 			client.logger.error(error);
 			return Error.GenericError(res, 'Failed to fetch storage mediums.');
@@ -41,8 +42,10 @@ export const getStorageById = (client: Client) => {
 // Endpoint: DELETE /api/admin/storage/:storageId
 export const deleteStorageById = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		const session = await getSession(client, req.headers);
+		const { storageId } = req.params;
+
 		try {
-			const { storageId } = req.params;
 			const storage = await client.FileManager.storageManager.fetchById(storageId);
 			if (storage == null) return Error.IncorrectQuery(res, 'storageId is invalid');
 
@@ -50,9 +53,35 @@ export const deleteStorageById = (client: Client) => {
 			if (storage._count.files > 0 || storage._count.users > 0) return Error.GenericError(res, 'Storage is not empty');
 			await client.FileManager.storageManager.delete(storage.id);
 
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'STORAGE',
+					eventName: 'STORAGE_DELETED',
+					message: 'Deleted storage medium',
+					resourceId: storage.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: true,
+				});
+			});
+
 			res.json({ success: 'Successfully deleted storage.' });
 		} catch (err) {
 			client.logger.error(err);
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'STORAGE',
+					eventName: 'STORAGE_DELETED',
+					message: `Failed to delete storage medium: ${err}`,
+					resourceId: storageId,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: false,
+				});
+			});
 			return Error.GenericError(res, 'Failed to delete storage medium.');
 		}
 	};
@@ -62,6 +91,8 @@ export const deleteStorageById = (client: Client) => {
 // Endpoint: POST /api/admin/storage
 export const postStorage = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		const session = await getSession(client, req.headers);
+
 		const { type, name, basePath, location, endpoint, maxSize, isPrivate } = req.body;
 		// Required fields
 		if (!type || typeof type !== 'string' || (type !== 'S3' && type !== 'FILE_SYSTEM' && type !== 'SFTP')) return Error.IncorrectQuery(res, `type is required and must be one of: ${['S3', 'FILE_SYSTEM'].join(', ')}.`);
@@ -69,7 +100,7 @@ export const postStorage = (client: Client) => {
 		if (typeof basePath !== 'string' || basePath.trim() === '') return Error.IncorrectQuery(res, 'basePath is required and must be a non-empty string.');
 
 		// Optional fields with type checks
-		if (location !== undefined && typeof location !== 'string') return Error.IncorrectQuery(res, 'location must be a number if provided.');
+		if (location !== undefined && typeof location !== 'string') return Error.IncorrectQuery(res, 'location must be a string if provided.');
 		if (endpoint !== undefined && typeof endpoint !== 'string') return Error.IncorrectQuery(res, 'endpoint must be a string if provided.');
 
 		if (maxSize !== undefined && (isNaN(maxSize) || maxSize < 0 || !Number.isInteger(Number(maxSize)))) return Error.IncorrectQuery(res, 'maxSize must be a non-negative integer if provided.');
@@ -83,9 +114,35 @@ export const postStorage = (client: Client) => {
 
 			const medium = await client.FileManager.storageManager.getProvider(storage);
 			await medium.verifyConnection();
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'STORAGE',
+					eventName: 'STORAGE_CREATED',
+					message: 'Storage medium created',
+					resourceId: storage.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: true,
+				});
+			});
 			res.json({ success: 'Successfully created new storage medium.', storage: sanitiseObject(storage) });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'STORAGE',
+					eventName: 'STORAGE_CREATED',
+					message: `Failed to create storage medium: ${err}`,
+					resourceId: '',
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: false,
+				});
+			});
 			return Error.GenericError(res, 'Failed to create new storage medium.');
 		}
 	};
@@ -107,8 +164,10 @@ export const getStorageTypes = (client: Client) => {
 // Endpoint: POST /api/admin/storage/:storageId
 export const postStorageByStorageId = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		const session = await getSession(client, req.headers);
+		const storageId = req.params.storageId;
+
 		try {
-			const storageId = req.params.storageId;
 			const { name, maxSize, isPrivate } = req.body;
 
 			if (storageId !== undefined && typeof storageId !== 'string') return Error.IncorrectQuery(res, 'storageId must be a valid string.');
@@ -129,9 +188,35 @@ export const postStorageByStorageId = (client: Client) => {
 				maxSize: BigInt(newMaxSize),
 				isPrivate: isPrivate,
 			});
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'STORAGE',
+					eventName: 'STORAGE_UPDATED',
+					message: 'Updated storage medium',
+					resourceId: storage.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: true,
+				});
+			});
 			res.json({ success: 'Successfully updated storage.', storage: sanitiseObject(newStorage) });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'STORAGE',
+					eventName: 'STORAGE_UPDATED',
+					message: `Failed to update storage medium: ${err}`,
+					resourceId: storageId,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: false,
+				});
+			});
 			return Error.GenericError(res, 'Failed to update storage.');
 		}
 	};
