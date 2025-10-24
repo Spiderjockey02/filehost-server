@@ -40,7 +40,7 @@ export default class FileManager extends FileAccessor {
 		if (storage == null) throw 'Storage not found';
 
 		// If it's user's first login, the directory doesn't exist so create it
-		if (files == null && filePath == '') {
+		if (files == null && filePath == '/') {
 			await this.create({ userId: user.id, path: '/', size: BigInt(this.client.config.get('FOLDER_SIZE')), type: 'DIRECTORY', name: '/', mimetype: null, storageId: user.storageId });
 			await this.client.notificationManager.create({
 				title: 'Welcome!',

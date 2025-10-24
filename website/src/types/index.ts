@@ -12,7 +12,7 @@ export type RegisterErrorTypes = {
 }
 
 export interface SettingErrorTypes {
-	type: 'current' | 'pwd1' | 'pwd2' | 'misc' | 'av' | 'email'
+	type: 'current' | 'pwd1' | 'pwd2' | 'misc' | 'av' | 'email' | 'name'
 	text: string
 }
 
@@ -56,4 +56,15 @@ export type Config = {
     AUDIT_LOGS: number;
   };
   FOLDER_SIZE: number;
+  RATE_LIMIT: {
+    CAPACITY: number
+    REFILL_RATE: number
+    ABUSE_THRESHOLD: number
+    ABUSE_WINDOW: number
+  }
 };
+
+export interface AccountProviders {
+  id: string
+  provider: string
+}

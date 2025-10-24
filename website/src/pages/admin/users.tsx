@@ -52,7 +52,7 @@ export default function AdminUsersPage({ emails, signupSource, userStats, error 
 				<Col lg={6}>
 					<Card>
 						<Card.Header>
-							User Rention Over Time
+							User Retention Over Time
 						</Card.Header>
 						<Card.Body>
 							<UserRetentionLineChart />

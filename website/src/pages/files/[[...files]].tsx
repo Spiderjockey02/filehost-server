@@ -17,7 +17,7 @@ export default function Files({ path = '/' }: FilePageProps) {
 	return (
 		<FileLayout user={session.user as User} activeTab='files' tabName={file?.name}>
 			<BreadcrumbNav path={path} isFile={file?.type == 'FILE'} setviewType={setviewType} viewType={viewType} parentId={`${file?.id}`} />
-			{path == '/' && <RecentNavbar />}
+			{(path == '/' && file?.children.length !== 0) && <RecentNavbar />}
 			<div style={{ paddingTop: '6px' }}>
 				{error == null ?
 					isLoading || file == null ?
