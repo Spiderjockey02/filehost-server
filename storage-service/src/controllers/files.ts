@@ -65,7 +65,7 @@ export const deleteFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_TRASHED',
+					eventName: 'FILE_TRASHED',
 					message: 'File moved to trash',
 					resourceId: fileId,
 					ip: getIP(req),
@@ -80,7 +80,7 @@ export const deleteFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_TRASHED',
+					eventName: 'FILE_TRASHED',
 					message: 'File failed to moved to trash',
 					resourceId: fileId,
 					ip: getIP(req),
@@ -144,7 +144,7 @@ export const postMoveFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_MOVE',
+					eventName: 'FILE_MOVE',
 					message: `File moved to directory ${newDirId}`,
 					resourceId: fileId,
 					ip: getIP(req),
@@ -159,7 +159,7 @@ export const postMoveFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_MOVE',
+					eventName: 'FILE_MOVE',
 					message: `File moved to directory ${newDirId}`,
 					resourceId: fileId,
 					ip: getIP(req),
@@ -193,7 +193,7 @@ export const postCopyFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_COPY',
+					eventName: 'FILE_COPY',
 					message: `File copied to directory ${newDirId}`,
 					resourceId: fileId,
 					ip: getIP(req),
@@ -208,7 +208,7 @@ export const postCopyFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_COPY',
+					eventName: 'FILE_COPY',
 					message: `File failed to be copied to directory ${newDirId}`,
 					resourceId: fileId,
 					ip: getIP(req),
@@ -244,7 +244,7 @@ export const postDownloadFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_DOWNLOAD',
+					eventName: 'FILE_DOWNLOAD',
 					message: 'File failed to moved to trash',
 					resourceId: file.id,
 					ip: getIP(req),
@@ -258,7 +258,7 @@ export const postDownloadFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_DOWNLOAD',
+					eventName: 'FILE_DOWNLOAD',
 					message: 'File failed to moved to trash',
 					resourceId: id,
 					ip: getIP(req),
@@ -313,7 +313,7 @@ export const postRenameFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_RENAME',
+					eventName: 'FILE_RENAME',
 					message: `File renamed to ${newName}`,
 					resourceId: fileId,
 					ip: getIP(req),
@@ -327,7 +327,7 @@ export const postRenameFile = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FILE_RENAME',
+					eventName: 'FILE_RENAME',
 					message: `File failed to rename to ${newName}`,
 					resourceId: fileId,
 					ip: getIP(req),
@@ -361,7 +361,7 @@ export const postCreateFolder = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FOLDER_CREATE',
+					eventName: 'FOLDER_CREATE',
 					message: 'Folder created',
 					resourceId: parentId,
 					ip: getIP(req),
@@ -376,7 +376,7 @@ export const postCreateFolder = (client: Client) => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
-					eventType: 'FOLDER_CREATE',
+					eventName: 'FOLDER_CREATE',
 					message: 'Folder failed to create',
 					resourceId: parentId,
 					ip: getIP(req),

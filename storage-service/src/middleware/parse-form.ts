@@ -142,7 +142,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			// Audit logs
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					eventType: 'FILE_UPLOAD',
+					eventName: 'FILE_UPLOAD',
 					resourceType: 'FILE',
 					resourceId: uploadedFile?.id,
 					success: true,
@@ -166,7 +166,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			// Audit logs
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					eventType: 'FILE_UPLOAD',
+					eventName: 'FILE_UPLOAD',
 					resourceType: 'FILE',
 					resourceId: uploadedFile?.id,
 					success: false,

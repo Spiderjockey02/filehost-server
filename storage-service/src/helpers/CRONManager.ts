@@ -97,7 +97,7 @@ export default class CRONManager extends CronJobAccessor {
 					if (log.status == 'FAILURE') throw log.message;
 					this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 						await this.client.AuditLogManager.create({
-							eventType: 'CRONJOB_RAN',
+							eventName: 'CRONJOB_RAN',
 							resourceType: 'SYSTEM',
 							resourceId: name,
 							success: true,
@@ -107,7 +107,7 @@ export default class CRONManager extends CronJobAccessor {
 				} catch (err) {
 					this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 						await this.client.AuditLogManager.create({
-							eventType: 'CRONJOB_RAN',
+							eventName: 'CRONJOB_RAN',
 							resourceType: 'SYSTEM',
 							resourceId: name,
 							success: false,

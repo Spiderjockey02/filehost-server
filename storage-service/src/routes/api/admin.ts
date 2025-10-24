@@ -1,6 +1,5 @@
 import { getFiles, getFilesGrowth, getFileSizeCategories, getMimeTypes, getRecentlyUploaded } from '../../controllers/admin/files';
 import { getConfig, getCronJobs, getCronJobsByName, getMimeTypesSearch, getStats, getSystemStats, postConfig, postCronJobsByName, postCronJobsByNameRun, postNotification } from '../../controllers/admin';
-import { getLogs, getSpecificLog } from '../../controllers/admin/logs';
 import type Client from '../../helpers/Client';
 import { checkAdmin } from '../../middleware';
 import { Router } from 'express';
@@ -9,10 +8,6 @@ const router = Router();
 
 export default async function(client: Client) {
 	router.get('/stats', await checkAdmin(client), getStats(client));
-
-	router.get('/logs', await checkAdmin(client), getLogs(client));
-
-	router.get('/logs/:date', await checkAdmin(client), getSpecificLog(client));
 
 	router.get('/files/mimetypes', await checkAdmin(client), getMimeTypes(client));
 

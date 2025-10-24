@@ -51,7 +51,7 @@ export const deleteResetAvatar = (client: Client) => {
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					resourceType: 'USER',
-					eventType: 'USER_AVATAR_CHANGE',
+					eventName: 'USER_AVATAR_CHANGE',
 					resourceId: session.user.id,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'],
@@ -67,7 +67,7 @@ export const deleteResetAvatar = (client: Client) => {
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					resourceType: 'USER',
-					eventType: 'USER_AVATAR_CHANGE',
+					eventName: 'USER_AVATAR_CHANGE',
 					resourceId: session.user.id,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'],

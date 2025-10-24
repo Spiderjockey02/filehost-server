@@ -51,8 +51,18 @@ export const auth = betterAuth({
 				await Promise.all([
 					client.auditLog.create({
 						data: {
-							eventType: 'USER_PASSWORD_RESET',
-							resourceType: 'USER',
+							event: {
+								connectOrCreate: {
+									where: {
+										name: 'USER_PASSWORD_RESET',
+									},
+									create: {
+										name: 'USER_PASSWORD_RESET',
+										resourceType: 'USER',
+										displayName: 'User Password Reset',
+									},
+								},
+							},
 							resourceId: user.id,
 							user: {
 								connect: {
@@ -160,80 +170,108 @@ export const auth = betterAuth({
 					};
 				},
 				after: async (user, ctx) => {
-					await client.auditLog.create({
-						data: {
-							user: {
-								connect: {
-									id: user.id,
-								},
-							},
-							eventType: 'USER_REGISTERED',
-							resourceType: 'SESSION',
-							resourceId: user.id,
-							UserAgentCon: {
-								connectOrCreate: {
-									where: {
-										agent: ctx?.request?.headers.get('user-agent') || '',
-									},
-									create: {
-										agent: ctx?.request?.headers.get('user-agent') || '',
+					try {
+						await client.auditLog.create({
+							data: {
+								user: {
+									connect: {
+										id: user.id,
 									},
 								},
-							},
-							ipCon: {
-								connectOrCreate: {
-									where: {
-										ip: ctx?.request?.headers.get('x-forwarded-for') || '',
-									},
-									create: {
-										ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+								event: {
+									connectOrCreate: {
+										where: {
+											name: 'USER_REGISTERED',
+										},
+										create: {
+											name: 'USER_REGISTERED',
+											resourceType: 'SESSION',
+											displayName: 'User Registered',
+										},
 									},
 								},
+								resourceId: user.id,
+								userAgentCon: {
+									connectOrCreate: {
+										where: {
+											agent: ctx?.request?.headers.get('user-agent') || '',
+										},
+										create: {
+											agent: ctx?.request?.headers.get('user-agent') || '',
+										},
+									},
+								},
+								ipCon: {
+									connectOrCreate: {
+										where: {
+											ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+										},
+										create: {
+											ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+										},
+									},
+								},
+								message: 'A new user has registered',
+								success: true,
 							},
-							message: 'A new user has registered',
-							success: true,
-						},
-					});
+						});
+					} catch (err) {
+						console.log(err);
+					}
 				},
 			},
 		},
 		session: {
 			create: {
 				after: async (session, ctx) => {
-					await client.auditLog.create({
-						data: {
-							user: {
-								connect: {
-									id: session.userId,
-								},
-							},
-							eventType: 'USER_LOGIN_SUCCESS',
-							resourceType: 'SESSION',
-							resourceId: session.id,
-							UserAgentCon: {
-								connectOrCreate: {
-									where: {
-										agent: ctx?.request?.headers.get('user-agent') || '',
-									},
-									create: {
-										agent: ctx?.request?.headers.get('user-agent') || '',
+					try {
+						await client.auditLog.create({
+							data: {
+								user: {
+									connect: {
+										id: session.userId,
 									},
 								},
-							},
-							ipCon: {
-								connectOrCreate: {
-									where: {
-										ip: ctx?.request?.headers.get('x-forwarded-for') || '',
-									},
-									create: {
-										ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+								event: {
+									connectOrCreate: {
+										where: {
+											name: 'USER_LOGIN',
+										},
+										create: {
+											name: 'USER_LOGIN',
+											resourceType: 'SESSION',
+											displayName: 'User Login',
+										},
 									},
 								},
+								resourceId: session.id,
+								userAgentCon: {
+									connectOrCreate: {
+										where: {
+											agent: ctx?.request?.headers.get('user-agent') || '',
+										},
+										create: {
+											agent: ctx?.request?.headers.get('user-agent') || '',
+										},
+									},
+								},
+								ipCon: {
+									connectOrCreate: {
+										where: {
+											ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+										},
+										create: {
+											ip: ctx?.request?.headers.get('x-forwarded-for') || '',
+										},
+									},
+								},
+								message: 'User has logged in',
+								success: true,
 							},
-							message: 'User has logged in',
-							success: true,
-						},
-					});
+						});
+					} catch (err) {
+						console.log(err);
+					}
 				},
 			},
 		},
@@ -243,77 +281,101 @@ export const auth = betterAuth({
 			const userAgent = ctx.request?.headers.get('user-agent');
 			const ipAddress = ctx.request?.headers.get('x-forwarded-for');
 
-			if (ctx.path == '/sign-in/email') {
-				if (ctx.context.returned instanceof APIError) {
-					console.log(ctx.context.returned.body?.code);
-					switch (ctx.context.returned.body?.code) {
-						case 'INVALID_EMAIL_OR_PASSWORD':
-							await client.auditLog.create({
-								data: {
-									user: {
-										connect: {
-											email: ctx.body.email,
-										},
-									},
-									eventType: 'USER_LOGIN_FAILURE',
-									resourceType: 'SESSION',
-									UserAgentCon: {
-										connectOrCreate: {
-											where: {
-												agent: userAgent || '',
-											},
-											create: {
-												agent: userAgent || '',
+			try {
+				if (ctx.path == '/sign-in/email') {
+					if (ctx.context.returned instanceof APIError) {
+						console.log(ctx.context.returned.body);
+						switch (ctx.context.returned.body?.code) {
+							case 'INVALID_EMAIL_OR_PASSWORD':
+								await client.auditLog.create({
+									data: {
+										user: {
+											connect: {
+												email: ctx.body.email,
 											},
 										},
-									},
-									ipCon: {
-										connectOrCreate: {
-											where: {
-												ip: ipAddress || '',
-											},
-											create: {
-												ip: ipAddress || '',
-											},
-										},
-									},
-									message: 'Failed login attempt due to invalid password.',
-									success: true,
-								},
-							});
-							break;
-						case 'INVALID_EMAIL':
-							await client.auditLog.create({
-								data: {
-									eventType: 'USER_LOGIN_FAILURE',
-									resourceType: 'SESSION',
-									UserAgentCon: {
-										connectOrCreate: {
-											where: {
-												agent: userAgent || '',
-											},
-											create: {
-												agent: userAgent || '',
+										event: {
+											connectOrCreate: {
+												where: {
+													name: 'USER_LOGIN',
+												},
+												create: {
+													name: 'USER_LOGIN',
+													resourceType: 'SESSION',
+													displayName: 'User Login',
+												},
 											},
 										},
-									},
-									ipCon: {
-										connectOrCreate: {
-											where: {
-												ip: ipAddress || '',
-											},
-											create: {
-												ip: ipAddress || '',
+										userAgentCon: {
+											connectOrCreate: {
+												where: {
+													agent: userAgent || '',
+												},
+												create: {
+													agent: userAgent || '',
+												},
 											},
 										},
+										ipCon: {
+											connectOrCreate: {
+												where: {
+													ip: ipAddress || '',
+												},
+												create: {
+													ip: ipAddress || '',
+												},
+											},
+										},
+										message: 'Failed login attempt due to invalid password.',
+										success: false,
 									},
-									message: 'Failed login attempt due to invalid email.',
-									success: true,
-								},
-							});
-							break;
+								});
+								break;
+							case 'INVALID_EMAIL':
+								await client.auditLog.create({
+									data: {
+										event: {
+											connectOrCreate: {
+												where: {
+													name: 'USER_LOGIN',
+												},
+												create: {
+													name: 'USER_LOGIN',
+													resourceType: 'SESSION',
+													displayName: 'User Login',
+												},
+											},
+										},
+										userAgentCon: {
+											connectOrCreate: {
+												where: {
+													agent: userAgent || '',
+												},
+												create: {
+													agent: userAgent || '',
+												},
+											},
+										},
+										ipCon: {
+											connectOrCreate: {
+												where: {
+													ip: ipAddress || '',
+												},
+												create: {
+													ip: ipAddress || '',
+												},
+											},
+										},
+										message: 'Failed login attempt due to invalid email.',
+										success: false,
+									},
+								});
+								break;
+						}
 					}
 				}
+			} catch (err) {
+				console.log(err);
 			}
 		}),
 	},

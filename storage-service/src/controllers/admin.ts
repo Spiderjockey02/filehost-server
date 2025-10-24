@@ -122,7 +122,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 			if (log.status == 'FAILURE') throw log.message ?? 'CRON job failed to execute.';
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					eventType: 'CRONJOB_RAN',
+					eventName: 'CRONJOB_RAN',
 					resourceType: 'SYSTEM',
 					resourceId: name,
 					success: true,
@@ -136,7 +136,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 		} catch (err) {
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					eventType: 'CRONJOB_RAN',
+					eventName: 'CRONJOB_RAN',
 					resourceType: 'SYSTEM',
 					resourceId: name,
 					success: false,
@@ -200,12 +200,11 @@ export const postNotification = (client: Client) => {
 		const user = await client.userManager.fetchbyParam({ id: userId });
 		if (user == null) return Error.IncorrectQuery(res, 'UserId is not a valid user.');
 		try {
-
 			const notification = await client.notificationManager.create({ text, title, url, userId: user.id });
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					eventType: 'NOTIFICATION_SENT',
+					eventName: 'NOTIFICATION_SENT',
 					resourceType: 'USER',
 					resourceId: notification.id,
 					success: true,
@@ -217,7 +216,7 @@ export const postNotification = (client: Client) => {
 			client.logger.error(err);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					eventType: 'NOTIFICATION_SENT',
+					eventName: 'NOTIFICATION_SENT',
 					resourceType: 'USER',
 					resourceId: user.id,
 					success: false,

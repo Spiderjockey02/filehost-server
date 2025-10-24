@@ -1,7 +1,8 @@
-import { AuditLogEventType, AuditLogResourceType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { AuditLogEventName, AuditLogResourceType, ListenerType } from '@prisma/client';
 
 export interface CreateAuditLogEntryParams {
-  eventType: AuditLogEventType;
+  eventName: AuditLogEventName;
   message?: string;
   resourceType: AuditLogResourceType;
 	resourceId?: string
@@ -10,3 +11,35 @@ export interface CreateAuditLogEntryParams {
   ip?: string;
   userAgent?: string;
 }
+
+export interface AddAuditLogListenerParams {
+  userId: string;
+  type: ListenerType
+  eventNames: AuditLogEventName[];
+  name: string
+  targetUrl?: string
+}
+
+export type UpdateAuditLogListenerParams = {
+  id: string
+} & AddAuditLogListenerParams
+
+export interface fetchAuditLogsParams {
+  page?: number;
+  userId?: string;
+  eventName?: AuditLogEventName
+  sortOrder?: Prisma.SortOrder
+}
+
+export type FullAuditLogListener = Prisma.AuditLogListenerGetPayload<{
+  include: {
+    events: true
+  }
+}>
+
+export type FullAuditLog = Prisma.AuditLogGetPayload<{
+  include: {
+    user: true
+    event: true
+  }
+}>

@@ -89,7 +89,7 @@ export default class TrashHandler {
 
 		this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 			await this.client.AuditLogManager.create({
-				eventType: 'FILE_RECOVERED',
+				eventName: 'FILE_RECOVERED',
 				resourceType: 'FILE',
 				resourceId: file.id,
 				success: true,
@@ -130,7 +130,7 @@ export default class TrashHandler {
 
 				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 					await this.client.AuditLogManager.create({
-						eventType: 'FILE_DELETE',
+						eventName: 'FILE_DELETE',
 						resourceType: 'FILE',
 						resourceId: file.id,
 						success: true,
@@ -140,7 +140,7 @@ export default class TrashHandler {
 			} catch (err) {
 				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 					await this.client.AuditLogManager.create({
-						eventType: 'FILE_DELETE',
+						eventName: 'FILE_DELETE',
 						resourceType: 'FILE',
 						resourceId: file.id,
 						success: false,

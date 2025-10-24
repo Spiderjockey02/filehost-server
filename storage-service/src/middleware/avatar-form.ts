@@ -51,7 +51,7 @@ export default async (client: Client, req: Request, user: User) => {
 		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 			await client.AuditLogManager.create({
 				resourceType: 'USER',
-				eventType: 'USER_AVATAR_CHANGE',
+				eventName: 'USER_AVATAR_CHANGE',
 				resourceId: user.id,
 				ip: getIP(req),
 				userAgent: req.headers['user-agent'],
@@ -65,7 +65,7 @@ export default async (client: Client, req: Request, user: User) => {
 		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 			await client.AuditLogManager.create({
 				resourceType: 'USER',
-				eventType: 'USER_AVATAR_CHANGE',
+				eventName: 'USER_AVATAR_CHANGE',
 				resourceId: user.id,
 				ip: getIP(req),
 				userAgent: req.headers['user-agent'],

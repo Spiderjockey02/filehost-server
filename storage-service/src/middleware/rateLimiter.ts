@@ -46,7 +46,7 @@ export async function userPostRateLimit(client: Client) {
 
 				client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 					await client.AuditLogManager.create({
-						eventType: 'RATE_LIMIT_ABUSE',
+						eventName: 'RATE_LIMIT_ABUSE',
 						resourceType: 'USER',
 						resourceId: key,
 						ip: getIP(req),

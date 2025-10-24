@@ -23,6 +23,7 @@ model User {
   files             File[]
   activity          UserActivity[]
   logs              AuditLog[]
+  auditListeners    AuditLogListener[]
   bans              UserBans[]  @relation("bannedUser")
   issuedBans        UserBans[]  @relation("issuedUser")
   plan              Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
@@ -275,7 +276,7 @@ enum AuditLogResourceType {
   SESSION
 }
 
-enum AuditLogEventType {
+enum AuditLogEventName {
   FILE_UPLOAD
   FILE_DOWNLOAD
   FILE_RENAME
@@ -288,35 +289,77 @@ enum AuditLogEventType {
   NOTIFICATION_SENT
   CRONJOB_RAN
   USER_REGISTERED
-  USER_LOGIN_SUCCESS
-  USER_LOGIN_FAILURE
+  USER_LOGIN
   USER_UPDATE
   USER_AVATAR_CHANGE
   USER_TWOFA_CHANGE
   USER_PASSWORD_RESET
   SYSTEM_ONLINE
   RATE_LIMIT_ABUSE
+  STORAGE_CREATED
+  STORAGE_UPDATED
+  STORAGE_DELETED
+}
+
+model AuditLogNames {
+  name          AuditLogEventName        @id
+  resourceType  AuditLogResourceType
+  displayName   String?
+  logs          AuditLog[]
+  subscriptions AuditLogEventSubscription[]
+
+  @@index([resourceType])
 }
 
 model AuditLog {
   id           String         @id @default(cuid())
   user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId       String?
-  eventType    AuditLogEventType
+  event        AuditLogNames  @relation(fields: [eventId], references: [name], onDelete: Cascade)
+  eventId      AuditLogEventName
   message      String?
-  resourceType AuditLogResourceType
   resourceId   String?
   success      Boolean
-  ipCon        IpAddress?    @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
+  ipCon        IpAddress?     @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
   ipAddress    String?
-  UserAgentCon UserAgent?    @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
+  userAgentCon UserAgent?     @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
   userAgent    String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime       @default(now())
 
-  @@index([eventType])
-  @@index([resourceType])
+  @@index([eventId])
   @@index([userId])
   @@index([createdAt])
+}
+
+enum ListenerType {
+  WEBHOOK
+  NOTIFICATION
+}
+
+model AuditLogListener {
+  id          String        @id @default(cuid())
+  admin       User          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  adminId     String
+  name        String
+  enabled     Boolean        @default(true)
+  type        ListenerType
+  targetUrl   String?
+  events      AuditLogEventSubscription[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([adminId])
+}
+
+model AuditLogEventSubscription {
+  id           String           @id @default(cuid())
+  listener     AuditLogListener @relation(fields: [listenerId], references: [id], onDelete: Cascade)
+  listenerId   String
+  event        AuditLogNames    @relation(fields: [eventId], references: [name], onDelete: Cascade)
+  eventId      AuditLogEventName
+
+  @@unique([listenerId, eventId])
+  @@index([eventId])
 }
 
 model UserBans {

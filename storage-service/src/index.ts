@@ -108,7 +108,7 @@ const client = new Client(io);
 	});
 
 	await client.AuditLogManager.create({
-		eventType: 'SYSTEM_ONLINE',
+		eventName: 'SYSTEM_ONLINE',
 		resourceType: 'SYSTEM',
 		success: true,
 		message: `System started in ${new Date().getTime() - start.getTime()}ms`,
