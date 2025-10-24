@@ -124,7 +124,7 @@ export default function AdminActivityCard({ userId }: Props) {
 						</Table.Body>
 					</Table>
 				</div>
-				<Table.PaginationFooter isLoading={isLoading} data={data} page={page} setPage={setPage} />
+				<Table.PaginationFooter isLoading={isLoading} total={data?.total} page={page} setPage={setPage} />
 				{data?.activity.map((activity) => (<AdminActivityModal key={activity.id} activity={activity} />))}
 			</Card.Body>
 		</Card>

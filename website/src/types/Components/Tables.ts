@@ -24,7 +24,7 @@ export interface FileViewProps {
 
 export interface PaginationFooterProps {
 	isLoading: boolean;
-	data: { total: number } | undefined;
+	total?: number;
 	page: number;
 	setPage: (page: number) => void;
 }

@@ -86,7 +86,7 @@ export default function AdminRecentUploadsCards({ userId }: Props) {
 						</Table.Body>
 					</Table>
 				</div>
-				<Table.PaginationFooter isLoading={isLoading} data={data} page={page} setPage={setPage} />
+				<Table.PaginationFooter isLoading={isLoading} total={data?.total} page={page} setPage={setPage} />
 			</Card.Body>
 		</Card>
 	);
