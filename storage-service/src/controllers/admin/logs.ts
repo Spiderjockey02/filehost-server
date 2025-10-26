@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { Error } from '../../utils';
+import { Error, getIP } from '../../utils';
 import fs from 'fs/promises';
 import Client from 'src/helpers/Client';
 import { existsSync } from 'fs';
@@ -215,8 +215,8 @@ export const getLogListeners = (client: Client) => {
 // Endpoint: POST /api/admin/logs/listeners
 export const postLogListener = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		const session = await getSession(client, req.headers);
 		try {
-			const session = await getSession(client, req.headers);
 			const { type, events, name, targetUrl } = req.body;
 
 			if (typeof type !== 'string' || !['WEBHOOK', 'NOTIFICATION'].includes(type)) return Error.IncorrectQuery(res, 'Invalid listener type provided.');
@@ -225,9 +225,34 @@ export const postLogListener = (client: Client) => {
 			if (type == 'WEBHOOK' && (typeof targetUrl !== 'string' || targetUrl.length === 0)) return Error.IncorrectQuery(res, 'Invalid targetUrl provided.');
 
 			const listener = await client.AuditLogManager.addListener({ userId: session!.userId, type: type as ListenerType, eventNames: events, name, targetUrl });
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'SYSTEM',
+					eventName: 'LISTENER_UPDATED',
+					message: 'Created audit log listener',
+					resourceId: listener.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: false,
+				});
+			});
 			res.json({ success: 'Successfully created log listener.', listener });
 		} catch (err) {
 			client.logger.error(err);
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'SYSTEM',
+					eventName: 'LISTENER_UPDATED',
+					message: 'Failed to create audit log listener',
+					resourceId: '',
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: false,
+				});
+			});
 			Error.GenericError(res, 'Failed to create log listener.');
 		}
 	};
@@ -236,12 +261,39 @@ export const postLogListener = (client: Client) => {
 // Endpoint: DELETE /api/admin/logs/listeners/:id
 export const deleteLogListener = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const session = await getSession(client, req.headers);
+
 		try {
-			const { id } = req.params;
-			await client.AuditLogManager.removeListener(id);
+			const listener = await client.AuditLogManager.removeListener(id);
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'SYSTEM',
+					eventName: 'LISTENER_UPDATED',
+					message: 'Deleted audit log listener',
+					resourceId: listener.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: true,
+				});
+			});
 			res.json({ success: 'Successfully deleted log listener.' });
 		} catch (err) {
 			client.logger.error(err);
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'SYSTEM',
+					eventName: 'LISTENER_UPDATED',
+					message: 'Failed to delete audit log listener',
+					resourceId: id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: false,
+				});
+			});
 			Error.GenericError(res, 'Failed to delete log listener.');
 		}
 	};
@@ -251,9 +303,9 @@ export const deleteLogListener = (client: Client) => {
 export const patchLogListener = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const { id } = req.params;
+		const session = await getSession(client, req.headers);
 
 		try {
-			const session = await getSession(client, req.headers);
 			const { type, events, name, targetUrl } = req.body;
 
 			if (typeof type !== 'string' || !['WEBHOOK', 'NOTIFICATION'].includes(type)) return Error.IncorrectQuery(res, 'Invalid listener type provided.');
@@ -262,9 +314,34 @@ export const patchLogListener = (client: Client) => {
 			if (type == 'WEBHOOK' && (typeof targetUrl !== 'string' || targetUrl.length === 0)) return Error.IncorrectQuery(res, 'Invalid targetUrl provided.');
 
 			const listener = await client.AuditLogManager.updateListener({ id, userId: session!.userId, type: type as ListenerType, eventNames: events, name, targetUrl });
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'SYSTEM',
+					eventName: 'LISTENER_UPDATED',
+					message: 'Updated audit log listener',
+					resourceId: listener.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: true,
+				});
+			});
 			res.json({ success: 'Successfully created log listener.', listener });
 		} catch (err) {
 			client.logger.error(err);
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					userId: session?.user.id,
+					resourceType: 'SYSTEM',
+					eventName: 'LISTENER_UPDATED',
+					message: 'Failed to update audit log listener',
+					resourceId: id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: false,
+				});
+			});
 			Error.GenericError(res, 'Failed to update log listener.');
 		}
 	};
