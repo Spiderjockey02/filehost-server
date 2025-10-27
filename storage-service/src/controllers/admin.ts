@@ -6,6 +6,7 @@ import fs from 'fs/promises';
 import MIMEList from '../../assets/MIME-list.json';
 import { CronJobLog } from '@prisma/client';
 import { getSession } from '../middleware';
+import { validateConfig, validateCRONSchedule, validateNotification } from '../validators';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
@@ -73,10 +74,10 @@ export const postCronJobsByName = (client: Client) => {
 			const cronJob = req.params.name;
 			const { schedule } = req.body;
 
+			// Validate cronJob name and schedule (CRON format)
 			if (!client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res, `${cronJob} is not a valid CRON job.`);
-			if (schedule == null) return Error.IncorrectQuery(res, 'Schedule is required.');
-			if (typeof schedule !== 'string') return Error.IncorrectQuery(res, 'Schedule must be a string.');
-			if (!schedule.match(/^[0-9\-\*\/, ]+$/)) return Error.IncorrectQuery(res, 'Schedule must be a valid CRON expression.');
+			const result = validateCRONSchedule.safeParse(schedule);
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			client.CRONManager.updateAndReschedule(cronJob, req.body.schedule);
 		} catch (err) {
@@ -188,10 +189,8 @@ export const postNotification = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		// Validate body
 		const { text, title, url, userId } = req.body;
-		if (typeof text !== 'string' || text.length < 1) return Error.IncorrectQuery(res, 'text must be a string with at least 1 character.');
-		if (typeof title !== 'string' || title.length < 1) return Error.IncorrectQuery(res, 'title must be a string with at least 1 character.');
-		if (url != undefined && (typeof url !== 'string' || !url.startsWith('/'))) return Error.IncorrectQuery(res, 'url must be a string starting with /.');
-		if (typeof userId !== 'string' || userId.length < 1) return Error.IncorrectQuery(res, 'userId must be a string with at least 1 character.');
+		const result = validateNotification.safeParse({ text, title, url, userId });
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		// Check session
 		const session = await getSession(client, req.headers);
@@ -241,50 +240,9 @@ export const postConfig = (client: Client) => {
 		const { MAX_AVATAR_SIZE, MAX_CHARS_FILE_NAME, DISALLOWED_MIME_TYPES, INVALID_CHARS_IN_FILE_NAME,
 			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE, RATE_LIMIT } = req.body;
 
-		// Validate MAX_AVATAR_SIZE and MAX_CHARS_FILE_NAME are positive integers
-		if (typeof MAX_AVATAR_SIZE !== 'number' || isNaN(MAX_AVATAR_SIZE) || MAX_AVATAR_SIZE < 1) return Error.IncorrectQuery(res, 'MAX_AVATAR_SIZE must be a valid number greater than or equal to 1.');
-		if (typeof MAX_CHARS_FILE_NAME !== 'number' || isNaN(MAX_CHARS_FILE_NAME) || MAX_CHARS_FILE_NAME < 1) return Error.IncorrectQuery(res, 'MAX_CHARS_FILE_NAME must be a valid number greater than or equal to 1.');
-
-		// Validate DISALLOWED_MIME_TYPES is an array of valid mime types
-		if (!Array.isArray(DISALLOWED_MIME_TYPES)) return Error.IncorrectQuery(res, 'DISALLOWED_MIME_TYPES must be an array of strings.');
-		for (const mimeType of DISALLOWED_MIME_TYPES) {
-			if (typeof mimeType !== 'string') return Error.IncorrectQuery(res, 'DISALLOWED_MIME_TYPES must be an array of strings.');
-			if (!MIMEList.includes(mimeType)) return Error.IncorrectQuery(res, `${mimeType} is not a valid mime type.`);
-		}
-
-		// Validate INVALID_CHARS_IN_FILE_NAME is an array of strings
-		if (!Array.isArray(INVALID_CHARS_IN_FILE_NAME)) return Error.IncorrectQuery(res, 'INVALID_CHARS_IN_FILE_NAME must be an array of strings.');
-		for (const char of INVALID_CHARS_IN_FILE_NAME) {
-			if (typeof char !== 'string') return Error.IncorrectQuery(res, 'INVALID_CHARS_IN_FILE_NAME must be an array of strings.');
-		}
-
-		// Validate KEEP_ORIGINAL_METADATA is a boolean
-		if (typeof KEEP_ORIGINAL_METADATA !== 'boolean') return Error.IncorrectQuery(res, 'KEEP_ORIGINAL_METADATA must be a boolean.');
-
-		// Validate THUMBNAIL is an object with WIDTH and HEIGHT as positive integers
-		if (typeof THUMBNAIL !== 'object' || THUMBNAIL == null) return Error.IncorrectQuery(res, 'THUMBNAIL must be an object.');
-		const { WIDTH, HEIGHT } = THUMBNAIL;
-		if (typeof WIDTH !== 'number' || isNaN(WIDTH) || WIDTH < 1) return Error.IncorrectQuery(res, 'THUMBNAIL.WIDTH must be a valid number greater than or equal to 1.');
-		if (typeof HEIGHT !== 'number' || isNaN(HEIGHT) || HEIGHT < 1) return Error.IncorrectQuery(res, 'THUMBNAIL.HEIGHT must be a valid number greater than or equal to 1.');
-
-		// Validate RETENTION_POLICY_IN_DAYS is an object with LOG_FILES, DATABASE_FILES, USER_ACTIVITY, AUDIT_LOGS as non-negative integers
-		if (typeof RETENTION_POLICY_IN_DAYS !== 'object' || RETENTION_POLICY_IN_DAYS == null) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS must be an object.');
-		const { LOG_FILES, DATABASE_FILES, USER_ACTIVITY, AUDIT_LOGS } = RETENTION_POLICY_IN_DAYS;
-		if (typeof LOG_FILES !== 'number' || isNaN(LOG_FILES) || LOG_FILES < 0) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS.LOG_FILES must be a valid number greater than or equal to 0.');
-		if (typeof DATABASE_FILES !== 'number' || isNaN(DATABASE_FILES) || DATABASE_FILES < 0) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS.DATABASE_FILES must be a valid number greater than or equal to 0.');
-		if (typeof USER_ACTIVITY !== 'number' || isNaN(USER_ACTIVITY) || USER_ACTIVITY < 0) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS.USER_ACTIVITY must be a valid number greater than or equal to 0.');
-		if (typeof AUDIT_LOGS !== 'number' || isNaN(AUDIT_LOGS) || AUDIT_LOGS < 0) return Error.IncorrectQuery(res, 'RETENTION_POLICY_IN_DAYS.AUDIT_LOGS must be a valid number greater than or equal to 0.');
-
-		// Validate FOLDER_SIZE is a positive integer
-		if (typeof FOLDER_SIZE !== 'number' || isNaN(FOLDER_SIZE) || FOLDER_SIZE < 1) return Error.IncorrectQuery(res, 'FOLDER_SIZE must be a valid number greater than or equal to 1.');
-
-		// Validate RATE_LIMIT is an object with WINDOW_SIZE and MAX_REQUESTS as positive integers
-		if (typeof RATE_LIMIT !== 'object' || RATE_LIMIT == null) return Error.IncorrectQuery(res, 'RATE_LIMIT must be an object.');
-		const { CAPACITY, REFILL_RATE, ABUSE_THRESHOLD, ABUSE_WINDOW } = RATE_LIMIT;
-		if (typeof CAPACITY !== 'number' || isNaN(CAPACITY) || CAPACITY < 1) return Error.IncorrectQuery(res, 'RATE_LIMIT.CAPACITY must be a valid number greater than or equal to 1.');
-		if (typeof REFILL_RATE !== 'number' || isNaN(REFILL_RATE) || REFILL_RATE < 1) return Error.IncorrectQuery(res, 'RATE_LIMIT.REFILL_RATE must be a valid number greater than or equal to 1.');
-		if (typeof ABUSE_THRESHOLD !== 'number' || isNaN(ABUSE_THRESHOLD) || ABUSE_THRESHOLD < 1) return Error.IncorrectQuery(res, 'RATE_LIMIT.ABUSE_THRESHOLD must be a valid number greater than or equal to 1.');
-		if (typeof ABUSE_WINDOW !== 'number' || isNaN(ABUSE_WINDOW) || ABUSE_WINDOW < 1) return Error.IncorrectQuery(res, 'RATE_LIMIT.ABUSE_WINDOW must be a valid number greater than or equal to 1.');
+		const result = validateConfig.safeParse({ MAX_AVATAR_SIZE, MAX_CHARS_FILE_NAME, DISALLOWED_MIME_TYPES, INVALID_CHARS_IN_FILE_NAME,
+			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE, RATE_LIMIT });
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		client.config.setAll(req.body);
 		res.json({ success: 'Configuration updated successfully.' });

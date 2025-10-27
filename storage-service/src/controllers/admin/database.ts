@@ -3,6 +3,7 @@ import { Error, PATHS } from '../../utils';
 import Client from 'src/helpers/Client';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
+import { validateBackup } from '../../validators';
 
 // Endpoint: GET /api/admin/database/backups
 export const getDatabaseBackups = (client: Client) => {
@@ -38,23 +39,20 @@ export const getDatabaseBackups = (client: Client) => {
 export const deleteBackupByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const timestamp = req.params.timestamp;
-			const regex = /^(\d+)\.dump\.sql$/;
-
-			const match = timestamp.match(regex);
-			if (!match) return Error.IncorrectQuery(res, 'Timestamp is an invalid format.');
-			const number = match[1];
+			const { timestamp } = req.params;
+			const result = validateBackup.safeParse(timestamp);
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			// Check if the database backups folder exists
-			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${number}.dump.sql`)) return Error.MissingResource(res, 'Database backup not found.');
+			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res, 'Database backup not found.');
 
 			// Delete the backup files
 			await Promise.all([
-				fs.rm(`${PATHS.DATABASE_BACKUPS}/${number}.meta.json`),
-				fs.rm(`${PATHS.DATABASE_BACKUPS}/${number}.dump.sql`),
+				fs.rm(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.meta.json`),
+				fs.rm(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`),
 			]);
 
-			res.json({ success: `Successfully deleted backup: ${number}` });
+			res.json({ success: `Successfully deleted backup: ${result.data.timestamp}` });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to delete database backup.');
@@ -66,17 +64,13 @@ export const deleteBackupByName = (client: Client) => {
 export const downloadBackupByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const timestamp = req.params.timestamp;
-			const regex = /^(\d+)\.dump\.sql$/;
-
-			const match = timestamp.match(regex);
-			if (!match) return Error.IncorrectQuery(res, 'Timestamp is an invalid format.');
-			const number = match[1];
+			const { timestamp } = req.params;
+			const result = validateBackup.safeParse(timestamp);
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			// Check if the database backups folder exists
-			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${number}.dump.sql`)) return Error.MissingResource(res, 'Database backup not found.');
-
-			res.download(`${PATHS.DATABASE_BACKUPS}/${number}.dump.sql`);
+			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res, 'Database backup not found.');
+			res.download(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`);
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to download database backup.');

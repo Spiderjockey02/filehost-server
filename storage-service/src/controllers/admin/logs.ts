@@ -4,7 +4,8 @@ import fs from 'fs/promises';
 import Client from 'src/helpers/Client';
 import { existsSync } from 'fs';
 import { getSession } from '../../middleware';
-import { AuditLogEventName, ListenerType, Prisma } from '@prisma/client';
+import { AuditLogEventName, ListenerType } from '@prisma/client';
+import { validateAdminLogs, validateFrame, validateLogListener } from '../../validators';
 type countEnum = { [key: string | number]: {
 	user: number
 	file: number
@@ -18,13 +19,10 @@ export const getLogs = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const { userId, page, eventName, sortOrder } = req.query;
+			const result = validateAdminLogs.safeParse({ userId, page, eventName, sortOrder });
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-			if (userId && typeof userId !== 'string') return Error.IncorrectQuery(res, 'Invalid userId provided.');
-			if (page && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
-			if (eventName && (typeof eventName !== 'string' || !Object.keys(AuditLogEventName).includes(eventName))) return Error.IncorrectQuery(res, 'eventName is invalid');
-			if (sortOrder && (typeof sortOrder !== 'string' || !['desc', 'asc'].includes(sortOrder))) return Error.IncorrectQuery(res, 'sortOrder is invalid');
-
-			const { logs, total } = await client.AuditLogManager.fetch({ userId, page: isNaN(Number(page)) ? undefined : Number(page), eventName: eventName as AuditLogEventName, sortOrder: sortOrder as Prisma.SortOrder });
+			const { logs, total } = await client.AuditLogManager.fetch({ ...result.data, eventName: result.data.eventName as AuditLogEventName });
 			res.json({ logs, total });
 		} catch (error) {
 			client.logger.error(error);
@@ -57,7 +55,8 @@ export const getLogHistory = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		// Get time frame and validate it
 		const frame = req.query.frame;
-		if (!frame || typeof frame !== 'string' || !['yearly', 'monthly', 'daily'].includes(frame)) return Error.IncorrectQuery(res, `frame must be on one of the following: ${['yearly', 'monthly', 'daily'].join(', ')}`);
+		const result = validateFrame.safeParse(frame);
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		switch (frame) {
 			case 'yearly': {
@@ -218,11 +217,8 @@ export const postLogListener = (client: Client) => {
 		const session = await getSession(client, req.headers);
 		try {
 			const { type, events, name, targetUrl } = req.body;
-
-			if (typeof type !== 'string' || !['WEBHOOK', 'NOTIFICATION'].includes(type)) return Error.IncorrectQuery(res, 'Invalid listener type provided.');
-			if (!Array.isArray(events) || events.some((e) => typeof e !== 'string')) return Error.IncorrectQuery(res, 'Invalid events provided.');
-			if (typeof name !== 'string' || name.length === 0) return Error.IncorrectQuery(res, 'Invalid name provided.');
-			if (type == 'WEBHOOK' && (typeof targetUrl !== 'string' || targetUrl.length === 0)) return Error.IncorrectQuery(res, 'Invalid targetUrl provided.');
+			const result = validateLogListener.safeParse({ type, events, name, targetUrl });
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			const listener = await client.AuditLogManager.addListener({ userId: session!.userId, type: type as ListenerType, eventNames: events, name, targetUrl });
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
@@ -307,11 +303,8 @@ export const patchLogListener = (client: Client) => {
 
 		try {
 			const { type, events, name, targetUrl } = req.body;
-
-			if (typeof type !== 'string' || !['WEBHOOK', 'NOTIFICATION'].includes(type)) return Error.IncorrectQuery(res, 'Invalid listener type provided.');
-			if (!Array.isArray(events) || events.some((e) => typeof e !== 'string')) return Error.IncorrectQuery(res, 'Invalid events provided.');
-			if (typeof name !== 'string' || name.length === 0) return Error.IncorrectQuery(res, 'Invalid name provided.');
-			if (type == 'WEBHOOK' && (typeof targetUrl !== 'string' || targetUrl.length === 0)) return Error.IncorrectQuery(res, 'Invalid targetUrl provided.');
+			const result = validateLogListener.safeParse({ type, events, name, targetUrl });
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			const listener = await client.AuditLogManager.updateListener({ id, userId: session!.userId, type: type as ListenerType, eventNames: events, name, targetUrl });
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {

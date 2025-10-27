@@ -2,6 +2,7 @@ import Client from 'src/helpers/Client';
 import type { Request, Response } from 'express';
 import { Error } from '../../utils';
 import { HTTPMethod } from '@prisma/client';
+import { validateFrame } from '../../validators';
 
 // Endpoint: GET /api/admin/network/stats
 export const getNetworkStats = (client: Client) => {
@@ -28,7 +29,8 @@ type countEnum = { [key: string | number]: number }
 export const getActivityRequests = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const frame = req.query.frame;
-		if (!frame || typeof frame !== 'string' || !['yearly', 'monthly', 'daily', 'hourly'].includes(frame)) return Error.IncorrectQuery(res, `frame must be on one of the following: ${['yearly', 'monthly', 'daily', 'hourly'].join(', ')}`);
+		const result = validateFrame.safeParse(frame);
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		switch (frame) {
 			case 'yearly': {
@@ -130,9 +132,9 @@ type histoyrDtata = {
 // Endpoint: GET /api/admin/network/traffic
 export const getActivityTraffic = (client: Client) => {
 	return async (req: Request, res: Response) => {
-
 		const frame = req.query.frame;
-		if (!frame || typeof frame !== 'string' || !['yearly', 'monthly', 'daily', 'hourly'].includes(frame)) return Error.IncorrectQuery(res, `frame must be on one of the following: ${['yearly', 'monthly', 'daily', 'hourly'].join(', ')}`);
+		const result = validateFrame.safeParse(frame);
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		switch (frame) {
 			case 'yearly': {

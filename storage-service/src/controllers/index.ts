@@ -15,9 +15,9 @@ export const getAvatar = (client: Client) => {
 
 // Endpoint GET /thumbnail/:userid/:path(*)
 export const getThumbnail = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return async (req: Request<{ userid: string, path: string[] }>, res: Response) => {
 		const userId = req.params.userid;
-		const path = (req.params.path as unknown as string[]).join('/');
+		const path = req.params.path.join('/');
 
 		// Make sure they have access to view the thumbnail
 		const session = await getSession(client, req.headers);
@@ -30,12 +30,12 @@ export const getThumbnail = (client: Client) => {
 
 // Endpoint GET /content/:userid/:path(*)
 export const getContent = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return async (req: Request<{ userid: string, path: string[] }>, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
 
 		const userId = req.params.userid;
-		const path = (req.params.path as unknown as string[]).join('/');
+		const path = req.params.path.join('/');
 
 		// Fetch file from database
 		const file = await client.FileManager.getByFilePath(userId, path);
@@ -45,11 +45,7 @@ export const getContent = (client: Client) => {
 		if (file.userId !== session.user.id) return Error.InvalidAccess(res);
 
 		// Update the user's recently viewed file history
-		try {
-			await client.recentlyViewedFileManager.upsert({ userId, fileId: file.id });
-		} catch (error) {
-			client.logger.error(error);
-		}
+		await client.recentlyViewedFileManager.upsert({ userId, fileId: file.id }).catch(client.logger.error);
 
 		try {
 			const owner = await client.userManager.fetchbyParam({ id: file.userId }) as User;
@@ -60,9 +56,7 @@ export const getContent = (client: Client) => {
 				if (err.name == 'NotFound') return Error.MissingResource(res, 'File not found on storage server.');
 			} else {
 				client.logger.error(`Non-S3 error: ${err}`);
-				res.status(500).json({
-					error: 'Failed to send file',
-				});
+				return Error.GenericError(res, 'Failed to send file');
 			}
 		}
 	};
@@ -72,7 +66,11 @@ export const getContent = (client: Client) => {
 export const getStatistics = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const [totalUsers, totalUsage, totalFileCount] = await Promise.all([client.userManager.fetchTotal(), client.FileManager.storageManager.fetchGlobalUsage(), client.FileManager.fetchTotal()]);
+			const [totalUsers, totalUsage, totalFileCount] = await Promise.all([
+				client.userManager.fetchTotal(),
+				client.FileManager.storageManager.fetchGlobalUsage(),
+				client.FileManager.fetchTotal(),
+			]);
 
 			res.json({ totalUsers, totalUsage: Number(totalUsage._sum.usedSize ?? 0), totalFileCount: totalFileCount.files + totalFileCount.folders });
 		} catch (error) {

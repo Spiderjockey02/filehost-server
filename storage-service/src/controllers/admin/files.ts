@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import Client from 'src/helpers/Client';
 import { Error, sanitiseObject } from '../../utils';
+import { validateFileGrowth, validateGrouped, validatePage } from '../../validators';
 type countEnum = { [key: string | number]: number }
 
 // Endpoint: GET /api/admin/files
@@ -27,22 +28,20 @@ export const getFiles = (client: Client) => {
 // Endpoint: GET /api/admin/files/growth
 export const getFilesGrowth = (client: Client) => {
 	return async (req: Request, res: Response) => {
-	// Get time frame and validate it
 		const { frame, storageId } = req.query;
+		const result = validateFileGrowth.safeParse({ frame, storageId });
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-		if (storageId && typeof storageId !== 'string') return Error.IncorrectQuery(res, 'storageId must be a string.');
-		if (!frame || typeof frame !== 'string' || !['yearly', 'monthly', 'daily'].includes(frame)) return Error.IncorrectQuery(res, `frame must be on one of the following: ${['yearly', 'monthly', 'daily'].join(', ')}`);
-
-		switch (frame) {
+		switch (result.data.frame) {
 			case 'yearly': {
 				const years: countEnum = {};
 				const currentYear = new Date().getFullYear();
-				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1), storageId);
+				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1), result.data.storageId);
 
 				for (let i = 9; i >= 0; i--) {
 					const start = new Date(currentYear - i, 0, 1);
 					const end = new Date(currentYear - i + 1, 0, 1);
-					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, storageId);
+					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, result.data.storageId);
 					cumulativeTotal += files;
 					years[currentYear - i] = cumulativeTotal;
 				}
@@ -57,7 +56,7 @@ export const getFilesGrowth = (client: Client) => {
 				const firstMonthDate = new Date();
 				firstMonthDate.setMonth(current.getMonth() - 11);
 
-				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate), storageId);
+				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate), result.data.storageId);
 				for (let i = 11; i >= 0; i--) {
 					const start = new Date(current);
 					start.setMonth(current.getMonth() - i);
@@ -65,7 +64,7 @@ export const getFilesGrowth = (client: Client) => {
 					end.setMonth(start.getMonth() + 1);
 
 					const monthName = start.toLocaleString('default', { month: 'long' });
-					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, storageId);
+					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, result.data.storageId);
 					cumulativeTotal += files;
 					months[monthName] = cumulativeTotal;
 				}
@@ -78,7 +77,7 @@ export const getFilesGrowth = (client: Client) => {
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);
 				frameStart.setDate(today.getDate() - 14);
-				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), frameStart, storageId);
+				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), frameStart, result.data.storageId);
 
 				for (let i = 14; i >= 0; i--) {
 					const end = new Date();
@@ -89,7 +88,7 @@ export const getFilesGrowth = (client: Client) => {
 					start.setDate(start.getDate() - 1);
 
 					const dateStr = start.toISOString().split('T')[0];
-					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, storageId);
+					const files = await client.FileManager.fetchUploadsBetweenTwoDates(start, end, result.data.storageId);
 					cumulativeTotal += files;
 					days[dateStr] = cumulativeTotal;
 				}
@@ -119,12 +118,11 @@ export const getRecentlyUploaded = (client: Client) => {
 		try {
 			// Allow pagination
 			const { page, userId } = req.query;
-
-			// Validate page
-			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
+			const result = validatePage.safeParse(page);
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			const [files, total] = await Promise.all([
-				client.FileManager.fetchRecentlyUploaded({ page: isNaN(Number(page)) ? undefined : Number(page), userId: userId ? `${userId}` : undefined }),
+				client.FileManager.fetchRecentlyUploaded({ page: result.data, userId: userId ? `${userId}` : undefined }),
 				client.FileManager.fetchTotal(userId ? `${userId}` : undefined),
 			]);
 			res.json({ files: sanitiseObject(files), total: total.files });
@@ -140,8 +138,8 @@ export const getMimeTypes = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const { grouped, type } = req.query;
-			if (grouped && typeof grouped !== 'string') return Error.IncorrectQuery(res, 'grouped must be a string.');
-			if (grouped && !['true', 'false'].includes(grouped)) return Error.IncorrectQuery(res, 'grouped must be either true or false.');
+			const result = validateGrouped.safeParse({ grouped, type });
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			const mimeTypes = await client.FileManager.fetchFileMediaTypes({ grouped, type });
 			res.json({ mimeTypes });

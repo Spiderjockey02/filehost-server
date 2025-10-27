@@ -4,17 +4,15 @@ import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import { FileType } from '@prisma/client';
 
-// Endpoint GET /api/files
+// Endpoint GET /api/files/:path
 export const getFiles = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return async (req: Request<{ path: string[] }>, res: Response) => {
 		try {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			// Fetch from cache
-			const filePath = (req.params.path as unknown as string[]).join('/');
+			const filePath = req.params.path.join('/');
 			const file = await client.FileManager.getDirectory(session.user, filePath);
-
 			res.json({ file });
 		} catch (err) {
 			client.logger.error(err);

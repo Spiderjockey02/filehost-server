@@ -3,38 +3,19 @@ import type { Request, Response } from 'express';
 import type Client from '../../helpers/Client';
 import { getSession } from '../../middleware';
 import type { FullSession } from 'src/types/database/Session';
-
-type data = { [key: string]: boolean}
+import { validateBan, validateFrame, validateUser } from '../../validators';
 type countEnum = { [key: string | number]: number }
 
 // Endpoint: GET /api/admin/users
 export const getUsers = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { page, include: rawFilters, name, sortBy, sortOrder, storageId } = req.query;
-			const filters = (rawFilters !== undefined && Array.isArray(rawFilters)) ? rawFilters.map((filter) => filter.toString()) : [`${rawFilters}`];
+			const { page, name, sortBy, sortOrder, storageId } = req.query;
+			const result = validateUser.safeParse({ page, name, sortBy, sortOrder, storageId });
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-			// Parse the filters and validate them
-			const parsedFilters: data = {};
-			for (const filter of filters) {
-				if (['group', 'recent', 'delete', 'analyse', 'user'].includes(filter)) parsedFilters[filter] = true;
-			}
-
-			// Validate sorting
-			if (sortOrder !== undefined && (typeof sortOrder !== 'string' || (sortOrder !== 'asc' && sortOrder !== 'desc'))) {
-				return Error.IncorrectQuery(res, 'sortOrder must be \'asc\', \'desc\' or not present.');
-			}
-
-			if (sortBy !== undefined && (typeof sortBy !== 'string' || (sortBy !== 'createdAt' && sortBy !== 'lastActive' && sortBy !== 'uploadedFiles'))) {
-				return Error.IncorrectQuery(res, 'Invalid sortBy. Must be one of \'createdAt\', \'lastActive\', or \'uploadedFiles\'.');
-			}
-
-			// Valid page index (if present)
-			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
-
-			// Fetch the database
-			const users = await client.userManager.fetchAll({ ...parsedFilters, page: isNaN(Number(page)) ? undefined : Number(page), name: name == undefined ? undefined : `${name}`, sortBy, sortOrder, storageId: storageId == undefined ? undefined : `${storageId}` });
-			const { total } = await client.userManager.fetchTotal(storageId == undefined ? undefined : `${storageId}`);
+			const users = await client.userManager.fetchAll({ ...result.data });
+			const { total } = await client.userManager.fetchTotal(result.data.storageId);
 			res.json({ users: sanitiseObject(users), total });
 		} catch (err) {
 			client.logger.error(err);
@@ -47,7 +28,6 @@ export const getUsers = (client: Client) => {
 export const getUsersByLanguageCode = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			// Fetch the database
 			const langaugeCodes = await client.userManager.fetchGroupCountsByLanguageCodes();
 			res.json({ langaugeCodes });
 		} catch (err) {
@@ -61,9 +41,9 @@ export const getUsersByLanguageCode = (client: Client) => {
 // Endpoint: GET /api/admin/users/growth
 export const getUserGrowth = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		// Get time frame and validate it
 		const frame = req.query.frame;
-		if (!frame || typeof frame !== 'string' || !['yearly', 'monthly', 'daily'].includes(frame)) return Error.IncorrectQuery(res, `frame must be on one of the following: ${['yearly', 'monthly', 'daily'].join(', ')}`);
+		const result = validateFrame.safeParse(frame);
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		switch (frame) {
 			case 'yearly': {
@@ -136,7 +116,6 @@ export const getUserGrowth = (client: Client) => {
 export const getUserSignupSource = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			// Fetch the database
 			const signupSource = await client.userManager.fetchSignUpSource();
 			res.json({ signupSource });
 		} catch (err) {
@@ -150,7 +129,6 @@ export const getUserSignupSource = (client: Client) => {
 export const getUserEmails = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			// Fetch the database
 			const emails = await client.userManager.fetchCountsByEmailDomain();
 			res.json({ emails });
 		} catch (err) {
@@ -171,10 +149,7 @@ export const getUserStats = (client: Client) => {
 				client.userManager.fetchAdminTotal(),
 			]);
 
-
-			res.json({
-				total: userTotal.total, new: userTotal.new, active: userTotal.active, avgstorageUsage: avgstorageUsage._avg.totalStorageSize, banned, admins,
-			});
+			res.json({	...userTotal, avgstorageUsage: avgstorageUsage._avg.totalStorageSize, banned, admins	});
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of email domains.');
@@ -279,17 +254,13 @@ export const banUserById = (client: Client) => {
 
 			// Validate inputs
 			if (adminUser.userId === userId) return Error.IncorrectQuery(res, 'You cannot ban yourself.');
-			if (!expiresAt || !reason) return Error.IncorrectQuery(res, 'expiresAt and reason are required.');
-			const expiresDate = new Date(expiresAt);
-			if (isNaN(expiresDate.getTime())) return Error.IncorrectQuery(res, 'expiresAt must be a valid date.');
-			if (expiresDate <= new Date()) return Error.IncorrectQuery(res, 'expiresAt must be a future date.');
-			if (typeof reason !== 'string' || reason.trim().length === 0) return Error.IncorrectQuery(res, 'reason must be a non-empty string.');
+			const result = validateBan.safeParse({ expiresAt, reason });
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			const ban = await client.userManager.setBanStatus({
 				userId,
-				expiresAt: expiresDate,
-				reason,
 				issuedByUserId: adminUser.userId,
+				...result.data,
 			});
 			res.json({ ban });
 		} catch (err) {
