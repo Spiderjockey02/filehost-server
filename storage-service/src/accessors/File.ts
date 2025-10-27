@@ -1,4 +1,4 @@
-import type { createFile, fetchByOwner, FullFile, Pagination, updateFile, updateFilePath } from '../types/database/File';
+import type { createFile, fetchByOwner, fetchFileMediaTypesParams, FullFile, Pagination, updateFile, updateFilePath } from '../types/database/File';
 import type { File, FileType, MediaType } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
@@ -479,8 +479,13 @@ export default class FileAccessor {
 		* Fetches all media types from the database and the number of files associated with each type.
 		* @param [grouped=false]
 	*/
-	async fetchFileMediaTypes(grouped: boolean = false) {
+	async fetchFileMediaTypes({ mediaType, grouped = false }: fetchFileMediaTypesParams) {
 		const res = await client.mediaType.findMany({
+			where: {
+				name: mediaType == undefined ? undefined : {
+					startsWith: mediaType,
+				},
+			},
 			include: {
 				_count: {
 					select: {

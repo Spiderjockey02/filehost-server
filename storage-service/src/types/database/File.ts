@@ -47,3 +47,8 @@ export type FullFile = Prisma.FileGetPayload<{
 export interface Pagination {
   page?: number
 }
+
+export interface fetchFileMediaTypesParams {
+  grouped?: boolean
+  mediaType?: string
+}

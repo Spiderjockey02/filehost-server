@@ -10,7 +10,7 @@ export const getFiles = (client: Client) => {
 			const [{ files, folders, newFiles }, avgSize, mostCommonFileTypes, deletedFiles, { _sum: { size } }] = await Promise.all([
 				client.FileManager.fetchTotal(),
 				client.FileManager.fetchAverageSize(),
-				client.FileManager.fetchFileMediaTypes(),
+				client.FileManager.fetchFileMediaTypes({}),
 				client.FileManager.fetchTotalDeleted(),
 				client.FileManager.fetchTotalStorageUsed(),
 			]);
@@ -139,11 +139,11 @@ export const getRecentlyUploaded = (client: Client) => {
 export const getMimeTypes = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { grouped } = req.query;
+			const { grouped, type } = req.query;
 			if (grouped && typeof grouped !== 'string') return Error.IncorrectQuery(res, 'grouped must be a string.');
 			if (grouped && !['true', 'false'].includes(grouped)) return Error.IncorrectQuery(res, 'grouped must be either true or false.');
 
-			const mimeTypes = await client.FileManager.fetchFileMediaTypes(grouped === 'true');
+			const mimeTypes = await client.FileManager.fetchFileMediaTypes({ grouped, type });
 			res.json({ mimeTypes });
 		} catch (err) {
 			client.logger.error(err);
