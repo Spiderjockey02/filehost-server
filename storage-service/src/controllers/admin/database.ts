@@ -40,7 +40,7 @@ export const deleteBackupByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const { timestamp } = req.params;
-			const result = validateBackup.safeParse(timestamp);
+			const result = validateBackup.safeParse({ timestamp });
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			// Check if the database backups folder exists
@@ -65,7 +65,7 @@ export const downloadBackupByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const { timestamp } = req.params;
-			const result = validateBackup.safeParse(timestamp);
+			const result = validateBackup.safeParse({ timestamp });
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			// Check if the database backups folder exists
