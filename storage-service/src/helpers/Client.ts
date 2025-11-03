@@ -121,7 +121,7 @@ export default class Client {
 		}
 
 		client.notificationManager.create({
-			text: `${log.message} ${userAgent} ${log.ipAddress}`,
+			text: `${log.message} ${userAgent} ${log.ipAddress || ''}`,
 			title: `Audit Log: ${log.event.displayName}`,
 			userId: listener.adminId,
 			url: `/admin/logs/${log.id}`,

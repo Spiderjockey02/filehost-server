@@ -141,7 +141,7 @@ export const getMimeTypes = (client: Client) => {
 			const result = validateGrouped.safeParse({ grouped, type });
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-			const mimeTypes = await client.FileManager.fetchFileMediaTypes({ grouped, type });
+			const mimeTypes = await client.FileManager.fetchFileMediaTypes({ ...result.data });
 			res.json({ mimeTypes });
 		} catch (err) {
 			client.logger.error(err);

@@ -21,8 +21,8 @@ export const validateGrouped = z.object({
 });
 
 
-export const validateFrame = z.enum(['yearly', 'monthly', 'daily'], {
-	message: 'frame must be one of the following: yearly, monthly, daily',
+export const validateFrame = z.enum(['yearly', 'monthly', 'daily', 'hourly'], {
+	message: 'frame must be one of the following: yearly, monthly, daily or hourly',
 });
 
 export const validateFileGrowth = z.object({
