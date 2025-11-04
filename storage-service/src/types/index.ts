@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import { User, File } from '@prisma/client';
 import { Writable } from 'node:stream';
+import { IncomingHttpHeaders } from 'node:http';
+import { Socket } from 'node:net';
 
 // For logger
 export type loggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
@@ -54,6 +56,12 @@ export interface DatabaseMetadata {
   sizeBytes: number | null;
   errorMessage: string | null;
   db: string;
+}
+
+export interface HTTPStripped {
+	headers: IncomingHttpHeaders
+	socket?: Socket
+	ip?: string
 }
 
 export type NestedPaths<T, Prev extends string = ''> = {

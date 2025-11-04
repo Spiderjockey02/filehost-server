@@ -7,7 +7,7 @@ import type { NextFunction, Request, Response } from 'express';
 import Client from 'src/helpers/Client';
 import { getSession } from '../middleware';
 import { HTTPMethod } from '@prisma/client';
-import { FileOptions, MySQLConnectionOptions, S3Options, SFTPOptions } from 'src/types';
+import { FileOptions, HTTPStripped, MySQLConnectionOptions, S3Options, SFTPOptions } from 'src/types';
 import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
 import { UAParser } from 'ua-parser-js';
 
@@ -108,10 +108,10 @@ export function sanitiseObject(obj: unknown): unknown {
 
 /**
   * Retrieves the client's IP address from the request headers or socket.
-  * @param {Request} req The incoming request object.
+  * @param {HTTPStripped} req The incoming request object.
   * @returns {string} The client's IP address.
 */
-export function getIP(req: Request): string {
+export function getIP(req: HTTPStripped): string {
 	// Regular expression to validate IPv4 and IPv6 addresses
 	const normalizeIP = (ip: string): string => {
 		if (ip.startsWith('::ffff:')) return ip.substring(7);
