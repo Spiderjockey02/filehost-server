@@ -369,7 +369,7 @@ export default class FileManager extends FileAccessor {
 
 		// Fetch the storage medium and check it's online
 		const storageProvider = await this.storageManager.getProviderById(file.storageId);
-		if (storageProvider.isOnline == false) return res.send('');
+		if (storageProvider.isOnline == false) throw 'Storage medium is offline';
 
 		// Download the file
 		return storageProvider.sendFile(res, file, range);

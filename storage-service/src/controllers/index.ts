@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import type Client from '../helpers/Client';
 import { getSession } from '../middleware';
-import { Error, sanitiseObject } from '../utils';
+import { Error, getIP, sanitiseObject } from '../utils';
 import { User } from '@prisma/client';
 import { S3ServiceException } from '@aws-sdk/client-s3';
 import { fetchAllPlans } from '../accessors/Plan';
@@ -50,14 +50,40 @@ export const getContent = (client: Client) => {
 		try {
 			const owner = await client.userManager.fetchbyParam({ id: file.userId }) as User;
 			await client.FileManager.sendFile(res, owner, file, req.headers.range);
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				client.AuditLogManager.create({
+					userId: session.user.id,
+					resourceType: 'FILE',
+					eventName: 'FILE_VIEWED',
+					message: 'File was viewed',
+					resourceId: file.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: true,
+				});
+			});
 		} catch (err) {
 			if (err instanceof S3ServiceException) {
 				client.logger.error(`S3 error: ${err}`);
-				if (err.name == 'NotFound') return Error.MissingResource(res, 'File not found on storage server.');
+				if (err.name == 'NotFound') Error.MissingResource(res, 'File not found on storage server.');
 			} else {
 				client.logger.error(`Non-S3 error: ${err}`);
-				return Error.GenericError(res, 'Failed to send file');
+				Error.GenericError(res, 'Failed to send file');
 			}
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				client.AuditLogManager.create({
+					userId: session.user.id,
+					resourceType: 'FILE',
+					eventName: 'FILE_VIEWED',
+					message: `Failed to view file: ${err}`,
+					resourceId: file.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'] ?? '',
+					success: false,
+				});
+			});
 		}
 	};
 };
