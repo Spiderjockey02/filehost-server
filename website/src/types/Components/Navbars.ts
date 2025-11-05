@@ -13,7 +13,7 @@ export interface BreadcrumbNavProps {
 }
 
 export interface FileSideBarProps extends FileNavBarProps {
-  activeTab: 'files' | 'recent' | 'bin'
+  activeTab: 'files' | 'recent' | 'bin' | 'gallery'
 }
 
 export interface AdminSideBarProps {

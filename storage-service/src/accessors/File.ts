@@ -538,4 +538,27 @@ export default class FileAccessor {
 			},
 		});
 	}
+
+	fetchGalleryByUserId(userId: string) {
+		return client.file.findMany({
+			where: {
+				userId,
+				OR: [
+					{
+						mimetype: {
+							startsWith: 'image/',
+						},
+					},
+					{
+						mimetype: {
+							startsWith: 'video/',
+						},
+					},
+				],
+			},
+			orderBy: {
+				createdAt: 'desc',
+			},
+		});
+	}
 }

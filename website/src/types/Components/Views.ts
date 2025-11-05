@@ -1,4 +1,4 @@
-import { FileWithChildren, FileWithCount } from '../database';
+import { FileWithCount } from '../database';
 import type { File } from '@prisma/client';
 
 export interface VideoPlayerProps {
@@ -11,7 +11,15 @@ export interface TextViewerProps {
 }
 
 export interface DirectoryProps {
-  folder: FileWithChildren
+  folder: {
+    id: string
+    children: File[]
+    userId: string
+  }
+}
+
+export interface GalleryProps {
+  files: File[]
 }
 
 export interface FilePanelPopupProps {

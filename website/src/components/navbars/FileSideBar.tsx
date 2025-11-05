@@ -1,4 +1,4 @@
-import { faBars, faClock, faFolder, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faClock, faFolder, faImages, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FileSideBarProps } from '@/types/Components/Navbars';
 import { formatBytes, getStatusColor } from '@/utils/functions';
@@ -36,6 +36,12 @@ export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 							</Link>
 						</li>
 						<li>
+							<Link href="/gallery" className={`btn sidebar-btn ${activeTab === 'gallery' ? 'active' : ''}`}>
+								<FontAwesomeIcon icon={faImages} />
+								<span> Gallery</span>
+							</Link>
+						</li>
+						<li>
 							<Link href="/recent" className={`btn sidebar-btn ${activeTab === 'recent' ? 'active' : ''}`}>
 								<FontAwesomeIcon icon={faClock} />
 								<span> Recents</span>
@@ -61,6 +67,12 @@ export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 					<Link href="/files" className={`btn sidebar-btn ${activeTab === 'files' ? 'active' : ''}`}>
 						<span data-bs-toggle="tooltip" data-bs-placement="right" title="All files"><FontAwesomeIcon icon={faFolder} /></span>
 						<span className="side-text"> All files</span>
+					</Link>
+				</li>
+				<li>
+					<Link href="/gallery" className={`btn sidebar-btn ${activeTab === 'gallery' ? 'active' : ''}`}>
+						<span data-bs-toggle="tooltip" data-bs-placement="right" title="Gallery"><FontAwesomeIcon icon={faImages} /></span>
+						<span className="side-text"> Gallery</span>
 					</Link>
 				</li>
 				<li>
