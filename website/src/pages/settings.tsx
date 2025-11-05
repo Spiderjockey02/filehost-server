@@ -1,18 +1,23 @@
-import { ErrorPopup, SuccessPopup, InputField, Card } from '@/components';
+import { ErrorPopup, SuccessPopup, InputField, Card, Table } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
-import { SettingErrorTypes } from '@/types';
+import { AccountProviders, SettingErrorTypes } from '@/types';
 import MainLayout from '@/layouts/main';
 import { useState } from 'react';
-import Image from 'next/image';
-import axios from 'axios';
 import { authClient } from '@/auth/client';
 import { GetServerSidePropsContext } from 'next';
 import User2FAModal from '@/components/Modals/User2FAModal';
+import { useQuery } from '@tanstack/react-query';
+import { parseUserAgent, queryOptions } from '@/utils/functions';
+import { AvatarUploadForm } from '@/components/Form/AvatarUploadForm';
+import { Session } from '@prisma/client';
 
 export default function Settings() {
-	const { data: session } = authClient.useSession();
+	const { data: session, refetch } = authClient.useSession();
 	const [errors, setErrors] = useState<SettingErrorTypes[]>([]);
-	const [email, setEmail] = useState('');
+	const [newUser, setNewUser] = useState({
+		email: '',
+		name: '',
+	});
 	const [success, setSuccess] = useState('');
 	const [passwords, setPasswords] = useState({
 		currentPassword: '',
@@ -20,35 +25,29 @@ export default function Settings() {
 		repeatNewPassword: '',
 	});
 
-	const onFileUploadChange = async (e: BaseSyntheticEvent) => {
-		const fileInput = e.target;
-		if (!fileInput.files) return alert('No file was chosen');
-		if (!fileInput.files || fileInput.files.length === 0) return alert('Files list is empty');
+	const { data: accountData } = useQuery({
+		queryKey: ['userAccounts'],
+		queryFn: async ({ signal }) => {
+			const res = await fetch('/api/session/accounts', { signal });
+			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
 
-		try {
-			const formData = new FormData();
-			formData.append('media', fileInput.files[0] as File);
+			const d = await res.json();
+			return d as { accounts: AccountProviders[] };
+		},
+		...queryOptions,
+	});
 
-			const { data } = await axios.post('/api/session/change-avatar', formData, {
-				headers: { 'Content-Type': 'multipart/form-data' },
-			});
+	const { data: sessionData } = useQuery({
+		queryKey: ['userSessions'],
+		queryFn: async ({ signal }) => {
+			const res = await fetch('/api/session/list', { signal });
+			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
 
-			if (data.success) setSuccess(data.success);
-		} catch (err) {
-			console.log(err);
-			setErrors([{ type: 'av', text: 'Failed to upload avatar' }]);
-		}
-	};
-
-	const deleteAvatar = async () => {
-		try {
-			const { data } = await axios.delete('/api/session/reset-avatar');
-			if (data.success) setSuccess(data.success);
-		} catch (err) {
-			console.log(err);
-			setErrors([{ type: 'av', text: 'Failed to delete avatar' }]);
-		}
-	};
+			const d = await res.json();
+			return d as { sessions: Session[] };
+		},
+		...queryOptions,
+	});
 
 	const onPasswordSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();
@@ -74,96 +73,208 @@ export default function Settings() {
 				revokeOtherSessions: true,
 			});
 		} catch {
-			setErrors([{ type: 'pwd1', text: 'asd' }]);
+			setErrors([{ type: 'pwd1', text: 'Failed to update password.' }]);
 		}
 	};
 
 	const onPersonalSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();
+		const { name } = newUser;
+		if (name.length == 0) return setErrors([{ type: 'name', text: 'This field is missing.' }]);
 
-		if (email.length == 0) return setErrors([{ type: 'email', text: 'This field is missing.' }]);
 		try {
-			await authClient.changeEmail({
-				newEmail: email,
-			});
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				setErrors([{ type: 'email', text: error.response?.data.error }]);
-			} else {
-				setErrors([{ type: 'av', text: 'Failed to edit personal information.' }]);
-			}
+			const res = await fetch('/api/session/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+			const data = await res.json();
+			console.log(data);
+			refetch();
+		} catch {
+			setErrors([{ type: 'av', text: 'Failed to edit personal information.' }]);
 		}
-	};
-
-	const ahjksd = async () => {
-		const sessions = await authClient.listSessions();
-		console.log(sessions);
 	};
 
 	if (session == null) return null;
 	return (
-		<MainLayout user={session.user} tabName='Settings'>
-			<section className="d-flex flex-row align-items-center" style={{ 'backgroundColor': '#eee', padding: '5% 0' }}>
-				<Card className='container'>
+		<MainLayout user={session.user} tabName="Settings">
+			<section className="d-flex flex-row align-items-center" style={{ backgroundColor: '#eee', padding: '5% 0' }}>
+				{errors.find((c) => c.type == 'av') && (
+					<ErrorPopup text={errors.find((c) => c.type == 'av')?.text as string} />
+				)}
+				{success.length !== 0 && <SuccessPopup text={success} />}
+				<Card className="container">
 					<Card.Body>
 						<div className="row" style={{ margin: '5px' }}>
-							<div className='col-lg-1 nav nav-pills flex-column' id="v-pills-tab" role="tablist" aria-orientation="vertical" style={{ padding: 0 }}>
-								<button className="nav-link active" id="v-pills-home-tab" data-bs-toggle="pill" data-bs-target="#v-pills-home" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">Account</button>
-								<button className="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="false">Billing</button>
+							<div className="col-lg-2 nav nav-pills flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical" style={{ padding: 0 }}>
+								<button className="nav-link active" id="v-pills-account-tab" data-bs-toggle="pill" data-bs-target="#v-pills-account" type="button" role="tab" aria-controls="v-pills-account" aria-selected="true">
+             			Account
+								</button>
+								<button className="nav-link" id="v-pills-billing-tab" data-bs-toggle="pill" data-bs-target="#v-pills-billing" type="button" role="tab" aria-controls="v-pills-billing" aria-selected="false">
+              		Billing
+								</button>
+								<button className="nav-link" id="v-pills-sessions-tab" data-bs-toggle="pill" data-bs-target="#v-pills-sessions" type="button" role="tab" aria-controls="v-pills-sessions" aria-selected="false">
+              		Sessions
+								</button>
 							</div>
-							<div className='col-lg-11 tab-content' id="v-pills-tabContent">
-								{errors.find(c => c.type == 'av') !== undefined && <ErrorPopup text={`${errors.find(c => c.type == 'av')?.text}`} />}
-								{success.length != 0 && <SuccessPopup text={success} />}
-								<div className="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab" >
+							<div className="col-lg-10 tab-content" id="v-pills-tabContent">
+								<div className="tab-pane fade show active" id="v-pills-account" role="tabpanel" aria-labelledby="v-pills-account-tab">
 									<h3 className="mb-4">Account Settings</h3>
-									<div className="d-flex flex-column align-items-center">
-										<Image src={session.user?.image ?? `/avatar/${session.user?.id}`} width={100} height={100} className="rounded-circle " alt="User avatar" />
-										&nbsp;
-										<div className="d-flex justify-content-center gap-2">
-											<label className="btn btn-sm btn-primary">
-												File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} accept="image/*" />
-											</label>
-											<button className="btn btn-sm btn-danger" onClick={() => deleteAvatar()}>Remove</button>
-										</div>
-									</div>
+									<AvatarUploadForm user={session.user} setSuccess={setSuccess} setErrors={setErrors} />
 									<ul className="nav nav-tabs mt-4" id="account-tabs">
 										<li className="nav-item">
-											<a className="nav-link active" href="#personal-info" data-bs-toggle="tab">Personal Information</a>
+											<a className="nav-link active" href="#personal-info" data-bs-toggle="tab">
+                    		Personal Info
+											</a>
 										</li>
 										<li className="nav-item">
-											<a className="nav-link" href="#password" data-bs-toggle="tab">Password</a>
+											<a className="nav-link" href="#connections" data-bs-toggle="tab">
+                    		Connections
+											</a>
 										</li>
+										{accountData?.accounts.find(a => a.provider === 'credential') !== undefined && (
+											<li className="nav-item">
+												<a className="nav-link" href="#password" data-bs-toggle="tab">
+                      	Password
+												</a>
+											</li>
+										)}
 									</ul>
 									<div className="tab-content mt-3">
 										<div className="tab-pane fade show active" id="personal-info">
-											<form className='mt-4' onSubmit={onPersonalSubmit}>
-												<InputField title='Update Name' name='name' placeholder={session.user?.name} />
-												<InputField title='Update Email' name="email" placeholder={session.user?.email} errorMsg={errors.find(e => e.type == 'email')?.text} onChange={(e) => setEmail(e.target.value)} />
-												<button type="submit" className="btn btn-primary float-end">Save Changes</button>
+											<form className="mt-4" onSubmit={onPersonalSubmit}>
+												<InputField title="Update Name" name="name" placeholder={session.user?.name} errorMsg={errors.find((e) => e.type == 'name')?.text} onChange={(e) => setNewUser((u) => ({ ...u, name: e.target.value }))} />
+												{accountData?.accounts.find(a => a.provider === 'credential') !== undefined && (
+													<InputField title="Update Email" name="email" placeholder={session.user?.email} errorMsg={errors.find((e) => e.type == 'email')?.text} onChange={(e) => setNewUser((u) => ({ ...u, email: e.target.value }))} />
+												)}
+												<button type="submit" className="btn btn-primary float-end">
+                      		Save Changes
+												</button>
 											</form>
 										</div>
-										<div className="tab-pane fade" id="password">
-											<form className="mt-4" onSubmit={onPasswordSubmit}>
-												<InputField title="Current Password" name="current-password" autocomplete='current-password' type='password' errorMsg={errors.find(e => e.type == 'current')?.text} onChange={(e) => setPasswords(p => ({ ...p, currentPassword: e.target.value }))} />
-												<div className="row">
-													<div className="col-md-6">
-														<InputField title="New Password" name="new-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd1')?.text} onChange={(e) => setPasswords(p => ({ ...p, newPassword: e.target.value }))} />
+										<div className="tab-pane fade" id="connections">
+											<h5>Connected Accounts</h5>
+											<p className="text-muted">
+                    		Manage your connected OAuth providers.
+											</p>
+											<div className="list-group">
+												{['google', 'discord'].map((provider) => (
+													<div key={provider} className="list-group-item d-flex justify-content-between align-items-center">
+														<span className="text-capitalize">{provider}</span>
+														{accountData?.accounts.map(a => a.provider).includes(provider) ? (
+															<button className="btn btn-sm btn-outline-danger">
+                            		Disconnect
+															</button>
+														) : (
+															<button className="btn btn-sm btn-outline-primary" onClick={() => authClient.linkSocial({ provider })}>
+                            		Connect
+															</button>
+														)}
 													</div>
-													<div className="col-md-6">
-														<InputField title="Repeat Password" name="repeat-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd2')?.text} onChange={(e) => setPasswords(p => ({ ...p, repeatNewPassword: e.target.value }))} />
-													</div>
-												</div>
-												<button className='btn btn-secondary' data-bs-toggle="modal" data-bs-target="#User2FAModal">Enable 2FA</button>
-												<User2FAModal />
-												<button type="submit" className="btn btn-primary float-end">Save Changes</button>
-											</form>
+												))}
+											</div>
 										</div>
+
+										{/* Password (only if user uses credentials) */}
+										{accountData?.accounts.find(a => a.provider === 'credential') !== undefined && (
+											<div className="tab-pane fade" id="password">
+
+												<form className="mt-4" onSubmit={onPasswordSubmit}>
+													<InputField title="Current Password" name="current-password" autocomplete="current-password" type="password" errorMsg={errors.find((e) => e.type == 'current')?.text} onChange={(e) => setPasswords((p) => ({ ...p, currentPassword: e.target.value }))}
+													/>
+													<div className="row">
+														<div className="col-md-6">
+															<InputField title="New Password" name="new-password" autocomplete="new-password" type="password" errorMsg={errors.find((e) => e.type == 'pwd1')?.text}
+																onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))}
+															/>
+														</div>
+														<div className="col-md-6">
+															<InputField title="Repeat Password" name="repeat-password" autocomplete="new-password" type="password" errorMsg={errors.find((e) => e.type == 'pwd2')?.text} onChange={(e) => setPasswords((p) => ({ ...p, repeatNewPassword: e.target.value }))} />
+														</div>
+													</div>
+													<button className="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#User2FAModal">
+                        		Enable 2FA
+													</button>
+													<User2FAModal />
+													<button type="submit" className="btn btn-primary float-end">
+                        		Save Changes
+													</button>
+												</form>
+											</div>
+										)}
 									</div>
 								</div>
-								<div className="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
-									<h3 className="mb-4">Billing Information</h3>
-									<p>Billing settings will be available here.</p>
-									<button onClick={ahjksd}>asd</button>
+
+								{/* Billing Tab */}
+								<div className="tab-pane fade" id="v-pills-billing" role="tabpanel" aria-labelledby="v-pills-billing-tab">
+									<h3 className="mb-4">Billing</h3>
+									<p className="text-muted">
+                		Manage your subscription plan and payment details.
+									</p>
+									<div className="d-flex flex-column gap-3">
+										<div className="card p-3">
+											<h5>Current Plan</h5>
+											<p>{session.user?.plan.name} — Active</p>
+										</div>
+										<button className="btn btn-primary" onClick={() => null}>
+                  		Manage Subscription
+										</button>
+									</div>
+								</div>
+								{/* Sessions Tab */}
+								<div className="tab-pane fade" id="v-pills-sessions" role="tabpanel" aria-labelledby="v-pills-sessions-tab">
+									<div className='table-responsive' style={{ overflowY: 'scroll', maxHeight: '75vh' }}>
+										<Table>
+											<Table.HeaderRow>
+												<Table.Header>IP</Table.Header>
+												<Table.Header>User Agent</Table.Header>
+												<Table.Header>Created At</Table.Header>
+												<Table.Header>Expires At</Table.Header>
+												<Table.Header>Actions</Table.Header>
+											</Table.HeaderRow>
+											<Table.Body>
+												{sessionData == undefined ? (
+													[0, 0, 0, 0].map((_, index) => (
+														<tr key={index}>
+															{Array(5)
+																.fill(0)
+																.map((_1, idx) => (
+																	<td key={idx} className="placeholder-glow">
+																		<span className="placeholder col-12"></span>
+																	</td>
+																))}
+														</tr>
+													))
+												) : (
+													sessionData.sessions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+														.map((userSes) => {
+															const isCurrent = userSes.id === session.session?.id;
+
+															return (
+																<tr key={userSes.id} className={isCurrent ? 'table-success' : ''}>
+																	<td>
+																		{userSes.ipAddress}
+																		{isCurrent && (
+																			<span className="badge bg-primary ms-2">Current</span>
+																		)}
+																	</td>
+																	<td>{parseUserAgent(userSes.userAgent)}</td>
+																	<td>{new Date(userSes.createdAt).toLocaleString()}</td>
+																	<td>{new Date(userSes.expiresAt).toLocaleString()}</td>
+																	<td>
+																		{!isCurrent && (
+																			<button className="btn btn-sm btn-outline-danger" onClick={() => authClient.revokeSession({
+																				token: userSes.token,
+																			})}
+																			>
+                    										Remove
+																			</button>
+																		)}
+																	</td>
+																</tr>
+															);
+														})
+												)}
+											</Table.Body>
+										</Table>
+									</div>
 								</div>
 							</div>
 						</div>

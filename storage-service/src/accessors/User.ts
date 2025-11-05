@@ -30,6 +30,8 @@ export default class UserManager {
 				updatedAt: data.updatedAt,
 				isMigrating: data.isMigrating,
 				image: data.image,
+				name: data.name,
+				languageCode: data.languageCode,
 			},
 			include: {
 				plan: true,

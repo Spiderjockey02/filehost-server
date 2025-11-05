@@ -17,6 +17,8 @@ export type fetchUserbyParam = {
 export interface updateUser {
 	id: string
 	email?: string
+	name?: string
+	languageCode?: string
 	totalStorageSize?: bigint
 	updatedAt?: Date
 	isMigrating?: boolean

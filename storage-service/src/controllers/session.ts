@@ -118,3 +118,64 @@ export const getLinkedAccounts = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint GET /api/session/list
+export const getSessions = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			const sessions = await client.sessionManager.fetchAll(session.user.id);
+			res.json({ sessions: sanitiseObject(sessions) });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch user sessions.');
+		}
+	};
+};
+
+// Endpoint POST /api/session/user
+export const postUserInformation = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const session = await getSession(client, req.headers);
+		if (!session?.user) return Error.InvalidSession(res);
+
+		try {
+			const { name } = req.body;
+			if (typeof name !== 'string' || name.length == 0) return Error.IncorrectQuery(res, 'Name must be provided.');
+
+			await client.userManager.update({ name, id: session.user.id	});
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					resourceType: 'USER',
+					eventName: 'USER_UPDATE',
+					resourceId: session.user.id,
+					userId: session.user.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'],
+					message: 'User updated their personal information',
+					success: true,
+				});
+			});
+
+			res.json({ success: 'Successfully updated user\'s information' });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to update user information.');
+
+			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await client.AuditLogManager.create({
+					resourceType: 'USER',
+					eventName: 'USER_UPDATE',
+					resourceId: session.user.id,
+					userId: session.user.id,
+					ip: getIP(req),
+					userAgent: req.headers['user-agent'],
+					message: `Failed to update personal information: ${err}`,
+					success: false,
+				});
+			});
+		}
+	};
+};
