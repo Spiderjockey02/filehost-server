@@ -19,7 +19,7 @@ export default class SessionManager {
 	  * @param {String?} userId The user Id.
 		* @returns {Session[]} The session
 	*/
-	fetchAll(userId?: string): Promise<Session[]> {
+	async fetchAll(userId?: string): Promise<Session[]> {
 		return client.session.findMany({
 			where: {
 				userId,

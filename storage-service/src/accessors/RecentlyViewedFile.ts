@@ -72,7 +72,7 @@ export default class RecentlyViewedFileManager {
 		* @param {string} fileId The file Id.
 		* @returns {RecentlyViewedFile} The file.
 	*/
-	delete(userId: string, fileId: string): Promise<RecentlyViewedFile> {
+	async delete(userId: string, fileId: string): Promise<RecentlyViewedFile> {
 		return client.recentlyViewedFile.delete({
 			where: {
 				fileId_userId: {

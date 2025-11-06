@@ -342,7 +342,7 @@ export default class FileAccessor {
 		* Gets the 10 recently uploaded files
 		* @returns The files.
 	*/
-	fetchRecentlyUploaded({ page = 0, userId }: Pagination & { userId?: string }) {
+	async fetchRecentlyUploaded({ page = 0, userId }: Pagination & { userId?: string }) {
 		return client.file.findMany({
 			where: {
 				deletedAt: null,
@@ -361,7 +361,7 @@ export default class FileAccessor {
 		* Gets the average file size
 		* @returns The average file size.
 	*/
-	fetchAverageSize() {
+	async fetchAverageSize() {
 		return client.file.aggregate({
 			_avg: {
 				size: true,
@@ -531,7 +531,7 @@ export default class FileAccessor {
 		});
 	}
 
-	fetchAllByUserId(userId: string) {
+	async fetchAllByUserId(userId: string) {
 		return client.file.findMany({
 			where: {
 				userId,
@@ -539,7 +539,7 @@ export default class FileAccessor {
 		});
 	}
 
-	fetchGalleryByUserId(userId: string) {
+	async fetchGalleryByUserId(userId: string) {
 		return client.file.findMany({
 			where: {
 				userId,

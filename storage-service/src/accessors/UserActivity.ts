@@ -165,7 +165,7 @@ export default class UserActivityAccessor {
 	  * Fetch the list of user agents
 	  * @returns {UserAgent[]} list of user agents
 	*/
-	fetchUserAgents(): Promise<UserAgent[]> {
+	async fetchUserAgents(): Promise<UserAgent[]> {
 		return client.userAgent.findMany({
 			include: {
 				_count: true,
