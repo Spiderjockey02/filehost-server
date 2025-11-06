@@ -51,6 +51,12 @@ export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarPro
 				</Link>
 			</li>
 			<li className={`nav-item ${activeTab == 'subscriptions' ? 'active' : ''}`}>
+				<Link className="nav-link" href="/admin/subscriptions">
+					<FontAwesomeIcon icon={faSackDollar} />
+					<span> Subscriptions</span>
+				</Link>
+			</li>
+			<li className={`nav-item ${activeTab == 'logs' ? 'active' : ''}`}>
 				<Link className="nav-link" href="/admin/logs">
 					<FontAwesomeIcon icon={faFileLines} />
 					<span> Audit logs</span>

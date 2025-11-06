@@ -26,6 +26,7 @@ model User {
   auditListeners    AuditLogListener[]
   bans              UserBans[]  @relation("bannedUser")
   issuedBans        UserBans[]  @relation("issuedUser")
+  banned            Boolean     @default(false)
   plan              Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
   planId            String
   totalStorageSize  Int  @default(0)
@@ -33,6 +34,7 @@ model User {
   storage           StorageMedium    @relation(fields: [storageId], references: [id])
   storageId         String
   twoFactorEnabled  Boolean   @default(false)
+  stripeCustomerId  String?
 
   @@index([planId])
   @@index([storageId])
@@ -378,12 +380,15 @@ model UserBans {
 }
 
 model Plan {
-  id              String    @id   @default(cuid())
-  name            String
-  maxStorageSize  Int    @default(5368709120)
-  price           Decimal   @default(0.00)
-  isDefault       Boolean   @default(false)
-  users           User[]
+  id                        String    @id       @default(cuid())
+  name                      String
+  maxStorageSize            Int       @default(5368709120)
+  maxFileSize               Int       @default(2147483648)
+  deletedFileRetentionDays  Int       @default(30)
+  price                     Decimal   @default(0.00)
+  priceId                   String?
+  isDefault                 Boolean   @default(false)
+  users                     User[]
 }
 
 model twoFactor {
@@ -391,4 +396,30 @@ model twoFactor {
   userId          String
   secret          String
   backupCodes     String
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  incomplete
+  incomplete_expired
+  past_due
+  canceled
+  unpaid
+  paused
+}
+
+model subscription {
+  id                    String    @id   @default(cuid())
+  plan	                String
+  referenceId	          String
+  stripeCustomerId	    String?
+  stripeSubscriptionId	String?
+  status	              SubscriptionStatus
+  periodStart	          DateTime?
+  periodEnd	            DateTime?
+  cancelAtPeriodEnd	    Boolean?
+  seats	                Int?
+  trialStart            DateTime?
+  trialEnd              DateTime?
 }

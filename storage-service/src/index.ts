@@ -9,7 +9,6 @@ import onFinished from 'on-finished';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { getSession } from './middleware';
-import { createPlan, fetchDefaultPlan } from './accessors/Plan';
 import { userPostRateLimit } from './middleware/rateLimiter';
 
 const start = new Date();
@@ -25,12 +24,12 @@ const client = new Client(io);
 
 (async () => {
 	// Create plans if not present
-	const defaultPlan = await fetchDefaultPlan();
+	const defaultPlan = await client.PlanManager.fetchDefault();
 	if (defaultPlan == null) {
-		await createPlan({
+		await client.PlanManager.create({
 			name: 'Free',
 			price: 0,
-			maxStorageSize: BigInt(5 * 1024 * 1024 * 1024),
+			maxStorageSize: 5 * (1024 ** 3),
 			isDefault: true,
 		});
 	}

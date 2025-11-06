@@ -4,12 +4,37 @@ import { nextCookies } from 'better-auth/next-js';
 import { betterAuth } from 'better-auth';
 import client from './prisma';
 import { APIError } from 'better-auth/api';
+import { stripe } from '@better-auth/stripe';
+import Stripe from 'stripe';
+
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+	apiVersion: '2025-10-29.clover',
+});
 
 export const auth = betterAuth({
 	appName: process.env.NEXT_PUBLIC_COMPANY_NAME,
 	plugins: [
 		lastLoginMethod(),
 		twoFactor(),
+		stripe({
+			stripeClient,
+			stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+			createCustomerOnSignUp: true,
+			subscription: {
+				enabled: true,
+				plans: async () => {
+					const plans = await client.plan.findMany();
+					return plans.map(plan => ({
+						name: plan.name,
+						priceId: plan.priceId!,
+					}));
+				},
+			},
+			// Log stripe webhooks
+			async onEvent(event) {
+				console.log(event);
+			},
+		}),
 		admin(),
 		nextCookies(),
 		organization({

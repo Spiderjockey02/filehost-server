@@ -244,3 +244,42 @@ export const validateBackup = z.object({
 		})
 		.transform(val => val.match(/^(\d+)\.dump\.sql$/)![1]),
 });
+
+export const createPlanSchema = z.object({
+	name: z
+		.string({ message: 'Plan name is required.' })
+		.min(1, { message: 'Plan name cannot be empty.' }),
+	maxStorageSize: z
+		.union([
+			z.number(),
+			z.string().regex(/^\d+$/, 'maxStorageSize must be a valid number').transform(Number),
+		])
+		.optional()
+		.refine((val) => val === undefined || val >= 0, { message: 'maxStorageSize must be non-negative.' }),
+	maxFileSize: z
+		.union([
+			z.number(),
+			z.string().regex(/^\d+$/, 'maxFileSize must be a valid number').transform(Number),
+		])
+		.optional()
+		.refine((val) => val === undefined || val >= 0, { message: 'maxFileSize must be non-negative.' }),
+	deletedFileRetentionDays: z
+		.union([
+			z.number(),
+			z.string().regex(/^\d+$/, 'deletedFileRetentionDays must be a valid number').transform(Number),
+		])
+		.optional()
+		.refine((val) => val === undefined || val >= 0, { message: 'deletedFileRetentionDays must be non-negative.' }),
+	price: z
+		.union([
+			z.number(),
+			z.string().regex(/^\d+(\.\d+)?$/, 'price must be a valid number').transform(Number),
+		])
+		.optional()
+		.refine((val) => val === undefined || val >= 0, { message: 'price must be non-negative.' }),
+	priceId: z
+		.string()
+		.regex(/^price_.+$/, { message: 'priceId must start with "price_".' })
+		.optional(),
+	isDefault: z.boolean().optional(),
+});

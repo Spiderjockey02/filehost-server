@@ -1,4 +1,5 @@
 import { inferAdditionalFields, organizationClient, adminClient, customSessionClient, twoFactorClient, lastLoginMethodClient } from 'better-auth/client/plugins';
+import { stripeClient } from '@better-auth/stripe/client';
 import { createAuthClient } from 'better-auth/react';
 import { auth } from './server';
 
@@ -9,6 +10,9 @@ export const authClient = createAuthClient({
 		organizationClient(),
 		inferAdditionalFields<typeof auth>(),
 		customSessionClient<typeof auth>(),
+		stripeClient({
+			subscription: true,
+		}),
 		twoFactorClient(),
 		lastLoginMethodClient(),
 	],

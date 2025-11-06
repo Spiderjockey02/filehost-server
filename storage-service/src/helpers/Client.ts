@@ -14,6 +14,7 @@ import AuditLogAccessor from '../accessors/AuditLog';
 import { AuditLogListener } from '@prisma/client';
 import { FullAuditLog } from 'src/types/database/AuditLogs';
 import { parseUserAgent } from '../utils';
+import PlanAccessor from '../accessors/Plan';
 
 export default class Client {
 	logger: Logger;
@@ -27,6 +28,7 @@ export default class Client {
 	userActivityManager: UserActivityManager;
 	config: ConfigManager;
 	AuditLogManager: AuditLogAccessor;
+	PlanManager: PlanAccessor;
 
 	constructor(io: Server) {
 		this.config = new ConfigManager();
@@ -40,6 +42,7 @@ export default class Client {
 		this.QueueManager = new QueueManager();
 		this.userActivityManager = new UserActivityManager();
 		this.AuditLogManager = new AuditLogAccessor(this);
+		this.PlanManager = new PlanAccessor();
 	}
 
 	async sendWebhook(listener: AuditLogListener, log: FullAuditLog) {

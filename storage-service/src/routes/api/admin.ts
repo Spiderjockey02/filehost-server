@@ -4,6 +4,7 @@ import type Client from '../../helpers/Client';
 import { checkAdmin } from '../../middleware';
 import { Router } from 'express';
 import { getActivityList, getActivityRequests, getActivityTraffic, getNetworkStats, getUserAgents } from '../../controllers/admin/network';
+import { deletePlan, getPlanStats, getPlanTrends, patchPlan, postPlan } from '../../controllers/admin/plans';
 const router = Router();
 
 export default async function(client: Client) {
@@ -46,6 +47,16 @@ export default async function(client: Client) {
 	router.post('/config', await checkAdmin(client), postConfig(client));
 
 	router.get('/mime-types/search', await checkAdmin(client), getMimeTypesSearch());
+
+	router.get('/plan/stats', await checkAdmin(client), getPlanStats(client));
+
+	router.get('/plan/trends', await checkAdmin(client), getPlanTrends(client));
+
+	router.post('/plan', await checkAdmin(client), postPlan(client));
+
+	router.patch('/plan/:planId', await checkAdmin(client), patchPlan(client));
+
+	router.delete('/plan/:planId', await checkAdmin(client), deletePlan(client));
 
 	return router;
 }
