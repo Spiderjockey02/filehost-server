@@ -41,8 +41,9 @@ export const getLogTypes = (client: Client) => {
 				client.AuditLogManager.getCountByResourceType('STORAGE'),
 				client.AuditLogManager.getCountByResourceType('SYSTEM'),
 				client.AuditLogManager.getCountByResourceType('SESSION'),
+				client.AuditLogManager.fetchSuccessRate(),
 			]);
-			res.json({ resourceTypes: { user: p[0], file: p[1], storage: p[2], system: p[3], session: p[4] } });
+			res.json({ resourceTypes: { user: p[0], file: p[1], storage: p[2], system: p[3], session: p[4] }, successRates: p[5] });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log types.');

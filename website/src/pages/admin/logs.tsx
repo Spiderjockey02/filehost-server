@@ -20,14 +20,21 @@ interface Props {
 		system: number
 		session: number
 	}
+	successRates: {
+		true: number
+		false: number
+	}
 }
 
-export default function adminLogsPage({ total, resourceTypes }: Props) {
+export default function adminLogsPage({ total, resourceTypes, successRates }: Props) {
 	const { data: session } = authClient.useSession();
-
 	if (session == null) return null;
+
+	const mostPopularEventType = Object.entries(resourceTypes).sort((a, b) => a[1] - b[1])[0][0];
+	const successRatesPercent = ((successRates.true / (successRates.true + successRates.false)) * 100).toFixed(2);
+
 	return (
-		<AdminLayout activeTab='network' user={session.user as User} tabName='Admin Audit Logs'>
+		<AdminLayout activeTab='logs' user={session.user as User} tabName='Admin Audit Logs'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Audit logs Dashboard</h1>
@@ -36,23 +43,14 @@ export default function adminLogsPage({ total, resourceTypes }: Props) {
 				</button>
 			</div>
 			<Row>
-				<Col xl={2} md={6} className='mb-4'>
+				<Col xl={4} md={6} className='mb-4'>
 					<InfoPill title="Total events" text={total} icon={faDownload} />
 				</Col>
-				<Col xl={2} md={6} className='mb-4'>
-					<InfoPill title="User events" text={resourceTypes.user} icon={faDownload} />
+				<Col xl={4} md={6} className='mb-4'>
+					<InfoPill title="Success rate" text={`${successRatesPercent}%`} icon={faDownload} />
 				</Col>
-				<Col xl={2} md={6} className='mb-4'>
-					<InfoPill title="File events" text={resourceTypes.file} icon={faDownload} />
-				</Col>
-				<Col xl={2} md={6} className='mb-4'>
-					<InfoPill title="Storage events" text={resourceTypes.storage} icon={faDownload} />
-				</Col>
-				<Col xl={2} md={6} className='mb-4'>
-					<InfoPill title="System events" text={resourceTypes.system} icon={faDownload} />
-				</Col>
-				<Col xl={2} md={6} className='mb-4'>
-					<InfoPill title="Session events" text={resourceTypes.session} icon={faDownload} />
+				<Col xl={4} md={6} className='mb-4'>
+					<InfoPill title="Most popular event" text={mostPopularEventType} icon={faDownload} />
 				</Col>
 			</Row>
 			&nbsp;
@@ -104,7 +102,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/logs/types`, headers(context.req)),
 			]);
 
-			return { props: { total: stats.total, resourceTypes: resourceData.resourceTypes } };
+			return { props: { total: stats.total, resourceTypes: resourceData.resourceTypes, successRates: resourceData.successRates } };
 		} catch (err) {
 			console.log(err);
 			return { props: { total: 0, error: 'API server currently unavailable' } };

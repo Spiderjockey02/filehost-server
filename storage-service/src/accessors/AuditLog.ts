@@ -292,4 +292,18 @@ export default class AuditLogAccessor {
 			},
 		});
 	}
+
+	async fetchSuccessRate() {
+		const res = await client.auditLog.groupBy({
+			by: ['success'],
+			_count: true,
+		});
+
+		const codesWithCount: { [key: string]: number } = {};
+		for (const item of res) {
+			codesWithCount[`${item.success}`] = item._count;
+		}
+
+		return codesWithCount;
+	}
 }
