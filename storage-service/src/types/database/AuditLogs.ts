@@ -22,6 +22,7 @@ export interface AddAuditLogListenerParams {
 
 export type UpdateAuditLogListenerParams = {
   id: string
+  enabled?: boolean
 } & AddAuditLogListenerParams
 
 export interface fetchAuditLogsParams {

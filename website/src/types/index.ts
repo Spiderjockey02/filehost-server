@@ -16,6 +16,11 @@ export interface SettingErrorTypes {
 	text: string
 }
 
+export interface NewListenerTypes {
+  type: 'name' | 'type' | 'targetUrl' | 'events' | 'misc'
+  text: string
+}
+
 export interface DatabaseBackup {
   createdAt: Date
   filename: string

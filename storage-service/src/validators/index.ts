@@ -60,6 +60,9 @@ export const validateLogListener = z
 		targetUrl: z
 			.string()
 			.optional(),
+		enabled: z
+			.boolean()
+			.optional(),
 	})
 	.superRefine((data, ctx) => {
 		if (data.type == 'WEBHOOK' && data.targetUrl?.trim() == '') {

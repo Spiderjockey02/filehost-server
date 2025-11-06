@@ -302,11 +302,11 @@ export const patchLogListener = (client: Client) => {
 		const session = await getSession(client, req.headers);
 
 		try {
-			const { type, events, name, targetUrl } = req.body;
-			const result = validateLogListener.safeParse({ type, events, name, targetUrl });
+			const { type, events, name, targetUrl, enabled } = req.body;
+			const result = validateLogListener.safeParse({ type, events, name, targetUrl, enabled });
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-			const listener = await client.AuditLogManager.updateListener({ id, userId: session!.userId, type: type as ListenerType, eventNames: events, name, targetUrl });
+			const listener = await client.AuditLogManager.updateListener({ id, userId: session!.userId, type: type as ListenerType, eventNames: events, name, targetUrl, enabled });
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session?.user.id,

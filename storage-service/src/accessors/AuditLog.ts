@@ -217,7 +217,7 @@ export default class AuditLogAccessor {
 				name: data.name,
 				type: data.type,
 				targetUrl: data.targetUrl,
-				enabled: true,
+				enabled: data.enabled,
 			},
 		});
 
