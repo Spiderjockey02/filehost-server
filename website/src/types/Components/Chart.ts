@@ -1,4 +1,4 @@
-import { ChartData, ChartOptions, ChartType, ChartTypeRegistry } from 'chart.js';
+import { ActiveElement, Chart as ChartJS, ChartData, ChartEvent, ChartOptions, ChartType, ChartTypeRegistry } from 'chart.js';
 import { CSSProperties } from 'react';
 import { StringNumberObj } from '..';
 
@@ -10,4 +10,5 @@ export interface ChartProps<TType extends ChartType = keyof ChartTypeRegistry> {
 
 export interface ObjectOrientedPieChartProps {
   data: StringNumberObj
+  onSliceClick?: (event: ChartEvent, elements: ActiveElement[], chart: ChartJS) => void
 }

@@ -3,7 +3,7 @@ import { getRandomColor } from '@/utils/functions';
 import { ChartData, ChartOptions } from 'chart.js';
 import PieChart from '../Charts/Pie';
 
-export default function ObjectOrientedPieChart({ data }: ObjectOrientedPieChartProps) {
+export default function ObjectOrientedPieChart({ data, onSliceClick }: ObjectOrientedPieChartProps) {
 	const dataset = {
 		labels: Object.keys(data),
 		datasets: [
@@ -31,6 +31,6 @@ export default function ObjectOrientedPieChart({ data }: ObjectOrientedPieChartP
 	} as ChartOptions<'pie'>;
 
 	return (
-		<PieChart data={dataset} options={options} style={{ maxHeight: '400px' }} />
+		<PieChart data={dataset} options={options} style={{ maxHeight: '400px' }} onClick={onSliceClick} />
 	);
 }

@@ -8,6 +8,7 @@ import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
 import { User } from 'better-auth';
 import axios from 'axios';
+import MimeTypePieChart from '@/components/Graphs/MimeTypePieChart';
 
 export default function AdminFilesPage(data: AdminFilesPageProps) {
 	const { data: session } = authClient.useSession();
@@ -78,14 +79,7 @@ export default function AdminFilesPage(data: AdminFilesPageProps) {
 					</Card>
 				</Col>
 				<Col xxl={4} xl={4} lg={12} md={12} className='mb-4'>
-					<Card>
-						<Card.Header>
-							File MIME Type Distribution
-						</Card.Header>
-						<Card.Body className='d-flex justify-content-center'>
-							<ObjectOrientedPieChart data={data.mostCommonFileTypes} />
-						</Card.Body>
-					</Card>
+					<MimeTypePieChart mimeType={data.mostCommonFileTypes} />
 				</Col>
 			</Row>
 			<p>Some graphs about deleted files, what no clue?</p>
