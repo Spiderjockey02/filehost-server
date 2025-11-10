@@ -250,7 +250,7 @@ export const auth = betterAuth({
 			create: {
 				after: async (session, ctx) => {
 					// If email is present then they are logging in via credentials, so check if they are 2FA
-					if (ctx?.body.email) {
+					if (ctx?.body?.email) {
 						const user = await client.user.findUnique({ where: { email: ctx?.body.email } });
 						if (user?.twoFactorEnabled) return;
 					}
