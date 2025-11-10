@@ -309,104 +309,66 @@ export const auth = betterAuth({
 	},
 	hooks: {
 		after: createAuthMiddleware(async (ctx) => {
-			const userAgent = ctx.request?.headers.get('user-agent');
-			const ipAddress = ctx.request?.headers.get('x-forwarded-for');
+			const userAgent = ctx.request?.headers.get('user-agent') || '';
+			const ipAddress = ctx.request?.headers.get('x-forwarded-for') || '';
 
-			try {
-				if (ctx.path == '/sign-in/email') {
-					if (ctx.context.returned instanceof APIError) {
-						console.log(ctx.context.returned.body);
-						switch (ctx.context.returned.body?.code) {
-							case 'INVALID_EMAIL_OR_PASSWORD':
-								await client.auditLog.create({
-									data: {
-										user: {
-											connect: {
-												email: ctx.body.email,
-											},
-										},
-										event: {
-											connectOrCreate: {
-												where: {
-													name: 'USER_LOGIN',
-												},
-												create: {
-													name: 'USER_LOGIN',
-													resourceType: 'SESSION',
-													displayName: 'User Login',
-												},
-											},
-										},
-										userAgentCon: {
-											connectOrCreate: {
-												where: {
-													agent: userAgent || '',
-												},
-												create: {
-													agent: userAgent || '',
-												},
-											},
-										},
-										ipCon: {
-											connectOrCreate: {
-												where: {
-													ip: ipAddress || '',
-												},
-												create: {
-													ip: ipAddress || '',
-												},
-											},
-										},
-										message: 'Failed login attempt due to invalid password.',
-										success: false,
+			const createAuditLog = async (message: string, userEmail?: string) => {
+				try {
+					await client.auditLog.create({
+						data: {
+							...(userEmail
+								? {
+									user: {
+										connect: { email: userEmail },
 									},
-								});
-								break;
-							case 'INVALID_EMAIL':
-								await client.auditLog.create({
-									data: {
-										event: {
-											connectOrCreate: {
-												where: {
-													name: 'USER_LOGIN',
-												},
-												create: {
-													name: 'USER_LOGIN',
-													resourceType: 'SESSION',
-													displayName: 'User Login',
-												},
-											},
-										},
-										userAgentCon: {
-											connectOrCreate: {
-												where: {
-													agent: userAgent || '',
-												},
-												create: {
-													agent: userAgent || '',
-												},
-											},
-										},
-										ipCon: {
-											connectOrCreate: {
-												where: {
-													ip: ipAddress || '',
-												},
-												create: {
-													ip: ipAddress || '',
-												},
-											},
-										},
-										message: 'Failed login attempt due to invalid email.',
-										success: false,
+						  }
+								: {}),
+							event: {
+								connectOrCreate: {
+									where: { name: 'USER_LOGIN' },
+									create: {
+										name: 'USER_LOGIN',
+										resourceType: 'SESSION',
+										displayName: 'User Login',
 									},
-								});
-								break;
-						}
-					}
+								},
+							},
+							userAgentCon: {
+								connectOrCreate: {
+									where: { agent: userAgent },
+									create: { agent: userAgent },
+								},
+							},
+							ipCon: {
+								connectOrCreate: {
+									where: { ip: ipAddress },
+									create: { ip: ipAddress },
+								},
+							},
+							message,
+							success: false,
+						},
+					});
+				} catch (err) {
+					console.error('Audit log creation failed:', err);
 				}
-			} catch (err) {
-				console.log(err);
+			};
+
+			// Get error code
+			if (!(ctx.context.returned instanceof APIError)) return;
+			const code = ctx.context.returned.body?.code;
+
+			switch (ctx.path) {
+				case '/sign-in/email':
+					if (code === 'INVALID_EMAIL_OR_PASSWORD') {
+						await createAuditLog('Failed login attempt due to invalid password.', ctx.body?.email);
+					} else if (code === 'INVALID_EMAIL') {
+						await createAuditLog('Failed login attempt due to invalid email.');
+					}
+					break;
+				case '/two-factor/verify-totp':
+					if (code === 'INVALID_CODE') await createAuditLog('Failed login attempt due to invalid 2FA code.');
+					break;
 			}
 		}),
 	},
