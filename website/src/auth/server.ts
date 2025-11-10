@@ -249,6 +249,12 @@ export const auth = betterAuth({
 		session: {
 			create: {
 				after: async (session, ctx) => {
+					// If email is present then they are logging in via credentials, so check if they are 2FA
+					if (ctx?.body.email) {
+						const user = await client.user.findUnique({ where: { email: ctx?.body.email } });
+						if (user?.twoFactorEnabled) return;
+					}
+
 					try {
 						await client.auditLog.create({
 							data: {
