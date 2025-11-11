@@ -179,3 +179,60 @@ export const postUserInformation = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint: GET /api/session/trash
+export const getTrash = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			const files = await client.FileManager.fetchOwnedByUserId({ userId:  session.user.id, isDeleted: true });
+			res.json({ files: sanitiseObject(files) });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to retrieve files in trash.');
+		}
+	};
+};
+
+
+// Endpoint: DELETE /api/session/trash/empty
+export const deleteEmpty = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			await client.FileManager.TrashHandler.emptyTrash(session.user.id);
+			res.json({ success: 'Successfully emptied trash.' });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to empty trash.');
+		}
+	};
+};
+
+// Endpoint: PUT /api/session/trash/restore
+export const putRestore = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			// Get and validate the file paths for restoring
+			const { paths } = req.body;
+			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
+
+			// Loop through each path and restore them (Could take some time if the multiple deep directories)
+			for (const path of paths) {
+				await client.FileManager.TrashHandler.restoreFile(session.user.id, path);
+			}
+
+			res.json({ success: 'Successfully restored file ' });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to empty trash.');
+		}
+	};
+};
