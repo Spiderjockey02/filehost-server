@@ -1,12 +1,19 @@
 import { faBars, faClock, faFolder, faImages, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FileSideBarProps, HoverElementProps } from '@/types/Components/Navbars';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FileSideBarProps } from '@/types/Components/Navbars';
 import { formatBytes, getStatusColor } from '@/utils/functions';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import config from '@/config';
 import Link from 'next/link';
 
 export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 	const size = user.totalStorageSize;
+
+	const HoverElement = ({ title, children }: HoverElementProps) => (
+	  <OverlayTrigger placement='right' overlay={<Tooltip>{title}</Tooltip>}>
+			{children}
+		</OverlayTrigger>
+	);
 
 	return (
 		<nav id="sidebar">
@@ -65,19 +72,25 @@ export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 			<ul className="list-unstyled components">
 				<li>
 					<Link href="/files" className={`btn sidebar-btn ${activeTab === 'files' ? 'active' : ''}`}>
-						<span data-bs-toggle="tooltip" data-bs-placement="right" title="All files"><FontAwesomeIcon icon={faFolder} /></span>
+					 <HoverElement title="All files">
+							<FontAwesomeIcon icon={faFolder} />
+					 </HoverElement>
 						<span className="side-text"> All files</span>
 					</Link>
 				</li>
 				<li>
 					<Link href="/gallery" className={`btn sidebar-btn ${activeTab === 'gallery' ? 'active' : ''}`}>
-						<span data-bs-toggle="tooltip" data-bs-placement="right" title="Gallery"><FontAwesomeIcon icon={faImages} /></span>
+						<HoverElement title="Gallery">
+							<FontAwesomeIcon icon={faImages} />
+					 </HoverElement>
 						<span className="side-text"> Gallery</span>
 					</Link>
 				</li>
 				<li>
 					<Link href="/recent" className={`btn sidebar-btn ${activeTab === 'recent' ? 'active' : ''}`}>
-						<span data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"><FontAwesomeIcon icon={faClock} /></span>
+						<HoverElement title="Recents">
+							<FontAwesomeIcon icon={faClock} />
+					 </HoverElement>
 						<span className="side-text"> Recents</span>
 					</Link>
 				</li>

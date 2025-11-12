@@ -1,6 +1,7 @@
 import { UserHistoryWithFile } from '../database';
 import type { User } from 'better-auth';
 import { adminSidebarTabs } from '../pages';
+import { ReactElement } from 'react';
 
 export type viewTypeTypes = 'List' | 'Tiles';
 
@@ -14,6 +15,11 @@ export interface BreadcrumbNavProps {
 
 export interface FileSideBarProps extends FileNavBarProps {
   activeTab: 'files' | 'recent' | 'bin' | 'gallery'
+}
+
+export interface HoverElementProps {
+	title: string
+	children: ReactElement
 }
 
 export interface AdminSideBarProps {
