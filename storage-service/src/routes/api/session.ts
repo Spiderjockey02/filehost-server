@@ -1,4 +1,4 @@
-import { deleteNotification, deleteResetAvatar, getLinkedAccounts, getRecentlyViewed, getSessions, postChangeAvatar, postUserInformation, getTrash, deleteEmpty, putRestore } from '../../controllers/session';
+import { deleteNotification, deleteResetAvatar, getLinkedAccounts, getRecentlyViewed, getSessions, postChangeAvatar, postUserInformation, getTrash, deleteEmpty, putRestore, getUserGallery } from '../../controllers/session';
 import type Client from '../../helpers/Client';
 import { Router } from 'express';
 const router = Router();
@@ -23,6 +23,8 @@ export default function(client: Client) {
 	router.delete('/trash/empty', deleteEmpty(client));
 
 	router.put('/trash/restore', putRestore(client));
+
+	router.get('/gallery', getUserGallery(client));
 
 	return router;
 }

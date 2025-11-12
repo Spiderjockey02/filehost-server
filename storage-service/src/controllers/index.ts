@@ -117,19 +117,3 @@ export const getPlans = (client: Client) => {
 		}
 	};
 };
-
-// Endpoint GET /api/gallery
-export const getUserGallery = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		try {
-			const session = await getSession(client, req.headers);
-			if (!session?.user) return Error.InvalidSession(res);
-
-			const files = await client.FileManager.fetchGalleryByUserId(session.user.id);
-			res.json({ files: sanitiseObject(files) });
-		} catch (error) {
-			client.logger.error(error);
-			return Error.GenericError(res, 'Failed to get user\'s gallery');
-		}
-	};
-};

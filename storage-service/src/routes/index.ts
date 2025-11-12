@@ -1,4 +1,4 @@
-import { getAvatar, getThumbnail, getContent, getStatistics, getPlans, getUserGallery } from '../controllers';
+import { getAvatar, getThumbnail, getContent, getStatistics, getPlans } from '../controllers';
 import type Client from '../helpers/Client';
 import { Router } from 'express';
 const router = Router();
@@ -13,8 +13,6 @@ export default function(client: Client) {
 	router.get('/api/statistics', getStatistics(client));
 
 	router.get('/api/plans', getPlans(client));
-
-	router.get('/api/gallery', getUserGallery(client));
 
 	return router;
 }
