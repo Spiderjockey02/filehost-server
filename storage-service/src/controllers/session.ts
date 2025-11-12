@@ -2,6 +2,7 @@ import { avatarForm, getSession } from '../middleware';
 import type { Request, Response } from 'express';
 import { Error, getIP, sanitiseObject } from '../utils';
 import type Client from '../helpers/Client';
+import { validateRecentlyViewed } from '../validators';
 
 // Endpoint: POST /api/session/change-avatar
 export const postChangeAvatar = (client: Client) => {
@@ -29,8 +30,12 @@ export const getRecentlyViewed = (client: Client) => {
 		try {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
+			const { sortBy, sortOrder } = req.query;
 
-			const files = await client.recentlyViewedFileManager.fetchUserLatest(session.user.id);
+			const result = validateRecentlyViewed.safeParse({ sortBy, sortOrder });
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+
+			const files = await client.recentlyViewedFileManager.fetchUserLatest({ userId: session.user.id, ...result.data });
 			res.json({ files: sanitiseObject(files) });
 		} catch (err) {
 			client.logger.error(err);

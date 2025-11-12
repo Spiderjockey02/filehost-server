@@ -1,97 +1,72 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import FileLayout from '@/layouts/file';
-import React from 'react';
 import { faSortUp, faSortDown, faSort, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Table from '@/components/UI/Table';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 import FileDetail from '@/components/Tables/FileDetailCell';
+import type { UserHistoryWithFile } from '@/types/database';
+import type { GetServerSidePropsContext } from 'next';
+import { ErrorPopup, Table } from '@/components';
 import { authClient } from '@/auth/client';
-import { UserHistoryWithFile } from '@/types/database';
-import { User } from 'better-auth';
 import { format } from '@/utils/functions';
-import { GetServerSidePropsContext } from 'next';
+import FileLayout from '@/layouts/file';
+import { User } from 'better-auth';
+import { useState } from 'react';
+import React from 'react';
 
-type sortKeyTypes = 'Name' | 'Acc_On';
-type SortOrder = 'ascn' | 'dscn';
+type sortKeyTypes = 'name' | 'viewedAt'
+type SortOrder = 'asc' | 'desc';
 
 export default function Recent() {
 	const { data: session } = authClient.useSession();
-	const [history, setHistory] = useState<UserHistoryWithFile[]>([]);
-	const [sortKey, setSortKey] = useState<sortKeyTypes>('Acc_On');
-	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
+	const [sortKey, setSortKey] = useState<sortKeyTypes>('viewedAt');
+	const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 	const [filters, setFilters] = useState<string[]>(['']);
 	const [activeFilters, setActiveFilters] = useState<string[]>(['']);
 
-	async function fetchFiles() {
-		try {
-			const { data } = await axios.get('/api/session/recently-viewed');
-			setHistory(data.files);
-			setFilters([...new Set((data.files as UserHistoryWithFile[]).map(c => `*.${c.file.name.split('.').at(-1)}`))]);
-		} catch (err) {
-			console.log(err);
-		}
-	}
+	const { data, isLoading, error, refetch } = useQuery({
+		queryKey: ['recent', sortKey, sortOrder],
+		queryFn: async ({ signal }) => {
+			const res = await fetch(`/api/session/recently-viewed?sortBy=${sortKey}&sortOrder=${sortOrder}`, { signal });
+			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
 
-	function updateSortKey(sort: sortKeyTypes) {
-		switch(sort) {
-			case 'Name': {
-				const isAscending = sortOrder === 'ascn';
-				setSortOrder(isAscending ? 'dscn' : 'ascn');
-				console.log(history);
-				const newHistory = history.sort((a, b) => {
-					return isAscending ? a.file.name.localeCompare(b.file.name) : b.file.name.localeCompare(a.file.name);
-				});
-				setHistory(newHistory);
-				setSortKey(sort);
-				break;
-			}
-			case 'Acc_On': {
-				const isAscending = sortOrder === 'ascn';
-				setSortOrder(isAscending ? 'dscn' : 'ascn');
-
-				setHistory(history.sort((a, b) => {
-					const dateA = new Date(a.viewedAt);
-					const dateB = new Date(b.viewedAt);
-					return isAscending ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
-				}));
-				setSortKey(sort);
-				break;
-			}
-		}
-	}
+			const d = await res.json();
+			setFilters([...new Set((d.files as UserHistoryWithFile[]).map(c => `*.${c.file.name.split('.').at(-1)}`))]);
+			return d as { files: UserHistoryWithFile[] };
+		},
+		...queryOptions,
+	});
 
 	const handleFilterChange = async (type: string) => {
 		try {
+			await refetch();
 			const newActiveFilters =
 			activeFilters.includes(type)
 				? activeFilters.filter(filter => filter !== type)
 				: [...activeFilters, type];
 
-			const { data } = await axios.get('/api/session/recently-viewed');
 			let newFilteredHistory: UserHistoryWithFile[] = [];
 			if (newActiveFilters.length == 1) {
-				newFilteredHistory = (data.files as UserHistoryWithFile[]);
+				newFilteredHistory = data?.files ?? [];
 			} else {
-				newFilteredHistory = (data.files as UserHistoryWithFile[]).filter(s => {
+				newFilteredHistory = (data?.files ?? []).filter(s => {
 					return newActiveFilters.includes(`*.${s.file.name.split('.').at(-1)}`);
 				});
 			}
 
-			setHistory(newFilteredHistory);
+			if (data) data.files = newFilteredHistory;
 			setActiveFilters(newActiveFilters);
 		} catch (err) {
 			console.log(err);
 		}
 	};
 
-	useEffect(() => {
-		fetchFiles();
-	}, []);
+	function updateSortKey(key: sortKeyTypes) {
+		setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+		setSortKey(key);
+	}
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as User} activeTab='recent'>
+		<FileLayout user={session.user as User} activeTab='recent' tabName='Recent files'>
 			<div className="d-flex flex-row justify-content-between">
 				<h5><b>Recently viewed files</b></h5>
 				<div className="dropdown">
@@ -110,24 +85,30 @@ export default function Recent() {
 					</ul>
 				</div>
 			</div>
-			<Table>
-				<Table.HeaderRow>
-					<Table.Header onClick={() => updateSortKey('Name')} style={{ cursor: 'pointer' }}>
-						Name <FontAwesomeIcon icon={sortKey == 'Name' ? (sortOrder == 'ascn' ? faSortUp : faSortDown) : faSort} />
-					</Table.Header>
-					<Table.Header onClick={() => updateSortKey('Acc_On')} style={{ cursor: 'pointer' }}>
-						Accessed on <FontAwesomeIcon icon={sortKey == 'Acc_On' ? (sortOrder == 'ascn' ? faSortUp : faSortDown) : faSort} />
-					</Table.Header>
-				</Table.HeaderRow>
-				<Table.Body>
-					{history.map(entry => (
-						<tr key={entry.id}>
-							<FileDetail file={entry.file} />
-							<td>{format(new Date().getTime() - (new Date().getTime() - new Date(entry.viewedAt).getTime()))}</td>
-						</tr>
-					))}
-				</Table.Body>
-			</Table>
+			{error == null ?
+				isLoading || data == null ?
+					<p>Loading</p> :
+					<Table>
+						<Table.HeaderRow>
+							<Table.Header onClick={() => updateSortKey('name')} style={{ cursor: 'pointer' }}>
+								Name <FontAwesomeIcon icon={sortKey == 'name' ? (sortOrder == 'asc' ? faSortUp : faSortDown) : faSort} />
+							</Table.Header>
+							<Table.Header onClick={() => updateSortKey('viewedAt')} style={{ cursor: 'pointer' }}>
+								Accessed on <FontAwesomeIcon icon={sortKey == 'viewedAt' ? (sortOrder == 'asc' ? faSortUp : faSortDown) : faSort} />
+							</Table.Header>
+						</Table.HeaderRow>
+						<Table.Body>
+							{data.files.map(entry => (
+								<tr key={entry.id}>
+									<FileDetail file={entry.file} />
+									<td>{format(new Date().getTime() - (new Date().getTime() - new Date(entry.viewedAt).getTime()))}</td>
+								</tr>
+							))}
+						</Table.Body>
+					</Table>
+				:
+				<ErrorPopup text={error.message} />
+			}
 		</FileLayout>
 	);
 }

@@ -1,10 +1,11 @@
-import type { CreateRecentlyViewedFile } from '../types/database/RecentlyViewedFile';
-import { RecentlyViewedFile } from '@prisma/client';
+import type { CreateRecentlyViewedFile, fetchUserLatestProps } from '../types/database/RecentlyViewedFile';
+import { FullRecentlyViewedFile } from '../types/database/RecentlyViewedFile';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
+import { RecentlyViewedFile } from '@prisma/client';
 
 export default class RecentlyViewedFileManager {
-	cache: LRUCache<string, RecentlyViewedFile[]>;
+	cache: LRUCache<string, FullRecentlyViewedFile[]>;
 
 	constructor() {
 		this.cache = new LRUCache({
@@ -51,14 +52,37 @@ export default class RecentlyViewedFileManager {
 		* @param {string} userId The user Id.
 		* @returns {RecentlyViewedFile[]} The files.
 	*/
-	async fetchUserLatest(userId: string): Promise<RecentlyViewedFile[]> {
+	async fetchUserLatest({ userId, sortBy = 'viewedAt', sortOrder = 'desc' }: fetchUserLatestProps): Promise<FullRecentlyViewedFile[]> {
 		let history = this.cache.get(userId) ?? null;
-		if (history) return history;
+		const sortFn = (a: FullRecentlyViewedFile, b: FullRecentlyViewedFile) => {
+			let valA: number | string = '';
+			let valB: number | string = '';
+
+			if (sortBy === 'viewedAt') {
+				valA = new Date(a.viewedAt).getTime();
+				valB = new Date(b.viewedAt).getTime();
+			} else if (sortBy === 'name') {
+				valA = a.file?.name?.toLowerCase() ?? '';
+				valB = b.file?.name?.toLowerCase() ?? '';
+			}
+
+			if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+			if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+			return 0;
+		};
+
+		// Send cached history with correct sorting
+		if (history) return [...history].sort(sortFn);
 
 		// Fetch from database as it's not in cache
 		history = await client.recentlyViewedFile.findMany({
 			where: { userId },
-			orderBy: { viewedAt: 'desc' },
+			orderBy: {
+				viewedAt: sortBy == 'viewedAt' ? sortOrder : undefined,
+				file: sortBy == 'name' ? {
+					name: sortOrder,
+				} : undefined,
+			},
 			include: { file: true },
 		});
 

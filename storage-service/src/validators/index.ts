@@ -283,3 +283,15 @@ export const createPlanSchema = z.object({
 		.optional(),
 	isDefault: z.boolean().optional(),
 });
+
+
+export const validateRecentlyViewed = z.object({
+	sortOrder: z
+		.enum(['asc', 'desc'], {
+			message: 'sortOrder must be a valid string, desc, asc',
+		}),
+	sortBy : z
+		.enum(['name', 'viewedAt'], {
+			message: 'sortBy must be a valid string, name or viewedAt',
+		}),
+});
