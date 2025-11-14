@@ -1,4 +1,4 @@
-import { getUsers, getUserGrowth, getUsersByLanguageCode, getUserEmails, getUserById, getUserStats, getUserSessions, getUserSignupSource, getUserRetention, getUserByIdAccounts, banUserById } from '../../../controllers/admin/users';
+import { getUsers, getUserGrowth, getUsersByLanguageCode, getUserEmails, getUserById, getUserStats, getUserSessions, getUserSignupSource, getUserRetention, getUserByIdAccounts, banUserById, getUsersNotification } from '../../../controllers/admin/users';
 import type Client from '../../../helpers/Client';
 import { checkAdmin } from '../../../middleware';
 import { Router } from 'express';
@@ -26,6 +26,8 @@ export default async function(client: Client) {
 	router.get('/:id/accounts', await checkAdmin(client), getUserByIdAccounts(client));
 
 	router.post('/:id/ban', await checkAdmin(client), banUserById(client));
+
+	router.get('/:id/notifications', await checkAdmin(client), getUsersNotification(client));
 
 	return router;
 }

@@ -68,4 +68,20 @@ export default class NotificationManager {
 		});
 		return this.cache.delete(notif.id);
 	}
+
+	/**
+	  * Fetch all notifications from a user
+	  * @param {string} userId The user id.
+	  * @returns {Notification[]} List of user's notifications
+	*/
+	async getByUserId(userId: string): Promise<Notification[]> {
+		return client.notification.findMany({
+			where: {
+				userId,
+			},
+			orderBy: {
+				createdAt: 'desc',
+			},
+		});
+	}
 }

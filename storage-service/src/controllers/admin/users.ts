@@ -269,3 +269,18 @@ export const banUserById = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint GET /api/admin/users/:id/notifications
+export const getUsersNotification = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const userId = req.params.id;
+
+		try {
+			const notification = await client.notificationManager.getByUserId(userId);
+			res.json({ notification });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch user\'s notifications.');
+		}
+	};
+};
