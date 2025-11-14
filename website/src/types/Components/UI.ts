@@ -1,6 +1,7 @@
 import { BaseSyntheticEvent, CSSProperties, ReactNode, Ref } from 'react';
 import type { Notification } from '@prisma/client';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { GridLayoutProps } from './Layout';
 
 export interface ModalProps {
   id: string
@@ -48,4 +49,8 @@ export interface InfoPillProgressProps {
   colour?: string
   max: number
   current: number
+}
+
+export interface CollapsibleIdProps extends GridLayoutProps {
+  id: string
 }
