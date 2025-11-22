@@ -287,6 +287,7 @@ enum AuditLogResourceType {
   SYSTEM
   SESSION
   SUBSCRIPTION
+  EMAIL
 }
 
 enum AuditLogEventName {
@@ -321,6 +322,7 @@ enum AuditLogEventName {
   PLAN_DELETED
   SUBSCRIPTION_START
   SUBSCRIPTION_ENDED
+  EMAIL_SENT
 }
 
 model AuditLogNames {

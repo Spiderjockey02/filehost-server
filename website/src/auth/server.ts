@@ -1,10 +1,11 @@
-import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { customSession, organization, admin, twoFactor, lastLoginMethod, createAuthMiddleware } from 'better-auth/plugins';
+import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { sendEmailChangedAttemptEmail, sendPasswordChangedEmail, sendPasswordResetEmail, sendVerificationEmail } from '@/utils/mail';
 import { nextCookies } from 'better-auth/next-js';
+import { stripe } from '@better-auth/stripe';
+import { APIError } from 'better-auth/api';
 import { betterAuth } from 'better-auth';
 import client from './prisma';
-import { APIError } from 'better-auth/api';
-import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -63,15 +64,21 @@ export const auth = betterAuth({
 	database: prismaAdapter(client, {
 		provider: 'mysql',
 	}),
+	emailVerification: {
+		sendOnSignUp: true,
+		sendVerificationEmail: async ({ user, url }) => {
+			await sendVerificationEmail(user, url);
+		},
+	},
 	emailAndPassword: {
 		enabled: true,
 		revokeSessionsOnPasswordReset: true,
+		// User has requested a password reset, send them an email to verify this
 		sendResetPassword: async ({ user, url }) => {
-			console.log(user);
-			console.log(url);
+			await sendPasswordResetEmail(user, url);
 		},
+		// User's password has been reset so send them a notficiation, email and add to audit logs
 		onPasswordReset: async ({ user }) => {
-			console.log(`Password for user ${user.email} has been reset.`);
 			try {
 				await Promise.all([
 					client.auditLog.create({
@@ -108,6 +115,7 @@ export const auth = betterAuth({
 							},
 						},
 					}),
+					sendPasswordChangedEmail(user),
 				]);
 			} catch (err) {
 				console.log(err);
@@ -117,6 +125,11 @@ export const auth = betterAuth({
 	user: {
 		changeEmail: {
 			enabled: true,
+			updateEmailWithoutVerification: true,
+			// User wants to change email so send them a confirmation email to their old (makes sure they are not compromised)
+			sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+				await sendEmailChangedAttemptEmail(user, newEmail, url);
+			},
 		},
 		additionalFields: {
 			totalStorageSize: {
