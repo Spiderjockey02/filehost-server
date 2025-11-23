@@ -1,14 +1,11 @@
-import { StringNumberObj } from '@/types';
-import Card from '../UI/Card';
+import type { MimeTypePieChartProps } from '@/types/Components/Chart';
 import ObjectOrientedPieChart from './ObjectOrientedPieChart';
 import { ChartEvent, ActiveElement } from 'chart.js';
+import type { StringNumberObj } from '@/types';
 import { useMemo, useState } from 'react';
+import { Card } from '@/components';
 
-interface Props {
-  mimeType: StringNumberObj
-}
-
-export default function MimeTypePieChart({ mimeType }: Props) {
+export default function MimeTypePieChart({ mimeType }: MimeTypePieChartProps) {
 	const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
 	// Group the mimetypes by their category

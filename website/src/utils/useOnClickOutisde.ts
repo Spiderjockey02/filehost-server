@@ -2,17 +2,17 @@ import { RefObject, useEffect } from 'react';
 
 type Event = MouseEvent | TouchEvent
 
-export const useOnClickOutside = <T extends HTMLElement = HTMLElement>(
-	ref: RefObject<T>,
-	handler: (event: Event) => void,
-) => {
+export const useOnClickOutside = <T extends HTMLElement = HTMLElement>(ref: RefObject<T>, handler: (event: Event) => void) => {
 	useEffect(() => {
 		const listener = (event: Event) => {
 			const el = ref?.current;
-			if (!el || el.contains((event?.target as Node) || null)
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				|| ((event as any).delegateTarget && [...(event as any)?.delegateTarget?.classList]?.includes('modal'))) return;
+			const target = event.target as Node | null;
 
+			// Ignore clicks inside the referenced element
+			if (!el || (target && el.contains(target))) return;
+
+			// Ignore clicks inside any Bootstrap modal or backdrop
+			if (target instanceof HTMLElement && (target.closest('.modal') || target.closest('.modal-backdrop'))) return;
 			handler(event);
 		};
 

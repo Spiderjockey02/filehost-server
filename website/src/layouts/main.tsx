@@ -1,15 +1,8 @@
+import type { MainLayoutProps } from '@/types/Components/Layout';
 import { Footer, HomeNavbar } from '@/components';
-import type { User } from 'better-auth';
 import Head from 'next/head';
-import { ReactNode } from 'react';
 
-interface Props {
-  children: ReactNode;
-	user?: User | null
-	tabName?: string
-}
-
-export default function MainLayout({ children, user, tabName }: Props) {
+export default function MainLayout({ children, user, tabName }: MainLayoutProps) {
 	return (
 		<>
 			<HomeNavbar user={user} />

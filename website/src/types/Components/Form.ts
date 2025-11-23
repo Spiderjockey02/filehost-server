@@ -1,4 +1,9 @@
 import type { HTMLInputTypeAttribute, ChangeEventHandler, HTMLInputAutoCompleteAttribute, ReactNode } from 'react';
+import type { ActionMeta, GroupBase, MultiValue, PropsValue } from 'react-select';
+import type { User } from 'better-auth';
+export interface AvatarUploadFormProps {
+	user: User | null
+}
 
 export interface InputFieldProps {
   title: string
@@ -10,6 +15,7 @@ export interface InputFieldProps {
   onChange?: ChangeEventHandler<HTMLInputElement>
   errorMsg?: string
   autocomplete?: HTMLInputAutoCompleteAttribute
+	step?: number
 }
 
 export interface DragUploadFieldProps {
@@ -40,4 +46,21 @@ export interface FileSystemDirectoryEntry extends FileSystemEntry {
 
 interface FileSystemDirectoryReader {
 	readEntries: (successCallback: (entries: FileSystemEntry[]) => void) => void;
+}
+
+export interface MultiSelectFieldProps {
+	errorMsg?: string
+	title: string
+	name: string
+	onChange?: ((newValue: MultiValue<{ value: string; text: string; }>, actionMeta: ActionMeta<{ value: string; text: string; }>) => void) | undefined
+	options: readonly ({ value: string; text: string; } | GroupBase<{ value: string; text: string; }>)[]
+	defaultValue?: PropsValue<{ value: string; text: string; }> | undefined
+}
+
+export interface SelectFieldProps {
+  errorMsg?: string
+  title: string
+  name: string
+  onChange?: ChangeEventHandler<HTMLSelectElement>
+  options: {value: string, label: string}[]
 }

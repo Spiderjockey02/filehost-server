@@ -1,17 +1,19 @@
-import { faDownload, faFolderTree, faHardDrive, faMemory, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { Row, Col, InfoPill, BarChart, Card, ErrorPopup, ObjectOrientedPieChart, FileUploadLineChart } from '@/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Row, Col, InfoPill, BarChart, Card, ObjectOrientedPieChart, FileUploadLineChart } from '@/components';
+import { faFolderTree, faHardDrive, faMemory, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
+import MimeTypePieChart from '@/components/Graphs/MimeTypePieChart';
+import { useToast } from '@/components/Hooks/ToastManager';
 import { formatBytes, headers } from '@/utils/functions';
+import type { GetServerSidePropsContext } from 'next';
 import { AdminFilesPageProps } from '@/types/pages';
-import { GetServerSidePropsContext } from 'next';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
-import { User } from 'better-auth';
+import type { User } from 'better-auth';
+import { useEffect } from 'react';
 import axios from 'axios';
-import MimeTypePieChart from '@/components/Graphs/MimeTypePieChart';
 
 export default function AdminFilesPage(data: AdminFilesPageProps) {
 	const { data: session } = authClient.useSession();
+	const { showToast } = useToast();
 
 	const fileCategory = {
 		labels: Object.keys(data.categories),
@@ -25,17 +27,17 @@ export default function AdminFilesPage(data: AdminFilesPageProps) {
 		],
 	};
 
+	useEffect(() => {
+		if (data.error) showToast('error', data.error);
+	}, [data.error]);
+
 	if (session == null) return null;
 	return (
 		<AdminLayout activeTab='files' user={session.user as User} tabName='Admin File'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">File Dashboard</h1>
-				<button className="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-					<FontAwesomeIcon icon={faDownload} /> Generate Report
-				</button>
 			</div>
-			{data.error && <ErrorPopup text={data.error} />}
 			<Row>
 				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Total files" text={data.files + data.folders} icon={faUsers} />

@@ -1,13 +1,10 @@
-import { requestTimeFrames } from '@/types/pages';
+import type { requestTimeFrames } from '@/types/pages';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
+import type { StringNumberObj } from '@/types';
 import LineChart from '../Charts/Line';
+import { Card } from '@/components';
 import { useState } from 'react';
-import Card from '../UI/Card';
-
-interface UserGrowth {
-  [key: string]: number;
-}
 
 export default function UserGrowthLineChart() {
 	const [userGrowthFrame, setUserGrowthFrame] = useState<requestTimeFrames>('monthly');
@@ -19,7 +16,7 @@ export default function UserGrowthLineChart() {
 			if (!res.ok) throw new Error(`Failed to fetch user growth: ${res.statusText}`);
 			const d = await res.json();
 			const firstKey = Object.keys(d)[0];
-			return d[firstKey] as UserGrowth;
+			return d[firstKey] as StringNumberObj;
 		},
 		...queryOptions,
 	});
@@ -37,7 +34,7 @@ export default function UserGrowthLineChart() {
 	};
 
 	return (
-		<Card>
+		<Card className='mb-4'>
 			<Card.Header>
 				User Growth Over Time
 				<div className="dropdown">
@@ -58,7 +55,7 @@ export default function UserGrowthLineChart() {
 					</div>
 				) : error ? (
 					<div className="alert alert-danger" role="alert">
-    				Error loading user growth data: {error.message}
+    				{error.message}
 					</div>
 				) : (
 					<LineChart

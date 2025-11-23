@@ -1,40 +1,42 @@
-import { FilePanelPopup, FileViewTable } from '@/components';
-import { useCallback, useEffect, useState } from 'react';
-import { GetServerSidePropsContext } from 'next/types';
+import { queryOptions, useQuery } from '@tanstack/react-query';
+import type { GetServerSidePropsContext } from 'next/types';
+import { useToast } from '@/components/Hooks/ToastManager';
+import type { FileWithCount } from '@/types/database';
+import type { SearchPageProps } from '@/types/pages';
+import { FileViewTable } from '@/components';
 import { authClient } from '@/auth/client';
-import { SearchPageProps } from '@/types/pages';
 import FileLayout from '@/layouts/file';
-import axios from 'axios';
-import { User } from 'better-auth';
-import { FileWithCount } from '@/types/database';
+import type { User } from 'better-auth';
+import { useEffect } from 'react';
 
 export default function Search({ query: { query, fileType, dateUpdated } }: SearchPageProps) {
 	const { data: session } = authClient.useSession();
-	const [files, setFiles] = useState<FileWithCount[]>([]);
-	const [filePanelToShow, setFilePanelToShow] = useState('');
+	const { showToast } = useToast();
 
-	const fetchFiles = useCallback(async () => {
-		try {
-			const { data } = await axios.get(`/api/files/search?query=${query}&fileType=${fileType}&updatedSince=${dateUpdated}`);
-			setFiles(data.query);
-		} catch (err) {
-			console.log(err);
-		}
-	}, [query, fileType, dateUpdated]);
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['recent', query, fileType, dateUpdated],
+		queryFn: async ({ signal }) => {
+			const res = await fetch(`/api/files/search?query=${query}&fileType=${fileType}&updatedSince=${dateUpdated}`, { signal });
+			if (!res.ok) throw new Error(`Failed to search for files: ${res.statusText}`);
+
+			const d = await res.json();
+			return d as { files: FileWithCount[] };
+		},
+		...queryOptions,
+	});
 
 	useEffect(() => {
-		fetchFiles();
-	}, [fetchFiles]);
+		if (error) showToast('error', error.message);
+	}, [error]);
 
 	if (session == null) return null;
 	return (
 		<FileLayout user={session.user as User} activeTab='files' tabName={`Searched for: ${query}`}>
 			<h4><b>Search for: {query}</b></h4>
-			{files.map((_) => (
-				filePanelToShow == _.id && <FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
-			))}
-			{/* @ts-expect-error CBA */}
-			<FileViewTable files={files} setFilePanelToShow={setFilePanelToShow} showMoreDetail={true} />
+			{isLoading || data == null ?
+				<p>Loading</p> :
+				<FileViewTable files={data.files} showMoreDetail={true} setFilePanelToShow={() => null} />
+			}
 		</FileLayout>
 	);
 }

@@ -1,29 +1,23 @@
-import { requestTimeFrames } from '@/types/pages';
+import type { AdminManageUsersCardProps } from '@/types/Components/Card';
+import type { requestTimeFrames } from '@/types/pages';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
+import type { StringNumberObj } from '@/types';
 import LineChart from '../Charts/Line';
+import { Card } from '@/components';
 import { useState } from 'react';
-import Card from '../UI/Card';
 
-interface UserGrowth {
-  [key: string]: number;
-}
-
-interface Props {
-	storageId?: string;
-}
-
-export default function FileUploadLineChart({ storageId }: Props) {
+export default function FileUploadLineChart({ storageId }: AdminManageUsersCardProps) {
 	const [uploadGrowthFrame, setUploadGrowthFrame] = useState<requestTimeFrames>('daily');
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: storageId ? ['fileUploads', uploadGrowthFrame, storageId] : ['fileUploads', uploadGrowthFrame],
 		queryFn: async ({ signal }) => {
 			const res = await fetch(`/api/admin/files/growth?frame=${uploadGrowthFrame}${storageId ? `&storageId=${storageId}` : ''}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user growth: ${res.statusText}`);
+			if (!res.ok) throw new Error(`Failed to fetch file upload trend: ${res.statusText}`);
 			const d = await res.json();
 			const firstKey = Object.keys(d)[0];
-			return d[firstKey] as UserGrowth;
+			return d[firstKey] as StringNumberObj;
 		},
 		...queryOptions,
 	});
@@ -41,7 +35,7 @@ export default function FileUploadLineChart({ storageId }: Props) {
 	};
 
 	return (
-		<Card>
+		<Card className='mb-4'>
 			<Card.Header>
 				File Uploads Over Time
 				<div className="dropdown">
@@ -62,7 +56,7 @@ export default function FileUploadLineChart({ storageId }: Props) {
 					</div>
 				) : error ? (
 					<div className="alert alert-danger" role="alert">
-    				Error loading file upload data: {error.message}
+    				{error.message}
 					</div>
 				) : (
 					<LineChart data={fileUploadData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />

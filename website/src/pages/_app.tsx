@@ -1,13 +1,16 @@
 import { UploadQueueProvider } from '@/components/Hooks/UploadContentManager';
-import { FileProvider } from '@/components/Hooks/FileManager';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SocketProvider } from '@/components/Hooks/SocketManager';
-import 'bootstrap/dist/css/bootstrap.css';
+import { ToastProvider } from '@/components/Hooks/ToastManager';
+import { FileProvider } from '@/components/Hooks/FileManager';
+import PopupToast from '@/components/UI/PopupToast';
 import Header from '../components/header';
 import type { AppProps } from 'next/app';
-import { useEffect } from 'react';
-import '@/styles/globals.scss';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
+
+import 'bootstrap/dist/css/bootstrap.css';
+import '@/styles/globals.scss';
 
 const queryClient = new QueryClient();
 export default function App({ Component, pageProps }: AppProps) {
@@ -15,23 +18,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
 	useEffect(() => {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const bootstrap = require('bootstrap/dist/js/bootstrap.bundle.min.js');
-
-		const handleRouteChange = () => {
-			const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-			tooltipTriggerList.forEach((tooltipTriggerEl) => {
-				new bootstrap.Tooltip(tooltipTriggerEl);
-			});
-		};
-
-		// Run on initial load
-		handleRouteChange();
-
-		// Run after every route change
-		router.events.on('routeChangeComplete', handleRouteChange);
-		return () => {
-			router.events.off('routeChangeComplete', handleRouteChange);
-		};
+		require('bootstrap/dist/js/bootstrap.bundle.min.js');
 	}, [router.events]);
 
 	return (
@@ -41,7 +28,10 @@ export default function App({ Component, pageProps }: AppProps) {
 				<SocketProvider>
 					<FileProvider>
 						<UploadQueueProvider>
-							<Component {...pageProps} />
+							<ToastProvider>
+								<Component {...pageProps} />
+								<PopupToast />
+							</ToastProvider>
 						</UploadQueueProvider>
 					</FileProvider>
 				</SocketProvider>

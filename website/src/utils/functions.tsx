@@ -26,6 +26,18 @@ export function formatTime(timeInSeconds: number) {
 	};
 }
 
+export function generatePlaceholderTable(rows: number, column: number) {
+	return Array.from({ length: rows }, (_, i) => i).map((_, index) => (
+		<tr key={index}>
+			{Array.from({ length: column }, (__, i) => i).map((__) => (
+				<td className="placeholder-glow" key={__}>
+					<span className="placeholder col-12"></span>
+				</td>
+			))}
+		</tr>
+	));
+}
+
 export function getFileIcon(file: File) {
 	// Check folder stuff
 	if (file.type == 'DIRECTORY') return (<FontAwesomeIcon icon={faFolder} />) ;

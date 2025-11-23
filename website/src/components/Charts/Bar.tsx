@@ -1,5 +1,5 @@
-import type { ChartProps } from '@/types/Components/Chart';
 import { Chart as ChartJS, Tooltip, Legend,	CategoryScale, LinearScale, Title, BarElement } from 'chart.js';
+import type { ChartProps } from '@/types/Components/Chart';
 import { Bar } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 

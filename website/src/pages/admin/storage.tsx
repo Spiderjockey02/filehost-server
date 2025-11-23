@@ -1,20 +1,27 @@
-import { authClient } from '@/auth/client';
-import { Card, Col, ErrorPopup, InfoPill, Row, ObjectOrientedPieChart } from '@/components';
-import AdminStorageTable from '@/components/Cards/AdminStorageTable';
-import AdminLayout from '@/layouts/admin';
-import { AdminStoragePageProps } from '@/types/pages';
-import { formatBytes, headers } from '@/utils/functions';
 import { faDownload, faFile, faFileImage, faHardDrive } from '@fortawesome/free-solid-svg-icons';
+import { Card, Col, InfoPill, Row, ObjectOrientedPieChart } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import axios from 'axios';
-import { User } from 'better-auth';
+import { AdminManageStorageCard } from '@/components/Cards';
+import { useToast } from '@/components/Hooks/ToastManager';
+import type { AdminStoragePageProps } from '@/types/pages';
+import { formatBytes, headers } from '@/utils/functions';
 import { GetServerSidePropsContext } from 'next/types';
+import { authClient } from '@/auth/client';
+import AdminLayout from '@/layouts/admin';
+import { User } from 'better-auth';
+import { useEffect } from 'react';
+import axios from 'axios';
 
 export default function AdminStoragePage({ error, storages, MediumCounts, avgFileCount, avgStorageUsage }: AdminStoragePageProps) {
 	const { data: session } = authClient.useSession();
-	if (session == null) return null;
+	const { showToast } = useToast();
+
+	useEffect(() => {
+		if (error) showToast('error', error);
+	}, [error]);
 
 	const avatarMedium = storages.find(s => s.avatarOnly);
+	if (session == null) return null;
 	return (
 		<AdminLayout activeTab='storage' user={session.user as User} tabName='Admin Storage'>
       &nbsp;
@@ -24,7 +31,6 @@ export default function AdminStoragePage({ error, storages, MediumCounts, avgFil
 					<FontAwesomeIcon icon={faDownload} /> Generate Report
 				</button>
 			</div>
-			{error && <ErrorPopup text={error} />}
 			<Row>
 				<Col xl={4} md={6} className="mb-4">
 					<InfoPill title="Avatar Storage" text={formatBytes(avatarMedium?.usedSize)} icon={faFileImage} />
@@ -43,12 +49,17 @@ export default function AdminStoragePage({ error, storages, MediumCounts, avgFil
 							Storage Medium Types
 						</Card.Header>
 						<Card.Body>
-							<ObjectOrientedPieChart data={MediumCounts} />
+							{error ?
+								<div className="alert alert-danger" role="alert">
+									{error}
+								</div>
+								: <ObjectOrientedPieChart data={MediumCounts} />
+							}
 						</Card.Body>
 					</Card>
 				</Col>
 			</Row>
-			<AdminStorageTable />
+			<AdminManageStorageCard />
 		</AdminLayout>
 	);
 }

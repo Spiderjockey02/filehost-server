@@ -1,6 +1,6 @@
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { TextViewerProps } from '@/types/Components/Views';
 import { useCallback, useEffect, useState } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import axios from 'axios';
 
 export default function TextViewer({ path }: TextViewerProps) {

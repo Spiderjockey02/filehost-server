@@ -1,14 +1,14 @@
 import { faCommentDots, faEarthEurope, faFile, faGauge, faHardDrive, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatBytes, queryOptions } from '@/utils/functions';
+import { useQuery } from '@tanstack/react-query';
 import { Col, Row } from '@/components/UI/Grid';
 import { authClient } from '@/auth/client';
+import type { Plan } from '@prisma/client';
 import MainLayout from '@/layouts/main';
+import CountUp from 'react-countup';
 import config from '../config';
 import Link from 'next/link';
-import CountUp from 'react-countup';
-import { useQuery } from '@tanstack/react-query';
-import { Plan } from '@prisma/client';
 
 export default function Home() {
 	const { data: session } = authClient.useSession();

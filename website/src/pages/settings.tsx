@@ -1,24 +1,26 @@
-import { ErrorPopup, SuccessPopup, InputField, Card, Table } from '@/components';
+import BillingPanelModal from '@/components/Modals/User/BillingPanelModal';
+import { AvatarUploadForm } from '@/components/Form/AvatarUploadForm';
+import SessionTable from '@/components/Tables/SessionTable';
+import type { SettingsFormError } from '@/types/errors';
+import type { GetServerSidePropsContext } from 'next';
+import { User2FAModal } from '@/components/Modals';
+import { queryOptions } from '@/utils/functions';
+import { useQuery } from '@tanstack/react-query';
+import { InputField, Card } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
-import { AccountProviders, SettingErrorTypes } from '@/types';
+import type { AccountProviders } from '@/types';
+import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import { useState } from 'react';
-import { authClient } from '@/auth/client';
-import { GetServerSidePropsContext } from 'next';
-import User2FAModal from '@/components/Modals/User2FAModal';
-import { useQuery } from '@tanstack/react-query';
-import { parseUserAgent, queryOptions } from '@/utils/functions';
-import { AvatarUploadForm } from '@/components/Form/AvatarUploadForm';
-import { Session } from '@prisma/client';
 
 export default function Settings() {
+	const [activeModal, setActiveModal] = useState<string | null>(null);
 	const { data: session, refetch } = authClient.useSession();
-	const [errors, setErrors] = useState<SettingErrorTypes[]>([]);
+	const [errors, setErrors] = useState<SettingsFormError[]>([]);
 	const [newUser, setNewUser] = useState({
 		email: '',
 		name: '',
 	});
-	const [success, setSuccess] = useState('');
 	const [passwords, setPasswords] = useState({
 		currentPassword: '',
 		newPassword: '',
@@ -37,18 +39,6 @@ export default function Settings() {
 		...queryOptions,
 	});
 
-	const { data: sessionData } = useQuery({
-		queryKey: ['userSessions'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/session/list', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { sessions: Session[] };
-		},
-		...queryOptions,
-	});
-
 	const onPasswordSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();
 		const { currentPassword, newPassword, repeatNewPassword } = passwords;
@@ -56,7 +46,7 @@ export default function Settings() {
 
 		// Make sure both fields are not empty
 		if (newPassword.length == 0 || repeatNewPassword.length == 0) {
-			const errs = new Array<SettingErrorTypes>();
+			const errs: SettingsFormError[] = [];
 			if (newPassword.length == 0) errs.push({ type: 'pwd1', text: 'This field is missing' });
 			if (repeatNewPassword.length == 0) errs.push({ type: 'pwd2', text: 'This field is missing' });
 			return setErrors(errs);
@@ -96,10 +86,6 @@ export default function Settings() {
 	return (
 		<MainLayout user={session.user} tabName="Settings">
 			<section className="d-flex flex-row align-items-center" style={{ backgroundColor: '#eee', padding: '5% 0' }}>
-				{errors.find((c) => c.type == 'av') && (
-					<ErrorPopup text={errors.find((c) => c.type == 'av')?.text as string} />
-				)}
-				{success.length !== 0 && <SuccessPopup text={success} />}
 				<Card className="container">
 					<Card.Body>
 						<div className="row" style={{ margin: '5px' }}>
@@ -117,7 +103,7 @@ export default function Settings() {
 							<div className="col-lg-10 tab-content" id="v-pills-tabContent">
 								<div className="tab-pane fade show active" id="v-pills-account" role="tabpanel" aria-labelledby="v-pills-account-tab">
 									<h3 className="mb-4">Account Settings</h3>
-									<AvatarUploadForm user={session.user} setSuccess={setSuccess} setErrors={setErrors} />
+									<AvatarUploadForm user={session.user} />
 									<ul className="nav nav-tabs mt-4" id="account-tabs">
 										<li className="nav-item">
 											<a className="nav-link active" href="#personal-info" data-bs-toggle="tab">
@@ -175,7 +161,6 @@ export default function Settings() {
 										{/* Password (only if user uses credentials) */}
 										{accountData?.accounts.find(a => a.provider === 'credential') !== undefined && (
 											<div className="tab-pane fade" id="password">
-
 												<form className="mt-4" onSubmit={onPasswordSubmit}>
 													<InputField title="Current Password" name="current-password" autocomplete="current-password" type="password" errorMsg={errors.find((e) => e.type == 'current')?.text} onChange={(e) => setPasswords((p) => ({ ...p, currentPassword: e.target.value }))}
 													/>
@@ -189,10 +174,10 @@ export default function Settings() {
 															<InputField title="Repeat Password" name="repeat-password" autocomplete="new-password" type="password" errorMsg={errors.find((e) => e.type == 'pwd2')?.text} onChange={(e) => setPasswords((p) => ({ ...p, repeatNewPassword: e.target.value }))} />
 														</div>
 													</div>
-													<button className="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#User2FAModal">
+													<button type="button" className="btn btn-secondary" onClick={() => setActiveModal('user2FA')}>
                         		Enable 2FA
 													</button>
-													<User2FAModal />
+													{activeModal == 'user2FA' && <User2FAModal show={true} onClose={() => setActiveModal(null)} /> }
 													<button type="submit" className="btn btn-primary float-end">
                         		Save Changes
 													</button>
@@ -213,68 +198,15 @@ export default function Settings() {
 											<h5>Current Plan</h5>
 											<p>{session.user?.plan.name} — Active</p>
 										</div>
-										<button className="btn btn-primary" onClick={() => null}>
+										{activeModal == 'billing' && <BillingPanelModal show={true} onClose={() => setActiveModal(null)} currentPlan={session.user!.plan} /> }
+										<button className="btn btn-primary" onClick={() => setActiveModal('billing')}>
                   		Manage Subscription
 										</button>
 									</div>
 								</div>
 								{/* Sessions Tab */}
 								<div className="tab-pane fade" id="v-pills-sessions" role="tabpanel" aria-labelledby="v-pills-sessions-tab">
-									<div className='table-responsive' style={{ overflowY: 'scroll', maxHeight: '75vh' }}>
-										<Table>
-											<Table.HeaderRow>
-												<Table.Header>IP</Table.Header>
-												<Table.Header>User Agent</Table.Header>
-												<Table.Header>Created At</Table.Header>
-												<Table.Header>Expires At</Table.Header>
-												<Table.Header>Actions</Table.Header>
-											</Table.HeaderRow>
-											<Table.Body>
-												{sessionData == undefined ? (
-													[0, 0, 0, 0].map((_, index) => (
-														<tr key={index}>
-															{Array(5)
-																.fill(0)
-																.map((_1, idx) => (
-																	<td key={idx} className="placeholder-glow">
-																		<span className="placeholder col-12"></span>
-																	</td>
-																))}
-														</tr>
-													))
-												) : (
-													sessionData.sessions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-														.map((userSes) => {
-															const isCurrent = userSes.id === session.session?.id;
-
-															return (
-																<tr key={userSes.id} className={isCurrent ? 'table-success' : ''}>
-																	<td>
-																		{userSes.ipAddress}
-																		{isCurrent && (
-																			<span className="badge bg-primary ms-2">Current</span>
-																		)}
-																	</td>
-																	<td>{parseUserAgent(userSes.userAgent)}</td>
-																	<td>{new Date(userSes.createdAt).toLocaleString()}</td>
-																	<td>{new Date(userSes.expiresAt).toLocaleString()}</td>
-																	<td>
-																		{!isCurrent && (
-																			<button className="btn btn-sm btn-outline-danger" onClick={() => authClient.revokeSession({
-																				token: userSes.token,
-																			})}
-																			>
-                    										Remove
-																			</button>
-																		)}
-																	</td>
-																</tr>
-															);
-														})
-												)}
-											</Table.Body>
-										</Table>
-									</div>
+									<SessionTable userId={session.session!.userId} isAdmin={false} />
 								</div>
 							</div>
 						</div>
@@ -301,8 +233,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		// Get the path from the URL
-		const path = [context.params?.files].flat();
-		return { props: { path: path.join('/') } };
+		return { props: { } };
 	}
 }

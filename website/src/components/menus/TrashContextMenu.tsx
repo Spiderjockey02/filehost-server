@@ -2,9 +2,9 @@ import { faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
 import type { TrashContextMenuProps } from '@/types/Components/Menu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useOnClickOutside } from '@/utils/useOnClickOutisde';
+import ContextMenu from '../UI/ContextMenu';
 import { useRef, RefObject } from 'react';
 import axios from 'axios';
-import ContextMenu from '../UI/ContextMenu';
 
 export default function TrashContextMenu({ x, y, closeContextMenu, selected }: TrashContextMenuProps) {
 	const contextMenuRef = useRef<HTMLDivElement>(null);

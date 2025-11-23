@@ -1,17 +1,24 @@
 import { faDownload, faUsers, faHardDrive, faFolderTree } from '@fortawesome/free-solid-svg-icons';
-import { Col, Row, InfoPill, ErrorPopup, UserGrowthLineChart, FileUploadLineChart } from '@/components';
-import AdminRecentUploadsCards from '@/components/Cards/AdminRecentUploads';
+import { Col, Row, InfoPill, UserGrowthLineChart, FileUploadLineChart } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { AdminListRecentUploadsCard } from '@/components/Cards';
+import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
 import type { AdminPageProps } from '@/types/pages';
 import { headers } from '@/utils/functions';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
 import { User } from 'better-auth';
+import { useEffect } from 'react';
 import axios from 'axios';
 
 export default function AdminPage({ stats, error }: AdminPageProps) {
 	const { data: session } = authClient.useSession();
+	const { showToast } = useToast();
+
+	useEffect(() => {
+		if (error) showToast('error', error);
+	}, [error]);
 
 	if (session == null) return null;
 	return (
@@ -23,7 +30,6 @@ export default function AdminPage({ stats, error }: AdminPageProps) {
 					<FontAwesomeIcon icon={faDownload} /> Generate Report
 				</button>
 			</div>
-			{error && <ErrorPopup text={error} />}
 			<Row>
 				<Col xl={4} md={6} className="mb-4">
 					<InfoPill title="Total Users (Active)" text={`${stats.users.total} (${stats.users.active})`} icon={faUsers} />
@@ -43,11 +49,7 @@ export default function AdminPage({ stats, error }: AdminPageProps) {
 					<FileUploadLineChart />
 				</Col>
 			</Row>
-			<Row>
-				<Col xl={8} md={12} className='mb-4'>
-					<AdminRecentUploadsCards />
-				</Col>
-			</Row>
+			<AdminListRecentUploadsCard />
 		</AdminLayout>
 	);
 }

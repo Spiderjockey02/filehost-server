@@ -1,8 +1,8 @@
+import type { DragUploadFieldProps, FileSystemDirectoryEntry, FileSystemFileEntry, FileSystemEntry } from '@/types/Components/Form';
 import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState, useRef, DragEvent } from 'react';
 import { useUploadQueue } from '../Hooks/UploadContentManager';
-import type { DragUploadFieldProps, FileSystemDirectoryEntry, FileSystemFileEntry, FileSystemEntry } from '@/types/Components/Form';
+import { useState, useRef, DragEvent } from 'react';
 
 export default function DragUploadField({ children, parentId }: DragUploadFieldProps) {
 	const [isDragging, setIsDragging] = useState(false);
@@ -57,18 +57,16 @@ export default function DragUploadField({ children, parentId }: DragUploadFieldP
 	};
 
 	return (
-		<>
-			<div className='position-relative' style={{ border: isDragging ? '1px dashed #0d6efd' : '', backgroundColor: isDragging ? '#f8f9fa' : 'transparent', transition: 'all 0.3s ease-in-out', minHeight: '50vh' }} onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
-				{isDragging && (
-					<div className="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center text-white fw-bold fs-4 d-flex flex-column align-items-center justify-content-center text-primary">
-						<FontAwesomeIcon icon={faCloudArrowUp} />
-						<p className="mt-2 fw-bold">Release to upload</p>
-					</div>
-				)}
-				<input type="file" multiple hidden={true} id="fileInput" {...{ webkitdirectory: 'true', mozdirectory: 'true', directory: 'true' }} />
-				{children}
-			</div>
-		</>
+		<div className='position-relative' style={{ border: isDragging ? '1px dashed #0d6efd' : '', backgroundColor: isDragging ? '#f8f9fa' : 'transparent', transition: 'all 0.3s ease-in-out', minHeight: '50vh' }} onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+			{isDragging && (
+				<div className="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center text-white fw-bold fs-4 d-flex flex-column align-items-center justify-content-center text-primary">
+					<FontAwesomeIcon icon={faCloudArrowUp} />
+					<p className="mt-2 fw-bold">Release to upload</p>
+				</div>
+			)}
+			<input type="file" multiple hidden={true} id="fileInput" {...{ webkitdirectory: 'true', mozdirectory: 'true', directory: 'true' }} />
+			{children}
+		</div>
 	);
 }
 

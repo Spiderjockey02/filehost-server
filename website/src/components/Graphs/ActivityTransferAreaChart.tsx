@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
 import { Chart as ChartJS,	CategoryScale, LinearScale, PointElement,	LineElement, Filler,	Tooltip, Legend, ChartOptions } from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import { formatBytes } from '@/utils/functions';
-import { Card } from '..';
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import { requestTimeFrames } from '@/types/pages';
+import type { requestTimeFrames } from '@/types/pages';
+import { formatBytes } from '@/utils/functions';
+import React, { useState } from 'react';
+import { Line } from 'react-chartjs-2';
+import { Card } from '..';
 ChartJS.register(CategoryScale,	LinearScale,	PointElement,	LineElement,	Filler,	Tooltip,	Legend);
 
 export default function ActivityTransferAreaChart() {
@@ -54,14 +54,14 @@ export default function ActivityTransferAreaChart() {
 		maintainAspectRatio: false,
 		plugins: {
 			legend: {
-				position: 'top' as const,
+				position: 'top',
 			},
 			tooltip: {
 				callbacks: {
 					label: (context) => {
 						const label = context.dataset.label || '';
 						const value = context.parsed.y;
-						return `${label}: ${formatBytes(value)}`;
+						return `${label}: ${formatBytes(value || 0)}`;
 					},
 				},
 			},
@@ -99,7 +99,7 @@ export default function ActivityTransferAreaChart() {
 					</div>
 				) : error ? (
 					<div className="alert alert-danger" role="alert">
-						Error loading activity data: {error.message}
+						{error.message}
 					</div>
 				) : (
 					<Line data={chartData} options={options} style={{ height: '400px' }} />

@@ -15,7 +15,7 @@ export default function RecentNavbar() {
 	const { data, isLoading } = useQuery({
 		queryKey: ['recentViewed'],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/session/recently-viewed', { signal });
+			const res = await fetch('/api/session/recently-viewed?sortBy=viewedAt&sortOrder=desc', { signal });
 			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
 
 			const d = await res.json();

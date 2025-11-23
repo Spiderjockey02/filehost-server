@@ -16,15 +16,8 @@ import UserGrowthLineChart from './Graphs/UserGrowthLineChart';
 import UserRetentionLineChart from './Graphs/UserRetentionLineChart';
 
 // Menus
-import FileContextMenu from './menus/FileContextMenu';
-import TrashContextMenu from './menus/TrashContextMenu';
-
-// Modals
-import DeleteFileModal from './Modals/DeleteFileModal';
-import RenameFileModal from './Modals/RenameFileModal';
-import UpdateLocationModal from './Modals/UpdateLocationModal';
-import CreateFolderModal from './Modals/CreateFolderModal';
-import SearchFileModal from './Modals/SearchFileModal';
+import FileContextMenu from './Menus/FileContextMenu';
+import TrashContextMenu from './Menus/TrashContextMenu';
 
 // Navbars
 import BreadcrumbNav from './Navbars/BreadcrumbNav';
@@ -42,32 +35,29 @@ import FileItemRow from './Tables/FileItemRow';
 import FileViewTable from './Tables/FileViewTable';
 
 // Toasts
-import ErrorPopup from './Toasts/ErrorPopup';
-import SuccessPopup from './Toasts/SuccessPopup';
 import UploadStatusToast from './Toasts/UploadStatusToast';
 
 // UI
 import { Row, Col } from './UI/Grid';
-import Modal from './UI/Modal';
 import NotificationBell from './UI/Notification';
 import Table from './UI/Table';
 import InfoPill from './UI/InfoPill';
 import InfoPillProgress from './UI/InfoPillProgressBar';
 import Card from './UI/Card';
+import CollapsibleCard from './UI/CollapsibleCard';
 
 // Views
-import Directory from './views/directory';
+import Directory from './views/Directory';
 import FilePanelPopup from './views/FilePanelPopup';
 import FileViewer from './views/FileViewer';
 import PhotoAlbum from './views/PhotoAlbum';
 import TextViewer from './views/TextViewer';
 import VideoPlayer from './views/VideoPlayer';
 
-export { InputField, FileContextMenu, TrashContextMenu, DeleteFileModal, RenameFileModal, UpdateLocationModal,
-	BreadcrumbNav, FileNavBar, Footer, HomeNavbar, RecentNavbar, FileSideBar, FileDetailCell, FileItemRow,
-	FileViewTable, ErrorPopup, SuccessPopup, UploadStatusToast, Row, Col, Modal, NotificationBell,
-	Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer, VideoPlayer, CreateFolderModal,
-	SearchFileModal, DragUploadField, AdminSideBar, AdminNavBar, InfoPill, InfoPillProgress, PieChart,
+export { InputField, FileContextMenu, TrashContextMenu, BreadcrumbNav, FileNavBar, Footer,
+	HomeNavbar, RecentNavbar, FileSideBar, FileDetailCell, FileItemRow, FileViewTable, UploadStatusToast,
+	Row, Col, NotificationBell, Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer,
+	VideoPlayer, DragUploadField, AdminSideBar, AdminNavBar, InfoPill, InfoPillProgress, PieChart,
 	LineChart, BarChart, Card, ActivityTransferAreaChart, FileUploadLineChart, LanguageDistributionPieChart,
-	ObjectOrientedPieChart, UserGrowthLineChart, UserRetentionLineChart,
+	ObjectOrientedPieChart, UserGrowthLineChart, UserRetentionLineChart, CollapsibleCard,
 };

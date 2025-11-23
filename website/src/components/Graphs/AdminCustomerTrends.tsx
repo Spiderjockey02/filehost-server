@@ -1,9 +1,9 @@
-import { requestTimeFrames } from '@/types/pages';
+import type { requestTimeFrames } from '@/types/pages';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import Card from '../UI/Card';
 import LineChart from '../Charts/Line';
+import { Card } from '@/components';
+import { useState } from 'react';
 
 export default function AdminCustomerTrend() {
 	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('daily');
@@ -12,7 +12,7 @@ export default function AdminCustomerTrend() {
 		queryKey: ['customerTrends', trafficGrowthFrame],
 		queryFn: async ({ signal }) => {
 			const res = await fetch(`/api/admin/plan/trends?frame=${trafficGrowthFrame}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch activity transfer data: ${res.statusText}`);
+			if (!res.ok) throw new Error(`Failed to fetch monthly revenue data: ${res.statusText}`);
 
 			const d = await res.json();
 			const firstKey = Object.keys(d)[0];
@@ -34,7 +34,7 @@ export default function AdminCustomerTrend() {
 	};
 
 	return (
-		<Card>
+		<Card className='mb-4'>
 			<Card.Header>
         Monthly Revenue Trend
 				<div className="dropdown">
@@ -55,7 +55,7 @@ export default function AdminCustomerTrend() {
 					</div>
 				) : error ? (
 					<div className="alert alert-danger" role="alert">
-            Error loading activity data: {error.message}
+						{error.message}
 					</div>
 				) : (
 					<LineChart data={fileUploadData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />

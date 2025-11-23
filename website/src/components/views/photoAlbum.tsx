@@ -1,8 +1,8 @@
-import type { ImageLoaderProps } from 'next/image';
+import type { DirectoryProps } from '@/types/Components/Views';
 import { useState, useEffect, useMemo, useRef } from 'react';
+import type { ImageLoaderProps } from 'next/image';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { DirectoryProps } from '@/types/Components/Views';
 
 export default function PhotoAlbum({ folder }: DirectoryProps) {
 	const [itemsToShow, setItemsToShow] = useState(40);

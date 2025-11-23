@@ -1,39 +1,25 @@
-import { authClient } from '@/auth/client';
-import { Row, Col, InfoPill, Card, Table } from '@/components';
+import { faDollar, faDownload, faHardDrive, faUserTag } from '@fortawesome/free-solid-svg-icons';
 import AdminCustomerTrend from '@/components/Graphs/AdminCustomerTrends';
-import AdminAddNewPlanModal from '@/components/Modals/AdminAddNewPlan';
-import AdminEditPlanModal from '@/components/Modals/AdminEditPlan';
-import AdminLayout from '@/layouts/admin';
-import { formatBytes, headers, queryOptions } from '@/utils/functions';
-import { faAdd, faDollar, faDownload, faHardDrive, faPen, faUserTag } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Plan } from '@prisma/client';
-import { useQuery } from '@tanstack/react-query';
+import { AdminManageSubscriptionCard } from '@/components/Cards';
+import type { AdminSubscriptionPageProps } from '@/types/pages';
+import { useToast } from '@/components/Hooks/ToastManager';
+import type { GetServerSidePropsContext } from 'next';
+import { Row, Col, InfoPill } from '@/components';
+import { headers } from '@/utils/functions';
+import { authClient } from '@/auth/client';
+import AdminLayout from '@/layouts/admin';
+import type { User } from 'better-auth';
+import { useEffect } from 'react';
 import axios from 'axios';
-import { User } from 'better-auth';
-import { GetServerSidePropsContext } from 'next';
 
-interface Props {
-	stats: {
-		payingUsers: number
-		newCustomers: number
-		mostPopular: number
-	}
-}
-
-export default function AdminSystemPage({ stats }: Props) {
+export default function AdminSystemPage({ stats, error }: AdminSubscriptionPageProps) {
 	const { data: session } = authClient.useSession();
-	const { data, isLoading, error, refetch } = useQuery({
-		queryKey: ['plans'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/plans', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
+	const { showToast } = useToast();
 
-			const d = await res.json();
-			return d as { plans: Plan[] };
-		},
-		...queryOptions,
-	});
+	useEffect(() => {
+		if (error) showToast('error', error);
+	}, [error]);
 
 	if (session == null) return null;
 	return (
@@ -60,78 +46,7 @@ export default function AdminSystemPage({ stats }: Props) {
 				</Col>
 			</Row>
 			<AdminCustomerTrend />
-			<Card>
-				<Card.Header>
-					Plans
-					<button className='btn btn-success' data-bs-toggle="modal" data-bs-target="#AdminAddNewPlanModal">
-						<FontAwesomeIcon icon={faAdd} />
-						Add Plan
-					</button>
-				</Card.Header>
-				<Card.Body className='table-responsive'>
-					<Table>
-						<Table.HeaderRow>
-							<Table.Header>Name</Table.Header>
-							<Table.Header>Max storage</Table.Header>
-							<Table.Header>Max file</Table.Header>
-							<Table.Header>File rentention</Table.Header>
-							<Table.Header>Price</Table.Header>
-							<Table.Header className='text-center'>Edit</Table.Header>
-						</Table.HeaderRow>
-						<Table.Body>
-							{error == null ?
-								isLoading || data == null ?
-									(
-										Array.from({ length: 5 }, (_, i) => i).map((_, index) => (
-											<tr key={index}>
-												<td className="placeholder-glow">
-													<span className="placeholder col-12"></span>
-												</td>
-												<td className="placeholder-glow">
-													<span className="placeholder col-12"></span>
-												</td>
-												<td className="placeholder-glow">
-													<span className="placeholder col-12"></span>
-												</td>
-												<td className="placeholder-glow">
-													<span className="placeholder col-12"></span>
-												</td>
-												<td className="placeholder-glow">
-													<span className="placeholder col-12"></span>
-												</td>
-												<td className="placeholder-glow">
-													<span className="placeholder col-12"></span>
-												</td>
-											</tr>
-										))
-									) : (
-										data.plans.map((plan) => (
-											<tr key={plan.id}>
-												<td>{plan.name}</td>
-												<td>{formatBytes(plan.maxStorageSize)}</td>
-												<td>{formatBytes(plan.maxFileSize)}</td>
-												<td>{plan.deletedFileRetentionDays} days</td>
-												<td>{`${process.env.NEXT_PUBLIC_CURRENCY_SYMBOL}${plan.price}`}</td>
-												<td className='text-center'>
-													<button className='btn' data-bs-toggle="modal" data-bs-target={`#${plan.id}`} style={{ padding: '0' }}>
-														<FontAwesomeIcon size='lg' icon={faPen} />
-													</button>
-												</td>
-											</tr>
-										))
-									) :
-								<tr>
-									<td colSpan={5} className="text-center text-danger fw-bold">
-										{error?.message ?? 'Failed to load recently uploaded files'}
-									</td>
-								</tr>
-							}
-						</Table.Body>
-					</Table>
-				</Card.Body>
-			</Card>
-			{data?.plans.map((plan) => (<AdminEditPlanModal refresh={refetch} plan={plan} key={plan.id} />))}
-			<AdminAddNewPlanModal refresh={refetch} />
+			<AdminManageSubscriptionCard />
 		</AdminLayout>
 	);
 }
@@ -164,7 +79,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			return { props: { stats } };
 		} catch (err) {
 			console.log(err);
-			return { props: { storages: [], avgFileCount: 0, avgStorageUsage: 0, MediumCounts: {}, error: 'API server currently unavailable' } };
+			return { props: { stats: { payingUsers: 0, newCustomers: 0, mostPopular: 0 }, error: 'API server currently unavailable' } };
 		}
 	}
 }

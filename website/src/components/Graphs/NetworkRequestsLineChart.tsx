@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
 import LineChart from '../Charts/Line';
 import { ChartData } from 'chart.js';
+import { Card } from '@/components';
 import { useState } from 'react';
-import Card from '../UI/Card';
 
 export default function NetworkRequestsLineChart() {
 	const [requestGrowthFrame, setRequestGrowthFrame] = useState<requestTimeFrames>('hourly');
@@ -56,7 +56,7 @@ export default function NetworkRequestsLineChart() {
 					</div>
 				) : error ? (
 					<div className="alert alert-danger" role="alert">
-						Error loading network requests: {error.message}
+						{error.message}
 					</div>
 				) : (
 					<LineChart data={RequestsOverTimeData} options={{ responsive: true, maintainAspectRatio: false, aspectRatio:2 }} style={{ height: '400px' }} />

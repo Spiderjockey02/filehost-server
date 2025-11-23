@@ -1,13 +1,14 @@
 import { faCopy, faDownload, faEllipsisV, faFileSignature, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { DeleteFileModal, RenameFileModal, UpdateLocationModal } from '@/components';
+import { DeleteFileModal, RenameFileModal, UpdateLocationModal } from '@/components/Modals';
 import type { FileContextMenuProps } from '@/types/Components/Menu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useOnClickOutside } from '@/utils/useOnClickOutisde';
-import { RefObject, useRef } from 'react';
-import axios from 'axios';
+import { RefObject, useRef, useState } from 'react';
 import ContextMenu from '../UI/ContextMenu';
+import axios from 'axios';
 
 export default function FileContextMenu({ x, y, closeContextMenu, selected, showFilePanel }: FileContextMenuProps) {
+	const [activeModal, setActiveModal] = useState<string | null>(null);
 	const contextMenuRef = useRef<HTMLDivElement>(null);
 
 	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
@@ -110,9 +111,9 @@ export default function FileContextMenu({ x, y, closeContextMenu, selected, show
 	if (selected.length === 1) {
 		return (
 			<>
-				<DeleteFileModal file={selected[0]} closeContextMenu={closeContextMenu} />
-				<UpdateLocationModal file={selected[0]} closeContextMenu={closeContextMenu} />
-				<RenameFileModal file={selected[0]} closeContextMenu={closeContextMenu} />
+				{activeModal == 'delete' && <DeleteFileModal file={selected[0]} closeContextMenu={closeContextMenu} show={true} onClose={() => setActiveModal(null)} />}
+				{activeModal == 'change' && <UpdateLocationModal file={selected[0]} closeContextMenu={closeContextMenu} show={true} onClose={() => setActiveModal(null)} />}
+				{activeModal == 'rename' && <RenameFileModal file={selected[0]} closeContextMenu={closeContextMenu} show={true} onClose={() => setActiveModal(null)} />}
 				<ContextMenu ref={contextMenuRef} x={x} y={y}>
 					<ContextMenu.Button onClick={() => handleCopyURL()}>
 						<FontAwesomeIcon icon={faCopy} /> Copy link
@@ -120,13 +121,13 @@ export default function FileContextMenu({ x, y, closeContextMenu, selected, show
 					<ContextMenu.Button onClick={() => handleDownload()}>
 						<FontAwesomeIcon icon={faDownload} /> Download
 					</ContextMenu.Button>
-					<ContextMenu.Button BSToggle="modal" BSTarget={`#delete_${selected[0].id}`}>
+					<ContextMenu.Button onClick={() => setActiveModal('delete')}>
 						<FontAwesomeIcon icon={faTrash} /> Delete
 					</ContextMenu.Button>
-					<ContextMenu.Button BSToggle="modal" BSTarget={`#change_${selected[0].id}`}>
+					<ContextMenu.Button onClick={() => setActiveModal('change')} >
 						<FontAwesomeIcon icon={faFolderOpen} /> Move / Copy to
 					</ContextMenu.Button>
-					<ContextMenu.Button BSToggle="modal" BSTarget={`#rename_${selected[0].id}`}>
+					<ContextMenu.Button onClick={() => setActiveModal('rename')}>
 						<FontAwesomeIcon icon={faFileSignature} /> Rename
 					</ContextMenu.Button>
 					<ContextMenu.Button onClick={() => showFilePanel(selected[0].id)}>

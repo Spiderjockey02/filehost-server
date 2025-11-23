@@ -1,38 +1,30 @@
-import { authClient } from '@/auth/client';
+import { AdminListAuditLogsCard, AdminManageLogListenersCard } from '@/components/Cards';
 import { Row, Col, InfoPill, ObjectOrientedPieChart, Card } from '@/components';
-import AdminAuditListenersCard from '@/components/Cards/AdminAuditListenersCard';
-import AdminAuditLogTableCard from '@/components/Cards/AdminAuditLogTableCard';
 import AuditLogActivityChart from '@/components/Graphs/AuditLogActivityChart';
-import AdminLayout from '@/layouts/admin';
-import { headers } from '@/utils/functions';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import axios from 'axios';
-import { User } from 'better-auth';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { useToast } from '@/components/Hooks/ToastManager';
+import type { AdminLogsPageProps } from '@/types/pages';
 import { GetServerSidePropsContext } from 'next';
+import { headers } from '@/utils/functions';
+import AdminLayout from '@/layouts/admin';
+import { authClient } from '@/auth/client';
+import type { User } from 'better-auth';
+import { useEffect } from 'react';
+import axios from 'axios';
 
-interface Props {
-	total: number;
-	resourceTypes: {
-		user: number
-		file: number
-		storage: number
-		system: number
-		session: number
-	}
-	successRates: {
-		true: number
-		false: number
-	}
-}
-
-export default function adminLogsPage({ total, resourceTypes, successRates }: Props) {
+export default function AdminLogsPage({ error, total, resourceTypes, successRates }: AdminLogsPageProps) {
 	const { data: session } = authClient.useSession();
-	if (session == null) return null;
+	const { showToast } = useToast();
+
+	useEffect(() => {
+		if (error) showToast('error', error);
+	}, [error]);
 
 	const mostPopularEventType = Object.entries(resourceTypes).sort((a, b) => a[1] - b[1])[0][0];
 	const successRatesPercent = ((successRates.true / (successRates.true + successRates.false)) * 100).toFixed(2);
 
+	if (session == null) return null;
 	return (
 		<AdminLayout activeTab='logs' user={session.user as User} tabName='Admin Audit Logs'>
 			&nbsp;
@@ -56,19 +48,24 @@ export default function adminLogsPage({ total, resourceTypes, successRates }: Pr
 			&nbsp;
 			<AuditLogActivityChart />
 			<Row>
-				<Col lg={8}>
-					<AdminAuditListenersCard />
+				<Col lg={8} className='mb-4'>
+					<AdminManageLogListenersCard />
 				</Col>
-				<Col lg={4}>
+				<Col lg={4} className='mb-4'>
 					<Card>
 						<Card.Header>Event Distribution</Card.Header>
 						<Card.Body>
-							<ObjectOrientedPieChart data={resourceTypes} />
+							{error ?
+								<div className="alert alert-danger" role="alert">
+									{error}
+								</div>
+								: <ObjectOrientedPieChart data={resourceTypes} />
+							}
 						</Card.Body>
 					</Card>
 				</Col>
 			</Row>
-			<AdminAuditLogTableCard />
+			<AdminListAuditLogsCard />
 		</AdminLayout>
 	);
 }
@@ -105,7 +102,18 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			return { props: { total: stats.total, resourceTypes: resourceData.resourceTypes, successRates: resourceData.successRates } };
 		} catch (err) {
 			console.log(err);
-			return { props: { total: 0, error: 'API server currently unavailable' } };
+			return { props: { total: 0,
+				resourceTypes: {
+					user: 0,
+					file: 0,
+					storage: 0,
+					system: 0,
+					session: 0,
+				},
+				successRates: {
+					true: 0,
+					false: 0,
+				}, error: 'API server currently unavailable' } };
 		}
 	}
 }

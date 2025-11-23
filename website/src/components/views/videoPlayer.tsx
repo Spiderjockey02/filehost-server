@@ -1,7 +1,7 @@
 import { faCompress, faExpand, faGear, faPause, faPlay, faVolumeHigh, faVolumeLow, faVolumeOff, faWindowMaximize } from '@fortawesome/free-solid-svg-icons';
 import type { KeyboardEvent, ChangeEvent, MouseEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { VideoPlayerProps } from '@/types/Components/Views';
+import type { VideoPlayerProps } from '@/types/Components/Views';
 import styles from '@/styles/VideoPlayer.module.css';
 import { formatTime } from '@/utils/functions';
 import { useRef } from 'react';

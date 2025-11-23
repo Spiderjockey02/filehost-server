@@ -1,5 +1,9 @@
 import type { ContextMenuProps, ButtonProps } from '@/types/Components/UI';
 
+/**
+  * A component that renders a custom context menu positioned at specific screen coordinates.
+  * @param {ContextMenuProps} props - The component props.
+*/
 function ContextMenu({ x, y, ref, children }: ContextMenuProps) {
 	return (
 		<div className="ctxmenu" ref={ref} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
@@ -8,9 +12,13 @@ function ContextMenu({ x, y, ref, children }: ContextMenuProps) {
 	);
 }
 
-function Button({ onClick, children, BSToggle, BSTarget }: ButtonProps) {
+/**
+  * A reusable button component designed for use within a context menu.
+  * @param {ButtonProps} props - The component props.
+*/
+function Button({ onClick, children }: ButtonProps) {
 	return (
-		<button className="btn btn-ctx-menu" onClick={onClick} data-bs-toggle={BSToggle} data-bs-target={BSTarget}>
+		<button className="btn btn-ctx-menu" onClick={onClick}>
 			{children}
 		</button>
 	);

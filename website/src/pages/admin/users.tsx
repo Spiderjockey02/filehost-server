@@ -1,18 +1,23 @@
+import { Row, Col, InfoPill, Card, ObjectOrientedPieChart, LanguageDistributionPieChart, UserGrowthLineChart, UserRetentionLineChart } from '@/components';
+import { faFolderTree, faHardDrive, faMemory, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { useToast } from '@/components/Hooks/ToastManager';
+import { AdminManageUsersCard } from '@/components/Cards';
+import { formatBytes, headers } from '@/utils/functions';
 import type { AdminUserPageProps } from '@/types/pages';
 import type { GetServerSidePropsContext } from 'next';
 import { authClient } from '@/auth/client';
-import type { User } from 'better-auth';
-import axios from 'axios';
 import AdminLayout from '@/layouts/admin';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faFolderTree, faHardDrive, faMemory, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { Row, Col, InfoPill, Card, ErrorPopup, ObjectOrientedPieChart, LanguageDistributionPieChart, UserGrowthLineChart, UserRetentionLineChart } from '@/components';
-import { formatBytes, headers } from '@/utils/functions';
-import AdminUserTableCards from '@/components/Cards/AdminUserTable';
+import type { User } from 'better-auth';
+import { useEffect } from 'react';
+import axios from 'axios';
 
 export default function AdminUsersPage({ emails, signupSource, userStats, error }: AdminUserPageProps) {
-	// Make sure user is logged in before accessing page
 	const { data: session } = authClient.useSession();
+	const { showToast } = useToast();
+
+	useEffect(() => {
+		if (error) showToast('error', error);
+	}, [error]);
 
 	if (session == null) return null;
 	return (
@@ -20,11 +25,7 @@ export default function AdminUsersPage({ emails, signupSource, userStats, error 
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">User Dashboard</h1>
-				<button className="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-					<FontAwesomeIcon icon={faDownload} /> Generate Report
-				</button>
 			</div>
-			{error && <ErrorPopup text={error} />}
 			<Row>
 				<Col xxl={2} xl={4} lg={4} md={6} className='mb-4'>
 					<InfoPill title="Total Users" text={userStats.total} icon={faUsers} />
@@ -45,12 +46,12 @@ export default function AdminUsersPage({ emails, signupSource, userStats, error 
 					<InfoPill title="Admins" text={userStats.admins} icon={faMemory} />
 				</Col>
 			</Row>
-			<Row className='mb-4'>
+			<Row>
 				<Col lg={6}>
 					<UserGrowthLineChart />
 				</Col>
 				<Col lg={6}>
-					<Card>
+					<Card className='mb-4'>
 						<Card.Header>
 							User Retention Over Time
 						</Card.Header>
@@ -60,11 +61,11 @@ export default function AdminUsersPage({ emails, signupSource, userStats, error 
 					</Card>
 				</Col>
 			</Row>
-			<Row className='mb-4'>
-				<Col lg={4}>
+			<Row>
+				<Col lg={4} className='mb-4'>
 					<LanguageDistributionPieChart />
 				</Col>
-				<Col lg={4}>
+				<Col lg={4} className='mb-4'>
 					<Card>
 						<Card.Header>
 							Sign up sources
@@ -74,7 +75,7 @@ export default function AdminUsersPage({ emails, signupSource, userStats, error 
 						</Card.Body>
 					</Card>
 				</Col>
-				<Col lg={4}>
+				<Col lg={4} className='mb-4'>
 					<Card>
 						<Card.Header>
 							Email domains Distribution
@@ -85,7 +86,7 @@ export default function AdminUsersPage({ emails, signupSource, userStats, error 
 					</Card>
 				</Col>
 			</Row>
-			<AdminUserTableCards />
+			<AdminManageUsersCard />
 		</AdminLayout>
 	);
 }

@@ -1,8 +1,9 @@
+import type { AutoComplete, FileNavBarProps } from '@/types/Components/Navbars';
 import { faSearch, faSlidersH } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { AutoComplete, FileNavBarProps } from '@/types/Components/Navbars';
-import { NotificationBell, SearchFileModal } from '@/components';
+import { SearchFileModal } from '@/components/Modals';
 import { signOutOptions } from '@/utils/functions';
+import { NotificationBell } from '@/components';
 import { useState, ChangeEvent } from 'react';
 import { authClient } from '@/auth/client';
 import { useRouter } from 'next/router';
@@ -12,6 +13,7 @@ import axios from 'axios';
 
 export default function FileNavBar({ user }: FileNavBarProps) {
 	const [srchRes, setSrchRes] = useState<AutoComplete[]>([]);
+	const [showSearchModal, setShowSearchModal] = useState(false);
 	const router = useRouter();
 
 	// Update to only use useStates not from documents
@@ -21,7 +23,7 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 		const dateUpdatedSelector = document.getElementById('dateUpdatedSelector') as HTMLSelectElement;
 		if (search) {
 			const { data } = await axios.get(`${window.origin}/api/files/search?query=${search}&fileType=${fileType.value}&updatedSince=${dateUpdatedSelector.value}`);
-			setSrchRes(data.query);
+			setSrchRes(data.files);
 		} else {
 			setSrchRes([]);
 		}
@@ -48,19 +50,7 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 													<div className="d-flex flex-column ms-2">
 														<span className="fw-bold text-truncate" >{file.name}</span>
 														<span className="text-muted small" style={{ height: '20px', overflow: 'hidden' }}>
-															<ol className="breadcrumb">
-																{file.path.split('/').length == 2 ?
-																	<li className="breadcrumb-item">
-																		/
-																	</li>
-																	:
-																	file.path.split('/').slice(1, -1).map(seg => (
-																		<li className="breadcrumb-item text-truncate" key={seg}>
-																			{seg}
-																		</li>
-																	))
-																}
-															</ol>
+															{file.path}
 														</span>
 													</div>
 												</Link>
@@ -98,9 +88,10 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 							</form>
 						</span>
 						<span className="mobile-searchBar">
-							<button id="searchIconBtn" type="submit" className="input-group-text" style={{ backgroundColor:'#f4f4f4', border:'none', borderRadius:'8px', height:'40px' }} data-bs-toggle="modal" data-bs-target="#exampleModal">
+							<button id="searchIconBtn" type="submit" className="input-group-text" style={{ backgroundColor:'#f4f4f4', border:'none', borderRadius:'8px', height:'40px' }} onClick={() => setShowSearchModal(true)}>
 								<FontAwesomeIcon icon={faSearch} />
 							</button>
+							<SearchFileModal show={showSearchModal} onClose={() => setShowSearchModal(false)} />
 						</span>
 					</li>
 				</ul>
@@ -121,7 +112,6 @@ export default function FileNavBar({ user }: FileNavBarProps) {
 					</li>
 				</ul>
 			</div>
-			<SearchFileModal />
 		</nav>
 	);
 }

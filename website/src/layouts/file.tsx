@@ -1,14 +1,8 @@
+import type { FileLayoutProps } from '@/types/Components/Layout';
 import { FileNavBar, FileSideBar } from '@/components';
-import { FileSideBarProps } from '@/types/Components/Navbars';
 import Head from 'next/head';
-import { ReactNode } from 'react';
 
-interface Props extends FileSideBarProps {
-  children: ReactNode
-	tabName?: string
-}
-
-export default function FileLayout({ children, user, activeTab, tabName }: Props) {
+export default function FileLayout({ children, user, activeTab, tabName }: FileLayoutProps) {
 	return (
 		<div className="wrapper" style={{ height: '100dvb', blockSize: '100dvb', overflow: 'hidden' }}>
 			<Head>

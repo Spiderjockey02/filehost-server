@@ -1,17 +1,10 @@
-import type { FileWithChildren } from '@/types/database';
+import type { FileContextType } from '@/types/Components/Hooks';
+import type { FileWithDeepChildren } from '@/types/database';
 import React, { createContext, useContext } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 
-interface FileContextType {
-	file: FileWithChildren | null;
-	isLoading: boolean;
-	error: Error | null;
-	refetch: () => void;
-}
-
 const FileContext = createContext<FileContextType | undefined>(undefined);
-
 export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const router = useRouter();
 	const path = (router.query.files as string[] | undefined) ?? [];
@@ -23,7 +16,7 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
 			if (!res.ok) throw new Error(`Failed to fetch user's files: ${res.statusText}`);
 
 			const { file } = await res.json();
-			return file as FileWithChildren;
+			return file as FileWithDeepChildren;
 		},
 		enabled: router.isReady && router.pathname.startsWith('/files'),
 	});

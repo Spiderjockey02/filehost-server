@@ -1,6 +1,6 @@
+import { sendEmailChangedAttemptEmail, sendPasswordChangedEmail, sendPasswordResetEmail, sendVerificationEmail } from '@/utils/mail';
 import { customSession, organization, admin, twoFactor, lastLoginMethod, createAuthMiddleware } from 'better-auth/plugins';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { sendEmailChangedAttemptEmail, sendPasswordChangedEmail, sendPasswordResetEmail, sendVerificationEmail } from '@/utils/mail';
 import { nextCookies } from 'better-auth/next-js';
 import { stripe } from '@better-auth/stripe';
 import { APIError } from 'better-auth/api';

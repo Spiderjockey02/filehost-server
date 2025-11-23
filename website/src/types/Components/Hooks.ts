@@ -1,13 +1,17 @@
-import { ReactNode } from 'react';
-import { FileWithChildren } from '../database';
+import { FileWithDeepChildren } from '../database';
+import { Socket } from 'socket.io-client';
 
 export interface FileContextType {
-  file: FileWithChildren | null;
-  setFile: (file: FileWithChildren | null) => void;
+	file: FileWithDeepChildren | null;
+	isLoading: boolean;
+	error: Error | null;
+	refetch: () => void;
 }
-export interface FileProviderProps {
-  children: ReactNode;
-}
+
+export interface SocketContextType {
+  socket: Socket | null;
+  isConnected: boolean;
+};
 
 export interface UploadFile {
   file: File;
@@ -26,3 +30,21 @@ export interface UploadQueueContextType {
   status: UploadStatus;
   cancelUpload: () => void;
 };
+
+export type ToastType = 'success' | 'error';
+
+export interface ToastContextValue {
+  showToast: (type: ToastType, message: string) => void;
+  hideToast: () => void;
+  toast: {
+    type: ToastType;
+    message: string;
+    visible: boolean;
+  };
+}
+
+export interface UploadQueueContextType {
+  addToQueue: (files: FileList | File[], parentId: string) => void;
+  cancelUpload: () => void;
+  status: UploadStatus | null;
+}

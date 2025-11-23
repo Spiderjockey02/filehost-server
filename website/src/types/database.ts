@@ -6,9 +6,27 @@ export type UserHistoryWithFile = Prisma.RecentlyViewedFileGetPayload<{
   }
 }>
 
+export type FileWithDeepChildren = Prisma.FileGetPayload<{
+  include: {
+    children: {
+      include: {
+        _count: {
+          select: {
+            children: true
+          }
+        }
+      }
+    }
+    _count: {
+      select: {
+        children: true
+      }
+    }
+  },
+}>
+
 export type FileWithChildren = Prisma.FileGetPayload<{
   include: {
-    children: true
     _count: {
       select: {
         children: true
@@ -18,7 +36,7 @@ export type FileWithChildren = Prisma.FileGetPayload<{
 }>
 
 export type FileWithCount = Prisma.FileGetPayload<{
- include: {
+  include: {
     _count: {
       select: {
         children: true
@@ -35,6 +53,7 @@ export type UserWithCount = Prisma.UserGetPayload<{
       }
     }
     activity: true
+    plan: true
   }
 }>
 
@@ -58,6 +77,7 @@ export type UserAgentWithCounts = Prisma.UserAgentGetPayload<{
     _count: {
       select: {
         activity: true
+        logs: true
       }
     }
   }

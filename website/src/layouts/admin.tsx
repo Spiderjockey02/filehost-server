@@ -1,17 +1,9 @@
+import type { AdminLayoutProps } from '@/types/Components/Layout';
 import { AdminSideBar, AdminNavBar } from '@/components';
-import { adminSidebarTabs } from '@/types/pages';
-import type { User } from 'better-auth';
+import { useState } from 'react';
 import Head from 'next/head';
-import { ReactNode, useState } from 'react';
 
-interface Props {
-	children: ReactNode;
-	user: User;
-	activeTab: adminSidebarTabs
-	tabName?: string
-}
-
-export default function AdminLayout({ children, user, activeTab, tabName }: Props) {
+export default function AdminLayout({ children, user, activeTab, tabName }: AdminLayoutProps) {
 	const [showSidebar, setShowSidebar] = useState(true);
 
 	return (

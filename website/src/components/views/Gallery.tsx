@@ -17,9 +17,14 @@ export default function Gallery({ files }: GalleryProps) {
 		const groups: Record<string, File[]> = {};
 		for (const file of files) {
 			const date = new Date(file.createdAt);
-			const monthYear = date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' });
-			if (!groups[monthYear]) groups[monthYear] = [];
-			groups[monthYear].push(file);
+			const dayKey = date.toLocaleDateString('en-GB', {
+				day: '2-digit',
+				month: 'long',
+				year: 'numeric',
+			});
+
+			if (!groups[dayKey]) groups[dayKey] = [];
+			groups[dayKey].push(file);
 		}
 		return groups;
 	}, [files]);

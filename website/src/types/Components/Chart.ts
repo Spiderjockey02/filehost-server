@@ -12,3 +12,11 @@ export interface ObjectOrientedPieChartProps {
   data: StringNumberObj
   onSliceClick?: (event: ChartEvent, elements: ActiveElement[], chart: ChartJS) => void
 }
+
+export type PieChartProps = {}
+  & ChartProps<'pie'>
+  & {onClick?: (event: ChartEvent, elements: ActiveElement[], chart: ChartJS) => void}
+
+export interface MimeTypePieChartProps {
+  mimeType: StringNumberObj
+}

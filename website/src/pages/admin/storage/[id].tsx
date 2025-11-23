@@ -1,42 +1,41 @@
-import { authClient } from '@/auth/client';
+import { faFolderTree, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { Row, Col, InfoPill, FileUploadLineChart } from '@/components';
-import AdminUserTableCards from '@/components/Cards/AdminUserTable';
-import AdminLayout from '@/layouts/admin';
-import { StorageWithCounts } from '@/types/database';
+import type { AdminStorageIdPageProps } from '@/types/pages';
+import { useToast } from '@/components/Hooks/ToastManager';
+import { AdminManageUsersCard } from '@/components/Cards';
+import type { GetServerSidePropsContext } from 'next';
 import { headers } from '@/utils/functions';
-import { faDownload, faFolderTree, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { authClient } from '@/auth/client';
+import AdminLayout from '@/layouts/admin';
+import type { User } from 'better-auth';
+import { useEffect } from 'react';
 import axios from 'axios';
-import { User } from 'better-auth';
-import { GetServerSidePropsContext } from 'next';
 
-interface Props {
-	storage: StorageWithCounts
-}
-
-export default function AdminStorageIdPage({ storage }: Props) {
+export default function AdminStorageIdPage({ storage, error }: AdminStorageIdPageProps) {
 	const { data: session } = authClient.useSession();
-	if (session == null) return null;
+	const { showToast } = useToast();
 
+	useEffect(() => {
+		if (error) showToast('error', error);
+	}, [error]);
+
+	if (session == null) return null;
 	return (
-		<AdminLayout activeTab="storage" user={session.user as User} tabName={`Storage Id: ${storage.name}`}>
+		<AdminLayout activeTab="storage" user={session.user as User} tabName={`Storage Id: ${storage?.name}`}>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
-				<h1 className="h3 mb-0 text-gray-800">Storage: {storage.name}</h1>
-				<button className="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-					<FontAwesomeIcon icon={faDownload} /> Generate Report
-				</button>
+				<h1 className="h3 mb-0 text-gray-800">Storage: {storage?.name}</h1>
 			</div>
 			<Row>
 				<Col lg={6} className='mb-4'>
-					<InfoPill title="Total files" text={storage._count.files} icon={faFolderTree} />
+					<InfoPill title="Total files" text={storage?._count.files ?? 0} icon={faFolderTree} />
 				</Col>
 				<Col lg={6} className='mb-4'>
-					<InfoPill title="Total users" text={storage._count.users} icon={faUsers} />
+					<InfoPill title="Total users" text={storage?._count.users ?? 0} icon={faUsers} />
 				</Col>
 			</Row>
-			<FileUploadLineChart storageId={storage.id} />
-			<AdminUserTableCards storageId={storage.id} />
+			<FileUploadLineChart storageId={storage?.id} />
+			<AdminManageUsersCard storageId={storage?.id} />
 		</AdminLayout>
 	);
 }
@@ -70,20 +69,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			return { props: { storage } };
 		} catch (err) {
 			console.error(err);
-			return {
-				props: {
-					files: 0,
-					folders: 0,
-					avgFileSize: 0,
-					deletedFiles: 0,
-					newFiles: 0,
-					totalStorageSize: 0,
-					mostCommonFileTypes: [],
-					days: {},
-					categories: {},
-					rawUploadGrowth: {},
-					error: 'API server currently unavailable',
-				},
+			return { props: { storage: null, error: 'API server currently unavailable' },
 			};
 		}
 	}

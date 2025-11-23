@@ -1,15 +1,16 @@
 import { faArrowUpFromBracket, faFolderOpen, faGrip, faPlus, faTableList } from '@fortawesome/free-solid-svg-icons';
-import { UploadStatusToast, ErrorPopup, CreateFolderModal } from '@/components';
 import { ChangeEvent, RefObject, useEffect, useRef, useState } from 'react';
 import type { BreadcrumbNavProps } from '@/types/Components/Navbars';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useOnClickOutside } from '@/utils/useOnClickOutisde';
 import { useUploadQueue } from '../Hooks/UploadContentManager';
+import { useOnClickOutside } from '@/utils/useOnClickOutisde';
+import { CreateFolderModal } from '@/components/Modals';
+import { UploadStatusToast } from '@/components';
 import Link from 'next/link';
 
 export default function BreadcrumbNav({ path, isFile, setviewType, viewType, parentId }: BreadcrumbNavProps) {
+	const [showModal, setShowModal] = useState(false);
 	const splitPath = path.split('/').filter(s => s.length > 0);
-	const [errorMsg] = useState('');
 	const containerRef = useRef<HTMLOListElement>(null);
 	const dropdownRef = useRef<HTMLUListElement>(null);
 	const [isOverflowing, setIsOverflowing] = useState(false);
@@ -119,7 +120,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType, viewType, par
           			<FontAwesomeIcon icon={faArrowUpFromBracket} /> Upload Files<input type="file" hidden multiple name="sampleFile" className="upload-input" onChange={onFileUploadChange} />
           		</label>
           		<div className="dropdown-divider"></div>
-          		<a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+          		<a className="dropdown-item" href="#" onClick={() => setShowModal(true)} >
           			<FontAwesomeIcon icon={faFolderOpen} /> Create folder
           		</a>
           	</div>
@@ -129,10 +130,9 @@ export default function BreadcrumbNav({ path, isFile, setviewType, viewType, par
           </>
 					}
 				</div>
-				<CreateFolderModal parentId={parentId} />
+				<CreateFolderModal parentId={parentId} show={showModal} setShow={() => setShowModal(false)} />
 				<UploadStatusToast />
 			</div>
-			{errorMsg.length > 0 && <ErrorPopup text={errorMsg} />}
 		</>
 	);
 }

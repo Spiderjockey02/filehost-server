@@ -2,6 +2,7 @@ import { useUploadQueue } from '../Hooks/UploadContentManager';
 
 export default function UploadStatusToast() {
 	const { status, cancelUpload } = useUploadQueue();
+	console.log(status);
 	if (!status || status.error === 'File with that name already exists') return null;
 
 	return (
@@ -14,10 +15,11 @@ export default function UploadStatusToast() {
 							<small>{status.remaining}</small>
 							<button type="button" className="btn-close" onClick={() => cancelUpload()}></button>
 						</>
-					 : <>
+					 :
+					  <>
 							<strong className="me-auto">Upload Complete</strong>
 							<button type="button" className="btn-close" onClick={() => cancelUpload()}></button>
-					 </>
+					  </>
 					}
 				</div>
 				<div className="toast-body">

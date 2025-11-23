@@ -1,10 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import type { SocketContextType } from '@/types/Components/Hooks';
 import { io, Socket } from 'socket.io-client';
-
-type SocketContextType = {
-  socket: Socket | null;
-  isConnected: boolean;
-};
 
 const SocketContext = createContext<SocketContextType>({
 	socket: null,

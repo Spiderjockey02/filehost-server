@@ -26,7 +26,7 @@ export default function FileItemRow({ file, isChecked, openContextMenu, handleCh
 						<Link onClick={handleTextClick} style={{ textDecoration: 'none', color: 'black' }} href="#">{getFileIcon(file)} {file.name}</Link>
 					}
 				</th>
-				<td>{file.type == 'FILE' ? formatBytes(file.size) : `${file._count?.children ?? 0} files`}</td>
+				<td>{file.type == 'FILE' ? formatBytes(file.size) : `${file._count.children} files`}</td>
 				<td className='hide-on-mobile'>{new Date(file.createdAt).toLocaleString('en-GB')}</td>
 			</tr>
 		</>

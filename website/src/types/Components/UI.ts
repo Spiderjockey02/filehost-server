@@ -31,8 +31,6 @@ export interface ContextMenuProps {
 export interface ButtonProps {
   onClick?: () => void
   children: ReactNode
-	BSToggle?: string
-	BSTarget?: string
 }
 
 export interface InfoPillProps {

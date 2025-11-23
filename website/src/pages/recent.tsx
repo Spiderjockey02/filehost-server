@@ -3,13 +3,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import FileDetail from '@/components/Tables/FileDetailCell';
 import type { UserHistoryWithFile } from '@/types/database';
+import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
-import { ErrorPopup, Table } from '@/components';
+import { useEffect, useState } from 'react';
 import { authClient } from '@/auth/client';
 import { format } from '@/utils/functions';
 import FileLayout from '@/layouts/file';
-import { User } from 'better-auth';
-import { useState } from 'react';
+import type { User } from 'better-auth';
+import { Table } from '@/components';
 import React from 'react';
 
 type sortKeyTypes = 'name' | 'viewedAt'
@@ -21,6 +22,7 @@ export default function Recent() {
 	const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 	const [filters, setFilters] = useState<string[]>(['']);
 	const [activeFilters, setActiveFilters] = useState<string[]>(['']);
+	const { showToast } = useToast();
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['recent', sortKey, sortOrder],
@@ -64,6 +66,10 @@ export default function Recent() {
 		setSortKey(key);
 	}
 
+	useEffect(() => {
+		if (error) showToast('error', error.message);
+	}, [error]);
+
 	if (session == null) return null;
 	return (
 		<FileLayout user={session.user as User} activeTab='recent' tabName='Recent files'>
@@ -85,29 +91,26 @@ export default function Recent() {
 					</ul>
 				</div>
 			</div>
-			{error == null ?
-				isLoading || data == null ?
-					<p>Loading</p> :
-					<Table>
-						<Table.HeaderRow>
-							<Table.Header onClick={() => updateSortKey('name')} style={{ cursor: 'pointer' }}>
-								Name <FontAwesomeIcon icon={sortKey == 'name' ? (sortOrder == 'asc' ? faSortUp : faSortDown) : faSort} />
-							</Table.Header>
-							<Table.Header onClick={() => updateSortKey('viewedAt')} style={{ cursor: 'pointer' }}>
-								Accessed on <FontAwesomeIcon icon={sortKey == 'viewedAt' ? (sortOrder == 'asc' ? faSortUp : faSortDown) : faSort} />
-							</Table.Header>
-						</Table.HeaderRow>
-						<Table.Body>
-							{data.files.map(entry => (
-								<tr key={entry.id}>
-									<FileDetail file={entry.file} />
-									<td>{format(new Date().getTime() - (new Date().getTime() - new Date(entry.viewedAt).getTime()))}</td>
-								</tr>
-							))}
-						</Table.Body>
-					</Table>
-				:
-				<ErrorPopup text={error.message} />
+			{isLoading || data == null ?
+				<p>Loading</p> :
+				<Table>
+					<Table.HeaderRow>
+						<Table.Header onClick={() => updateSortKey('name')} style={{ cursor: 'pointer' }}>
+							Name <FontAwesomeIcon icon={sortKey == 'name' ? (sortOrder == 'asc' ? faSortUp : faSortDown) : faSort} />
+						</Table.Header>
+						<Table.Header onClick={() => updateSortKey('viewedAt')} style={{ cursor: 'pointer' }}>
+							Accessed on <FontAwesomeIcon icon={sortKey == 'viewedAt' ? (sortOrder == 'asc' ? faSortUp : faSortDown) : faSort} />
+						</Table.Header>
+					</Table.HeaderRow>
+					<Table.Body>
+						{data.files.map(entry => (
+							<tr key={entry.id}>
+								<FileDetail file={entry.file} />
+								<td>{format(new Date().getTime() - (new Date().getTime() - new Date(entry.viewedAt).getTime()))}</td>
+							</tr>
+						))}
+					</Table.Body>
+				</Table>
 			}
 		</FileLayout>
 	);

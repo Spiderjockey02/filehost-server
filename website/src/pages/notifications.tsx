@@ -1,15 +1,14 @@
-import { authClient } from '@/auth/client';
-import MainLayout from '@/layouts/main';
 import { faArrowRight, faBell, faCheckCircle, faClock, faInfoCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import axios from 'axios';
-import { User } from 'better-auth';
-import { GetServerSidePropsContext } from 'next';
+import type { GetServerSidePropsContext } from 'next';
+import { authClient } from '@/auth/client';
+import MainLayout from '@/layouts/main';
+import type { User } from 'better-auth';
 import Link from 'next/link';
+import axios from 'axios';
 
 export default function Notifications() {
-	const { data: session } = authClient.useSession();
-	const { refetch } = authClient.useSession();
+	const { data: session, refetch } = authClient.useSession();
 
 	async function deleteNotification(id: string) {
 		try {
@@ -28,14 +27,12 @@ export default function Notifications() {
 					<FontAwesomeIcon icon={faBell} className='me-2' />
 					Notifications ({session.user?.notifications.length})
 				</h1>
-
-				{session.user?.notifications.length === 0 ? (
+				{session.user?.notifications.length === 0 ?
 					<div className="alert alert-info text-center" role="alert">
 						<FontAwesomeIcon icon={faCheckCircle} className="me-2"/>
 						You&apos;re all caught up! No new notifications.
 					</div>
-				) : (
-					<div className="row row-cols-1 g-3">
+				 : <div className="row row-cols-1 g-3">
 						{session.user?.notifications
 							.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 							.map((notification) => (
@@ -60,14 +57,14 @@ export default function Notifications() {
 											&nbsp;
 											<button className="btn btn-sm btn-outline-danger mt-2" onClick={() => deleteNotification(notification.id)}>
 												<FontAwesomeIcon icon={faTrash} className="me-1" />
-													Delete
+												Delete
 											</button>
 										</div>
 									</div>
 								</div>
 							))}
 					</div>
-				)}
+				}
 			</div>
 		</MainLayout>
 	);

@@ -1,11 +1,11 @@
 import type { GetServerSidePropsContext } from 'next';
-import { authClient } from '@/auth/client';
-import FileLayout from '@/layouts/file';
-import { User } from 'better-auth';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
-import { File } from '@prisma/client';
 import Gallery from '@/components/views/Gallery';
+import { authClient } from '@/auth/client';
+import type { File } from '@prisma/client';
+import FileLayout from '@/layouts/file';
+import type { User } from 'better-auth';
 
 export default function GalleryPage() {
 	const { data: session } = authClient.useSession();
@@ -13,8 +13,8 @@ export default function GalleryPage() {
 	const { data } = useQuery({
 		queryKey: ['gallery', session?.user?.id],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/gallery', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch audit log listeners: ${res.statusText}`);
+			const res = await fetch('/api/session/gallery', { signal });
+			if (!res.ok) throw new Error(`Failed to fetch user's gallery: ${res.statusText}`);
 
 			const d = await res.json();
 			return d as { files: File[] };

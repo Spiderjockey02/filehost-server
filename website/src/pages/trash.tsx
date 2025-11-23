@@ -1,16 +1,17 @@
 import { faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TrashContextMenu, FileDetailCell, Table, ErrorPopup } from '@/components';
-import { useState, MouseEvent } from 'react';
+import { TrashContextMenu, FileDetailCell, Table } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { GetServerSidePropsContext } from 'next';
-import { authClient } from '@/auth/client';
-import FileLayout from '@/layouts/file';
-import axios from 'axios';
-import { File } from '@prisma/client';
-import { User } from 'better-auth';
-import { DeletedFile } from '@/types/database';
 import { format, queryOptions } from '@/utils/functions';
+import type { GetServerSidePropsContext } from 'next';
+import type { DeletedFile } from '@/types/database';
 import { useQuery } from '@tanstack/react-query';
+import { useState, MouseEvent, useEffect } from 'react';
+import { authClient } from '@/auth/client';
+import type { File } from '@prisma/client';
+import FileLayout from '@/layouts/file';
+import type { User } from 'better-auth';
+import axios from 'axios';
+import { useToast } from '@/components/Hooks/ToastManager';
 
 const initalContextMenu = {
 	show: false,
@@ -23,6 +24,7 @@ export default function Trash() {
 	const { data: session } = authClient.useSession();
 	const [selected, setSelected] = useState<File[]>([]);
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
+	const { showToast } = useToast();
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['trash'],
@@ -68,7 +70,12 @@ export default function Trash() {
 			await axios.delete('/api/trash/empty');
 			await refetch();
 		} catch (err) {
-			console.error('Error emptying bin:', err);
+			if (axios.isAxiosError(err)) {
+				const message = err.response?.data?.error || err.message || 'An unexpected error occurred while empting the bin.';
+				showToast('error', message);
+			} else {
+				showToast('error', 'Unexpected error occurred');
+			}
 		}
 	};
 
@@ -79,7 +86,12 @@ export default function Trash() {
 			setSelected([]);
 			await refetch();
 		} catch (err) {
-			console.error('Error restoring files:', err);
+			if (axios.isAxiosError(err)) {
+				const message = err.response?.data?.error || err.message || 'An unexpected error occurred while restoring files.';
+				showToast('error', message);
+			} else {
+				showToast('error', 'Unexpected error occurred');
+			}
 		}
 	};
 
@@ -101,13 +113,17 @@ export default function Trash() {
 		);
 	};
 
+	useEffect(() => {
+		if (error) showToast('error', error.message);
+	}, [error]);
+
 	if (session == null) return null;
 	return (
 		<FileLayout user={session.user as User} activeTab='bin' tabName='Trash'>
 			<div className="d-flex justify-content-between align-items-center mb-3">
 				<nav aria-label="breadcrumb">
 					<ol className="breadcrumb bg-white mb-0">
-						<li className="breadcrumb-item"><b>Trash</b></li>
+						<li className="breadcrumb-item fw-bold">Trash</li>
 					</ol>
 				</nav>
 			</div>
@@ -120,35 +136,32 @@ export default function Trash() {
 				</button>
 			</div>
 			{contextMenu.show && <TrashContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} />}
-			{error == null ?
-				isLoading || data == null ?
-					<p>Loading</p> :
-					<Table>
-						<Table.HeaderRow>
-							<Table.Header className='text-center' style={{ width: '5%' }}>
-								<input className="form-check-input"	type="checkbox"	onChange={handleSelectAllToggle} checked={selected.length === data.files.length && data.files.length > 0}	aria-label="Select all files" />
-							</Table.Header>
-							<Table.Header>
-								Name
-							</Table.Header>
-							<Table.Header>
-								Deleted on
-							</Table.Header>
-						</Table.HeaderRow>
-						<Table.Body>
-							{data.files.sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()).map(file => (
-								<tr key={file.id} onContextMenu={(e) => openContextMenu(e, file)}>
-									<td className="text-center">
-										<input className="form-check-input" type="checkbox" checked={selected.includes(file)} onChange={() => handleCheckboxToggle(file)} aria-label={`Select file ${file.path}`} />
-									</td>
-									<FileDetailCell file={file} disableClick={true} />
-									<td>{format(new Date(file.deletedAt))}</td>
-								</tr>
-							))}
-						</Table.Body>
-					</Table>
-				:
-				<ErrorPopup text={error.message} />
+			{isLoading || data == null ?
+				<p>Loading</p> :
+				<Table>
+					<Table.HeaderRow>
+						<Table.Header className='text-center' style={{ width: '5%' }}>
+							<input className="form-check-input"	type="checkbox"	onChange={handleSelectAllToggle} checked={selected.length === data.files.length && data.files.length > 0}	aria-label="Select all files" />
+						</Table.Header>
+						<Table.Header>
+							Name
+						</Table.Header>
+						<Table.Header>
+							Deleted on
+						</Table.Header>
+					</Table.HeaderRow>
+					<Table.Body>
+						{data.files.sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()).map(file => (
+							<tr key={file.id} onContextMenu={(e) => openContextMenu(e, file)}>
+								<td className="text-center">
+									<input className="form-check-input" type="checkbox" checked={selected.includes(file)} onChange={() => handleCheckboxToggle(file)} aria-label={`Select file ${file.path}`} />
+								</td>
+								<FileDetailCell file={file} disableClick={true} />
+								<td>{format(new Date(file.deletedAt))}</td>
+							</tr>
+						))}
+					</Table.Body>
+				</Table>
 			}
 		</FileLayout>
 	);
@@ -170,8 +183,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		// Get the path from the URL
-		const path = [context.params?.files].flat();
-		return { props: { path: path.join('/') } };
+		return { props: { } };
 	}
 }

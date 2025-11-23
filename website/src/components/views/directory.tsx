@@ -9,15 +9,10 @@ export default function Directory({ folder }: DirectoryProps) {
 		<DragUploadField parentId={folder.id}>
 			{folder.children.map((_) => (
 				filePanelToShow == _.id && (
-					<>
-						{/* @ts-expect-error sdfhjk */}
-						<FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
-					</>
+					<FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
 				)
 			))}
-			{/* @ts-expect-error sdfhjk */}
-			<FileViewTable files={folder.children}
-				setFilePanelToShow={setFilePanelToShow} />
+			<FileViewTable files={folder.children} setFilePanelToShow={setFilePanelToShow} />
 		</DragUploadField>
 	);
 }

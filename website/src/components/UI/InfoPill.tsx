@@ -2,6 +2,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { InfoPillProps } from '@/types/Components/UI';
 import Card from './Card';
 
+/**
+  * A small, styled information card (or "pill") that displays a title, value, and icon.
+  * @param {InfoPillProps} props - The component props.
+*/
 export default function InfoPill({ title, text, icon, colour }: InfoPillProps) {
 	const randomColor = colour ?? `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 	return (

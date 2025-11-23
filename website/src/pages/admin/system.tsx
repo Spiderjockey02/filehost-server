@@ -1,23 +1,26 @@
+import { AdminListLogFilesCard, AdminManageCacheCard, AdminManageConfigCard, AdminManageCRONjobsCard, AdminManageDatabaseBackupsCard } from '@/components/Cards';
 import { faClock, faDownload, faFolderTree, faHardDrive, faMemory } from '@fortawesome/free-solid-svg-icons';
-import AdminDatabaseBackupCard from '@/components/Cards/AdminDatabaseBackup';
 import { convertMiliseconds, formatBytes, headers } from '@/utils/functions';
-import { Row, Col, InfoPill, InfoPillProgress, ErrorPopup } from '@/components';
-import { AdminCRONJobCard } from '@/components/Cards/AdminCRONJob';
+import { Row, Col, InfoPill, InfoPillProgress } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import AdminLogFileCard from '@/components/Cards/AdminLogFile';
-import AdminCacheCard from '@/components/Cards/AdminCache';
+import { useToast } from '@/components/Hooks/ToastManager';
+import type { AdminSystemPageProps } from '@/types/pages';
 import type { GetServerSidePropsContext } from 'next';
-import { AdminSystemPageProps } from '@/types/pages';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
-import { User } from 'better-auth';
+import type { User } from 'better-auth';
+import { useEffect } from 'react';
 import axios from 'axios';
-import AdminConfigCard from '@/components/Cards/AdminConfig';
 
 export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) {
 	const { data: session } = authClient.useSession();
-	if (session == null) return null;
+	const { showToast } = useToast();
 
+	useEffect(() => {
+		if (error) showToast('error', error);
+	}, [error]);
+
+	if (session == null) return null;
 	return (
 		<AdminLayout activeTab='system' user={session.user as User} tabName='Admin System'>
 			&nbsp;
@@ -27,7 +30,6 @@ export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) 
 					<FontAwesomeIcon icon={faDownload} /> Generate Report
 				</button>
 			</div>
-			{error && <ErrorPopup text={error} />}
 			<Row>
 				<Col lg={3} md={6} className="mb-4">
 					<InfoPill title="Log File Size" text={`${formatBytes(stats.logs.totalByteSize)} (${stats.logs.count})`} icon={faFolderTree} />
@@ -44,15 +46,15 @@ export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) 
 			</Row>
 			<Row>
 				<Col lg={4}>
-					<AdminConfigCard />
+					<AdminManageConfigCard />
 				</Col>
 				<Col lg={4}>
-					<AdminDatabaseBackupCard />
-					<AdminCRONJobCard />
+					<AdminManageDatabaseBackupsCard />
+					<AdminManageCRONjobsCard />
 				</Col>
 				<Col lg={4}>
-					<AdminLogFileCard />
-					<AdminCacheCard />
+					<AdminListLogFilesCard />
+					<AdminManageCacheCard />
 				</Col>
 			</Row>
 		</AdminLayout>

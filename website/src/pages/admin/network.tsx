@@ -1,20 +1,26 @@
-import { Card, Col, ErrorPopup, InfoPill, Row, ActivityTransferAreaChart, ObjectOrientedPieChart } from '@/components';
+import { Card, Col, InfoPill, Row, ActivityTransferAreaChart, ObjectOrientedPieChart } from '@/components';
 import { faDownload, faEarthEurope, faStopwatch, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { AdminListActivitiesCard, AdminListUserAgentsCard } from '@/components/Cards';
 import NetworkRequestsLineChart from '@/components/Graphs/NetworkRequestsLineChart';
-import AdminUserAgentCard from '@/components/Cards/AdminUserAgentCard';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import AdminActivityCard from '@/components/Cards/AdminActivity';
+import { useToast } from '@/components/Hooks/ToastManager';
 import { formatBytes, headers } from '@/utils/functions';
 import { AdminNetworkPageProps } from '@/types/pages';
 import { GetServerSidePropsContext } from 'next';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
 import { User } from 'better-auth';
-import axios from 'axios';
+import { useEffect } from 'react';
 import Link from 'next/link';
+import axios from 'axios';
 
 export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 	const { data: session } = authClient.useSession();
+	const { showToast } = useToast();
+
+	useEffect(() => {
+		if (data.error) showToast('error', data.error);
+	}, [data.error]);
 
 	if (session == null) return null;
 	return (
@@ -26,7 +32,6 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 					<FontAwesomeIcon icon={faDownload} /> Generate Report
 				</button>
 			</div>
-			{data.error && <ErrorPopup text={data.error} />}
 			<Row>
 				<Col xl={3} md={6} className='mb-4'>
 					<InfoPill title="Total Incoming Bytes" text={formatBytes(data.network.incomingBytes)} icon={faDownload} />
@@ -41,11 +46,11 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 					<InfoPill title="Total Requests" text={data.total} icon={faEarthEurope} />
 				</Col>
 			</Row>
-			<Row className='mb-4'>
-				<Col xl={6}>
+			<Row>
+				<Col xl={6} className='mb-4'>
 					<NetworkRequestsLineChart />
 				</Col>
-				<Col xl={6}>
+				<Col xl={6} className='mb-4'>
 					<ActivityTransferAreaChart />
 				</Col>
 			</Row>
@@ -56,11 +61,16 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 							<Link href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods" className='fw-bold' target='_blank'>Method Distribution</Link>
 						</Card.Header>
 						<Card.Body>
-							<ObjectOrientedPieChart data={data.methods.reduce((acc, item) => {
-								// @ts-expect-error stuff
-								acc[item.method] = item.count;
-								return acc;
-							}, {})} />
+							{data.error ?
+								<div className="alert alert-danger" role="alert">
+									{data.error}
+								</div>
+								: <ObjectOrientedPieChart data={data.methods.reduce((acc, item) => {
+									// @ts-expect-error stuff
+									acc[item.method] = item.count;
+									return acc;
+								}, {})} />
+							}
 						</Card.Body>
 					</Card>
 				</Col>
@@ -70,18 +80,22 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 							<Link href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status" className='fw-bold' target='_blank'>Status Code Distribution</Link>
 						</Card.Header>
 						<Card.Body>
-							<ObjectOrientedPieChart data={data.status.reduce((acc, item) => {
-								// @ts-expect-error stuff
-								acc[item.status] = item.count;
-								return acc;
-							}, {})} />
+							{data.error ?
+								<div className="alert alert-danger" role="alert">
+									{data.error}
+								</div>
+								: <ObjectOrientedPieChart data={data.status.reduce((acc, item) => {
+									// @ts-expect-error stuff
+									acc[item.status] = item.count;
+									return acc;
+								}, {})} />
+							}
 						</Card.Body>
 					</Card>
 				</Col>
 			</Row>
-			<AdminActivityCard />
-			<AdminUserAgentCard />
-			<p>Display list of IPS, maybe?</p>
+			<AdminListActivitiesCard />
+			<AdminListUserAgentsCard />
 		</AdminLayout>
 	);
 }

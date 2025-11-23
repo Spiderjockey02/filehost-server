@@ -1,9 +1,9 @@
 import { requestTimeFrames } from '@/types/pages';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import Card from '../UI/Card';
 import { Line } from 'react-chartjs-2';
+import { Card } from '@/components';
+import { useState } from 'react';
 
 export default function AuditLogActivityChart() {
 	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('daily');
@@ -12,7 +12,7 @@ export default function AuditLogActivityChart() {
 		queryKey: ['auditLogActivity', trafficGrowthFrame],
 		queryFn: async ({ signal }) => {
 			const res = await fetch(`/api/admin/logs/history?frame=${trafficGrowthFrame}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch activity transfer data: ${res.statusText}`);
+			if (!res.ok) throw new Error(`Failed to fetch audit log activity data: ${res.statusText}`);
 
 			const d = await res.json();
 			const firstKey = Object.keys(d)[0];
@@ -39,7 +39,7 @@ export default function AuditLogActivityChart() {
 	}));
 
 	return (
-		<Card>
+		<Card className='mb-4'>
 			<Card.Header>
         Audit Log Activity Over Time
 				<div className="dropdown">
@@ -60,7 +60,7 @@ export default function AuditLogActivityChart() {
 					</div>
 				) : error ? (
 					<div className="alert alert-danger" role="alert">
-            Error loading activity data: {error.message}
+						{error.message}
 					</div>
 				) : (
 					<Line data={{ labels, datasets }} options={{ responsive: true, maintainAspectRatio: false }} style={{ height: '400px' }} />

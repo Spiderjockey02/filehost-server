@@ -1,47 +1,51 @@
-import { SettingErrorTypes } from '@/types';
-import type { User } from 'better-auth';
+import type { AvatarUploadFormProps } from '@/types/Components/Form';
+import { useToast } from '../Hooks/ToastManager';
 import Image from 'next/image';
+import axios from 'axios';
 
-interface Props {
-  user: User | null
-  setSuccess: (msg: string) => void
-  setErrors: (errs: SettingErrorTypes[]) => void
-}
+export function AvatarUploadForm({ user }: AvatarUploadFormProps) {
+	const { showToast } = useToast();
 
-export function AvatarUploadForm({ user, setSuccess, setErrors }: Props) {
 	// Upload new avatar
 	const onAvatarUploadChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		// Make sure only a single image file is uploaded
 		const fileInput = e.target;
-		if (!fileInput.files || fileInput.files.length != 1) return setErrors([{ type: 'av', text: 'Please upload a single image file.' }]);
+		if (!fileInput.files || fileInput.files.length != 1) return showToast('error', 'Please upload a single image file.');
 		const file = fileInput.files[0];
-		if (file.type.split('/')[0] !== 'image') return setErrors([{ type: 'av', text: 'Please upload a single image file.' }]);
+		if (file.type.split('/')[0] !== 'image') return showToast('error', 'Please upload a single image file.');
 
 		try {
 			const formData = new FormData();
 			formData.append('media', file);
 
-			const res = await fetch('/api/session/avatar/change', {
-				method: 'POST',
-				body: formData,
+			const { data } = await axios.post('/api/session/avatar/change', formData, {
+				headers: {
+					'Content-Type': 'multipart/form-data',
+				},
 			});
-			const data = await res.json();
-			if (data.success) setSuccess(data.success);
+			if (data.success) showToast('success', data.success);
 		} catch (err) {
-			console.log(err);
-			setErrors([{ type: 'av', text: 'Failed to upload avatar' }]);
+			if (axios.isAxiosError(err)) {
+				const message = err.response?.data?.error || err.message || 'An unexpected error occurred while uploading avatar.';
+				showToast('error', message);
+			} else {
+				showToast('error', 'Unexpected error occurred');
+			}
 		}
 	};
 
 	// Delete avatar
 	const deleteAvatar = async () => {
 		try {
-			const res = await fetch('/api/session/avatar/reset', { method: 'DELETE' });
-			const data = await res.json();
-			if (data.success) setSuccess(data.success);
+			const { data } = await axios.delete('/api/session/avatar/reset');
+			if (data.success) showToast('success', data.success);
 		} catch (err) {
-			console.log(err);
-			setErrors([{ type: 'av', text: 'Failed to delete avatar' }]);
+			if (axios.isAxiosError(err)) {
+				const message = err.response?.data?.error || err.message || 'An unexpected error occurred while deleting avatar.';
+				showToast('error', message);
+			} else {
+				showToast('error', 'Unexpected error occurred');
+			}
 		}
 	};
 

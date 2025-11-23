@@ -8,7 +8,7 @@ export default function UserRetentionLineChart() {
 		queryKey: ['userRentention'],
 		queryFn: async ({ signal }) => {
 			const res = await fetch('/api/admin/users/retention', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user growth: ${res.statusText}`);
+			if (!res.ok) throw new Error(`Failed to fetch user retention: ${res.statusText}`);
 			const d = await res.json();
 			const firstKey = Object.keys(d)[0];
 			return d[firstKey];
@@ -67,7 +67,7 @@ export default function UserRetentionLineChart() {
 		</div>
 	) : error ? (
 		<div className="alert alert-danger" role="alert">
-      Error loading user growth data: {error.message}
+			{error.message}
 		</div>
 	) : (
 		<LineChart

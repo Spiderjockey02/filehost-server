@@ -1,11 +1,11 @@
-import { VideoPlayer, TextViewer, ErrorPopup } from '@/components';
-import { useRef, useState } from 'react';
+import { VideoPlayer, TextViewer } from '@/components';
+import { useRef } from 'react';
 import Image from 'next/image';
 import type { FileViewerProps } from '@/types/Components/Views';
+import { useToast } from '../Hooks/ToastManager';
 
 export default function FileViewer({ file }: FileViewerProps) {
-	const [error, setError] = useState<string>('');
-
+	const { showToast } = useToast();
 	const imageRef = useRef<HTMLImageElement>(null);
 	function handleFullScreen() {
 		if (imageRef.current) {
@@ -33,10 +33,9 @@ export default function FileViewer({ file }: FileViewerProps) {
 		case 'image':
 			return (
 				<div className='d-flex justify-content-center' style={{ maxHeight: 'calc(100vh - 130px)', padding: '0 6px' }}>
-					<Image className="center" src={`/content/${file.userId}${file.path}`} onClick={handleFullScreen} ref={imageRef} unoptimized={true} onError={() => setError('Failed to load image. Please try again later')}
+					<Image className="center" src={`/content/${file.userId}${file.path}`} onClick={handleFullScreen} ref={imageRef} unoptimized={true} onError={() => showToast('error', 'Failed to load image. Please try again later')}
 						alt={file.name} width={1000} height={1000} style={{ cursor: 'pointer', maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
 					/>
-					{error && <ErrorPopup text={error} />}
 				</div>
 			);
 		case 'video':

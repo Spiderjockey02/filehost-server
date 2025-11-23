@@ -1,6 +1,40 @@
 import { DatabaseBackup, StringNumberObj } from '.';
 import { StorageWithCounts } from './database';
 
+export interface AdminStorageIdPageProps {
+  error?: string
+  storage: StorageWithCounts | null
+}
+
+export interface AdminUserIdPageProps {
+  userId: string
+}
+
+export interface AdminLogsPageProps {
+  error?: string
+  total: number;
+  resourceTypes: {
+    user: number
+    file: number
+    storage: number
+    system: number
+    session: number
+  }
+  successRates: {
+    true: number
+    false: number
+  }
+}
+
+export interface AdminSubscriptionPageProps {
+  error?: string
+  stats: {
+		payingUsers: number
+		newCustomers: number
+		mostPopular: number
+	}
+}
+
 export interface AdminPageProps {
   stats: {
     users: {
