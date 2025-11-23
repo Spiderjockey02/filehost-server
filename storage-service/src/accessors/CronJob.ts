@@ -1,5 +1,5 @@
-import { createCronJob, createCronJobLogType } from 'src/types/database/CronJob';
-import { CronJob, CronJobLog, CronJobNames } from '@prisma/client';
+import type { createCronJob, createCronJobLogType } from '@/types/database/CronJob';
+import type { CronJob, CronJobLog, CronJobNames } from '@/types/generated/client';
 import client from './prisma';
 
 export default class CronJobAccessor {

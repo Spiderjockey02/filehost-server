@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/types/generated/client';
 
 export interface CreateRecentlyViewedFile {
   fileId: string;

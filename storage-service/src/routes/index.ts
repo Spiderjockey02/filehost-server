@@ -1,5 +1,5 @@
-import { getAvatar, getThumbnail, getContent, getStatistics, getPlans } from '../controllers';
-import type Client from '../helpers/Client';
+import { getAvatar, getThumbnail, getContent, getStatistics, getPlans } from '@/controllers';
+import type Client from '@/helpers/Client';
 import { Router } from 'express';
 const router = Router();
 

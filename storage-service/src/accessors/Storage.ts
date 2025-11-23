@@ -1,8 +1,8 @@
-import { StorageMedium } from '@prisma/client';
+import type { createStorageMedium, StorageWithCounts, updateStorageMedium } from '@/types/database/StorageMedium';
+import type { StorageMedium } from '@/types/generated/client';
+import type { storageDirection } from '@/types/database/User';
+import type { Pagination } from '@/types/database/File';
 import client from './prisma';
-import { createStorageMedium, StorageWithCounts, updateStorageMedium } from 'src/types/database/StorageMedium';
-import { Pagination } from 'src/types/database/File';
-import { storageDirection } from 'src/types/database/User';
 
 export default class StorageAccessor {
 	// Don't need any special caching as it's a set number

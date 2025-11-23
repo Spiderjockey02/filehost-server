@@ -1,8 +1,9 @@
-import Client from 'src/helpers/Client';
+import { createPlanSchema, validateFrame } from '@/validators';
 import type { Request, Response } from 'express';
-import { Error, getIP } from '../../utils';
-import { createPlanSchema, validateFrame } from '../../validators';
-import { getSession } from '../../middleware';
+import type Client from '@/helpers/Client';
+import { getSession } from '@/middleware';
+import type { CountMap } from '@/types';
+import { Error, getIP } from '@/utils';
 
 // Endpoint: GET /api/admin/plan/stats
 export const getPlanStats = (client: Client) => {
@@ -24,7 +25,6 @@ export const getPlanStats = (client: Client) => {
 };
 
 // Endpoint: GET /api/admin/plan/trends
-type countEnum = { [key: string | number]: number }
 export const getPlanTrends = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const frame = req.query.frame;
@@ -33,7 +33,7 @@ export const getPlanTrends = (client: Client) => {
 
 		switch (frame) {
 			case 'yearly': {
-				const years: countEnum = {};
+				const years: CountMap = {};
 				const currentYear = new Date().getFullYear();
 				let cumulativeTotal = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1));
 
@@ -48,7 +48,7 @@ export const getPlanTrends = (client: Client) => {
 				break;
 			}
 			case 'monthly': {
-				const months: countEnum = {};
+				const months: CountMap = {};
 				const current = new Date();
 				current.setDate(1);
 
@@ -71,7 +71,7 @@ export const getPlanTrends = (client: Client) => {
 				break;
 			}
 			case 'daily': {
-				const days: countEnum = {};
+				const days: CountMap = {};
 				const today = new Date();
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);
@@ -95,7 +95,7 @@ export const getPlanTrends = (client: Client) => {
 				break;
 			}
 			case 'hourly': {
-				const hours: countEnum = {};
+				const hours: CountMap = {};
 				const now = new Date();
 				const frameStart = new Date(now);
 				frameStart.setHours(now.getHours() - 23, 0, 0, 0);

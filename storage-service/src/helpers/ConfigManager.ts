@@ -1,6 +1,6 @@
-import fs from 'fs';
+import type { NestedPaths, NestedValue } from '@/types';
 import config from '../../assets/config.json';
-import { NestedPaths, NestedValue } from 'src/types';
+import fs from 'fs';
 
 export class ConfigManager {
 	private configPath: string;

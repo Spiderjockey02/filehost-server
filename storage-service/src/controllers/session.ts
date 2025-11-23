@@ -1,8 +1,8 @@
-import { avatarForm, getSession } from '../middleware';
+import { Error, getIP, sanitiseObject } from '@/utils';
+import { avatarForm, getSession } from '@/middleware';
+import { validateRecentlyViewed } from '@/validators';
 import type { Request, Response } from 'express';
-import { Error, getIP, sanitiseObject } from '../utils';
-import type Client from '../helpers/Client';
-import { validateRecentlyViewed } from '../validators';
+import type Client from '@/helpers/Client';
 
 // Endpoint: POST /api/session/change-avatar
 export const postChangeAvatar = (client: Client) => {

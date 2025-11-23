@@ -1,8 +1,8 @@
-import type { CreateRecentlyViewedFile, fetchUserLatestProps } from '../types/database/RecentlyViewedFile';
-import { FullRecentlyViewedFile } from '../types/database/RecentlyViewedFile';
+import type { CreateRecentlyViewedFile, fetchUserLatestProps } from '@/types/database/RecentlyViewedFile';
+import type { FullRecentlyViewedFile } from '@/types/database/RecentlyViewedFile';
+import type { RecentlyViewedFile } from '@/types/generated/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
-import { RecentlyViewedFile } from '@prisma/client';
 
 export default class RecentlyViewedFileManager {
 	cache: LRUCache<string, FullRecentlyViewedFile[]>;

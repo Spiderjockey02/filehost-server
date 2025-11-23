@@ -1,12 +1,12 @@
-import { cleanUpVideo } from '../utils/VideoPreprocessor';
-import { getIP, normalizePath } from '../utils';
-import type Client from '../helpers/Client';
-import type { File } from '@prisma/client';
+import type { UserWithPlan } from '@/types/database/User';
+import { cleanUpVideo } from '@/utils/VideoPreprocessor';
+import type { FullFile } from '@/types/database/File';
+import type { File } from '@/types/generated/client';
+import { getIP, normalizePath } from '@/utils';
+import { readFile } from 'node:fs/promises';
+import type Client from '@/helpers/Client';
 import type { Request } from 'express';
 import formidable from 'formidable';
-import { readFile } from 'node:fs/promises';
-import { FullFile } from 'src/types/database/File';
-import { UserWithPlan } from 'src/types/database/User';
 
 export default async (client: Client, req: Request, user: UserWithPlan) => {
 	// Make sure they haven't already uploaded past their max storage

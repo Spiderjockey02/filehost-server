@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/types/generated/client';
 
 export type FullSession = Prisma.SessionGetPayload<{
   include: {

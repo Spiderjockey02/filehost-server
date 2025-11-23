@@ -1,6 +1,6 @@
-import { deleteStorageById, getStorageById, getStorages, getStorageTypes, postMigrateUserFromStorage, postStorage, postStorageByStorageId } from '../../../controllers/admin/storage';
-import type Client from '../../../helpers/Client';
-import { checkAdmin } from '../../../middleware';
+import { deleteStorageById, getStorageById, getStorages, getStorageTypes, postMigrateUserFromStorage, postStorage, postStorageByStorageId } from '@/controllers/admin/storage';
+import type Client from '@/helpers/Client';
+import { checkAdmin } from '@/middleware';
 import { Router } from 'express';
 const router = Router();
 

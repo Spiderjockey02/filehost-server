@@ -1,12 +1,12 @@
 import { createReadStream, createWriteStream, existsSync, mkdirSync, statSync } from 'node:fs';
-import type { File } from '@prisma/client';
+import type { FullFile } from '@/types/database/File';
+import type { File } from '@/types/generated/client';
+import type { StorageProvider } from '@/types';
+import type Client from '@/helpers/Client';
 import type { Response } from 'express';
 import fs from 'node:fs/promises';
 import archiver from 'archiver';
 import path from 'node:path';
-import { StorageProvider } from 'src/types';
-import Client from '../Client';
-import { FullFile } from 'src/types/database/File';
 
 export default class FileSystemManager implements StorageProvider {
 	basePath: string;

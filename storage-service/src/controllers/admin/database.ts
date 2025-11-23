@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
-import { Error, PATHS } from '../../utils';
-import Client from 'src/helpers/Client';
+import { validateBackup } from '@/validators';
+import type Client from '@/helpers/Client';
+import { Error, PATHS } from '@/utils';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
-import { validateBackup } from '../../validators';
 
 // Endpoint: GET /api/admin/database/backups
 export const getDatabaseBackups = (client: Client) => {

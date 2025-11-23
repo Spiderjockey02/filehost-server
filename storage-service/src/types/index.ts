@@ -1,8 +1,8 @@
+import type { User, File } from '@/types/generated/client';
+import type { IncomingHttpHeaders } from 'node:http';
 import type { Request, Response } from 'express';
-import { User, File } from '@prisma/client';
-import { Writable } from 'node:stream';
-import { IncomingHttpHeaders } from 'node:http';
-import { Socket } from 'node:net';
+import type { Writable } from 'node:stream';
+import type { Socket } from 'node:net';
 
 // For logger
 export type loggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
@@ -78,6 +78,40 @@ export type NestedValue<T, Path extends string> =
     : Path extends keyof T
       ? T[Path]
       : never;
+
+export type CountMap = Record<string | number, number>
+
+export type TrafficHistoryByDate = {
+  [date: string]: {
+    incomingBytes: number | null;
+    outgoingBytes: number | null;
+  };
+};
+
+export type EntityCountMap = { [key: string | number]: {
+	user: number
+	file: number
+	storage: number
+	system: number
+	session: number
+} }
+
+export interface RateLimitBucket {
+  tokens: number;
+  lastRefill: number;
+  abuseLog: number[];
+  lastAbuseLog?: number;
+}
+
+export type Task<T> = () => Promise<T>;
+
+export interface QueuedTask<T> {
+  task: Task<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: any) => void;
+}
+
+export type queueKeys = 'NOTIFICATIONS' | 'AUDIT_LOGS'
 
 export interface StorageProvider {
   isOnline: boolean

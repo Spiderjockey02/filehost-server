@@ -1,6 +1,6 @@
-import { deleteLogListener, getLogEvents, getLogFiles, getLogHistory, getLogListeners, getLogs, getLogTypes, getSpecificLog, postLogListener, patchLogListener } from '../../../controllers/admin/logs';
-import type Client from '../../../helpers/Client';
-import { checkAdmin } from '../../../middleware';
+import { deleteLogListener, getLogEvents, getLogFiles, getLogHistory, getLogListeners, getLogs, getLogTypes, getSpecificLog, postLogListener, patchLogListener } from '@/controllers/admin/logs';
+import type Client from '@/helpers/Client';
+import { checkAdmin } from '@/middleware';
 import { Router } from 'express';
 const router = Router();
 

@@ -1,16 +1,16 @@
-import { normalizePath, sanitiseObject } from '../utils';
-import type { File, User } from '@prisma/client';
-import TrashHandler from './TrashHandler';
-import Client from './Client';
-import FileAccessor from '../accessors/File';
-import StorageManager from './StorageManager';
-import type { Response } from 'express';
-import ThumbnailCreator from './ThumbnailCreator';
-import { FullFile } from 'src/types/database/File';
-import archiver, { Archiver } from 'archiver';
-import { StorageProvider } from 'src/types';
-import { UserWithPlan } from 'src/types/database/User';
+import type { File, User } from '@/types/generated/client';
+import type { UserWithPlan } from '@/types/database/User';
+import { normalizePath, sanitiseObject } from '@/utils';
 import { S3ServiceException } from '@aws-sdk/client-s3';
+import type { FullFile } from '@/types/database/File';
+import type StorageManager from './StorageManager';
+import ThumbnailCreator from './ThumbnailCreator';
+import type { StorageProvider } from '@/types';
+import archiver, { Archiver } from 'archiver';
+import FileAccessor from '@/accessors/File';
+import TrashHandler from './TrashHandler';
+import type { Response } from 'express';
+import Client from './Client';
 
 export default class FileManager extends FileAccessor {
 	TrashHandler: TrashHandler;

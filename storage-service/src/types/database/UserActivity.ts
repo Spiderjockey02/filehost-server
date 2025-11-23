@@ -1,4 +1,4 @@
-import { HTTPMethod } from '@prisma/client';
+import { HTTPMethod, Prisma } from '@/types/generated/client';
 
 export type UserActivityInput = {
 	userId: string | null;
@@ -17,4 +17,10 @@ export interface fetchActivity {
 	userId?: string
 	statusCode?: number
 	method?: HTTPMethod
+}
+
+export interface fetchUserAgentsParams {
+	sortBy: 'name' | 'activity' | 'logs'
+	sortOrder: Prisma.SortOrder
+	page: number
 }

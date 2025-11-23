@@ -1,8 +1,8 @@
-import Client from 'src/helpers/Client';
+import { Error, getIP, sanitiseObject } from '@/utils';
 import type { Request, Response } from 'express';
-import { Error, getIP, sanitiseObject } from '../../utils';
-import { getSession } from '../../middleware';
-import { validateStorage } from '../../validators';
+import { validateStorage } from '@/validators';
+import type Client from '@/helpers/Client';
+import { getSession } from '@/middleware';
 
 // Endpoint: GET /api/admin/storage
 export const getStorages = (client: Client) => {

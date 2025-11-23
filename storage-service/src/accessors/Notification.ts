@@ -1,8 +1,8 @@
-import type { CreateNotification } from '../types/database/Notification';
-import { Notification } from '@prisma/client';
+import type { CreateNotification } from '@/types/database/Notification';
+import type { Notification } from '@/types/generated/client';
+import type { Server } from 'socket.io';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
-import { Server } from 'socket.io';
 
 export default class NotificationManager {
 	cache: LRUCache<string, Notification>;

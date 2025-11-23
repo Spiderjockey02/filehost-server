@@ -4,10 +4,14 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "prestart": "npm run build",
     "start": "node .",
+    "dev": "ts-node -r tsconfig-paths/register .",
     "db": "npx prisma studio"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   },
   "keywords": [],
   "author": "",

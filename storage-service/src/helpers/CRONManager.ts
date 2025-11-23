@@ -1,10 +1,10 @@
-import Client from './Client';
+import type { CronJobLog, CronJobNames } from '@/types/generated/client';
+import type { CronJobList } from '@/types/database/CronJob';
+import CronJobAccessor from '@/accessors/CronJob';
+import extendedClient from '@/accessors/prisma';
+import type Client from './Client';
 import { CronJob } from 'cron';
-import CronJobAccessor from '../accessors/CronJob';
-import extendedClient from '../accessors/prisma';
 import fs from 'fs/promises';
-import { CronJobLog, CronJobNames } from '@prisma/client';
-import { CronJobList } from 'src/types/database/CronJob';
 
 export default class CRONManager extends CronJobAccessor {
 	client: Client;

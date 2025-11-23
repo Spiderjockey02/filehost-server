@@ -1,10 +1,10 @@
-import type { Request } from 'express';
-import Client from '../helpers/Client';
-import formidable from 'formidable';
-import sharp from 'sharp';
-import { User } from '@prisma/client';
+import type { User } from '@/types/generated/client';
 import { readFile } from 'node:fs/promises';
+import type { Request } from 'express';
+import Client from '@/helpers/Client';
+import formidable from 'formidable';
 import { getIP } from '../utils';
+import sharp from 'sharp';
 
 export default async (client: Client, req: Request, user: User) => {
 	// Get storage and it's provider

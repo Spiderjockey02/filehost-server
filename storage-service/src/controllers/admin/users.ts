@@ -1,10 +1,10 @@
-import { Error, sanitiseObject } from '../../utils';
+import { validateBan, validateFrame, validatePage, validateUser } from '@/validators';
+import type { FullSession } from '@/types/database/Session';
 import type { Request, Response } from 'express';
-import type Client from '../../helpers/Client';
-import { getSession } from '../../middleware';
-import type { FullSession } from 'src/types/database/Session';
-import { validateBan, validateFrame, validateUser } from '../../validators';
-type countEnum = { [key: string | number]: number }
+import { Error, sanitiseObject } from '@/utils';
+import type Client from '@/helpers/Client';
+import { getSession } from '@/middleware';
+import type { CountMap } from '@/types';
 
 // Endpoint: GET /api/admin/users
 export const getUsers = (client: Client) => {
@@ -47,7 +47,7 @@ export const getUserGrowth = (client: Client) => {
 
 		switch (frame) {
 			case 'yearly': {
-				const years: countEnum = {};
+				const years: CountMap = {};
 				const currentYear = new Date().getFullYear();
 				let cumulativeTotal = await client.userManager.fetchUserJoinesBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1));
 
@@ -62,7 +62,7 @@ export const getUserGrowth = (client: Client) => {
 				break;
 			}
 			case 'monthly': {
-				const months: countEnum = {};
+				const months: CountMap = {};
 				const current = new Date();
 				current.setDate(1);
 
@@ -85,7 +85,7 @@ export const getUserGrowth = (client: Client) => {
 				break;
 			}
 			case 'daily': {
-				const days: countEnum = {};
+				const days: CountMap = {};
 				const today = new Date();
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);
@@ -179,8 +179,8 @@ export const getUserRetention = (client: Client) => {
 		try {
 			// Loop last 14 days get
 			const { total } = await client.userManager.fetchTotal();
-			const days: countEnum = {};
-			const sessions: countEnum = {};
+			const days: CountMap = {};
+			const sessions: CountMap = {};
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
 			const frameStart = new Date(today);
@@ -276,8 +276,8 @@ export const getUsersNotification = (client: Client) => {
 		const userId = req.params.id;
 
 		try {
-			const notification = await client.notificationManager.getByUserId(userId);
-			res.json({ notification });
+			const notifications = await client.notificationManager.getByUserId(userId);
+			res.json({ notifications });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user\'s notifications.');

@@ -1,29 +1,41 @@
-import { PrismaClient } from '@prisma/client';
-import { Logger, parseMySQLConnectionString, PATHS } from '../utils';
+import { Logger, parseMySQLConnectionString, PATHS } from '@/utils';
+import { PrismaClient } from '@/types/generated/client';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import type { DatabaseMetadata } from '@/types';
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
-import { DatabaseMetadata } from 'src/types';
+import 'dotenv/config';
 const LoggerClass = new Logger();
 
-const client = new PrismaClient({ errorFormat: 'pretty',
-	log: [
-		{ level: 'info', emit: 'event' },
-		{ level: 'warn', emit: 'event' },
-		{ level: 'error', emit: 'event' },
-	],
+const database = parseMySQLConnectionString(process.env.DATABASE_URL as string);
+const adapter = new PrismaMariaDb({
+	host: database.host,
+	user: database.username,
+	password: database.password,
+	database: database.database,
+	connectionLimit: 30,
 });
 
-client.$on('info', (data) => {
-	LoggerClass.log(data.message);
+const client = new PrismaClient({ log: [
+	{ level: 'query', emit: 'event' },
+	{ level: 'info', emit: 'event' },
+	{ level: 'warn', emit: 'event' },
+	{ level: 'error', emit: 'event' },
+],
+adapter,
 });
 
-client.$on('warn', (data) => {
-	LoggerClass.warn(data.message);
+client.$on('info', (e) => {
+	LoggerClass.log(e.message);
 });
 
-client.$on('error', (data) => {
-	LoggerClass.error(data.message);
+client.$on('warn', (e) => {
+	LoggerClass.warn(e.message);
+});
+
+client.$on('error', (e) => {
+	LoggerClass.error(e.message);
 });
 
 const prismaClient = client.$extends({

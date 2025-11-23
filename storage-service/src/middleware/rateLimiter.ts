@@ -1,16 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import Client from 'src/helpers/Client';
-import { Error, getIP } from '../utils';
+import type { RateLimitBucket } from '@/types';
+import type Client from '@/helpers/Client';
+import { Error, getIP } from '@/utils';
 import { getSession } from '.';
+const buckets: Map<string, RateLimitBucket> = new Map();
 
-interface Bucket {
-  tokens: number;
-  lastRefill: number;
-  abuseLog: number[];
-	lastAbuseLog?: number;
-}
-
-const buckets: Map<string, Bucket> = new Map();
 export async function userPostRateLimit(client: Client) {
 	return async (req: Request, res: Response, next: NextFunction) => {
 		// Make sure the request isn't for content

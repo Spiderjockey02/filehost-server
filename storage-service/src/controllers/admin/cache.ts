@@ -1,6 +1,6 @@
-import Client from 'src/helpers/Client';
-import { Error } from '../../utils';
 import type { Request, Response } from 'express';
+import type Client from '@/helpers/Client';
+import { Error } from '@/utils';
 
 // Endpoint: DELETE /api/admin/cache/:name
 export const deleteCacheByName = (client: Client) => {

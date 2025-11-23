@@ -1,4 +1,4 @@
-import { CronJobNames, Status } from '@prisma/client';
+import { CronJobNames, Status } from '@/types/generated/client';
 
 export interface createCronJobLogType {
   jobName: CronJobNames

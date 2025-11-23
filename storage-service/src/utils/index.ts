@@ -1,15 +1,15 @@
+import type { FileOptions, HTTPStripped, MySQLConnectionOptions, S3Options, SFTPOptions } from '@/types';
+import type { NextFunction, Request, Response } from 'express';
+import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
+import { readdirSync, statSync, readFileSync } from 'fs';
+import { HTTPMethod } from '@/types/generated/client';
 import { PATHS, ipRegex } from './CONSTANTS';
+import { getSession } from '@/middleware';
+import type Client from '@/helpers/Client';
+import { join, parse, sep } from 'path';
+import { UAParser } from 'ua-parser-js';
 import Logger from './Logger';
 import Error from './Error';
-import { readdirSync, statSync, readFileSync } from 'fs';
-import { join, parse, sep } from 'path';
-import type { NextFunction, Request, Response } from 'express';
-import Client from 'src/helpers/Client';
-import { getSession } from '../middleware';
-import { HTTPMethod } from '@prisma/client';
-import { FileOptions, HTTPStripped, MySQLConnectionOptions, S3Options, SFTPOptions } from 'src/types';
-import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
-import { UAParser } from 'ua-parser-js';
 
 // Setup MaxMind GeoIP
 const db = readFileSync('./assets/GeoLite2-City.mmdb');

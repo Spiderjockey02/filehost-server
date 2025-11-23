@@ -1,7 +1,7 @@
 import { postCopyFile, postCreateFolder, deleteFile, postDownloadFile, getFiles,
 	postMoveFile, postFileUpload, postRenameFile, getSearchFile, getAllDirectories,
-	getBulkDownload, deleteBulkFiles } from '../../controllers/files';
-import type Client from '../../helpers/Client';
+	getBulkDownload, deleteBulkFiles } from '@/controllers/files';
+import type Client from '@/helpers/Client';
 import { Router } from 'express';
 const router = Router();
 

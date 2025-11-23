@@ -1,4 +1,4 @@
-import { FileType, Prisma } from '@prisma/client';
+import { FileType, Prisma } from '@/types/generated/client';
 
 export interface createFile {
   path: string

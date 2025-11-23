@@ -1,5 +1,5 @@
-import { Prisma } from '@prisma/client';
-import { AuditLogEventName, AuditLogResourceType, ListenerType } from '@prisma/client';
+import type { AuditLogEventName, AuditLogResourceType, ListenerType } from '@/types/generated/client';
+import { Prisma } from '@/types/generated/client';
 
 export interface CreateAuditLogEntryParams {
   eventName: AuditLogEventName;

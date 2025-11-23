@@ -3,7 +3,8 @@ src/utils/logs
 
 # Prisma
 prisma/migrations/
-prisma/backups/*
+prisma/backups/
+src/types/generated/
 !prisma/backups/README.md
 
 # Uploaded content

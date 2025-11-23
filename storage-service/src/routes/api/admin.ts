@@ -1,10 +1,10 @@
-import { getFiles, getFilesGrowth, getFileSizeCategories, getMimeTypes, getRecentlyUploaded } from '../../controllers/admin/files';
-import { getConfig, getCronJobs, getCronJobsByName, getMimeTypesSearch, getStats, getSystemStats, postConfig, postCronJobsByName, postCronJobsByNameRun, postNotification } from '../../controllers/admin';
-import type Client from '../../helpers/Client';
-import { checkAdmin } from '../../middleware';
+import { getConfig, getCronJobs, getCronJobsByName, getMimeTypesSearch, getStats, getSystemStats, postConfig, postCronJobsByName, postCronJobsByNameRun, postNotification } from '@/controllers/admin';
+import { getActivityList, getActivityRequests, getActivityTraffic, getNetworkStats, getUserAgents } from '@/controllers/admin/network';
+import { getFiles, getFilesGrowth, getFileSizeCategories, getMimeTypes, getRecentlyUploaded } from '@/controllers/admin/files';
+import { deletePlan, getPlanStats, getPlanTrends, patchPlan, postPlan } from '@/controllers/admin/plans';
+import type Client from '@/helpers/Client';
+import { checkAdmin } from '@/middleware';
 import { Router } from 'express';
-import { getActivityList, getActivityRequests, getActivityTraffic, getNetworkStats, getUserAgents } from '../../controllers/admin/network';
-import { deletePlan, getPlanStats, getPlanTrends, patchPlan, postPlan } from '../../controllers/admin/plans';
 const router = Router();
 
 export default async function(client: Client) {

@@ -1,5 +1,6 @@
-import { deleteNotification, deleteResetAvatar, getLinkedAccounts, getRecentlyViewed, getSessions, postChangeAvatar, postUserInformation, getTrash, deleteEmpty, putRestore, getUserGallery } from '../../controllers/session';
-import type Client from '../../helpers/Client';
+import { deleteNotification, deleteResetAvatar, getLinkedAccounts, getRecentlyViewed, getSessions,
+	postChangeAvatar, postUserInformation, getTrash, deleteEmpty, putRestore, getUserGallery } from '@/controllers/session';
+import type Client from '@/helpers/Client';
 import { Router } from 'express';
 const router = Router();
 

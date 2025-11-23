@@ -1,16 +1,16 @@
-import { exec, spawn } from 'node:child_process';
-import type { File, StorageMedium } from '@prisma/client';
+import type { File, StorageMedium } from '@/types/generated/client';
 import { pipeline as _pipeline, Readable } from 'node:stream';
-import { createCanvas } from 'canvas';
-import sharp from 'sharp';
-import { join } from 'node:path';
+import { handleFFMPEGEncoding } from '../utils/Streams';
 import FileManager from './FileOperationManager';
+import { exec, spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { createCanvas } from 'canvas';
+import type Client from './Client';
+import { join } from 'node:path';
 import { promisify } from 'util';
 import { tmpdir } from 'node:os';
-import { randomUUID } from 'node:crypto';
-import { handleFFMPEGEncoding } from '../utils/Streams';
-import Client from './Client';
+import sharp from 'sharp';
 const pipeline = promisify(_pipeline);
 
 export default class ThumbnailCreator {

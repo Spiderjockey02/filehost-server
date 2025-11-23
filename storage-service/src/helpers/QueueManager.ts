@@ -1,12 +1,4 @@
-type Task<T> = () => Promise<T>;
-
-interface QueuedTask<T> {
-  task: Task<T>;
-  resolve: (value: T) => void;
-  reject: (reason?: any) => void;
-}
-
-type queueKeys = 'NOTIFICATIONS' | 'AUDIT_LOGS'
+import type { QueuedTask, queueKeys, Task } from '@/types';
 
 export default class QueueManager {
 	private queues: Map<string, QueuedTask<any>[]> = new Map();

@@ -1,7 +1,7 @@
-import { fetchActivity, UserActivityInput } from 'src/types/database/UserActivity';
-import { Pagination } from 'src/types/database/File';
+import type { fetchActivity, fetchUserAgentsParams, UserActivityInput } from '@/types/database/UserActivity';
+import type { UserActivity, UserAgent } from '@/types/generated/client';
+import type { Pagination } from '@/types/database/File';
 import client from './prisma';
-import { UserActivity, UserAgent } from '@prisma/client';
 
 export default class UserActivityAccessor {
 	/**
@@ -165,11 +165,25 @@ export default class UserActivityAccessor {
 	  * Fetch the list of user agents
 	  * @returns {UserAgent[]} list of user agents
 	*/
-	async fetchUserAgents(): Promise<UserAgent[]> {
-		return client.userAgent.findMany({
-			include: {
-				_count: true,
-			},
-		});
+	async fetchUserAgents({ sortBy, sortOrder, page = 0 }: fetchUserAgentsParams): Promise<[UserAgent[], number]> {
+		return Promise.all([
+			client.userAgent.findMany({
+				include: {
+					_count: true,
+				},
+				orderBy: {
+					agent: sortBy == 'name' ? sortOrder : undefined,
+					activity: sortBy == 'activity' ? {
+						_count: sortOrder,
+					} : undefined,
+					logs: sortBy == 'logs' ? {
+						_count: sortOrder,
+					} : undefined,
+				},
+				take: 20,
+				skip: page * 20,
+			}),
+			client.userAgent.count(),
+		]);
 	}
 }

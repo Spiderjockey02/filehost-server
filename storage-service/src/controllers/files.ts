@@ -1,8 +1,8 @@
-import { getSession, parseForm } from '../middleware';
-import { Error, getIP, sanitiseObject } from '../utils';
+import { Error, getIP, sanitiseObject } from '@/utils';
+import { getSession, parseForm } from '@/middleware';
+import { FileType } from '@/types/generated/client';
 import type { Request, Response } from 'express';
-import type Client from '../helpers/Client';
-import { FileType } from '@prisma/client';
+import type Client from '@/helpers/Client';
 
 // Endpoint GET /api/files/:path
 export const getFiles = (client: Client) => {
@@ -404,7 +404,7 @@ export const getSearchFile = (client: Client) => {
 			const files = await client.FileManager.searchByName(session.user.id, srch, type);
 
 			// Only need to send the name and path for search query
-			res.json({ query: sanitiseObject(files) });
+			res.json({ files: sanitiseObject(files) });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to search for item.');

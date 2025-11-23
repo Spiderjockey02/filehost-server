@@ -1,16 +1,16 @@
 import { S3Client, GetObjectCommand, DeleteObjectCommand, CopyObjectCommand, ListObjectsV2Command, HeadObjectCommand, S3ServiceException } from '@aws-sdk/client-s3';
-import type { File } from '@prisma/client';
-import archiver from 'archiver';
-import type { Response } from 'express';
-import stream from 'stream';
-import { promisify } from 'node:util';
-import { StorageProvider } from 'src/types';
-import { parseS3Url } from '../../utils';
-const pipeline = promisify(stream.pipeline);
+import type { FullFile } from '@/types/database/File';
+import type { File } from '@/types/generated/client';
+import type { StorageProvider } from '@/types';
 import { Upload } from '@aws-sdk/lib-storage';
+import type Client from '@/helpers/Client';
 import { PassThrough } from 'node:stream';
-import Client from '../Client';
-import { FullFile } from 'src/types/database/File';
+import type { Response } from 'express';
+import { promisify } from 'node:util';
+import { parseS3Url } from '@/utils';
+import archiver from 'archiver';
+import stream from 'stream';
+const pipeline = promisify(stream.pipeline);
 
 export default class S3Manager implements StorageProvider {
 	client: Client;

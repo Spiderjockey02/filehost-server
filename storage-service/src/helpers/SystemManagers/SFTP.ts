@@ -1,13 +1,13 @@
-import { File } from '@prisma/client';
-import { Response } from 'express';
-import { SFTPOptions, StorageProvider } from 'src/types';
+import type { SFTPOptions, StorageProvider } from '@/types';
 import { PassThrough, Readable, Writable } from 'stream';
-import Client from '../Client';
+import type { File } from '@/types/generated/client';
+import type Client from '@/helpers/Client';
 import SFTPClient from 'ssh2-sftp-client';
-import { parseSFTPUrl } from '../../utils';
+import { parseSFTPUrl } from '@/utils';
+import { promisify } from 'node:util';
+import { Response } from 'express';
 import archiver from 'archiver';
 import strm from 'stream';
-import { promisify } from 'node:util';
 import path from 'path';
 const pipeline = promisify(strm.pipeline);
 

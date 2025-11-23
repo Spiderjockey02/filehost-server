@@ -1,8 +1,8 @@
-import { AddAuditLogListenerParams, CreateAuditLogEntryParams, fetchAuditLogsParams, FullAuditLogListener, UpdateAuditLogListenerParams } from 'src/types/database/AuditLogs';
-import { AuditLog, AuditLogListener, AuditLogNames, AuditLogResourceType } from '@prisma/client';
+import type { AddAuditLogListenerParams, CreateAuditLogEntryParams, fetchAuditLogsParams, FullAuditLogListener, UpdateAuditLogListenerParams } from '@/types/database/AuditLogs';
+import type { AuditLog, AuditLogListener, AuditLogNames, AuditLogResourceType } from '@/types/generated/client';
 import { parseIP, parseUserAgent } from '../utils';
+import type Client from '@/helpers/Client';
 import client from './prisma';
-import Client from 'src/helpers/Client';
 
 export default class AuditLogAccessor {
 	listeners: Map<string, FullAuditLogListener>;

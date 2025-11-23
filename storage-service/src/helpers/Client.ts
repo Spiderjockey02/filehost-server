@@ -1,20 +1,19 @@
-import RecentlyViewedFileManager from '../accessors/RecentlyViewedFile';
-import NotificationManager from '../accessors/Notification';
-import SessionManager from '../accessors/Session';
-import FileManager from './FileOperationManager';
-import UserManager from '../accessors/User';
-import Logger from '../utils/Logger';
-import CRONManager from './CRONManager';
-import QueueManager from './QueueManager';
-import StorageManager from './StorageManager';
+import RecentlyViewedFileManager from '@/accessors/RecentlyViewedFile';
+import type { AuditLogListener } from '@/types/generated/client';
+import type { FullAuditLog } from '@/types/database/AuditLogs';
+import NotificationManager from '@/accessors/Notification';
+import FileManager from '@/helpers/FileOperationManager';
 import UserActivityManager from './UserActivityManager';
-import { Server } from 'socket.io';
+import AuditLogAccessor from '@/accessors/AuditLog';
+import SessionManager from '@/accessors/Session';
+import { parseUserAgent, Logger } from '@/utils';
 import { ConfigManager } from './ConfigManager';
-import AuditLogAccessor from '../accessors/AuditLog';
-import { AuditLogListener } from '@prisma/client';
-import { FullAuditLog } from 'src/types/database/AuditLogs';
-import { parseUserAgent } from '../utils';
-import PlanAccessor from '../accessors/Plan';
+import StorageManager from './StorageManager';
+import PlanAccessor from '@/accessors/Plan';
+import UserManager from '@/accessors/User';
+import QueueManager from './QueueManager';
+import CRONManager from './CRONManager';
+import type { Server } from 'socket.io';
 
 export default class Client {
 	logger: Logger;

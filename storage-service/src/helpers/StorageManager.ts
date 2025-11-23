@@ -1,11 +1,11 @@
-import StorageAccessor from '../accessors/Storage';
+import type { StorageMedium, File } from '@/types/generated/client';
 import FileSystemManager from './SystemManagers/FileSystem';
-import { StorageMedium, File } from '@prisma/client';
+import { S3ServiceException } from '@aws-sdk/client-s3';
+import StorageAccessor from '@/accessors/Storage';
+import SFTPManager from './SystemManagers/SFTP';
+import type { StorageProvider } from '@/types';
 import S3Manager from './SystemManagers/S3';
 import Client from './Client';
-import { StorageProvider } from 'src/types';
-import { S3ServiceException } from '@aws-sdk/client-s3';
-import SFTPManager from './SystemManagers/SFTP';
 
 export default class StorageManager extends StorageAccessor {
 	client: Client;

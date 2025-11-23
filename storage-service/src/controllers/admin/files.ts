@@ -1,8 +1,8 @@
+import { validateFileGrowth, validateGrouped, validatePage } from '@/validators';
 import type { Request, Response } from 'express';
-import Client from 'src/helpers/Client';
-import { Error, sanitiseObject } from '../../utils';
-import { validateFileGrowth, validateGrouped, validatePage } from '../../validators';
-type countEnum = { [key: string | number]: number }
+import { Error, sanitiseObject } from '@/utils';
+import type Client from '@/helpers/Client';
+import type { CountMap } from '@/types';
 
 // Endpoint: GET /api/admin/files
 export const getFiles = (client: Client) => {
@@ -34,7 +34,7 @@ export const getFilesGrowth = (client: Client) => {
 
 		switch (result.data.frame) {
 			case 'yearly': {
-				const years: countEnum = {};
+				const years: CountMap = {};
 				const currentYear = new Date().getFullYear();
 				let cumulativeTotal = await client.FileManager.fetchUploadsBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1), result.data.storageId);
 
@@ -49,7 +49,7 @@ export const getFilesGrowth = (client: Client) => {
 				break;
 			}
 			case 'monthly': {
-				const months: countEnum = {};
+				const months: CountMap = {};
 				const current = new Date();
 				current.setDate(1);
 
@@ -72,7 +72,7 @@ export const getFilesGrowth = (client: Client) => {
 				break;
 			}
 			case 'daily': {
-				const days: countEnum = {};
+				const days: CountMap = {};
 				const today = new Date();
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);

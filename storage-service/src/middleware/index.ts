@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from 'express';
+import type { FullSession } from '@/types/database/Session';
+import { IncomingHttpHeaders } from 'node:http';
+import type Client from '@/helpers/Client';
 import avatarForm from './avatar-form';
 import parseForm from './parse-form';
-import { Error } from '../utils';
-import Client from 'src/helpers/Client';
-import { IncomingHttpHeaders } from 'node:http';
-import { FullSession } from 'src/types/database/Session';
+import { Error } from '@/utils';
 
 /**
   * Fetches the session from the request headers.

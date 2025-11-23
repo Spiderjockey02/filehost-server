@@ -1,8 +1,8 @@
-import type { GetUsers, fetchUserbyParam, updateUser, FullUser, storageDirection, setUserBan, AddToPlanProps, fetchByStorageIdParams } from '../types/database/User';
+import type { GetUsers, fetchUserbyParam, updateUser, FullUser, storageDirection, setUserBan, AddToPlanProps, fetchByStorageIdParams } from '@/types/database/User';
+import type { Account, User, UserBans } from '@/types/generated/client';
+import type { Pagination } from '@/types/database/File';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
-import { Pagination } from 'src/types/database/File';
-import { Account, User, UserBans } from '@prisma/client';
 
 export default class UserManager {
 	cache: LRUCache<string, FullUser>;

@@ -1,5 +1,5 @@
+import { AuditLogEventName } from '@/types/generated/client';
 import MIMEList from '../../assets/MIME-list.json';
-import { AuditLogEventName } from '@prisma/client';
 import { z } from 'zod';
 
 export const validatePage = z
@@ -121,8 +121,12 @@ export const validateNotification = z.object({
 		.min(1, { message: 'title must be a string with at least 1 character.' }),
 	url: z
 		.string()
-		.startsWith('/', { message: 'url must start with /.' })
-		.optional(),
+		.optional()
+		.refine(
+			(val) => !val || val === '' || val.startsWith('/'),
+			{ message: 'url must start with /.' },
+		)
+		.transform((val) => (val === '' ? undefined : val)),
 	userId: z
 		.string()
 		.min(1, { message: 'userId must be a string with at least 1 character.' }),

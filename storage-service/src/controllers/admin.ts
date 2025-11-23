@@ -1,12 +1,12 @@
-import type { Request, Response } from 'express';
-import type Client from '../helpers/Client';
-import { Error, getIP, PATHS } from '../utils';
-import os from 'os';
-import fs from 'fs/promises';
+import { validateConfig, validateCRONSchedule, validateNotification } from '@/validators';
+import type { CronJobLog } from '@/types/generated/client';
 import MIMEList from '../../assets/MIME-list.json';
-import { CronJobLog } from '@prisma/client';
-import { getSession } from '../middleware';
-import { validateConfig, validateCRONSchedule, validateNotification } from '../validators';
+import type { Request, Response } from 'express';
+import { Error, getIP, PATHS } from '@/utils';
+import type Client from '@/helpers/Client';
+import { getSession } from '@/middleware';
+import fs from 'fs/promises';
+import os from 'os';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {

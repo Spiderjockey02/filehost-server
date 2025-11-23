@@ -1,5 +1,5 @@
-import type { createFile, fetchByOwner, fetchFileMediaTypesParams, FullFile, Pagination, updateFile, updateFilePath } from '../types/database/File';
-import type { File, FileType, MediaType } from '@prisma/client';
+import type { createFile, fetchByOwner, fetchFileMediaTypesParams, FullFile, Pagination, updateFile, updateFilePath } from '@/types/database/File';
+import type { File, FileType, MediaType } from '@/types/generated/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
 

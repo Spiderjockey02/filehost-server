@@ -1,6 +1,6 @@
-import { getDatabaseBackups, deleteBackupByName, downloadBackupByName } from '../../../controllers/admin/database';
-import type Client from '../../../helpers/Client';
-import { checkAdmin } from '../../../middleware';
+import { getDatabaseBackups, deleteBackupByName, downloadBackupByName } from '@/controllers/admin/database';
+import type Client from '@/helpers/Client';
+import { checkAdmin } from '@/middleware';
 import { Router } from 'express';
 const router = Router();
 

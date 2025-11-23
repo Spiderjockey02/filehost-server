@@ -1,7 +1,7 @@
-import type { File } from '@prisma/client';
+import type { UserWithPlan } from '@/types/database/User';
+import type { File } from '@/types/generated/client';
+import prismaClient from '@/accessors/prisma';
 import Client from './Client';
-import prismaClient from '../accessors/prisma';
-import { UserWithPlan } from 'src/types/database/User';
 
 export default class TrashHandler {
 	client: Client;

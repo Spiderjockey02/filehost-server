@@ -1,7 +1,7 @@
-import type { UserActivityInput } from 'src/types/database/UserActivity';
-import { IpAddress, UserAgent } from '@prisma/client';
-import UserActivity from '../accessors/UserActivity';
-import { parseIP, parseUserAgent } from '../utils';
+import type { UserActivityInput } from '@/types/database/UserActivity';
+import type { IpAddress, UserAgent } from '@/types/generated/client';
+import UserActivity from '@/accessors/UserActivity';
+import { parseIP, parseUserAgent } from '@/utils';
 import client from '../accessors/prisma';
 import { LRUCache } from 'lru-cache';
 

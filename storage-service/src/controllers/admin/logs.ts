@@ -1,25 +1,19 @@
+import { validateAdminLogs, validateFrame, validateLogListener } from '@/validators';
+import type { AuditLogEventName, ListenerType } from '@/types/generated/client';
 import type { Request, Response } from 'express';
-import { Error, getIP } from '../../utils';
-import fs from 'fs/promises';
-import Client from 'src/helpers/Client';
+import type { EntityCountMap } from '@/types';
+import type Client from '@/helpers/Client';
+import { getSession } from '@/middleware';
+import { Error, getIP } from '@/utils';
 import { existsSync } from 'fs';
-import { getSession } from '../../middleware';
-import { AuditLogEventName, ListenerType } from '@prisma/client';
-import { validateAdminLogs, validateFrame, validateLogListener } from '../../validators';
-type countEnum = { [key: string | number]: {
-	user: number
-	file: number
-	storage: number
-	system: number
-	session: number
-} }
+import fs from 'fs/promises';
 
 // Endpoint: GET /api/admin/logs
 export const getLogs = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const { userId, page, eventName, sortOrder } = req.query;
-			const result = validateAdminLogs.safeParse({ userId, page, eventName, sortOrder });
+			const result = validateAdminLogs.safeParse({ userId, page, eventName: eventName == '' ? undefined : eventName, sortOrder });
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			const { logs, total } = await client.AuditLogManager.fetch({ ...result.data, eventName: result.data.eventName as AuditLogEventName });
@@ -61,7 +55,7 @@ export const getLogHistory = (client: Client) => {
 
 		switch (frame) {
 			case 'yearly': {
-				const years: countEnum = {};
+				const years: EntityCountMap = {};
 				const currentYear = new Date().getFullYear();
 				let cumulativeTotal = await Promise.all([
 					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1)),
@@ -95,7 +89,7 @@ export const getLogHistory = (client: Client) => {
 				break;
 			}
 			case 'monthly': {
-				const months: countEnum = {};
+				const months: EntityCountMap = {};
 				const current = new Date();
 				current.setDate(1);
 
@@ -138,7 +132,7 @@ export const getLogHistory = (client: Client) => {
 				break;
 			}
 			case 'daily': {
-				const days: countEnum = {};
+				const days: EntityCountMap = {};
 				const today = new Date();
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);

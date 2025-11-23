@@ -1,8 +1,9 @@
-import Client from 'src/helpers/Client';
+import { HTTPMethod } from '@/types/generated/client';
 import type { Request, Response } from 'express';
-import { Error } from '../../utils';
-import { HTTPMethod } from '@prisma/client';
-import { validateFrame } from '../../validators';
+import { validateFrame } from '@/validators';
+import type Client from '@/helpers/Client';
+import type { CountMap, TrafficHistoryByDate } from '@/types';
+import { Error } from '@/utils';
 
 // Endpoint: GET /api/admin/network/stats
 export const getNetworkStats = (client: Client) => {
@@ -25,7 +26,6 @@ export const getNetworkStats = (client: Client) => {
 };
 
 // Endpoint: GET /api/admin/network/requests
-type countEnum = { [key: string | number]: number }
 export const getActivityRequests = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const frame = req.query.frame;
@@ -34,7 +34,7 @@ export const getActivityRequests = (client: Client) => {
 
 		switch (frame) {
 			case 'yearly': {
-				const years: countEnum = {};
+				const years: CountMap = {};
 				const currentYear = new Date().getFullYear();
 				let cumulativeTotal = await client.userActivityManager.fetchActivityBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1));
 
@@ -49,7 +49,7 @@ export const getActivityRequests = (client: Client) => {
 				break;
 			}
 			case 'monthly': {
-				const months: countEnum = {};
+				const months: CountMap = {};
 				const current = new Date();
 				current.setDate(1);
 
@@ -72,7 +72,7 @@ export const getActivityRequests = (client: Client) => {
 				break;
 			}
 			case 'daily': {
-				const days: countEnum = {};
+				const days: CountMap = {};
 				const today = new Date();
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);
@@ -96,7 +96,7 @@ export const getActivityRequests = (client: Client) => {
 				break;
 			}
 			case 'hourly': {
-				const hours: countEnum = {};
+				const hours: CountMap = {};
 				const now = new Date();
 				const frameStart = new Date(now);
 				frameStart.setHours(now.getHours() - 23, 0, 0, 0);
@@ -121,14 +121,6 @@ export const getActivityRequests = (client: Client) => {
 	};
 };
 
-
-type histoyrDtata = {
-	[key: string]: {
-		incomingBytes: number | null
-		outgoingBytes: number | null
-	}
-}
-
 // Endpoint: GET /api/admin/network/traffic
 export const getActivityTraffic = (client: Client) => {
 	return async (req: Request, res: Response) => {
@@ -138,7 +130,7 @@ export const getActivityTraffic = (client: Client) => {
 
 		switch (frame) {
 			case 'yearly': {
-				const years: histoyrDtata = {};
+				const years: TrafficHistoryByDate = {};
 				const currentYear = new Date().getFullYear();
 
 				for (let i = 9; i >= 0; i--) {
@@ -153,7 +145,7 @@ export const getActivityTraffic = (client: Client) => {
 				break;
 			}
 			case 'monthly': {
-				const months: histoyrDtata = {};
+				const months: TrafficHistoryByDate = {};
 				const current = new Date();
 				current.setDate(1);
 
@@ -176,7 +168,7 @@ export const getActivityTraffic = (client: Client) => {
 				break;
 			}
 			case 'daily': {
-				const days: histoyrDtata = {};
+				const days: TrafficHistoryByDate = {};
 				const today = new Date();
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);
@@ -200,7 +192,7 @@ export const getActivityTraffic = (client: Client) => {
 				break;
 			}
 			case 'hourly': {
-				const hours: histoyrDtata = {};
+				const hours: TrafficHistoryByDate = {};
 				const now = new Date();
 				const frameStart = new Date(now);
 				frameStart.setHours(now.getHours() - 23, 0, 0, 0);
@@ -258,10 +250,14 @@ export const getActivityList = (client: Client) => {
 
 // Endpoint: GET /api/admin/network/user-agents
 export const getUserAgents = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return async (req: Request, res: Response) => {
 		try {
-			const agents = await client.userActivityManager.fetchUserAgents();
-			res.json({ agents });
+			const { sortBy, sortOrder, page } = req.query;
+			if (typeof sortBy !== 'string' || (sortBy !== 'name' && sortBy !== 'activity' && sortBy !== 'logs')) return Error.IncorrectQuery(res, 'sortBy must be a name or activity');
+			if (typeof sortOrder !== 'string' || (sortOrder !== 'desc' && sortOrder !== 'asc')) return Error.IncorrectQuery(res, 'sortOrder must be desc or asc');
+
+			const agents = await client.userActivityManager.fetchUserAgents({ sortBy, sortOrder, page: Number(page) });
+			res.json({ agents: agents[0], total: agents[1] });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user agents.');

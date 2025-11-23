@@ -1,9 +1,9 @@
-import type { Request, Response } from 'express';
-import type Client from '../helpers/Client';
-import { getSession } from '../middleware';
-import { Error, getIP, sanitiseObject } from '../utils';
-import { User } from '@prisma/client';
 import { S3ServiceException } from '@aws-sdk/client-s3';
+import { Error, getIP, sanitiseObject } from '@/utils';
+import type { User } from '@/types/generated/client';
+import type { Request, Response } from 'express';
+import type Client from '@/helpers/Client';
+import { getSession } from '@/middleware';
 
 // Endpoint GET /avatar/:userId
 export const getAvatar = (client: Client) => {
