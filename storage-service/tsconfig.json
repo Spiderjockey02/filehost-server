@@ -30,5 +30,5 @@
     "verbatimModuleSyntax": false,
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "prisma.config.ts"]
 }
