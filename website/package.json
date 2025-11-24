@@ -46,7 +46,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.1",
     "eslint-config-next": "^15.3.0",
     "prisma": "^6.4.1",
     "typescript": "^5.4.5"
