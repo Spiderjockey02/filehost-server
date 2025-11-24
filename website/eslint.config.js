@@ -4,7 +4,7 @@ import nextPlugin from '@next/eslint-plugin-next';
 
 export default [
 	{
-		ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**'],
+		ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/src/types/generated/**'],
 	},
 	{
 		files: ['**/*.{js,jsx,ts,tsx}'],
