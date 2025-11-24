@@ -1,15 +1,21 @@
-/**
-  * @type {import('next').NextConfig}
-**/
-const nextConfig = {
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
 	reactStrictMode: true,
 	webpack: (config) => {
+		config.resolve = config.resolve || {};
+		config.resolve.extensionAlias = {
+			...(config.resolve.extensionAlias || {}),
+			'.js': ['.js', '.ts'],
+			'.mjs': ['.mjs', '.mts'],
+		};
 		config.resolve.fallback = { fs: false };
 		return config;
 	},
 	images: {
-		remotePatterns: [new URL('https://cdn.discordapp.com/**') ],
+		remotePatterns: [new URL('https://cdn.discordapp.com/**'), new URL('https://placehold.co/**') ],
 	},
+	allowedDevOrigins: ['192.168.0.170'],
 	rewrites: async () => {
 		return [
 		 {
@@ -40,4 +46,4 @@ const nextConfig = {
 	},
 };
 
-module.exports = nextConfig;
+export default nextConfig;
