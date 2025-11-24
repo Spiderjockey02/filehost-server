@@ -2,11 +2,10 @@ import { faCheck, faRedoAlt, faSave, faX } from '@fortawesome/free-solid-svg-ico
 import type { AdminCRONJobLogsModalProps } from '@/types/Components/Modals';
 import { generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { CronJobLog } from '@prisma/client';
+import type { CronJobLog } from '@/types/generated/browser';
+import { Table, InputField } from '@/components';
 import { useQuery } from '@tanstack/react-query';
-import InputField from '../../Form/InputField';
 import { Modal } from 'react-bootstrap';
-import Table from '../../UI/Table';
 import { useState } from 'react';
 import axios from 'axios';
 

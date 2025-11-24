@@ -1,4 +1,4 @@
-import { File, Plan } from '@prisma/client';
+import { File, Plan } from '@/types/generated/browser';
 import type { Session, User } from 'better-auth';
 
 export interface DatabaseBackup {

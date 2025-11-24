@@ -1,11 +1,10 @@
 import { format, generatePlaceholderTable, parseUserAgent } from '@/utils/functions';
+import { AuditLogEventName, type AuditLog } from '@/types/generated/browser';
 import { faSortUp, faSortDown } from '@fortawesome/free-solid-svg-icons';
 import type { ListAuditLogsFilterProps } from '@/types/Components/Card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { Table, CollapsibleCard } from '@/components';
-import { AuditLogEventName } from '@prisma/client';
-import type { AuditLog } from '@prisma/client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 

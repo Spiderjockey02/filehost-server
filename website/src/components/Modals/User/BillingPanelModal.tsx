@@ -1,9 +1,9 @@
 import type { BillingPanelModalProps } from '@/types/Components/Modals';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/components/Hooks/ToastManager';
+import type { Plan } from '@/types/generated/browser';
 import { formatBytes } from '@/utils/functions';
 import { authClient } from '@/auth/client';
-import type { Plan } from '@prisma/client';
 import { Col, Row } from '../../UI/Grid';
 import { Modal } from 'react-bootstrap';
 

@@ -1,9 +1,9 @@
-import type { ImageLoaderProps } from 'next/image';
 import { useState, useEffect, useMemo, useRef } from 'react';
+import type { GalleryProps } from '@/types/Components/Views';
+import type { ImageLoaderProps } from 'next/image';
+import { File } from '@/types/generated/browser';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { GalleryProps } from '@/types/Components/Views';
-import { File } from '@prisma/client';
 
 export default function Gallery({ files }: GalleryProps) {
 	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${files[0].userId}${encodeURI(src)}`;

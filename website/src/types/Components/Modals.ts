@@ -1,7 +1,7 @@
-import { CronJob, File, Plan, UserActivity } from '@prisma/client';
-import { DatabaseBackup } from '..';
-import { RefetchOptions, QueryObserverResult } from '@tanstack/react-query';
-import { FullAuditLogListener, StorageWithCounts } from '../database';
+import type { CronJob, File, Plan, UserActivity } from '@/types/generated/browser';
+import type { RefetchOptions, QueryObserverResult } from '@tanstack/react-query';
+import type { FullAuditLogListener, StorageWithCounts } from '../database';
+import type { DatabaseBackup } from '..';
 
 export interface BaseModalProps {
   show: boolean;

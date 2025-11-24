@@ -1,9 +1,9 @@
-import { BaseSyntheticEvent, useState } from 'react';
-import { FileModalProps } from '@/types/Components/Modals';
-import axios from 'axios';
+import type { FileModalProps } from '@/types/Components/Modals';
 import { useFolderRefetch } from '../../Hooks/FileManager';
-import { File } from '@prisma/client';
+import type { File } from '@/types/generated/browser';
+import { BaseSyntheticEvent, useState } from 'react';
 import { Modal } from 'react-bootstrap';
+import axios from 'axios';
 
 type FolderNode = {
 	name: string;

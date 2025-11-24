@@ -1,6 +1,6 @@
-import { ActiveElement, Chart as ChartJS, ChartData, ChartEvent, ChartOptions, ChartType, ChartTypeRegistry } from 'chart.js';
-import { CSSProperties } from 'react';
-import { StringNumberObj } from '..';
+import type { ActiveElement, Chart as ChartJS, ChartData, ChartEvent, ChartOptions, ChartType, ChartTypeRegistry } from 'chart.js';
+import type { CSSProperties } from 'react';
+import type { StringNumberObj } from '..';
 
 export interface ChartProps<TType extends ChartType = keyof ChartTypeRegistry> {
   data: ChartData<TType>

@@ -1,7 +1,7 @@
 import type { AdminEditListenerModalProps } from '@/types/Components/Modals';
+import { AuditLogEventName } from '@/types/generated/browser';
 import type { AuditListenerFormError } from '@/types/errors';
 import { useToast } from '@/components/Hooks/ToastManager';
-import { AuditLogEventName } from '@prisma/client';
 import { Modal } from 'react-bootstrap';
 import { InputField } from '../..';
 import Select from 'react-select';

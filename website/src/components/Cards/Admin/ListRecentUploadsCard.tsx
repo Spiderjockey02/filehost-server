@@ -1,8 +1,8 @@
 import { format, formatBytes, generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import type { AdminListActivitiesCardProps } from '@/types/Components/Card';
 import { Table, CollapsibleCard } from '@/components';
+import type { File } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
-import type { File } from '@prisma/client';
 import { useState } from 'react';
 import Link from 'next/link';
 

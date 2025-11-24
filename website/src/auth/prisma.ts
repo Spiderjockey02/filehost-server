@@ -1,12 +1,22 @@
-import { PrismaClient } from '@prisma/client';
+import { parseMySQLConnectionString } from '@/utils/functions';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaClient } from '@/types/generated/client';
 
-const client = new PrismaClient({ errorFormat: 'pretty',
-	log: [
-		{ level: 'info', emit: 'event' },
-		{ level: 'warn', emit: 'event' },
-		{ level: 'error', emit: 'event' },
-	],
+const database = parseMySQLConnectionString(process.env.DATABASE_URL as string);
+const adapter = new PrismaMariaDb({
+	host: database.host,
+	user: database.username,
+	password: database.password,
+	database: database.database,
+	connectionLimit: 30,
 });
+
+const client = new PrismaClient({ log: [
+	{ level: 'query', emit: 'event' },
+	{ level: 'info', emit: 'event' },
+	{ level: 'warn', emit: 'event' },
+	{ level: 'error', emit: 'event' },
+], adapter });
 
 const extendedClient = client.$extends({
 	query: {

@@ -2,9 +2,9 @@ import { generatePlaceholderTable, formatBytes, queryOptions } from '@/utils/fun
 import { AdminEditPlanModal, AdminCreatePlanModal } from '@/components/Modals';
 import { faAdd, faPen } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { Plan } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
 import { Table, Card } from '@/components';
-import { Plan } from '@prisma/client';
 import { useState } from 'react';
 
 export default function AdminManageSubscriptionCard() {

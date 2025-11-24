@@ -1,6 +1,6 @@
-import { File } from '@prisma/client';
-import { MouseEvent } from 'react';
-import { FileWithChildren } from '../database';
+import type { File } from '@/types/generated/browser';
+import type { FileWithChildren } from '../database';
+import type { MouseEvent } from 'react';
 
 export interface FileDetailCellProps {
   file: File

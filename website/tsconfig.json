@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2015",
+    "target": "es2023",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -20,5 +20,5 @@
     },
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "./src/types/better-auth.d.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "prisma.config.ts"]
 }

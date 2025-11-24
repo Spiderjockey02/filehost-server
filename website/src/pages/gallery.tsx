@@ -1,9 +1,9 @@
 import type { GetServerSidePropsContext } from 'next';
+import type { File } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
 import Gallery from '@/components/views/Gallery';
 import { authClient } from '@/auth/client';
-import type { File } from '@prisma/client';
 import FileLayout from '@/layouts/file';
 import type { User } from 'better-auth';
 

@@ -1,10 +1,10 @@
 import { AdminListActivitiesCard, AdminListRecentUploadsCard, AdminListSessionsCard, AdminManageUserCard, AdminManageUserNotficationsCard } from '@/components/Cards';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { AdminUserIdPageProps } from '@/types/pages';
+import type { UserBans } from '@/types/generated/browser';
 import type { GetServerSidePropsContext } from 'next';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
-import type { UserBans } from '@prisma/client';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
 import type { AdminUser } from '@/types';

@@ -1,7 +1,7 @@
-import { BaseSyntheticEvent, CSSProperties, ReactNode, Ref } from 'react';
-import type { Notification } from '@prisma/client';
-import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { GridLayoutProps } from './Layout';
+import type { BaseSyntheticEvent, CSSProperties, ReactNode, Ref } from 'react';
+import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import type { Notification } from '@/types/generated/browser';
+import type { GridLayoutProps } from './Layout';
 
 export interface ModalProps {
   id: string

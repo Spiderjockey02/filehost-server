@@ -3,8 +3,8 @@ import { faCircleInfo, faDownLong, faUpLong } from '@fortawesome/free-solid-svg-
 import type { AdminListActivitiesCardProps } from '@/types/Components/Card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminActivityDetailsModal } from '@/components/Modals';
+import type { UserActivity } from '@/types/generated/browser';
 import { Table, CollapsibleCard } from '@/components';
-import type { UserActivity } from '@prisma/client';
 import { useQuery } from '@tanstack/react-query';
 import { ChangeEvent, useState } from 'react';
 import Link from 'next/link';

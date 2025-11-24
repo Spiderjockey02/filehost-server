@@ -1,12 +1,14 @@
 import { faFile, faFileAlt, faFileAudio, faFileImage, faFilePdf, faFileVideo, faFolder } from '@fortawesome/free-solid-svg-icons';
+import type { NextApiRequestCookies } from 'next/dist/server/api-utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { File } from '@prisma/client';
+import type { MySQLConnectionOptions } from '@/types/database';
+import type { File } from '@/types/generated/browser';
 import { UAParser } from 'ua-parser-js';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
 import { IncomingMessage } from 'http';
-import { NextApiRequestCookies } from 'next/dist/server/api-utils';
 import { NextRouter } from 'next/router';
+
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -137,4 +139,13 @@ export function signOutOptions(router: NextRouter) {
 			},
 		},
 	};
+}
+
+export function parseMySQLConnectionString(connectionString: string): MySQLConnectionOptions {
+	const regex = /^mysql:\/\/([^:]+):([^/]+)@([^/:]+):(\d+)\/(.+)$/;
+	const match = connectionString.match(regex);
+
+	if (!match) throw 'Invalid MySQL connection string format';
+	const [, username, password, host, port, database] = match;
+	return { username, password, host, database, port: parseInt(port, 10) };
 }

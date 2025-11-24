@@ -1,4 +1,4 @@
-import { File, Prisma } from '@prisma/client';
+import { File, Prisma } from '@/types/generated/browser';
 
 export type UserHistoryWithFile = Prisma.RecentlyViewedFileGetPayload<{
   include: {
@@ -88,3 +88,11 @@ export type FullAuditLogListener = Prisma.AuditLogListenerGetPayload<{
     events: true
   }
 }>
+
+export interface MySQLConnectionOptions {
+  username: string
+	password: string
+	host: string
+	port: number
+	database: string
+}

@@ -1,11 +1,11 @@
+import { FileViewProps, sortKeyTypes, SortOrder } from '@/types/Components/Tables';
 import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FileViewProps, sortKeyTypes, SortOrder } from '@/types/Components/Tables';
 import { useState, MouseEvent, useMemo } from 'react';
+import type { File } from '@/types/generated/browser';
 import FileItemRow from './FileItemRow';
-import Table from '../UI/Table';
 import { FileContextMenu } from '..';
-import { File } from '@prisma/client';
+import Table from '../UI/Table';
 
 const initalContextMenu = {
 	show: false,

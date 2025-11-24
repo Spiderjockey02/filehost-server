@@ -1,10 +1,10 @@
 import type { BaseModalProps } from '@/types/Components/Modals';
+import { AuditLogEventName } from '@/types/generated/browser';
 import type { AuditListenerFormError } from '@/types/errors';
 import { useToast } from '@/components/Hooks/ToastManager';
-import { AuditLogEventName } from '@prisma/client';
 import SelectField from '../../Form/SelectField';
-import InputField from '../../Form/InputField';
 import { FormEvent, useState } from 'react';
+import { InputField } from '@/components';
 import { Modal } from 'react-bootstrap';
 import Select from 'react-select';
 import axios from 'axios';

@@ -1,7 +1,7 @@
-import { UserHistoryWithFile } from '../database';
+import type { UserHistoryWithFile } from '../database';
+import type { adminSidebarTabs } from '../pages';
+import type { ReactElement } from 'react';
 import type { User } from 'better-auth';
-import { adminSidebarTabs } from '../pages';
-import { ReactElement } from 'react';
 
 export type viewTypeTypes = 'List' | 'Tiles';
 

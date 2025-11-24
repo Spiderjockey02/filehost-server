@@ -1,5 +1,5 @@
-import { Prisma, UserBans } from '@prisma/client';
-import { AdminUser } from '..';
+import type { Prisma, UserBans } from '@/types/generated/browser';
+import type { AdminUser } from '..';
 
 export interface AdminListActivitiesCardProps {
 	userId?: string;

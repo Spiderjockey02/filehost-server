@@ -1,14 +1,14 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faClock, faInbox } from '@fortawesome/free-solid-svg-icons';
-import { NotificationProps } from '@/types/Components/UI';
-import { useIsMobile } from '../Hooks/IsMobile';
-import { authClient } from '@/auth/client';
-import Link from 'next/link';
-import axios from 'axios';
-import { format } from '@/utils/functions';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { NotificationProps } from '@/types/Components/UI';
+import type { Notification } from '@/types/generated/browser';
 import { SyntheticEvent, useEffect, useState } from 'react';
 import { useSocket } from '../Hooks/SocketManager';
-import { Notification } from '@prisma/client';
+import { useIsMobile } from '../Hooks/IsMobile';
+import { authClient } from '@/auth/client';
+import { format } from '@/utils/functions';
+import Link from 'next/link';
+import axios from 'axios';
 
 export default function NotificationBell({ notifications: oldNotifs }: NotificationProps) {
 	const [notifications, setNotifications] = useState(oldNotifs);

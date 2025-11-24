@@ -1,7 +1,7 @@
-import { User } from 'better-auth';
-import { CSSProperties, ReactNode } from 'react';
-import { adminSidebarTabs } from '../pages';
-import { FileSideBarProps } from './Navbars';
+import type { CSSProperties, ReactNode } from 'react';
+import type { FileSideBarProps } from './Navbars';
+import type { adminSidebarTabs } from '../pages';
+import type { User } from 'better-auth';
 
 export interface GridLayoutProps {
 	readonly children?: ReactNode

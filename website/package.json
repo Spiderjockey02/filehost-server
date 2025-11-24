@@ -2,6 +2,7 @@
   "name": "website",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,6 +16,8 @@
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
     "@fortawesome/react-fontawesome": "^3.1.0",
     "@monaco-editor/react": "^4.7.0",
+    "@prisma/adapter-mariadb": "^7.0.0",
+    "@prisma/client": "^7.0.0",
     "@tanstack/react-query": "^5.76.1",
     "axios": "^1.9.0",
     "better-auth": "^1.2.3",
@@ -30,14 +33,13 @@
     "react-dom": "^19.0.0",
     "react-qr-code": "^2.0.18",
     "react-select": "^5.10.2",
-    "react-syntax-highlighter": "^15.6.1",
+    "react-syntax-highlighter": "^16.1.0",
     "sass": "^1.84.0",
     "socket.io-client": "^4.8.1",
-    "stripe": "^19.2.1",
+    "stripe": "^20.0.0",
     "ua-parser-js": "^2.0.3"
   },
   "devDependencies": {
-    "@prisma/client": "^6.6.0",
     "@types/bootstrap": "^5.2.10",
     "@types/node": "^20.19.25",
     "@types/nodemailer": "^7.0.4",
@@ -48,7 +50,7 @@
     "@typescript-eslint/parser": "^8.29.1",
     "eslint": "^9.39.1",
     "eslint-config-next": "^15.3.0",
-    "prisma": "^6.4.1",
+    "prisma": "^7.0.0",
     "typescript": "^5.4.5"
   }
 }

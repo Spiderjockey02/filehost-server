@@ -1,5 +1,5 @@
-import { FileWithDeepChildren } from '../database';
-import { Socket } from 'socket.io-client';
+import type { FileWithDeepChildren } from '../database';
+import type { Socket } from 'socket.io-client';
 
 export interface FileContextType {
 	file: FileWithDeepChildren | null;

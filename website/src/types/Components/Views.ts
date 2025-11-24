@@ -1,5 +1,5 @@
-import { FileWithChildren, FileWithCount } from '../database';
-import type { File } from '@prisma/client';
+import type { FileWithChildren, FileWithCount } from '../database';
+import type { File } from '@/types/generated/browser';
 
 export interface VideoPlayerProps {
   userId: string

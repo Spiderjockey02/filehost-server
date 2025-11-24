@@ -2,9 +2,9 @@ import { faQuestion, faCheck, faX, faCircleInfo } from '@fortawesome/free-solid-
 import { generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminCRONJobLogsModal } from '@/components/Modals';
+import type { CronJob } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Table } from '@/components';
-import { CronJob } from '@prisma/client';
 import { useState } from 'react';
 
 export default function AdminManageCRONjobsCard() {

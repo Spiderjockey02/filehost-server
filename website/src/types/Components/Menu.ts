@@ -1,4 +1,4 @@
-import { File } from '@prisma/client';
+import type { File } from '@/types/generated/browser';
 
 export interface FileContextMenuProps {
   x: number

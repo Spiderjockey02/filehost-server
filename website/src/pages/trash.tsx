@@ -1,17 +1,17 @@
 import { faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TrashContextMenu, FileDetailCell, Table } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useToast } from '@/components/Hooks/ToastManager';
 import { format, queryOptions } from '@/utils/functions';
+import { useState, MouseEvent, useEffect } from 'react';
+import type { File } from '@/types/generated/browser';
 import type { GetServerSidePropsContext } from 'next';
 import type { DeletedFile } from '@/types/database';
 import { useQuery } from '@tanstack/react-query';
-import { useState, MouseEvent, useEffect } from 'react';
 import { authClient } from '@/auth/client';
-import type { File } from '@prisma/client';
 import FileLayout from '@/layouts/file';
 import type { User } from 'better-auth';
 import axios from 'axios';
-import { useToast } from '@/components/Hooks/ToastManager';
 
 const initalContextMenu = {
 	show: false,

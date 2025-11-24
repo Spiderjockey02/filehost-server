@@ -3,8 +3,8 @@ import { format, generatePlaceholderTable } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminSendNotificationModal } from '@/components/Modals';
 import { queryOptions, useQuery } from '@tanstack/react-query';
+import type { Notification } from '@/types/generated/browser';
 import { faAdd } from '@fortawesome/free-solid-svg-icons';
-import type { Notification } from '@prisma/client';
 import { Card, Table } from '@/components';
 import { useState } from 'react';
 

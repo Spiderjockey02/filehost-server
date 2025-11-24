@@ -1,7 +1,7 @@
 import { generatePlaceholderTable, parseUserAgent, queryOptions } from '@/utils/functions';
 import type { AdminListSessionsCardProps } from '@/types/Components/Card';
+import type { Session } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
-import type { Session } from '@prisma/client';
 import Table from '../UI/Table';
 
 export default function SessionTable({ userId, isAdmin }: AdminListSessionsCardProps) {

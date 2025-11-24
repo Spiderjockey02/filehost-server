@@ -1,4 +1,4 @@
-import type { Plan, Notification } from '@prisma/client';
+import type { Plan, Notification } from '@/types/generated/browser';
 
 declare module 'better-auth' {
   export interface User {
