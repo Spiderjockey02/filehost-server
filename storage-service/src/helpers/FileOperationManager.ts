@@ -50,6 +50,7 @@ export default class FileManager extends FileAccessor {
 			files = await this.getByFilePath(user.id, filePath);
 		}
 
+		if (files?.deletedAt !== null) throw 'Directory not found';
 		return sanitiseObject(files);
 	}
 
@@ -416,7 +417,7 @@ export default class FileManager extends FileAccessor {
 	async sendThumbnail(res: Response, userId: string, filePath: string) {
 		// Get the mimeType of the file
 		const file = await this.getByFilePath(userId, filePath);
-		if (file == null || file.mimetype == null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+		if (file == null || file.mimetype == null || file.deletedAt !== null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 		// Fetch the storage medium and check it's online
 		const storageProvider = await this.storageManager.getProviderById(file.storageId);
 		if (storageProvider.isOnline == false) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);

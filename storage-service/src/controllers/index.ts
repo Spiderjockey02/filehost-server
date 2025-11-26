@@ -38,7 +38,7 @@ export const getContent = (client: Client) => {
 
 		// Fetch file from database
 		const file = await client.FileManager.getByFilePath(userId, path);
-		if (file == null) return Error.MissingResource(res, 'File not found');
+		if (file == null || file.deletedAt !== null) return Error.MissingResource(res, 'File not found');
 
 		// Make sure they have access to view the file
 		if (file.userId !== session.user.id) return Error.InvalidAccess(res);

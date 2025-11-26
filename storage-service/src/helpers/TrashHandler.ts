@@ -37,8 +37,16 @@ export default class TrashHandler {
 					where: { id: file.id },
 					data: { deletedAt: dateToDelete },
 				});
-				fileUpdates.push({ id: file.id, deletedAt: null });
 
+				// Delete caches
+				this.client.FileManager.cache.delete(`${file.userId}_${file.path}`);
+
+				// Update their parent's cached version aswell
+				const parentFile = await this.client.FileManager.getById(file.parentId);
+				if (parentFile) this.client.FileManager.cache.delete(`${file.userId}_${parentFile.path}`);
+
+				// Carry on managing other files and fallback system
+				fileUpdates.push({ id: file.id, deletedAt: null });
 				if (file.type === 'DIRECTORY') {
 					const children = await this.client.FileManager.getChildrenByParentId(file.id);
 

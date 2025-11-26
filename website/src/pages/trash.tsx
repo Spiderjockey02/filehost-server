@@ -67,7 +67,7 @@ export default function Trash() {
 	// Empty Trash Bin
 	const handleEmptyBin = async () => {
 		try {
-			await axios.delete('/api/trash/empty');
+			await axios.delete('/api/session/trash/empty');
 			await refetch();
 		} catch (err) {
 			if (axios.isAxiosError(err)) {
@@ -82,7 +82,7 @@ export default function Trash() {
 	// Restore selected files
 	const handleRestore = async () => {
 		try {
-			await axios.put('/api/trash/restore', { paths: selected.map(s => s.path) });
+			await axios.put('/api/session/trash/restore', { paths: selected.map(s => s.path) });
 			setSelected([]);
 			await refetch();
 		} catch (err) {
@@ -147,7 +147,7 @@ export default function Trash() {
 							Name
 						</Table.Header>
 						<Table.Header>
-							Deleted on
+							Deleting
 						</Table.Header>
 					</Table.HeaderRow>
 					<Table.Body>
