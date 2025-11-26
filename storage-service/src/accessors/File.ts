@@ -543,6 +543,7 @@ export default class FileAccessor {
 		return client.file.findMany({
 			where: {
 				userId,
+				deletedAt: null,
 				OR: [
 					{
 						mimetype: {

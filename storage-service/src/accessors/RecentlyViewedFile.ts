@@ -72,11 +72,13 @@ export default class RecentlyViewedFileManager {
 		};
 
 		// Send cached history with correct sorting
-		if (history) return [...history].sort(sortFn);
+		if (history) return [...history].filter(h => h.file?.deletedAt === null).sort(sortFn);
 
 		// Fetch from database as it's not in cache
 		history = await client.recentlyViewedFile.findMany({
-			where: { userId },
+			where: { userId,
+				file: { deletedAt: null },
+			},
 			orderBy: {
 				viewedAt: sortBy == 'viewedAt' ? sortOrder : undefined,
 				file: sortBy == 'name' ? {
