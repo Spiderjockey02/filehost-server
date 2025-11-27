@@ -18,15 +18,19 @@ export default class StorageAccessor {
 	 * @returns {StorageMedium} The created storage medium.
 	 */
 	async create(data: createStorageMedium): Promise<StorageMedium> {
-		const storage = await client.storageMedium.create({
-			data,
-			include: {
-				_count: true,
-			},
-		});
+		try {
+			const storage = await client.storageMedium.create({
+				data,
+				include: {
+					_count: true,
+				},
+			});
 
-		this.cache.set(storage.id, storage);
-		return storage;
+			this.cache.set(storage.id, storage);
+			return storage;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -35,17 +39,21 @@ export default class StorageAccessor {
 	  * @returns {StorageMedium} The updated storage medium.
 	*/
 	async update(data: updateStorageMedium): Promise<StorageMedium> {
-		const storage = await client.storageMedium.update({
-			where: {
-				id: data.id,
-			},
-			data,
-			include: {
-				_count: true,
-			},
-		});
-		this.cache.set(storage.id, storage);
-		return storage;
+		try {
+			const storage = await client.storageMedium.update({
+				where: {
+					id: data.id,
+				},
+				data,
+				include: {
+					_count: true,
+				},
+			});
+			this.cache.set(storage.id, storage);
+			return storage;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -69,24 +77,28 @@ export default class StorageAccessor {
 	  * @returns The updated storage.
 	*/
 	async modifyUsage(storageId: string, size: bigint, direction: storageDirection) {
-		const storage = await client.storageMedium.update({
-			where: {
-				id: storageId,
-			},
-			data: {
-				usedSize: {
-					set: direction === 'SET' ? size : undefined,
-					decrement: direction === 'DECRE' ? size : undefined,
-					increment: direction === 'INCRE' ? size : undefined,
+		try {
+			const storage = await client.storageMedium.update({
+				where: {
+					id: storageId,
 				},
-			},
-			include: {
-				_count: true,
-			},
-		});
+				data: {
+					usedSize: {
+						set: direction === 'SET' ? size : undefined,
+						decrement: direction === 'DECRE' ? size : undefined,
+						increment: direction === 'INCRE' ? size : undefined,
+					},
+				},
+				include: {
+					_count: true,
+				},
+			});
 
-		this.cache.set(storage.id, storage);
-		return storage;
+			this.cache.set(storage.id, storage);
+			return storage;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -95,18 +107,22 @@ export default class StorageAccessor {
 		* @returns {StorageWithCounts | null} The storage medium.
 	*/
 	async fetchById(id: string): Promise<StorageWithCounts | null> {
-		let storage = this.cache.get(id) ?? null;
-		if (storage !== null) return storage;
+		try {
+			let storage = this.cache.get(id) ?? null;
+			if (storage !== null) return storage;
 
-		storage = await client.storageMedium.findFirst({
-			where: { id },
-			include: {
-				_count: true,
-			},
-		});
+			storage = await client.storageMedium.findFirst({
+				where: { id },
+				include: {
+					_count: true,
+				},
+			});
 
-		if (storage !== null) this.cache.set(id, storage);
-		return storage;
+			if (storage !== null) this.cache.set(id, storage);
+			return storage;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -114,21 +130,25 @@ export default class StorageAccessor {
 		* @returns {StorageMedium | null} The storage medium.
 	*/
 	async fetchAvatarMedium(): Promise<StorageMedium | null> {
-		let avatarMedium = this.cache.get('avatar') ?? null;
-		if (avatarMedium == null) {
-			avatarMedium = await client.storageMedium.findFirst({
-				where: {
-					avatarOnly: true,
-				},
-				include: {
-					_count: true,
-				},
-			});
+		try {
+			let avatarMedium = this.cache.get('avatar') ?? null;
+			if (avatarMedium == null) {
+				avatarMedium = await client.storageMedium.findFirst({
+					where: {
+						avatarOnly: true,
+					},
+					include: {
+						_count: true,
+					},
+				});
 
-			if (avatarMedium !== null) this.cache.set('avatar', avatarMedium);
+				if (avatarMedium !== null) this.cache.set('avatar', avatarMedium);
+			}
+
+			return avatarMedium;
+		} catch (error) {
+			throw error;
 		}
-
-		return avatarMedium;
 	}
 
 	/**
@@ -154,17 +174,21 @@ export default class StorageAccessor {
 		* @returns {{ [key: string]: number }} Object with storage type as key and count as value.
 	*/
 	async fetchCountPerType(): Promise<{ [key: string]: number }> {
-		const mediumTypes = await client.storageMedium.groupBy({
-			by: ['type'],
-			_count: true,
-		});
+		try {
+			const mediumTypes = await client.storageMedium.groupBy({
+				by: ['type'],
+				_count: true,
+			});
 
-		const typeWithCount: { [key: string]: number } = {};
-		for (const item of mediumTypes) {
-			typeWithCount[item.type] = item._count;
+			const typeWithCount: { [key: string]: number } = {};
+			for (const item of mediumTypes) {
+				typeWithCount[item.type] = item._count;
+			}
+
+			return typeWithCount;
+		} catch (error) {
+			throw error;
 		}
-
-		return typeWithCount;
 	}
 
 	/**
@@ -180,19 +204,23 @@ export default class StorageAccessor {
 		* @returns {number} The average file count.
 	*/
 	async fetchAvgFileCount(): Promise<number> {
-		let groups = await client.file.groupBy({
-			by: ['storageId'],
-			_count: true,
-		});
+		try {
+			let groups = await client.file.groupBy({
+				by: ['storageId'],
+				_count: true,
+			});
 
-		// Check to NOT include avatar Only and thumbnail Only storage mediums
-		for (const group of groups) {
-			const storage = await this.fetchById(group.storageId);
-			if (storage?.avatarOnly) groups = groups.filter(g => g.storageId !== group.storageId);
+			// Check to NOT include avatar Only and thumbnail Only storage mediums
+			for (const group of groups) {
+				const storage = await this.fetchById(group.storageId);
+				if (storage?.avatarOnly) groups = groups.filter(g => g.storageId !== group.storageId);
+			}
+
+			// Now calculate average
+			return groups.map(g => g._count).reduce((a, b) => a + b, 0) / groups.length;
+		} catch (error) {
+			throw error;
 		}
-
-		// Now calculate average
-		return groups.map(g => g._count).reduce((a, b) => a + b, 0) / groups.length;
 	}
 
 	/**
@@ -200,21 +228,25 @@ export default class StorageAccessor {
 		* @returns {number} The average storage usage.
 	*/
 	async fetchAvgStorageUsage(): Promise<number> {
-		let groups = await client.file.groupBy({
-			by: ['storageId'],
-			_sum: {
-				size: true,
-			},
-		});
+		try {
+			let groups = await client.file.groupBy({
+				by: ['storageId'],
+				_sum: {
+					size: true,
+				},
+			});
 
-		// Check to NOT include avatar Only and thumbnail Only storage mediums
-		for (const group of groups) {
-			const storage = await this.fetchById(group.storageId);
-			if (storage?.avatarOnly) groups = groups.filter(g => g.storageId !== group.storageId);
+			// Check to NOT include avatar Only and thumbnail Only storage mediums
+			for (const group of groups) {
+				const storage = await this.fetchById(group.storageId);
+				if (storage?.avatarOnly) groups = groups.filter(g => g.storageId !== group.storageId);
+			}
+
+			// Now calculate average
+			return groups.map(g => g._sum.size).reduce((a, b) => Number(a) + Number(b), 0) / groups.length;
+		} catch (error) {
+			throw error;
 		}
-
-		// Now calculate average
-		return groups.map(g => g._sum.size).reduce((a, b) => Number(a) + Number(b), 0) / groups.length;
 	}
 
 	/**

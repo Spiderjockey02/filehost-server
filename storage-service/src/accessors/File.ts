@@ -25,39 +25,43 @@ export default class FileAccessor {
     * @returns {File} The created file.
   */
 	async create(data: createFile): Promise<FullFile> {
-		if (data.mimetype !== null) await this.fetchOrCreateFileMediaType(data.mimetype);
+		try {
+			if (data.mimetype !== null) await this.fetchOrCreateFileMediaType(data.mimetype);
 
-		const file = await client.file.create({
-			data: {
-				path: data.path,
-				name: data.name,
-				size: data.size,
-				userId: data.userId,
-				type: data.type,
-				parentId: data.parentId,
-				mimetype: data.mimetype,
-				storageId: data.storageId,
-			},
-			include: {
-				children: data.type == 'DIRECTORY',
-			},
-		});
+			const file = await client.file.create({
+				data: {
+					path: data.path,
+					name: data.name,
+					size: data.size,
+					userId: data.userId,
+					type: data.type,
+					parentId: data.parentId,
+					mimetype: data.mimetype,
+					storageId: data.storageId,
+				},
+				include: {
+					children: data.type == 'DIRECTORY',
+				},
+			});
 
-		this.cache.set(`${file.userId}_${file.path}`, file);
+			this.cache.set(`${file.userId}_${file.path}`, file);
 
-		// Have to do 2 layers (to get show proper children count)
-		if (file.parentId) {
-			const parent = await this.getById(file.parentId);
-			if (parent) {
-				this.cache.delete(`${parent.userId}_${parent.path}`);
-				if (parent.parentId) {
-					const grandparent = await this.getById(parent.parentId);
-					if (grandparent) this.cache.delete(`${grandparent.userId}_${grandparent.path}`);
+			// Have to do 2 layers (to get show proper children count)
+			if (file.parentId) {
+				const parent = await this.getById(file.parentId);
+				if (parent) {
+					this.cache.delete(`${parent.userId}_${parent.path}`);
+					if (parent.parentId) {
+						const grandparent = await this.getById(parent.parentId);
+						if (grandparent) this.cache.delete(`${grandparent.userId}_${grandparent.path}`);
+					}
 				}
 			}
-		}
 
-		return file;
+			return file;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -66,50 +70,54 @@ export default class FileAccessor {
     * @returns {File} The updated file.
   */
 	async update(data: updateFile): Promise<FullFile> {
-		if (data.children !== undefined && data.children.mimetype !== null) await this.fetchOrCreateFileMediaType(data.children.mimetype);
+		try {
+			if (data.children !== undefined && data.children.mimetype !== null) await this.fetchOrCreateFileMediaType(data.children.mimetype);
 
-		const file = await client.file.update({
-			where: {
-				id: data.id,
-			},
-			data: {
-				path: data.path,
-				name: data.name,
-				size: data.size,
-				parentId: data.parentId,
-				deletedAt: data.deletedAt,
-				storageId: data.storageId,
-				children: {
-					create: data.children,
+			const file = await client.file.update({
+				where: {
+					id: data.id,
 				},
-			},
-			include: {
-				children: {
-					where: {
-						deletedAt: null,
+				data: {
+					path: data.path,
+					name: data.name,
+					size: data.size,
+					parentId: data.parentId,
+					deletedAt: data.deletedAt,
+					storageId: data.storageId,
+					children: {
+						create: data.children,
 					},
-					include: {
-						_count: {
-							select: {
-								children: {
-									where: {
-										deletedAt: null,
+				},
+				include: {
+					children: {
+						where: {
+							deletedAt: null,
+						},
+						include: {
+							_count: {
+								select: {
+									children: {
+										where: {
+											deletedAt: null,
+										},
 									},
 								},
 							},
 						},
 					},
 				},
-			},
-		});
+			});
 
-		// Update it's own cached version
-		this.cache.delete(`${file.userId}_${file.path}`);
+			// Update it's own cached version
+			this.cache.delete(`${file.userId}_${file.path}`);
 
-		// Update their parent's cached version aswell
-		const parentFile = await this.getById(file.parentId);
-		if (parentFile) this.cache.delete(`${file.userId}_${parentFile.path}`);
-		return file;
+			// Update their parent's cached version aswell
+			const parentFile = await this.getById(file.parentId);
+			if (parentFile) this.cache.delete(`${file.userId}_${parentFile.path}`);
+			return file;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -118,33 +126,37 @@ export default class FileAccessor {
 	 * @returns {number} The number of rows updated.
 	*/
 	async updateChildsPath({ userId, parentId, oldPath, newPath }: updateFilePath): Promise<number> {
-		const updatedRows = await client.$executeRawUnsafe(
-			`UPDATE \`File\`
-			SET path = REPLACE(path, ?, ?)
-			WHERE path LIKE CONCAT(?, '%') 
-			AND path != ?
-			AND parentId = ?`,
-			oldPath,
-			newPath,
-			oldPath,
-			oldPath,
-			parentId,
-		);
+		try {
+			const updatedRows = await client.$executeRawUnsafe(
+				`UPDATE \`File\`
+				SET path = REPLACE(path, ?, ?)
+				WHERE path LIKE CONCAT(?, '%') 
+				AND path != ?
+				AND parentId = ?`,
+				oldPath,
+				newPath,
+				oldPath,
+				oldPath,
+				parentId,
+			);
 
-		// Get the cached files that need replacing
-		const keys = [...this.cache.keys()];
-		const filteredKeys = keys.filter(key => key.startsWith(`${userId}_${oldPath}`));
-		for (const key of filteredKeys) {
-			const file = this.cache.get(key);
-			if (!file || file.parentId !== parentId) continue;
+			// Get the cached files that need replacing
+			const keys = [...this.cache.keys()];
+			const filteredKeys = keys.filter(key => key.startsWith(`${userId}_${oldPath}`));
+			for (const key of filteredKeys) {
+				const file = this.cache.get(key);
+				if (!file || file.parentId !== parentId) continue;
 
-			// Update the cache key
-			const [keyUserId, keyPath] = key.split('_', 2);
-			const newKey = `${keyUserId}_${keyPath.replace(oldPath, newPath)}`;
-			this.cache.delete(key);
-			this.cache.set(newKey, { ...file, path: file.path.replace(oldPath, newPath) });
+				// Update the cache key
+				const [keyUserId, keyPath] = key.split('_', 2);
+				const newKey = `${keyUserId}_${keyPath.replace(oldPath, newPath)}`;
+				this.cache.delete(key);
+				this.cache.set(newKey, { ...file, path: file.path.replace(oldPath, newPath) });
+			}
+			return updatedRows;
+		} catch (error) {
+			throw error;
 		}
-		return updatedRows;
 	}
 
 	/**
@@ -154,45 +166,49 @@ export default class FileAccessor {
 		* @returns {FullFile | null} The file.
 	*/
 	async getByFilePath(userId: string, filePath: string, includeDeleted?: boolean): Promise<FullFile | null> {
-		const cleanedFilePath = filePath.startsWith('/') ? filePath : `/${filePath}`;
-		let file = this.cache.get(`${userId}_${cleanedFilePath}`) ?? null;
-		if (file !== null) return file;
+		try {
+			const cleanedFilePath = filePath.startsWith('/') ? filePath : `/${filePath}`;
+			let file = this.cache.get(`${userId}_${cleanedFilePath}`) ?? null;
+			if (file !== null) return file;
 
-		// Fetch from database
-		file = await client.file.findFirst({
-			where: {
-				userId,
-				deletedAt: includeDeleted ? undefined : null,
-				path: {
-					equals: cleanedFilePath,
-				},
-			},
-			include: {
-				children: {
-					where: {
-						deletedAt: includeDeleted ? undefined : null,
+			// Fetch from database
+			file = await client.file.findFirst({
+				where: {
+					userId,
+					deletedAt: includeDeleted ? undefined : null,
+					path: {
+						equals: cleanedFilePath,
 					},
-					include: {
-						_count: {
-							select: {
-								children: {
-									where: {
-										deletedAt: includeDeleted ? undefined : null,
+				},
+				include: {
+					children: {
+						where: {
+							deletedAt: includeDeleted ? undefined : null,
+						},
+						include: {
+							_count: {
+								select: {
+									children: {
+										where: {
+											deletedAt: includeDeleted ? undefined : null,
+										},
 									},
 								},
 							},
 						},
 					},
 				},
-			},
-		});
+			});
 
-		if (file !== null) {
-			await this.getChildrenByParentId(file.id);
-			this.cache.set(`${userId}_${file.path.startsWith('/') ? file.path : `/${file.path}`}`, file);
+			if (file !== null) {
+				await this.getChildrenByParentId(file.id);
+				this.cache.set(`${userId}_${file.path.startsWith('/') ? file.path : `/${file.path}`}`, file);
+			}
+
+			return file;
+		} catch (error) {
+			throw error;
 		}
-
-		return file;
 	}
 
 	/**
@@ -213,35 +229,36 @@ export default class FileAccessor {
 		* @returns {File[]} The files.
 	*/
 	async getChildrenByParentId(parentId: string): Promise<File[]> {
-		const files = await client.file.findMany({
-			where: {
-				parentId,
-			},
-			include: {
-				children: {
-					where: {
-						deletedAt: null,
-					},
-					include: {
-						_count: {
-							select: {
-								children: {
-									where: {
-										deletedAt: null,
+		try {
+			const files = await client.file.findMany({
+				where: {
+					parentId,
+				},
+				include: {
+					children: {
+						where: {
+							deletedAt: null,
+						},
+						include: {
+							_count: {
+								select: {
+									children: {
+										where: {
+											deletedAt: null,
+										},
 									},
 								},
 							},
 						},
 					},
 				},
-			},
-		});
+			});
 
-		for (const file of files) {
-			this.cache.set(`${file.userId}_${file.path}`, file);
+			for (const file of files) this.cache.set(`${file.userId}_${file.path}`, file);
+			return files;
+		} catch (error) {
+			throw error;
 		}
-
-		return files;
 	}
 
 	/**
@@ -312,30 +329,34 @@ export default class FileAccessor {
 	async fetchTotal(userId?: string) {
 		const last7days = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
 
-		const [files, folders, newFiles] = await Promise.all([
-			client.file.count({
-				where: {
-					userId,
-					type: 'FILE',
-				},
-			}),
-			client.file.count({
-				where: {
-					userId,
-					type: 'DIRECTORY',
-				},
-			}),
-			client.file.count({
-				where: {
-					userId,
-					createdAt: {
-						gte: last7days,
+		try {
+			const [files, folders, newFiles] = await Promise.all([
+				client.file.count({
+					where: {
+						userId,
+						type: 'FILE',
 					},
-				},
-			}),
-		]);
+				}),
+				client.file.count({
+					where: {
+						userId,
+						type: 'DIRECTORY',
+					},
+				}),
+				client.file.count({
+					where: {
+						userId,
+						createdAt: {
+							gte: last7days,
+						},
+					},
+				}),
+			]);
 
-		return { files, folders, newFiles };
+			return { files, folders, newFiles };
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -398,33 +419,37 @@ export default class FileAccessor {
 	  * @returns The distribution of file sizes in bins.
 	*/
 	async fetchUploadSizeDistribution() {
-		const files = await client.file.findMany({
-			where: {
-				deletedAt: null,
-				type: 'FILE',
-			},
-			select: { size: true },
-		});
+		try {
+			const files = await client.file.findMany({
+				where: {
+					deletedAt: null,
+					type: 'FILE',
+				},
+				select: { size: true },
+			});
 
-		const category = {
-			'Tiny (0-10 KB)': 0,
-			'Small (10 KB - 1 MB)': 0,
-			'Medium (1 MB - 50 MB)': 0,
-			'Large (50 MB - 500 MB)': 0,
-			'Very Large (500 MB - 1 GB)': 0,
-			'Huge (> 1 GB)': 0,
-		};
+			const category = {
+				'Tiny (0-10 KB)': 0,
+				'Small (10 KB - 1 MB)': 0,
+				'Medium (1 MB - 50 MB)': 0,
+				'Large (50 MB - 500 MB)': 0,
+				'Very Large (500 MB - 1 GB)': 0,
+				'Huge (> 1 GB)': 0,
+			};
 
-		for (const { size } of files) {
-			if (size < 10 * 1024) category['Tiny (0-10 KB)']++;
-			else if (size < 1 * 1024 * 1024) category['Small (10 KB - 1 MB)']++;
-			else if (size < 50 * 1024 * 1024) category['Medium (1 MB - 50 MB)']++;
-			else if (size < 500 * 1024 * 1024) category['Large (50 MB - 500 MB)']++;
-			else if (size < 1024 * 1024 * 1024) category['Very Large (500 MB - 1 GB)']++;
-			else category['Huge (> 1 GB)']++;
+			for (const { size } of files) {
+				if (size < 10 * 1024) category['Tiny (0-10 KB)']++;
+				else if (size < 1 * 1024 * 1024) category['Small (10 KB - 1 MB)']++;
+				else if (size < 50 * 1024 * 1024) category['Medium (1 MB - 50 MB)']++;
+				else if (size < 500 * 1024 * 1024) category['Large (50 MB - 500 MB)']++;
+				else if (size < 1024 * 1024 * 1024) category['Very Large (500 MB - 1 GB)']++;
+				else category['Huge (> 1 GB)']++;
+			}
+
+			return category;
+		} catch (error) {
+			throw error;
 		}
-
-		return category;
 	}
 
 	/**
@@ -458,21 +483,25 @@ export default class FileAccessor {
 		* @returns The media type object.
 	*/
 	async fetchOrCreateFileMediaType(mimeType: string) {
-		let mediaType = this.mimeTypeCache.get(mimeType) ?? null;
-		if (mediaType == null) {
-			mediaType = await client.mediaType.upsert({
-				where: {
-					name: mimeType,
-				},
-				create: {
-					name: mimeType,
-				},
-				update: {},
-			});
-			if (mediaType !== null) this.mimeTypeCache.set(mimeType, mediaType);
-		}
+		try {
+			let mediaType = this.mimeTypeCache.get(mimeType) ?? null;
+			if (mediaType == null) {
+				mediaType = await client.mediaType.upsert({
+					where: {
+						name: mimeType,
+					},
+					create: {
+						name: mimeType,
+					},
+					update: {},
+				});
+				if (mediaType !== null) this.mimeTypeCache.set(mimeType, mediaType);
+			}
 
-		return mediaType;
+			return mediaType;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -480,36 +509,40 @@ export default class FileAccessor {
 		* @param [grouped=false]
 	*/
 	async fetchFileMediaTypes({ mediaType, grouped = false }: fetchFileMediaTypesParams) {
-		const res = await client.mediaType.findMany({
-			where: {
-				name: mediaType == undefined ? undefined : {
-					startsWith: mediaType,
-				},
-			},
-			include: {
-				_count: {
-					select: {
-						files: true,
+		try {
+			const res = await client.mediaType.findMany({
+				where: {
+					name: mediaType == undefined ? undefined : {
+						startsWith: mediaType,
 					},
 				},
-			},
-		});
+				include: {
+					_count: {
+						select: {
+							files: true,
+						},
+					},
+				},
+			});
 
-		const group: { [ key: string ]: number } = {};
-		if (grouped) {
-			for (const type of res) {
-				const mimeName = `${type.name.split('/')[0]}/*`;
+			const group: { [ key: string ]: number } = {};
+			if (grouped) {
+				for (const type of res) {
+					const mimeName = `${type.name.split('/')[0]}/*`;
 
-				if (group[mimeName] === undefined) group[mimeName] = 0;
-				group[mimeName] += type._count.files;
+					if (group[mimeName] === undefined) group[mimeName] = 0;
+					group[mimeName] += type._count.files;
+				}
+				return group;
+			} else {
+				for (const type of res) {
+					if (group[type.name] === undefined) group[type.name] = 0;
+					group[type.name] += type._count.files;
+				}
+				return group;
 			}
-			return group;
-		} else {
-			for (const type of res) {
-				if (group[type.name] === undefined) group[type.name] = 0;
-				group[type.name] += type._count.files;
-			}
-			return group;
+		} catch (error) {
+			throw error;
 		}
 	}
 

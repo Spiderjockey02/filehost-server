@@ -20,31 +20,35 @@ export default class RecentlyViewedFileManager {
 		* @returns {RecentlyViewedFile[]} The files.
 	*/
 	async upsert(data: CreateRecentlyViewedFile): Promise<RecentlyViewedFile> {
-		const history = await client.recentlyViewedFile.upsert({
-			where: {
-				fileId_userId: {
-					fileId: data.fileId,
-					userId: data.userId,
-				},
-			},
-			update: {
-				viewedAt: new Date(),
-			},
-			create: {
-				file: {
-					connect: {
-						id: data.fileId,
+		try {
+			const history = await client.recentlyViewedFile.upsert({
+				where: {
+					fileId_userId: {
+						fileId: data.fileId,
+						userId: data.userId,
 					},
 				},
-				user: {
-					connect: {
-						id: data.userId,
+				update: {
+					viewedAt: new Date(),
+				},
+				create: {
+					file: {
+						connect: {
+							id: data.fileId,
+						},
+					},
+					user: {
+						connect: {
+							id: data.userId,
+						},
 					},
 				},
-			},
-		});
-		this.cache.delete(data.userId);
-		return history;
+			});
+			this.cache.delete(data.userId);
+			return history;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -53,43 +57,47 @@ export default class RecentlyViewedFileManager {
 		* @returns {RecentlyViewedFile[]} The files.
 	*/
 	async fetchUserLatest({ userId, sortBy = 'viewedAt', sortOrder = 'desc' }: fetchUserLatestProps): Promise<FullRecentlyViewedFile[]> {
-		let history = this.cache.get(userId) ?? null;
-		const sortFn = (a: FullRecentlyViewedFile, b: FullRecentlyViewedFile) => {
-			let valA: number | string = '';
-			let valB: number | string = '';
+		try {
+			let history = this.cache.get(userId) ?? null;
+			const sortFn = (a: FullRecentlyViewedFile, b: FullRecentlyViewedFile) => {
+				let valA: number | string = '';
+				let valB: number | string = '';
 
-			if (sortBy === 'viewedAt') {
-				valA = new Date(a.viewedAt).getTime();
-				valB = new Date(b.viewedAt).getTime();
-			} else if (sortBy === 'name') {
-				valA = a.file?.name?.toLowerCase() ?? '';
-				valB = b.file?.name?.toLowerCase() ?? '';
-			}
+				if (sortBy === 'viewedAt') {
+					valA = new Date(a.viewedAt).getTime();
+					valB = new Date(b.viewedAt).getTime();
+				} else if (sortBy === 'name') {
+					valA = a.file?.name?.toLowerCase() ?? '';
+					valB = b.file?.name?.toLowerCase() ?? '';
+				}
 
-			if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-			if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-			return 0;
-		};
+				if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+				if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+				return 0;
+			};
 
-		// Send cached history with correct sorting
-		if (history) return [...history].filter(h => h.file?.deletedAt === null).sort(sortFn);
+			// Send cached history with correct sorting
+			if (history) return [...history].filter(h => h.file?.deletedAt === null).sort(sortFn);
 
-		// Fetch from database as it's not in cache
-		history = await client.recentlyViewedFile.findMany({
-			where: { userId,
-				file: { deletedAt: null },
-			},
-			orderBy: {
-				viewedAt: sortBy == 'viewedAt' ? sortOrder : undefined,
-				file: sortBy == 'name' ? {
-					name: sortOrder,
-				} : undefined,
-			},
-			include: { file: true },
-		});
+			// Fetch from database as it's not in cache
+			history = await client.recentlyViewedFile.findMany({
+				where: { userId,
+					file: { deletedAt: null },
+				},
+				orderBy: {
+					viewedAt: sortBy == 'viewedAt' ? sortOrder : undefined,
+					file: sortBy == 'name' ? {
+						name: sortOrder,
+					} : undefined,
+				},
+				include: { file: true },
+			});
 
-		this.cache.set(userId, history);
-		return history;
+			this.cache.set(userId, history);
+			return history;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**

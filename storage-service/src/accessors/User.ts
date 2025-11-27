@@ -20,26 +20,30 @@ export default class UserManager {
 		* @returns {UserWithGroup} The updated user.
 	*/
 	async update(data: updateUser): Promise<FullUser> {
-		const user = await client.user.update({
-			where: {
-				id: data.id,
-			},
-			data: {
-				email: data.email,
-				totalStorageSize: data.totalStorageSize,
-				updatedAt: data.updatedAt,
-				isMigrating: data.isMigrating,
-				image: data.image,
-				name: data.name,
-				languageCode: data.languageCode,
-			},
-			include: {
-				plan: true,
-				notifications: true,
-			},
-		});
-		this.cache.set(user.id, user);
-		return user;
+		try {
+			const user = await client.user.update({
+				where: {
+					id: data.id,
+				},
+				data: {
+					email: data.email,
+					totalStorageSize: data.totalStorageSize,
+					updatedAt: data.updatedAt,
+					isMigrating: data.isMigrating,
+					image: data.image,
+					name: data.name,
+					languageCode: data.languageCode,
+				},
+				include: {
+					plan: true,
+					notifications: true,
+				},
+			});
+			this.cache.set(user.id, user);
+			return user;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -49,57 +53,62 @@ export default class UserManager {
 	*/
 	async fetchAll({ name, sortBy, sortOrder, storageId, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
 		// Fetch paginated users first
-		const users = await client.user.findMany({
-			where: {
-				name: name?.length ? { startsWith: name } : undefined,
-				storageId,
-			},
-			include: {
-				plan: true,
-				notifications: true,
-				activity: {
-					take: 1,
-					orderBy: {
-						createdAt: 'desc',
+		try {
+
+			const users = await client.user.findMany({
+				where: {
+					name: name?.length ? { startsWith: name } : undefined,
+					storageId,
+				},
+				include: {
+					plan: true,
+					notifications: true,
+					activity: {
+						take: 1,
+						orderBy: {
+							createdAt: 'desc',
+						},
+					},
+					_count: {
+						select: {
+							files: true,
+						},
 					},
 				},
-				_count: {
-					select: {
-						files: true,
-					},
-				},
-			},
-			take: 20,
-			skip: page * 20,
-		});
-
-		// Sorting by uploaded file count
-		if (sortBy === 'uploadedFiles') {
-			users.sort((a, b) => {
-				const diff = (a._count.files ?? 0) - (b._count.files ?? 0);
-				return sortOrder === 'desc' ? -diff : diff;
+				take: 20,
+				skip: page * 20,
 			});
-		}
 
-		// Sorting by user createdAt
-		if (sortBy === 'createdAt') {
-			users.sort((a, b) => {
-				const diff = a.createdAt.getTime() - b.createdAt.getTime();
-				return sortOrder === 'desc' ? -diff : diff;
-			});
-		}
+			// Sorting by uploaded file count
+			if (sortBy === 'uploadedFiles') {
+				users.sort((a, b) => {
+					const diff = (a._count.files ?? 0) - (b._count.files ?? 0);
+					return sortOrder === 'desc' ? -diff : diff;
+				});
+			}
 
-		// Sorting by last activity
-		if (sortBy === 'lastActive') {
-			users.sort((a, b) => {
-				const aActivity = a.activity[0] !== undefined ? a.activity[0].createdAt?.getTime() : a.updatedAt.getTime();
-				const bActivity = b.activity[0] !== undefined ? b.activity[0].createdAt?.getTime() : b.updatedAt.getTime();
-				const diff = aActivity - bActivity;
-				return sortOrder === 'desc' ? -diff : diff;
-			});
-		}
+			// Sorting by user createdAt
+			if (sortBy === 'createdAt') {
+				users.sort((a, b) => {
+					const diff = a.createdAt.getTime() - b.createdAt.getTime();
+					return sortOrder === 'desc' ? -diff : diff;
+				});
+			}
 
-		return users;
+			// Sorting by last activity
+			if (sortBy === 'lastActive') {
+				users.sort((a, b) => {
+					const aActivity = a.activity[0] !== undefined ? a.activity[0].createdAt?.getTime() : a.updatedAt.getTime();
+					const bActivity = b.activity[0] !== undefined ? b.activity[0].createdAt?.getTime() : b.updatedAt.getTime();
+					const diff = aActivity - bActivity;
+					return sortOrder === 'desc' ? -diff : diff;
+				});
+			}
+
+			return users;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -132,27 +141,31 @@ export default class UserManager {
 		* @returns {UserWithGroup | null} The updated user.
 	*/
 	async fetchbyParam(data: fetchUserbyParam): Promise<FullUser | null> {
-		let user = !data.force ? (this.cache.find(u => u.id === data.id || u.email === data.email) ?? null) : null;
-		if (user == null) {
-			user = await client.user.findUnique({
-				where: {
-					email: data.email,
-					id: data.id,
-				},
-				include: {
-					plan: true,
-					notifications: true,
-					sessions: true,
-					_count: {
-						select: {
-							files: true,
+		try {
+			let user = !data.force ? (this.cache.find(u => u.id === data.id || u.email === data.email) ?? null) : null;
+			if (user == null) {
+				user = await client.user.findUnique({
+					where: {
+						email: data.email,
+						id: data.id,
+					},
+					include: {
+						plan: true,
+						notifications: true,
+						sessions: true,
+						_count: {
+							select: {
+								files: true,
+							},
 						},
 					},
-				},
-			});
-			if (user != null) this.cache.set(user?.id, user);
+				});
+				if (user != null) this.cache.set(user?.id, user);
+			}
+			return user;
+		} catch (error) {
+			throw error;
 		}
-		return user;
 	}
 
 	/**
@@ -187,38 +200,42 @@ export default class UserManager {
 		* @returns The total count of users.
 	*/
 	async fetchTotal(storageId?: string) {
-		// Fetch users that have been created in the last week
-		const last7days = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+		try {
+			// Fetch users that have been created in the last week
+			const last7days = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
 
-		const [total, active, newUser] = await Promise.all([
-			client.user.count({
-				where: {
-					storageId,
-				},
-			}),
-			client.user.count({
-				where: {
-					storageId,
-					sessions: {
-						some: {
-							createdAt: {
-								gte: last7days,
+			const [total, active, newUser] = await Promise.all([
+				client.user.count({
+					where: {
+						storageId,
+					},
+				}),
+				client.user.count({
+					where: {
+						storageId,
+						sessions: {
+							some: {
+								createdAt: {
+									gte: last7days,
+								},
 							},
 						},
 					},
-				},
-			}),
-			client.user.count({
-				where: {
-					storageId,
-					createdAt: {
-						gte: last7days,
+				}),
+				client.user.count({
+					where: {
+						storageId,
+						createdAt: {
+							gte: last7days,
+						},
 					},
-				},
-			}),
-		]);
+				}),
+			]);
 
-		return { total, active, new: newUser };
+			return { total, active, new: newUser };
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -245,17 +262,21 @@ export default class UserManager {
 		* @returns The array of user IDs.
 	*/
 	async fetchUsersWhoUploadedBetweenTwoDates(oldDate: Date, newDate: Date) {
-		const files = await client.file.findMany({
-			where: {
-				createdAt: {
-					gte: oldDate,
-					lte: newDate,
+		try {
+			const files = await client.file.findMany({
+				where: {
+					createdAt: {
+						gte: oldDate,
+						lte: newDate,
+					},
 				},
-			},
-		});
+			});
 
-		const users = [...new Set(files.map(f => f.userId))];
-		return users;
+			const users = [...new Set(files.map(f => f.userId))];
+			return users;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -263,17 +284,21 @@ export default class UserManager {
 	  * @returns The number of users by language code
 	*/
 	async fetchGroupCountsByLanguageCodes() {
-		const languageCode = await client.user.groupBy({
-			by: ['languageCode'],
-			_count: true,
-		});
+		try {
+			const languageCode = await client.user.groupBy({
+				by: ['languageCode'],
+				_count: true,
+			});
 
-		const codesWithCount: { [key: string]: number } = {};
-		for (const item of languageCode) {
-			codesWithCount[item.languageCode] = item._count;
+			const codesWithCount: { [key: string]: number } = {};
+			for (const item of languageCode) {
+				codesWithCount[item.languageCode] = item._count;
+			}
+
+			return codesWithCount;
+		} catch (error) {
+			throw error;
 		}
-
-		return codesWithCount;
 	}
 
 	/**
@@ -281,20 +306,24 @@ export default class UserManager {
 	  * @returns The number of users by group
 	*/
 	async fetchCountsByEmailDomain() {
-		const users = await client.user.findMany({
-			select: {
-				email: true,
-			},
-		});
+		try {
+			const users = await client.user.findMany({
+				select: {
+					email: true,
+				},
+			});
 
-		const domainCount: Record<string, number> = {};
-		for (const user of users) {
-			const email = user.email!;
-			const domain = email.split('@')[1].toLowerCase();
-			if (domain) domainCount[domain] = (domainCount[domain] || 0) + 1;
+			const domainCount: Record<string, number> = {};
+			for (const user of users) {
+				const email = user.email!;
+				const domain = email.split('@')[1].toLowerCase();
+				if (domain) domainCount[domain] = (domainCount[domain] || 0) + 1;
+			}
+
+			return domainCount;
+		} catch (error) {
+			throw error;
 		}
-
-		return domainCount;
 	}
 
 	/**
@@ -314,11 +343,15 @@ export default class UserManager {
 		* @returns The average file size.
 	*/
 	async fetchBannedTotal() {
-		const bans = await client.userBans.groupBy({
-			by: 'userId',
-		});
+		try {
+			const bans = await client.userBans.groupBy({
+				by: 'userId',
+			});
 
-		return bans.length;
+			return bans.length;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -365,12 +398,16 @@ export default class UserManager {
 		* Gets the number of admins
 	*/
 	async fetchAdminTotal() {
-		const users = await client.user.groupBy({
-			by: ['role'],
-			_count: true,
-		});
+		try {
+			const users = await client.user.groupBy({
+				by: ['role'],
+				_count: true,
+			});
 
-		return users.find(f => f.role == 'admin')?._count ?? 0;
+			return users.find(f => f.role == 'admin')?._count ?? 0;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -378,17 +415,21 @@ export default class UserManager {
 		* @returns An object of providers with values the number of users
 	*/
 	async fetchSignUpSource() {
-		const result = await client.account.groupBy({
-			by: ['providerId'],
-			_count: true,
-		});
+		try {
+			const result = await client.account.groupBy({
+				by: ['providerId'],
+				_count: true,
+			});
 
-		const providerCount: Record<string, number> = {};
-		for (const row of result) {
-			providerCount[row.providerId] = row._count;
+			const providerCount: Record<string, number> = {};
+			for (const row of result) {
+				providerCount[row.providerId] = row._count;
+			}
+
+			return providerCount;
+		} catch (error) {
+			throw error;
 		}
-
-		return providerCount;
 	}
 
 	/**

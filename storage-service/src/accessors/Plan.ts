@@ -9,43 +9,78 @@ export default class PlanAccessor {
 		this.cache = new Map();
 	}
 
-	async create(data: createPlan) {
-		const plan = await client.plan.create({
-			data,
-		});
+	/**
+	  * Creates a new plan in the database.
+	  * @param {createPlan} data The data for the new plan.
+	  * @returns {Plan} The created plan.
+	*/
+	async create(data: createPlan): Promise<Plan> {
+		try {
+			const plan = await client.plan.create({
+				data,
+			});
 
-		this.cache.set(plan.id, plan);
-		return plan;
+			this.cache.set(plan.id, plan);
+			return plan;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async update(data: updatePlan) {
-		const plan = await client.plan.update({
-			where: {
-				id: data.id,
-			},
-			data,
-		});
+	/**
+	 * Updates an existing plan in the database.
+	 * @param {updatePlan} data The updated data for the plan.
+	 * @returns {Plan} The updated plan.
+	*/
+	async update(data: updatePlan): Promise<Plan> {
+		try {
+			const plan = await client.plan.update({
+				where: {
+					id: data.id,
+				},
+				data,
+			});
 
-		this.cache.set(plan.id, plan);
-		return plan;
+			this.cache.set(plan.id, plan);
+			return plan;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async delete(planId: string) {
-		const plan = await client.plan.delete({
-			where: {
-				id: planId,
-			},
-		});
+	/**
+	  * Deletes a plan from the database.
+	  * @param {string} planId The ID of the plan to delete.
+	  * @returns {Plan} The deleted plan.
+	*/
+	async delete(planId: string): Promise<Plan> {
+		try {
+			const plan = await client.plan.delete({
+				where: {
+					id: planId,
+				},
+			});
 
-		this.cache.delete(plan.id);
-		return plan;
+			this.cache.delete(plan.id);
+			return plan;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async fetchAll() {
+	/**
+	  * Fetches all plans from the database.
+	  * @returns {Plan[]} An array of all plans.
+	*/
+	async fetchAll(): Promise<Plan[]> {
 		return client.plan.findMany();
 	}
 
-	async fetchDefault() {
+	/**
+	  * Fetches the default plan from the database.
+	  * @returns {Plan | null} The default plan or null if not found.
+	*/
+	async fetchDefault(): Promise<Plan | null> {
 		return client.plan.findFirst({
 			where: {
 				isDefault: true,
@@ -53,7 +88,11 @@ export default class PlanAccessor {
 		});
 	}
 
-	async fetchPayingUsers() {
+	/**
+	  * Fetches the number of paying users.
+	  * @returns {number} The count of paying users.
+	*/
+	async fetchPayingUsers(): Promise<number> {
 		return client.user.count({
 			where: {
 				plan: {
@@ -65,42 +104,64 @@ export default class PlanAccessor {
 		});
 	}
 
-	async fetchNewCustomers() {
+	/**
+	  * Fetches the number of new customers in the last 30 days.
+	  * @returns {number} The count of new customers.
+	*/
+	async fetchNewCustomers(): Promise<number> {
 		const thirtyDaysAgo = new Date();
 		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-		const subscribers = await client.subscription.count({
-			where: {
-				status: 'active',
-				periodStart: {
-					gte: thirtyDaysAgo,
+		try {
+			const subscribers = await client.subscription.count({
+				where: {
+					status: 'active',
+					periodStart: {
+						gte: thirtyDaysAgo,
+					},
 				},
-			},
-		});
+			});
 
-		return subscribers;
+			return subscribers;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async fetchMostPopular() {
-		 const plans = await client.plan.findMany({
-			include: {
-				_count: {
-					select: { users: true },
+	/**
+	  * Fetches the most popular plan based on the number of users subscribed.
+	  * @returns {string | null} The name of the most popular plan or null if none found.
+	*/
+	async fetchMostPopular(): Promise<string | null> {
+		try {
+			const plans = await client.plan.findMany({
+				include: {
+					_count: {
+						select: { users: true },
+					},
 				},
-			},
-			orderBy: {
-				users: {
-					_count: 'desc',
+				orderBy: {
+					users: {
+						_count: 'desc',
+					},
 				},
-			},
-			take: 1,
-		});
+				take: 1,
+			});
 
-		return plans[0]?.name ?? null;
+			return plans[0]?.name ?? null;
+		} catch (error) {
+			throw error;
+		}
 	}
 
+	/**
+	  * Fetches the number of subscriptions that started between two dates.
+	  * @param {Date} oldDate The start date.
+	  * @param {Date} newDate The end date.
+	  * @returns {number} The count of subscriptions.
+	*/
 	async fetchSubscriptionStartsBetweenTwoDates(oldDate: Date, newDate: Date): Promise<number> {
-		return await client.subscription.count({
+		return client.subscription.count({
 			where: {
 				periodStart: {
 					gte: oldDate,
@@ -110,38 +171,46 @@ export default class PlanAccessor {
 		});
 	}
 
-	async getTotalRevenue() {
-		// Fetch all active subscriptions and group them by plan
-		const activeSubs = await client.subscription.groupBy({
-			by: ['plan'],
-			where: { status: 'active' },
-			_count: { plan: true },
-		});
+	/**
+	  * Calculates the total revenue from all active subscriptions.
+	  * @returns {number} The total revenue.
+	*/
+	async getTotalRevenue(): Promise<number> {
+		try {
+			// Fetch all active subscriptions and group them by plan
+			const activeSubs = await client.subscription.groupBy({
+				by: ['plan'],
+				where: { status: 'active' },
+				_count: { plan: true },
+			});
 
-		if (!activeSubs.length) return 0;
+			if (!activeSubs.length) return 0;
 
-		// Get all plan prices for those plan names
-		const plans = await client.plan.findMany({
-			where: {
-				name: {
-					in: activeSubs.map(s => s.plan),
+			// Get all plan prices for those plan names
+			const plans = await client.plan.findMany({
+				where: {
+					name: {
+						in: activeSubs.map(s => s.plan),
+					},
 				},
-			},
-			select: {
-				name: true,
-				price: true,
-			},
-		});
+				select: {
+					name: true,
+					price: true,
+				},
+			});
 
-		// Map plans to quick lookup
-		const priceMap = Object.fromEntries(plans.map(p => [p.name, Number(p.price)]));
+			// Map plans to quick lookup
+			const priceMap = Object.fromEntries(plans.map(p => [p.name, Number(p.price)]));
 
-		// Calculate total
-		const total = activeSubs.reduce((sum, sub) => {
-			const planPrice = priceMap[sub.plan] ?? 0;
-			return sum + planPrice * sub._count.plan;
-		}, 0);
+			// Calculate total
+			const total = activeSubs.reduce((sum, sub) => {
+				const planPrice = priceMap[sub.plan] ?? 0;
+				return sum + planPrice * sub._count.plan;
+			}, 0);
 
-		return total;
+			return total;
+		} catch (error) {
+			throw error;
+		}
 	}
 }

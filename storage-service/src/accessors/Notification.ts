@@ -22,23 +22,27 @@ export default class NotificationManager {
 	  * @returns {Notification} The created notification.
 	*/
 	async create(data: CreateNotification): Promise<Notification> {
-		const notification = await client.notification.create({
-			data: {
-				text: data.text,
-				title: data.title,
-				url: data.url,
-				user: {
-					connect: {
-						id: data.userId,
+		try {
+			const notification = await client.notification.create({
+				data: {
+					text: data.text,
+					title: data.title,
+					url: data.url,
+					user: {
+						connect: {
+							id: data.userId,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		// Emit the notification to the user
-		this.socket.to(notification.userId).emit('notification', notification);
-		this.cache.set(notification.id, notification);
-		return notification;
+			// Emit the notification to the user
+			this.socket.to(notification.userId).emit('notification', notification);
+			this.cache.set(notification.id, notification);
+			return notification;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 
@@ -48,13 +52,17 @@ export default class NotificationManager {
 	  * @returns {Notification | null} The notification.
 	*/
 	async getById(id: string): Promise<Notification | null> {
-		let notif = this.cache.get(id) ?? null;
-		if (notif) return notif;
-		notif = await client.notification.findUnique({
-			where: { id },
-		});
-		if (notif) this.cache.set(notif.id, notif);
-		return notif;
+		try {
+			let notif = this.cache.get(id) ?? null;
+			if (notif) return notif;
+			notif = await client.notification.findUnique({
+				where: { id },
+			});
+			if (notif) this.cache.set(notif.id, notif);
+			return notif;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -63,10 +71,14 @@ export default class NotificationManager {
 	  * @returns {Boolean} Whether the notification was deleted.
 	*/
 	async delete(id: string): Promise<boolean> {
-		const notif = await client.notification.delete({
-			where: { id },
-		});
-		return this.cache.delete(notif.id);
+		try {
+			const notif = await client.notification.delete({
+				where: { id },
+			});
+			return this.cache.delete(notif.id);
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**

@@ -37,17 +37,21 @@ export default class SessionManager {
 		* @returns {String[]} The array of user Ids
 	*/
 	async fetchUsersWhoLoggedInBetweenTwoDates(oldDate: Date, newDate: Date): Promise<string[]> {
-		const sessions = await client.session.findMany({
-			where: {
-				createdAt: {
-					gte: oldDate,
-					lte: newDate,
+		try {
+			const sessions = await client.session.findMany({
+				where: {
+					createdAt: {
+						gte: oldDate,
+						lte: newDate,
+					},
 				},
-			},
-		});
+			});
 
-		const users = [...new Set(sessions.map(s => s.userId))];
-		return users;
+			const users = [...new Set(sessions.map(s => s.userId))];
+			return users;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -56,24 +60,28 @@ export default class SessionManager {
 		* @returns {Session} The session
 	*/
 	async fetchByToken(token: string): Promise<FullSession | null> {
-		let session = this.cache.get(token) ?? null;
-		if (session == null) {
-			session = await client.session.findUnique({
-				where: {
-					token,
-				},
-				include: {
-					user: {
-						include: {
-							plan: true,
+		try {
+			let session = this.cache.get(token) ?? null;
+			if (session == null) {
+				session = await client.session.findUnique({
+					where: {
+						token,
+					},
+					include: {
+						user: {
+							include: {
+								plan: true,
+							},
 						},
 					},
-				},
-			});
-			if (session !== null) this.cache.set(token, session);
-		}
+				});
+				if (session !== null) this.cache.set(token, session);
+			}
 
-		return session;
+			return session;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -82,14 +90,19 @@ export default class SessionManager {
 		* @returns {Session} Whether it was deleted or not
 	*/
 	async delete(token: string): Promise<Session> {
-		const session = await client.session.delete({
-			where: {
-				token,
-			},
-		});
+		try {
 
-		this.cache.delete(session.token);
-		return session;
+			const session = await client.session.delete({
+				where: {
+					token,
+				},
+			});
+
+			this.cache.delete(session.token);
+			return session;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**

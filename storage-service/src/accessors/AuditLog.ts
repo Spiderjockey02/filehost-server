@@ -25,64 +25,68 @@ export default class AuditLogAccessor {
 		const userAgent = params.userAgent ? parseUserAgent(params.userAgent) : undefined;
 		const displayName = params.eventName.split('_').join(' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
-		const log = await client.auditLog.create({
-			data: {
-				event: {
-					connectOrCreate: {
-						where: {
-							name: params.eventName,
-						},
-						create: {
-							name: params.eventName,
-							resourceType: params.resourceType,
-							displayName: displayName,
+		try {
+			const log = await client.auditLog.create({
+				data: {
+					event: {
+						connectOrCreate: {
+							where: {
+								name: params.eventName,
+							},
+							create: {
+								name: params.eventName,
+								resourceType: params.resourceType,
+								displayName: displayName,
+							},
 						},
 					},
+					message: params.message,
+					success: params.success,
+					resourceId: params.resourceId,
+					user: params.userId ? {
+						connect: {
+							id: params.userId,
+						},
+					} : undefined,
+					ipCon: params.ip ? {
+						connectOrCreate: {
+							where: {
+								ip: params.ip,
+							},
+							create: {
+								...ip, ip: params.ip,
+							},
+						},
+					} : undefined,
+					userAgentCon: params.userAgent ? {
+						connectOrCreate: {
+							where: {
+								agent: params.userAgent,
+							},
+							create: {
+								...userAgent, agent: params.userAgent,
+							},
+						},
+					} : undefined,
 				},
-				message: params.message,
-				success: params.success,
-				resourceId: params.resourceId,
-				user: params.userId ? {
-					connect: {
-						id: params.userId,
-					},
-				} : undefined,
-				ipCon: params.ip ? {
-					connectOrCreate: {
-						where: {
-							ip: params.ip,
-						},
-						create: {
-							...ip, ip: params.ip,
-						},
-					},
-				} : undefined,
-				userAgentCon: params.userAgent ? {
-					connectOrCreate: {
-						where: {
-							agent: params.userAgent,
-						},
-						create: {
-							...userAgent, agent: params.userAgent,
-						},
-					},
-				} : undefined,
-			},
-			include: {
-				user: true,
-				event: true,
-			},
-		});
+				include: {
+					user: true,
+					event: true,
+				},
+			});
 
-		// Notify listeners
-		const listeners = this.listeners.size == 0 ? this.listeners : await this.getListeners();
-		const interestedListeners = [...listeners.values()].filter(l => l.events.some(e => e.eventId === params.eventName) && l.enabled);
-		for (const listener of interestedListeners) {
-			if (listener.type === 'WEBHOOK' && listener.targetUrl) this.gclient.sendWebhook(listener, log);
-			if (listener.type == 'NOTIFICATION') this.gclient.sendNotification(this.gclient, listener, log);
+			// Notify listeners
+			const listeners = this.listeners.size == 0 ? this.listeners : await this.getListeners();
+			const interestedListeners = [...listeners.values()].filter(l => l.events.some(e => e.eventId === params.eventName) && l.enabled);
+			for (const listener of interestedListeners) {
+				if (listener.type === 'WEBHOOK' && listener.targetUrl) this.gclient.sendWebhook(listener, log);
+				if (listener.type == 'NOTIFICATION') this.gclient.sendNotification(this.gclient, listener, log);
+			}
+
+			return log;
+		} catch (error) {
+			throw error;
 		}
-
-		return log;
 	}
 
 	/**
@@ -91,27 +95,31 @@ export default class AuditLogAccessor {
 		* @returns {{logs: AuditLog[], total: number}} The list of logs and a total
 	*/
 	async fetch(data: fetchAuditLogsParams): Promise<{logs: AuditLog[], total: number}> {
-		const [logs, total] = await Promise.all([
-			client.auditLog.findMany({
-				where: {
-					userId: data.userId,
-					eventId: data.eventName,
-				},
-				orderBy: {
-					createdAt: data.sortOrder ?? 'desc',
-				},
-				take: 20,
-				skip: data.page ? data.page * 20 : 0,
-			}),
-			client.auditLog.count({
-				where: {
-					userId: data.userId,
-					eventId: data.eventName,
-				},
-			}),
-		]);
+		try {
+			const [logs, total] = await Promise.all([
+				client.auditLog.findMany({
+					where: {
+						userId: data.userId,
+						eventId: data.eventName,
+					},
+					orderBy: {
+						createdAt: data.sortOrder ?? 'desc',
+					},
+					take: 20,
+					skip: data.page ? data.page * 20 : 0,
+				}),
+				client.auditLog.count({
+					where: {
+						userId: data.userId,
+						eventId: data.eventName,
+					},
+				}),
+			]);
 
-		return { logs, total };
+			return { logs, total };
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -151,40 +159,44 @@ export default class AuditLogAccessor {
 		* @returns {AuditLogListener} The new listener
 	*/
 	async addListener(data: AddAuditLogListenerParams): Promise<AuditLogListener> {
-		const listener = await client.auditLogListener.create({
-			data: {
-				admin: {
-					connect: {
-						id: data.userId,
+		try {
+			const listener = await client.auditLogListener.create({
+				data: {
+					admin: {
+						connect: {
+							id: data.userId,
+						},
 					},
+					name: data.name,
+					type: data.type,
+					targetUrl: data.targetUrl,
+					enabled: true,
 				},
-				name: data.name,
-				type: data.type,
-				targetUrl: data.targetUrl,
-				enabled: true,
-			},
-		});
+			});
 
-		await client.auditLogEventSubscription.createMany({
-			data: data.eventNames.map(eventName => ({
-				listenerId: listener.id,
-				eventId: eventName,
-			})),
-			skipDuplicates: true,
-		});
+			await client.auditLogEventSubscription.createMany({
+				data: data.eventNames.map(eventName => ({
+					listenerId: listener.id,
+					eventId: eventName,
+				})),
+				skipDuplicates: true,
+			});
 
-		// Fetch new listener with events
-		const fullListener = await client.auditLogListener.findUnique({
-			where: {
-				id: listener.id,
-			},
-			include: {
-				events: true,
-			},
-		});
+			// Fetch new listener with events
+			const fullListener = await client.auditLogListener.findUnique({
+				where: {
+					id: listener.id,
+				},
+				include: {
+					events: true,
+				},
+			});
 
-		this.listeners.set(fullListener!.id, fullListener!);
-		return listener;
+			this.listeners.set(fullListener!.id, fullListener!);
+			return listener;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -193,14 +205,18 @@ export default class AuditLogAccessor {
 		* @returns {AuditLogListener} The deleted listener
 	*/
 	async removeListener(id: string): Promise<AuditLogListener> {
-		const listener = await client.auditLogListener.delete({
-			where: {
-				id: id,
-			},
-		});
+		try {
+			const listener = await client.auditLogListener.delete({
+				where: {
+					id: id,
+				},
+			});
 
-		this.listeners.delete(listener.id);
-		return listener;
+			this.listeners.delete(listener.id);
+			return listener;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -209,52 +225,56 @@ export default class AuditLogAccessor {
 		* @returns {AuditLogListener} The new listener
 	*/
 	async updateListener(data: UpdateAuditLogListenerParams): Promise<AuditLogListener> {
-		const listener = await client.auditLogListener.update({
-			where: {
-				id: data.id,
-			},
-			data: {
-				name: data.name,
-				type: data.type,
-				targetUrl: data.targetUrl,
-				enabled: data.enabled,
-			},
-		});
-
-		const existingSubs = await client.auditLogEventSubscription.findMany({
-			where: { listenerId: listener.id },
-			select: { eventId: true },
-		});
-
-		const existingEventIds = existingSubs.map(e => e.eventId);
-		const newEventIds = data.eventNames;
-
-		const toAdd = newEventIds.filter(id => !existingEventIds.includes(id));
-		const toRemove = existingEventIds.filter(id => !newEventIds.includes(id));
-
-		await client.$transaction([
-			client.auditLogEventSubscription.deleteMany({
+		try {
+			const listener = await client.auditLogListener.update({
 				where: {
-					listenerId: listener.id,
-					eventId: { in: toRemove },
+					id: data.id,
 				},
-			}),
-			client.auditLogEventSubscription.createMany({
-				data: toAdd.map(eventId => ({
-					listenerId: listener.id,
-					eventId,
-				})),
-				skipDuplicates: true,
-			}),
-		]);
+				data: {
+					name: data.name,
+					type: data.type,
+					targetUrl: data.targetUrl,
+					enabled: data.enabled,
+				},
+			});
 
-		const fullListener = await client.auditLogListener.findUnique({
-			where: { id: listener.id },
-			include: { events: true },
-		});
+			const existingSubs = await client.auditLogEventSubscription.findMany({
+				where: { listenerId: listener.id },
+				select: { eventId: true },
+			});
 
-		this.listeners.set(fullListener!.id, fullListener!);
-		return fullListener!;
+			const existingEventIds = existingSubs.map(e => e.eventId);
+			const newEventIds = data.eventNames;
+
+			const toAdd = newEventIds.filter(id => !existingEventIds.includes(id));
+			const toRemove = existingEventIds.filter(id => !newEventIds.includes(id));
+
+			await client.$transaction([
+				client.auditLogEventSubscription.deleteMany({
+					where: {
+						listenerId: listener.id,
+						eventId: { in: toRemove },
+					},
+				}),
+				client.auditLogEventSubscription.createMany({
+					data: toAdd.map(eventId => ({
+						listenerId: listener.id,
+						eventId,
+					})),
+					skipDuplicates: true,
+				}),
+			]);
+
+			const fullListener = await client.auditLogListener.findUnique({
+				where: { id: listener.id },
+				include: { events: true },
+			});
+
+			this.listeners.set(fullListener!.id, fullListener!);
+			return fullListener!;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -262,14 +282,18 @@ export default class AuditLogAccessor {
 		* @returns {FullAuditLogListener[]} The list of listeners
 	*/
 	async getListeners(): Promise<FullAuditLogListener[]> {
-		const listeners = await client.auditLogListener.findMany({
-			include: {
-				events: true,
-			},
-		});
+		try {
+			const listeners = await client.auditLogListener.findMany({
+				include: {
+					events: true,
+				},
+			});
 
-		listeners.forEach(l => this.listeners.set(l.id, l));
-		return listeners;
+			listeners.forEach(l => this.listeners.set(l.id, l));
+			return listeners;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -293,17 +317,25 @@ export default class AuditLogAccessor {
 		});
 	}
 
+	/**
+	 * Fetch the success rate of audit logs
+	 * @returns The count of successful and failed audit logs
+	*/
 	async fetchSuccessRate() {
-		const res = await client.auditLog.groupBy({
-			by: ['success'],
-			_count: true,
-		});
+		try {
+			const res = await client.auditLog.groupBy({
+				by: ['success'],
+				_count: true,
+			});
 
-		const codesWithCount: { [key: string]: number } = {};
-		for (const item of res) {
-			codesWithCount[`${item.success}`] = item._count;
+			const codesWithCount: { [key: string]: number } = {};
+			for (const item of res) {
+				codesWithCount[`${item.success}`] = item._count;
+			}
+
+			return codesWithCount;
+		} catch (error) {
+			throw error;
 		}
-
-		return codesWithCount;
 	}
 }

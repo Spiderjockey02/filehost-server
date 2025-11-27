@@ -14,13 +14,14 @@ export default class CronJobAccessor {
 	  * @returns {CronJob[]} The CRON jobs
 	*/
 	async fetchAll(): Promise<CronJob[]> {
-		const cronJobs = await client.cronJob.findMany();
+		try {
+			const cronJobs = await client.cronJob.findMany();
+			for (const cronJob of cronJobs) this.names.set(cronJob.name, cronJob);
 
-		for (const cronJob of cronJobs) {
-			this.names.set(cronJob.name, cronJob);
+			return cronJobs;
+		} catch (error) {
+			throw error;
 		}
-
-		return cronJobs;
 	}
 
 	/**
@@ -57,27 +58,31 @@ export default class CronJobAccessor {
 	  * @returns The updated user.
 	*/
 	async createLog(data: createCronJobLogType) {
-		const log = await client.cronJobLog.create({
-			data: {
-				cronJob: {
-					connectOrCreate: {
-						where: {
-							name: data.jobName,
-						},
-						create: {
-							name: data.jobName,
+		try {
+			const log = await client.cronJobLog.create({
+				data: {
+					cronJob: {
+						connectOrCreate: {
+							where: {
+								name: data.jobName,
+							},
+							create: {
+								name: data.jobName,
+							},
 						},
 					},
+					status: data.status,
+					message: data.message,
+					duration: data.duration,
 				},
-				status: data.status,
-				message: data.message,
-				duration: data.duration,
-			},
-		});
+			});
 
-		// Update latest status and then return the inital log
-		await this.update({ name: data.jobName, latestStatus: data.status });
-		return log;
+			// Update latest status and then return the inital log
+			await this.update({ name: data.jobName, latestStatus: data.status });
+			return log;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	/**
