@@ -415,12 +415,24 @@ export default class FileManager extends FileAccessor {
 	  * @param {string} filePath The filepath of the file for the thumbnail
 	*/
 	async sendThumbnail(res: Response, userId: string, filePath: string) {
+		// Set default cache headers (1 hour)
+		res.setHeader('Cache-Control', 'public, max-age=3600');
+
 		// Get the mimeType of the file
 		const file = await this.getByFilePath(userId, filePath);
 		if (file == null || file.mimetype == null || file.deletedAt !== null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+
 		// Fetch the storage medium and check it's online
 		const storageProvider = await this.storageManager.getProviderById(file.storageId);
 		if (storageProvider.isOnline == false) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+
+		// Browser/CDN cache for 6 hours, revalidate after
+		const lastModified = file.updatedAt.toUTCString();
+		res.setHeader('Cache-Control', 'public, max-age=21600');
+		res.setHeader('Last-Modified', lastModified);
+
+		const ims = res.req.headers['if-modified-since'];
+		if (ims && new Date(ims).getTime() >= file.updatedAt.getTime()) return res.status(304).end();
 
 		// Send thumbnail if it exists, create it if it doesn't
 		try {
@@ -432,6 +444,7 @@ export default class FileManager extends FileAccessor {
 						await this.ThumbnailCreator.createThumbnail(file);
 						return await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` });
 					} catch {
+						res.setHeader('Cache-Control', 'public, max-age=86400');
 						return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 					}
 				}
@@ -440,9 +453,11 @@ export default class FileManager extends FileAccessor {
 					await this.ThumbnailCreator.createThumbnail(file);
 					return await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` });
 				} catch {
+					res.setHeader('Cache-Control', 'public, max-age=86400');
 					return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 				}
 			}
+			res.setHeader('Cache-Control', 'public, max-age=86400');
 			return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 		}
 	}
