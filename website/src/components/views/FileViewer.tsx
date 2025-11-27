@@ -1,8 +1,8 @@
+import type { FileViewerProps } from '@/types/Components/Views';
 import { VideoPlayer, TextViewer } from '@/components';
+import { useToast } from '../Hooks/ToastManager';
 import { useRef } from 'react';
 import Image from 'next/image';
-import type { FileViewerProps } from '@/types/Components/Views';
-import { useToast } from '../Hooks/ToastManager';
 
 export default function FileViewer({ file }: FileViewerProps) {
 	const { showToast } = useToast();
@@ -39,7 +39,7 @@ export default function FileViewer({ file }: FileViewerProps) {
 				</div>
 			);
 		case 'video':
-			return <VideoPlayer path={file.path} userId={file.userId} />;
+			return <VideoPlayer videoPath={`/content/${file.userId}${file.path}`} thumbnailPath={`/thumbnail/${file.userId}${file.path}`} />;
 		default:
 			<div className="text-center">
 				<p>Unsupported file type: {file.mimetype}</p>

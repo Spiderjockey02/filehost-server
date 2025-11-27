@@ -20,12 +20,11 @@ export function formatBytes(bytes?: number) {
 	return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-export function formatTime(timeInSeconds: number) {
-	const result = new Date((isNaN(timeInSeconds) ? 1 : timeInSeconds) * 1000).toISOString().substr(11, 8);
-	return {
-		minutes: result.substr(3, 2),
-		seconds: result.substr(6, 2),
-	};
+export function formatTime(seconds: number) {
+	if (!isFinite(seconds)) return '0:00';
+	const s = Math.floor(seconds % 60);
+	const m = Math.floor(seconds / 60);
+	return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 export function generatePlaceholderTable(rows: number, column: number) {

@@ -14,3 +14,15 @@ export interface TrashContextMenuProps {
   selected: File[]
   closeContextMenu: () => void
 }
+
+export interface VideoPlayerContextMenuProps {
+  contextMenu: {
+    x: number;
+    y: number;
+  }
+  setContextMenu: (menu: null) => void;
+  setShowStats: (show: (prev: boolean) => boolean) => void;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  currentTime: number
+}

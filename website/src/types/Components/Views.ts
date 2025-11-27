@@ -2,9 +2,11 @@ import type { FileWithChildren, FileWithCount } from '../database';
 import type { File } from '@/types/generated/browser';
 
 export interface VideoPlayerProps {
-  userId: string
-	path: string
+  videoPath: string;
+	thumbnailPath?: string;
 }
+
+export type HUDIndicator = 'seek_forward' | 'seek_backward' | 'volume' | 'speed' | null;
 
 export interface TextViewerProps {
   path: string
