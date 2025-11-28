@@ -1,4 +1,4 @@
-import { FileType, Prisma } from '@/types/generated/client';
+import { type FileType, Prisma } from '@/types/generated/client';
 
 export interface createFile {
   path: string
@@ -9,6 +9,19 @@ export interface createFile {
   userId: string
   type?: FileType
   storageId: string
+}
+
+export interface addMetadata {
+  width?: number
+  height?: number
+  duration?: number
+  frameRate?: number
+  cameraModel?: string
+  gpsLatitude?: number
+  gpsLongitude?: number
+  originalCreatedAt: Date
+  codec?: string
+  exif?: any
 }
 
 export interface updateFile {

@@ -1,4 +1,5 @@
 import type { UserWithPlan } from '@/types/database/User';
+import MetadataExtractor from '@/utils/MetadataExtractor';
 import { cleanUpVideo } from '@/utils/VideoPreprocessor';
 import type { FullFile } from '@/types/database/File';
 import type { File } from '@/types/generated/client';
@@ -107,6 +108,14 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			// Move the uploaded file away from temp folder to storage server
 			const buffer = await readFile(file.filepath);
 			await fileProvider.writeFile(`${user.id}/${uploadedFile.id}`, buffer);
+
+			// Extract metadata
+			try {
+				const meta = await new MetadataExtractor().extract(file);
+				await client.FileManager.addMetadata(uploadedFile.id, { ...meta });
+			} catch (err) {
+				client.logger.error(err);
+			}
 
 			// Notification
 			const max = Number(user.plan.maxStorageSize);

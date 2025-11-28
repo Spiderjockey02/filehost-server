@@ -64,6 +64,19 @@ export interface HTTPStripped {
 	ip?: string
 }
 
+export interface ExtractedMetadata {
+  width?: number;
+  height?: number;
+  duration?: number;
+  codec?: string;
+  cameraModel?: string;
+  gpsLatitude?: number;
+  gpsLongitude?: number;
+  exif?: any;
+  frameRate?: number
+  originalCreatedAt: Date
+}
+
 export type NestedPaths<T, Prev extends string = ''> = {
   [K in keyof T & string]: T[K] extends object
     ? `${Prev}${K}` | NestedPaths<T[K], `${Prev}${K}.`>

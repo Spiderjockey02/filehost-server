@@ -1,4 +1,4 @@
-import type { createFile, fetchByOwner, fetchFileMediaTypesParams, FullFile, Pagination, updateFile, updateFilePath } from '@/types/database/File';
+import type { addMetadata, createFile, fetchByOwner, fetchFileMediaTypesParams, FullFile, Pagination, updateFile, updateFilePath } from '@/types/database/File';
 import type { File, FileType, MediaType } from '@/types/generated/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
@@ -63,6 +63,21 @@ export default class FileAccessor {
 			throw error;
 		}
 	}
+
+
+	async addMetadata(fileId: string, data: addMetadata) {
+		return client.fileMetadata.create({
+			data: {
+				file: {
+					connect: {
+						id: fileId,
+					},
+				},
+				...data,
+			},
+		});
+	}
+
 
 	/**
     * Updates a file
@@ -573,26 +588,38 @@ export default class FileAccessor {
 	}
 
 	async fetchGalleryByUserId(userId: string) {
-		return client.file.findMany({
-			where: {
-				userId,
-				deletedAt: null,
-				OR: [
-					{
-						mimetype: {
-							startsWith: 'image/',
+		try {
+			const files = await client.file.findMany({
+				where: {
+					userId,
+					deletedAt: null,
+					OR: [
+						{
+							mimetype: {
+								startsWith: 'image/',
+							},
 						},
-					},
-					{
-						mimetype: {
-							startsWith: 'video/',
+						{
+							mimetype: {
+								startsWith: 'video/',
+							},
 						},
-					},
-				],
-			},
-			orderBy: {
-				createdAt: 'desc',
-			},
-		});
+					],
+				},
+				include: {
+					metadata: true,
+				},
+			});
+
+			files.sort((a, b) => {
+				const dateA = a.metadata?.originalCreatedAt ?? a.createdAt;
+				const dateB = b.metadata?.originalCreatedAt ?? b.createdAt;
+				return dateB.getTime() - dateA.getTime();
+			});
+
+			return files;
+		} catch (err) {
+			throw err;
+		}
 	}
 }

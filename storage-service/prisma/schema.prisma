@@ -1,6 +1,5 @@
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -99,7 +98,7 @@ model Verification {
 model Notification {
   id          String    @id             @default(cuid())
   createdAt   DateTime  @default(now())
-  text        String
+  text        String    @db.LongText
   title       String
   url         String?
   userId      String
@@ -133,6 +132,7 @@ model File {
   storage     StorageMedium    @relation(fields: [storageId], references: [id])
   storageId   String
   recentlyViewedBy  RecentlyViewedFile[]
+  metadata    FileMetadata?
 
   @@unique([path, userId])
   @@index([userId])
@@ -140,6 +140,22 @@ model File {
   @@index([storageId])
   @@index([deletedAt])
   @@index([mimetype])
+}
+
+model FileMetadata {
+  id                String    @id       @default(uuid())
+  file              File      @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId            String    @unique
+  originalCreatedAt DateTime?
+  width             Int?
+  height            Int?
+  duration          Float?
+  frameRate         Float?
+  cameraModel       String?
+  gpsLatitude       Float?
+  gpsLongitude      Float?
+  codec             String?
+  exif              Json?
 }
 
 enum StorageType {
@@ -193,7 +209,7 @@ enum Status {
 model CronJobLog {
   id        Int         @id   @default(autoincrement())
   status    Status
-  message   String
+  message   String      @db.LongText
   ranAt     DateTime    @default(now())
   duration  Int?        @default(0)
   cronJob   CronJob     @relation(fields: [jobName], references: [name], onDelete: Cascade)
@@ -342,7 +358,7 @@ model AuditLog {
   userId       String?
   event        AuditLogNames  @relation(fields: [eventId], references: [name], onDelete: Cascade)
   eventId      AuditLogEventName
-  message      String?
+  message      String?        @db.LongText
   resourceId   String?
   success      Boolean
   ipCon        IpAddress?     @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
