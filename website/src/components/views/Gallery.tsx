@@ -124,7 +124,7 @@ export default function Gallery({ files }: GalleryProps) {
 			{Object.entries(groupedFiles).map(([monthYear, group]) => (
 				<section key={monthYear} ref={(el) => {sectionRefs.current[monthYear] = el;}} className="mb-5">
 					<h5 className="fw-bold text-muted mb-3 sticky-top py-2">{monthYear}</h5>
-					<div className="d-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '5px' }}>
+					<div className="d-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, max-content))', gap: '5px', justifyContent: 'start' }}>
 						{group.map((file) => {
 							const show = visible[file.id];
 							return (

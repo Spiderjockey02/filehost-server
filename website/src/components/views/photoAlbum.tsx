@@ -30,7 +30,7 @@ export default function PhotoAlbum({ folder }: DirectoryProps) {
 
 	return (
 		<>
-			<div className="d-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '5px' }}>
+			<div className="d-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, max-content))', gap: '5px', justifyContent: 'start' }}>
 				{visibleFiles.map((file) => (
 					<div key={file.name} className="text-center rounded position-relative file-container">
 						<Link href={`/files${file.path}`} className="text-decoration-none">
