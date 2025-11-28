@@ -45,6 +45,12 @@ export type FileWithCount = Prisma.FileGetPayload<{
   }
 }>
 
+export type FileWithMetadata = Prisma.FileGetPayload<{
+  include: {
+    metadata: true
+  }
+}>
+
 export type UserWithCount = Prisma.UserGetPayload<{
   include: {
     _count: {

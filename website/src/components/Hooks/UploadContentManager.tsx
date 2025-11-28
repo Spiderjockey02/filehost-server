@@ -49,7 +49,7 @@ export const UploadQueueProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 			const formData = new FormData();
 			formData.append('media', file);
-			formData.append('metadata', JSON.stringify({ parentId }));
+			formData.append('metadata', JSON.stringify({ parentId, originalCreated: file.lastModified }));
 
 			controllerRef.current = new AbortController();
 			let previousLoaded = 0;

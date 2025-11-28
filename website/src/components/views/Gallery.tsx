@@ -16,7 +16,7 @@ export default function Gallery({ files }: GalleryProps) {
 	const groupedFiles = useMemo(() => {
 		const groups: Record<string, File[]> = {};
 		for (const file of files) {
-			const date = new Date(file.createdAt);
+			const date = new Date(file.metadata?.originalCreatedAt ?? file.createdAt);
 			const dayKey = date.toLocaleDateString('en-GB', {
 				day: '2-digit',
 				month: 'long',

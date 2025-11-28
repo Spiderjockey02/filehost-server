@@ -1,4 +1,4 @@
-import type { FileWithChildren, FileWithCount } from '../database';
+import type { FileWithChildren, FileWithCount, FileWithMetadata } from '../database';
 import type { File } from '@/types/generated/browser';
 
 export interface VideoPlayerProps {
@@ -24,7 +24,7 @@ export interface DirectoryProps {
 }
 
 export interface GalleryProps {
-  files: File[]
+  files: FileWithMetadata[]
 }
 
 export interface FilePanelPopupProps {

@@ -1,5 +1,5 @@
+import type { FileWithMetadata } from '@/types/database';
 import type { GetServerSidePropsContext } from 'next';
-import type { File } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
 import Gallery from '@/components/views/Gallery';
@@ -17,7 +17,7 @@ export default function GalleryPage() {
 			if (!res.ok) throw new Error(`Failed to fetch user's gallery: ${res.statusText}`);
 
 			const d = await res.json();
-			return d as { files: File[] };
+			return d as { files: FileWithMetadata[] };
 		},
 		...queryOptions,
 	});

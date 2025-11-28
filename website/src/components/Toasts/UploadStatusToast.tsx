@@ -2,7 +2,6 @@ import { useUploadQueue } from '../Hooks/UploadContentManager';
 
 export default function UploadStatusToast() {
 	const { status, cancelUpload } = useUploadQueue();
-	console.log(status);
 	if (!status || status.error === 'File with that name already exists') return null;
 
 	return (

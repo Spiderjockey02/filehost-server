@@ -131,6 +131,7 @@ model File {
   storage     StorageMedium    @relation(fields: [storageId], references: [id])
   storageId   String
   recentlyViewedBy  RecentlyViewedFile[]
+  metadata    FileMetadata?
 
   @@unique([path, userId])
   @@index([userId])
@@ -138,6 +139,22 @@ model File {
   @@index([storageId])
   @@index([deletedAt])
   @@index([mimetype])
+}
+
+model FileMetadata {
+  id                String    @id       @default(uuid())
+  file              File      @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId            String    @unique
+  originalCreatedAt DateTime?
+  width             Int?
+  height            Int?
+  duration          Float?
+  frameRate         Float?
+  cameraModel       String?
+  gpsLatitude       Float?
+  gpsLongitude      Float?
+  codec             String?
+  exif              Json?
 }
 
 enum StorageType {

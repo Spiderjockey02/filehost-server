@@ -33,7 +33,10 @@ export default function Trash() {
 			if (!res.ok) throw new Error(`Failed to fetch user's trashed files: ${res.statusText}`);
 
 			const d = await res.json();
-			return d as { files: DeletedFile[] };
+			const files = d.files as DeletedFile[];
+			const parentIds = new Set(files.map(f => f.id));
+			const filtered = files.filter(f => !parentIds.has(f.parentId ?? ''));
+			return { files: filtered };
 		},
 		...queryOptions,
 	});
