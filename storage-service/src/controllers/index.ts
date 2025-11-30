@@ -34,7 +34,7 @@ export const getContent = (client: Client) => {
 		if (!session?.user) return Error.InvalidSession(res);
 
 		const userId = req.params.userid;
-		const path = req.params.path.join('/');
+		const path = req.params.path.join('/').split('?')[0];
 
 		// Fetch file from database
 		const file = await client.FileManager.getByFilePath(userId, path);
@@ -50,6 +50,7 @@ export const getContent = (client: Client) => {
 			const owner = await client.userManager.fetchbyParam({ id: file.userId }) as User;
 			await client.FileManager.sendFile(res, owner, file, req.headers.range);
 
+			if (file.mimetype?.startsWith('video') && req.headers.range !== 'bytes=0-') return;
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				client.AuditLogManager.create({
 					userId: session.user.id,
@@ -65,12 +66,14 @@ export const getContent = (client: Client) => {
 		} catch (err) {
 			if (err instanceof S3ServiceException) {
 				client.logger.error(`S3 error: ${err}`);
-				if (err.name == 'NotFound') Error.MissingResource(res, 'File not found on storage server.');
+				if (err.name == 'NotFound' && !res.headersSent) Error.MissingResource(res, 'File not found on storage server.');
 			} else {
 				client.logger.error(`Non-S3 error: ${err}`);
-				Error.GenericError(res, 'Failed to send file');
+				if (!res.headersSent) Error.GenericError(res, 'Failed to send file');
 			}
 
+			// Don't log errors if the user is just updating playback (it will abort the old request to send the new, resulting in an error being thrown)
+			if (`${err}` == 'Error: aborted') return;
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				client.AuditLogManager.create({
 					userId: session.user.id,
