@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
 		config.resolve.fallback = { fs: false };
 		return config;
 	},
+	experimental: {
+		middlewareClientMaxBodySize: '10gb',
+	},
 	images: {
 		remotePatterns: [new URL('https://cdn.discordapp.com/**'), new URL('https://placehold.co/**') ],
 	},
