@@ -112,7 +112,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			// Extract metadata
 			try {
 				const meta = await new MetadataExtractor().extract(file);
-				await client.FileManager.addMetadata(uploadedFile.id, { ...meta });
+				if (meta != null) await client.FileManager.addMetadata(uploadedFile.id, { ...meta });
 			} catch (err) {
 				client.logger.error(err);
 			}

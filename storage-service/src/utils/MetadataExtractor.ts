@@ -13,7 +13,7 @@ export default class MetadataExtractor {
 	  * @param extra Extra information from the upload metadata
 	  * @returns {ExtractedMetadata} The extracted metadata
 	*/
-	async extract(file: File, extra?: { originalCreated?: Date }): Promise<ExtractedMetadata> {
+	async extract(file: File, extra?: { originalCreated?: Date }): Promise<ExtractedMetadata | null> {
 		let base: ExtractedMetadata | null = null;
 
 		// Fetch metadata from file
@@ -22,7 +22,7 @@ export default class MetadataExtractor {
 		} else if (file.mimetype?.startsWith('video/')) {
 			base = await this.extractFromVideo(file.filepath);
 		} else {
-			throw new Error('Unsupported file type');
+			return null;
 		}
 
 		// Calculate the best time the original file was created
