@@ -6,12 +6,17 @@ import { ChartData } from 'chart.js';
 import { Card } from '@/components';
 import { useState } from 'react';
 
-export default function NetworkRequestsLineChart() {
+interface Props {
+	userId?: string
+	storageId?: string
+}
+
+export default function NetworkRequestsLineChart({ userId, storageId }: Props) {
 	const [requestGrowthFrame, setRequestGrowthFrame] = useState<requestTimeFrames>('hourly');
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['networkRequests', requestGrowthFrame],
+		queryKey: ['networkRequests', requestGrowthFrame, userId, storageId],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/network/requests?frame=${requestGrowthFrame}`, { signal });
+			const res = await fetch(`/api/admin/network/requests?frame=${requestGrowthFrame}${userId ? `&userId=${userId}` : ''}${storageId ? `&storageId=${storageId}` : ''}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch network requests: ${res.statusText}`);
 
 			const d = await res.json();

@@ -7,13 +7,17 @@ import { Line } from 'react-chartjs-2';
 import { Card } from '..';
 ChartJS.register(CategoryScale,	LinearScale,	PointElement,	LineElement,	Filler,	Tooltip,	Legend);
 
-export default function ActivityTransferAreaChart() {
+interface Props {
+	userId?: string
+	storageId?: string
+}
+export default function ActivityTransferAreaChart({ userId, storageId }: Props) {
 	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('hourly');
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['networkTraffic', trafficGrowthFrame],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/network/traffic?frame=${trafficGrowthFrame}`, { signal });
+			const res = await fetch(`/api/admin/network/traffic?frame=${trafficGrowthFrame}${userId ? `&userId=${userId}` : ''}${storageId ? `&storageId=${storageId}` : ''}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch activity transfer data: ${res.statusText}`);
 
 			const d = await res.json();

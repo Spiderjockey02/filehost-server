@@ -104,12 +104,16 @@ export default class UserActivityAccessor {
 	  * @param oldDate The first date
 		* @param newDate The old date
 	*/
-	async fetchActivityBetweenTwoDates(oldDate: Date, newDate: Date) {
+	async fetchActivityBetweenTwoDates(oldDate: Date, newDate: Date, filter?: {userId?: string, storageId?: string }) {
 		return client.userActivity.count({
 			where: {
 				createdAt: {
 					gte: oldDate,
 					lte: newDate,
+				},
+				userId: filter?.userId,
+				user: {
+					storageId: filter?.storageId,
 				},
 			},
 		});
@@ -120,7 +124,7 @@ export default class UserActivityAccessor {
 	  * @param oldDate The first date
 		* @param newDate The old date
 	*/
-	async calculateTransferBetweenTwoDates(oldDate: Date, newDate: Date) {
+	async calculateTransferBetweenTwoDates(oldDate: Date, newDate: Date, filter?: {userId?: string, storageId?: string }) {
 		try {
 			const result = await client.userActivity.aggregate({
 				_sum: {
@@ -131,6 +135,10 @@ export default class UserActivityAccessor {
 					createdAt: {
 						gte: oldDate,
 						lte: newDate,
+					},
+					userId: filter?.userId,
+					user: {
+						storageId: filter?.storageId,
 					},
 				},
 			});

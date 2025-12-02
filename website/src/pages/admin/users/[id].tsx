@@ -1,4 +1,6 @@
 import { AdminListActivitiesCard, AdminListRecentUploadsCard, AdminListSessionsCard, AdminManageUserCard, AdminManageUserNotficationsCard } from '@/components/Cards';
+import NetworkRequestsLineChart from '@/components/Graphs/NetworkRequestsLineChart';
+import { ActivityTransferAreaChart, Col, Row } from '@/components';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { AdminUserIdPageProps } from '@/types/pages';
 import type { UserBans } from '@/types/generated/browser';
@@ -9,7 +11,6 @@ import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
 import type { AdminUser } from '@/types';
 import type { User } from 'better-auth';
-import { Col, Row } from '@/components';
 import { useEffect } from 'react';
 
 export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
@@ -53,6 +54,14 @@ export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
 				</Col>
 				<Col lg={7}>
 					<AdminListActivitiesCard userId={userId} />
+				</Col>
+			</Row>
+			<Row>
+				<Col xl={6} className='mb-4'>
+					<NetworkRequestsLineChart userId={userId} />
+				</Col>
+				<Col xl={6} className='mb-4'>
+					<ActivityTransferAreaChart userId={userId} />
 				</Col>
 			</Row>
 			<AdminManageUserNotficationsCard userId={userId} />
