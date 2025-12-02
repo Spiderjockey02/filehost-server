@@ -1,4 +1,4 @@
-import type { CreateNotification } from '@/types/database/Notification';
+import type { CreateNotification, GetByUserIdParams } from '@/types/database/Notification';
 import type { Notification } from '@/types/generated/client';
 import type { Server } from 'socket.io';
 import { LRUCache } from 'lru-cache';
@@ -86,13 +86,28 @@ export default class NotificationManager {
 	  * @param {string} userId The user id.
 	  * @returns {Notification[]} List of user's notifications
 	*/
-	async getByUserId(userId: string): Promise<Notification[]> {
+	async getByUserId({ userId, page }: GetByUserIdParams): Promise<Notification[]> {
 		return client.notification.findMany({
 			where: {
 				userId,
 			},
 			orderBy: {
 				createdAt: 'desc',
+			},
+			take: 20,
+			skip: page * 20,
+		});
+	}
+
+	/**
+	  * Fetch total count of user's notifications
+	  * @param {string} userId The user id.
+	  * @returns {number} Total number of user's notification
+	*/
+	async fetchCount(userId: string): Promise<number> {
+		return client.notification.count({
+			where: {
+				userId,
 			},
 		});
 	}

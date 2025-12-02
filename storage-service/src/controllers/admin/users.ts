@@ -274,10 +274,18 @@ export const banUserById = (client: Client) => {
 export const getUsersNotification = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const userId = req.params.id;
+		const { page } = req.query;
+
+		const result = validatePage.safeParse(page);
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		try {
-			const notifications = await client.notificationManager.getByUserId(userId);
-			res.json({ notifications });
+			const [notifications, total] = await Promise.all([
+				client.notificationManager.getByUserId({ userId, page: result.data ?? 0 }),
+				client.notificationManager.fetchCount(userId),
+			]);
+
+			res.json({ notifications, total });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user\'s notifications.');

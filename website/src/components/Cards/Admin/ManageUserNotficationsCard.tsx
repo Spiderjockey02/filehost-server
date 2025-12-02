@@ -10,15 +10,16 @@ import { useState } from 'react';
 
 export default function AdminManageUserNotficationsCard({ userId }: AdminManageUserNotficationsCardProps) {
 	const [showModal, setShowModal] = useState(false);
+	const [page, setPage] = useState(0);
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['userNotifications', userId],
+		queryKey: ['userNotifications', userId, page],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/users/${userId}/notifications`, { signal });
+			const res = await fetch(`/api/admin/users/${userId}/notifications?page=${page}`, { signal });
 			if (!res.ok) throw new Error(`Failed to fetch user's notifications: ${res.statusText}`);
 
 			const d = await res.json();
-			return d as { notifications: Notification[] };
+			return d as { notifications: Notification[], total: number };
 		},
 		...queryOptions,
 	});
@@ -62,6 +63,7 @@ export default function AdminManageUserNotficationsCard({ userId }: AdminManageU
 						}
 					</Table.Body>
 				</Table>
+				<Table.PaginationFooter isLoading={isLoading} total={data?.total} page={page} setPage={setPage} />
 			</Card.Body>
 		</Card>
 	);

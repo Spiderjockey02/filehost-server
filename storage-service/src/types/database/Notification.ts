@@ -4,3 +4,8 @@ export interface CreateNotification {
   url?: string
   userId: string
 }
+
+export interface GetByUserIdParams {
+  userId: string
+  page: number
+}
