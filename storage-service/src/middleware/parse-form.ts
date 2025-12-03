@@ -158,7 +158,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 					userId: user.id,
 					ip: getIP(req),
 					userAgent: `${req.headers['user-agent']}`,
-					message: `File uploaded: ${file.originalFilename} (${file.size} bytes)`,
+					message: 'Successfully uploaded file.',
 				});
 			});
 
@@ -182,7 +182,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 					userId: user.id,
 					ip: getIP(req),
 					userAgent: `${req.headers['user-agent']}`,
-					message: `File upload failed: ${file.originalFilename} - ${error}`,
+					message: `Failed to upload file due to error: ${error}.`,
 				});
 			});
 

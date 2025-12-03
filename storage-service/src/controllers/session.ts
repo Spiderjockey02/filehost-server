@@ -61,7 +61,7 @@ export const deleteResetAvatar = (client: Client) => {
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'],
 					success: true,
-					message: 'User reset their avatar',
+					message: 'Successfully reset avatar.',
 				});
 			});
 
@@ -76,8 +76,8 @@ export const deleteResetAvatar = (client: Client) => {
 					resourceId: session.user.id,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'],
-					success: true,
-					message: `Failed to reset avatar: ${err}`,
+					success: false,
+					message: `Failed to reset avatar due to error: ${err}.`,
 				});
 			});
 			Error.GenericError(res, 'Failed to delete user\'s avatar.');
@@ -159,7 +159,7 @@ export const postUserInformation = (client: Client) => {
 					userId: session.user.id,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'],
-					message: 'User updated their personal information',
+					message: 'Successfully updated user\'s personal information.',
 					success: true,
 				});
 			});
@@ -177,7 +177,7 @@ export const postUserInformation = (client: Client) => {
 					userId: session.user.id,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'],
-					message: `Failed to update personal information: ${err}`,
+					message: `Failed to update personal information due to error: ${err}.`,
 					success: false,
 				});
 			});

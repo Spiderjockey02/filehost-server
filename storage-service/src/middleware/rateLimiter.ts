@@ -46,7 +46,7 @@ export async function userPostRateLimit(client: Client) {
 						ip: getIP(req),
 						userAgent: req.headers['user-agent'] || '',
 						success: true,
-						message: `Rate limit abuse detected: ${bucket.abuseLog.length} req/s`,
+						message: `Rate limit abuse detected: ${bucket.abuseLog.length} req/s.`,
 					});
 				});
 			}

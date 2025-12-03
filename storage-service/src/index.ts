@@ -110,7 +110,7 @@ const client = new Client(io);
 		eventName: 'SYSTEM_ONLINE',
 		resourceType: 'SYSTEM',
 		success: true,
-		message: `System started in ${new Date().getTime() - start.getTime()}ms`,
+		message: `System started in ${new Date().getTime() - start.getTime()}ms.`,
 	});
 
 	server.listen(process.env.PORT, () => client.logger.ready(`Started on PORT: ${process.env.PORT}`));

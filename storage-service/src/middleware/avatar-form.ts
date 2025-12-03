@@ -56,12 +56,12 @@ export default async (client: Client, req: Request, user: User) => {
 				ip: getIP(req),
 				userAgent: req.headers['user-agent'],
 				success: true,
-				message: 'User updated their avatar',
+				message: 'Successfully updated avatar.',
 			});
 		});
 
 		return { fields, files };
-	} catch (error) {
+	} catch (err) {
 		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 			await client.AuditLogManager.create({
 				resourceType: 'USER',
@@ -70,11 +70,11 @@ export default async (client: Client, req: Request, user: User) => {
 				ip: getIP(req),
 				userAgent: req.headers['user-agent'],
 				success: false,
-				message: `Failed to update avatar: ${error}`,
+				message: `Failed to update avatar due to error: ${err}.`,
 			});
 		});
 
 		await fileProvider.deleteFile(file[0].filepath);
-		throw error;
+		throw err;
 	}
 };

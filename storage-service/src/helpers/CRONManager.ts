@@ -101,7 +101,7 @@ export default class CRONManager extends CronJobAccessor {
 							resourceType: 'SYSTEM',
 							resourceId: name,
 							success: true,
-							message: `CRON job ${name} executed successfully.`,
+							message: 'Successfully ran CRON job.',
 						});
 					});
 				} catch (err) {
@@ -111,7 +111,7 @@ export default class CRONManager extends CronJobAccessor {
 							resourceType: 'SYSTEM',
 							resourceId: name,
 							success: false,
-							message: `CRON job ${name} failed with error: ${err}`,
+							message: `Failed to run CRON job due to error: ${err}`,
 						});
 					});
 					this.client.logger.error(`[CRONMANAGER]: Error occurred while executing ${name}: ${err}`);

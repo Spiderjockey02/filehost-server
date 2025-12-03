@@ -127,7 +127,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 					resourceType: 'SYSTEM',
 					resourceId: name,
 					success: true,
-					message: `CRON job ${name} executed successfully.`,
+					message: 'Successfully ran CRON job.',
 					userId: session.user?.id,
 					userAgent: req.headers['user-agent'],
 					ip: getIP(req),
@@ -141,7 +141,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 					resourceType: 'SYSTEM',
 					resourceId: name,
 					success: false,
-					message: `CRON job ${name} failed with error: ${err}`,
+					message: `Failed to run CRON job due to error: ${err}.`,
 					userId: session.user?.id,
 					userAgent: req.headers['user-agent'],
 					ip: getIP(req),
@@ -196,8 +196,10 @@ export const postNotification = (client: Client) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
 
+		// Check recipient is a valid user
 		const user = await client.userManager.fetchbyParam({ id: userId });
 		if (user == null) return Error.IncorrectQuery(res, 'UserId is not a valid user.');
+
 		try {
 			const notification = await client.notificationManager.create({ text, title, url, userId: user.id });
 
@@ -207,6 +209,7 @@ export const postNotification = (client: Client) => {
 					resourceType: 'USER',
 					resourceId: notification.id,
 					success: true,
+					message: `Admin: ${session.user.id} successfully sent notification to user: ${user.id}.`,
 					userId: session.user.id,
 				});
 			});
@@ -219,6 +222,7 @@ export const postNotification = (client: Client) => {
 					resourceType: 'USER',
 					resourceId: user.id,
 					success: false,
+					message: `Admin: ${session.user.id} failed to sent notification to user: ${user.id} due to error: ${err}.`,
 					userId: session.user.id,
 				});
 			});

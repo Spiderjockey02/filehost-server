@@ -102,6 +102,7 @@ export default class TrashHandler {
 				resourceId: file.id,
 				success: true,
 				userId: file.userId,
+				message: 'Successfully recovered file.',
 			});
 		});
 
@@ -143,6 +144,7 @@ export default class TrashHandler {
 						resourceId: file.id,
 						success: true,
 						userId: file.userId,
+						message: 'Successfully removed file from system.',
 					});
 				});
 			} catch (err) {
@@ -152,7 +154,7 @@ export default class TrashHandler {
 						resourceType: 'FILE',
 						resourceId: file.id,
 						success: false,
-						message: `Failed to remove file from system: ${err}`,
+						message: `Failed to remove file from system: ${err}.`,
 						userId: file.userId,
 					});
 				});
