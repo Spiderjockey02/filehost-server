@@ -57,9 +57,9 @@ export const getCronJobsByName = (client: Client) => {
 		const name = req.params.name;
 		try {
 			if (!client.CRONManager.isValidCronJobName(name)) return Error.MissingResource(res, `${name} is not a valid CRON job.`);
-			const logs = await client.CRONManager.fetchAllLogs();
+			const logs = await client.CRONManager.fetchAllLogs(name);
 
-			res.json({ logs: logs.filter(l => l.jobName == name) });
+			res.json({ logs });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of mime types.');

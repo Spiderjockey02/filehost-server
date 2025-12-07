@@ -86,10 +86,14 @@ export default class CronJobAccessor {
 	}
 
 	/**
-	  * Fetch all CRON job logs
+	  * Fetch all CRON job logs by name
 		* @returns {CronJobLog[]} An array of CRON job logs
 	*/
-	async fetchAllLogs(): Promise<CronJobLog[]> {
-		return client.cronJobLog.findMany();
+	async fetchAllLogs(jobName: CronJobNames): Promise<CronJobLog[]> {
+		return client.cronJobLog.findMany({
+			where: {
+				jobName,
+			},
+		});
 	}
 }
