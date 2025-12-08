@@ -629,4 +629,37 @@ export default class FileAccessor {
 			throw err;
 		}
 	}
+
+	/**
+	  * Move all user's trashed files back to normal
+	  * @param userId The user's id
+	  * @returns {{count: number}}
+	*/
+	async updateAllFilesFromTrash(userId: string): Promise<{count: number}> {
+		return client.file.updateMany({
+			where: {
+				userId,
+				deletedAt: {
+					not: null,
+				},
+			},
+			data: {
+				deletedAt: null,
+			},
+		});
+	}
+
+	/**
+	  * Fetch all files globally in trash
+	  * @returns {File[]} All trashed files
+	*/
+	async fetchAllDeleted(): Promise<File[]> {
+		return client.file.findMany({
+			where: {
+				deletedAt: {
+					not: null,
+				},
+			},
+		});
+	}
 }

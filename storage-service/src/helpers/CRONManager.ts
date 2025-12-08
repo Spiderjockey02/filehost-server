@@ -30,6 +30,7 @@ export default class CRONManager extends CronJobAccessor {
 			{ name: 'DELETE_EXPIRED_SESSIONS', schedule: '0 * * * *' },
 			{ name: 'RECALCULATE_USER_STORAGE', schedule: '0 0,6,12,18 * * *' },
 			{ name: 'RECALCULATE_STORAGE_USAGE', schedule: '0 * * * *' },
+			{ name: 'DELETE_OLD_TRASHED_FILES', schedule: '0 * * * *' },
 		] as CronJobList[];
 
 		for (const job of defaultJobs) {
@@ -284,6 +285,32 @@ export default class CRONManager extends CronJobAccessor {
 			const duration = Date.now() - start;
 			return this.createLog({ jobName: 'RECALCULATE_STORAGE_USAGE', status: 'FAILURE', message: `${err}`, duration });
 		}
+	}
+
+	/**
+	  * Delete all files in trashed if time has ran out
+		* @returns {CronJobLog}
+	*/
+	async deleteOldTrashedFiles(): Promise<CronJobLog> {
+		const start = Date.now();
+
+		try {
+			const filesInTrash = await this.client.FileManager.fetchAllDeleted();
+			let deletedNum = 0;
+
+			for (const file of filesInTrash) {
+				await this.client.FileManager.TrashHandler.removeFileFromSystem(file.userId, file.id);
+				deletedNum++;
+			}
+
+			const duration = Date.now() - start;
+			return this.createLog({ jobName: 'DELETE_OLD_TRASHED_FILES', status: 'SUCCESS', message: `Deleted ${deletedNum} trashed files.`, duration });
+
+		} catch (err) {
+			const duration = Date.now() - start;
+			return this.createLog({ jobName: 'DELETE_OLD_TRASHED_FILES', status: 'FAILURE', message: `${err}`, duration });
+		}
+
 	}
 
 	isValidCronJobName(name: string): name is CronJobNames {

@@ -12,11 +12,11 @@ export default class TrashHandler {
 	/**
 	  * Move a file to the trash
 	  * @param {UserWithPlan} user The user
-	  * @param {string} fileId The file path
+	  * @param {string} fileId The file Id
 	*/
 	async moveToTrash(user: UserWithPlan, fileId: string) {
-		const file = await this.client.FileManager.getById(fileId);
-		if (file == null) throw 'Invalid File.';
+		const file = await this.client.FileManager.fetchById(fileId);
+		if (file == null) throw 'The specified file does not exist.';
 
 		// Check the owner of the file and folder
 		if (file.userId !== user.id) throw 'You do not have permission to delete this file.';
@@ -42,13 +42,13 @@ export default class TrashHandler {
 				this.client.FileManager.cache.delete(`${file.userId}_${file.path}`);
 
 				// Update their parent's cached version aswell
-				const parentFile = await this.client.FileManager.getById(file.parentId);
+				const parentFile = await this.client.FileManager.fetchById(file.parentId);
 				if (parentFile) this.client.FileManager.cache.delete(`${file.userId}_${parentFile.path}`);
 
 				// Carry on managing other files and fallback system
 				fileUpdates.push({ id: file.id, deletedAt: null });
 				if (file.type === 'DIRECTORY') {
-					const children = await this.client.FileManager.getChildrenByParentId(file.id);
+					const children = await this.client.FileManager.fetchChildrenByParentId(file.id);
 
 					for (const child of children.filter(c => c.deletedAt == null)) {
 						await this.moveToTrash(user, child.id);
@@ -72,12 +72,14 @@ export default class TrashHandler {
 	/**
 	 * Restore a deleted file back the user's directory
 	 * @param {string} userId The user ID
-	 * @param {string} filePath The file path
+	 * @param {string} fileId The file Id
 	 * @returns {File} The updated file
 	 */
-	async restoreFile(userId: string, filePath: string): Promise<File> {
-		const file = await this.client.FileManager.getByFilePath(userId, filePath, true);
-		if (file == null) throw new Error('Invalid path');
+	async restoreFile(userId: string, fileId: string): Promise<File> {
+		const file = await this.client.FileManager.fetchById(fileId);
+		if (file == null) throw 'The specified file does not exist.';
+		if (userId !== file.userId) throw 'You do not have permission to restore this file.';
+		if (file.deletedAt == null) throw 'File is not in the trash.';
 
 		// Update the current file/folder in the database
 		await this.client.FileManager.update({
@@ -85,13 +87,13 @@ export default class TrashHandler {
 			deletedAt: null,
 		});
 
-		// If it's a folder, process its children (don't move the folder itself again)
+		// If it's a folder, process its children
 		if (file.type === 'DIRECTORY') {
-			const children = await this.client.FileManager.getChildrenByParentId(file.id);
+			const children = await this.client.FileManager.fetchChildrenByParentId(file.id);
 
 			// Move all child files/subfolders (make sure no children are already restored)
 			for (const child of children.filter(f => f.deletedAt !== null)) {
-				await this.restoreFile(userId, child.path);
+				await this.restoreFile(userId, child.id);
 			}
 		}
 
@@ -110,31 +112,64 @@ export default class TrashHandler {
 	}
 
 	/**
-	  * Restore a user's entire deleted files back to their files
+	  * Restore a user's entire deleted files
 	  * @param {string} userId The user ID
-		* @returns {GetBatchResult} The result of the operation
+		* @returns {boolean} The result of the operation
 	*/
-	async emptyTrash(userId: string): Promise<File[]> {
-		// First get all files in trash so the actual file can be moved back to the user's directory
+	async emptyTrash(userId: string): Promise<boolean> {
 		const filesInTrash = await this.client.FileManager.fetchOwnedByUserId({ userId, isDeleted: true });
-		return Promise.all(filesInTrash.map(async f => await this.restoreFile(userId, f.path)));
+
+		try {
+			const { count } = await this.client.FileManager.updateAllFilesFromTrash(userId);
+			this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await this.client.AuditLogManager.create({
+					eventName: 'FILE_RECOVERED_ALL',
+					resourceType: 'FILE',
+					resourceId: '',
+					success: true,
+					userId: filesInTrash[0].userId,
+					message: `Successfully empited trash with ${count} files.`,
+				});
+			});
+
+			return true;
+		} catch (err) {
+			this.client.logger.error(err);
+			this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await this.client.AuditLogManager.create({
+					eventName: 'FILE_RECOVERED_ALL',
+					resourceType: 'FILE',
+					resourceId: '',
+					success: false,
+					userId: filesInTrash[0].userId,
+					message: 'Successfully recovered file.',
+				});
+			});
+
+			return false;
+		}
 	}
 
 	/**
 	  * Remove the deleted file from the system
 	  * @param {string} userId The user ID
-	  * @param {string} filePath The file path
+	  * @param {string} fileId The file ID
 	*/
-	async removeFileFromSystem(userId: string, filePath: string) {
-		const file = await this.client.FileManager.getByFilePath(userId, filePath, true);
-		if (file && file.deletedAt !== null) {
+	async removeFileFromSystem(userId: string, fileId: string) {
+		const file = await this.client.FileManager.fetchById(fileId);
+		if (file == null) throw 'The specified file does not exist.';
+		if (file.userId !== userId) throw 'You do not have permission to restore this file.';
+		if (file.deletedAt == null) throw 'File is not in the trash.';
+
+		// Only remove file from system if it's older than current time
+		if (file.deletedAt < new Date()) {
 			try {
 				await this.client.FileManager.deleteFromDB(file.id);
 				await this.client.userManager.modifyStorageSize(userId, file.size, 'DECRE');
 				const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
 				if (storage !== null) {
 					const medium = await this.client.FileManager.storageManager.getProvider(storage);
-					medium.deleteFile(`${userId}${filePath}`);
+					medium.deleteFile(`${userId}${file.path}`);
 				}
 
 				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
@@ -148,6 +183,7 @@ export default class TrashHandler {
 					});
 				});
 			} catch (err) {
+				this.client.logger.error(`Failed to remove file from system: ${err}`);
 				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 					await this.client.AuditLogManager.create({
 						eventName: 'FILE_DELETE',
@@ -158,7 +194,6 @@ export default class TrashHandler {
 						userId: file.userId,
 					});
 				});
-				this.client.logger.error(`Failed to remove file from system: ${err}`);
 			}
 		}
 	}
