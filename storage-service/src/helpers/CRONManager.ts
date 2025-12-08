@@ -68,6 +68,9 @@ export default class CRONManager extends CronJobAccessor {
 				case 'DELETE_OLD_BACKUPS':
 					this.scheduleJob(name, cronJob.schedule, this.deleteOldBackups.bind(this));
 					break;
+				case 'DELETE_OLD_TRASHED_FILES':
+					this.scheduleJob(name, cronJob.schedule, this.deleteOldTrashedFiles.bind(this));
+					break;
 				default:
 					this.client.logger.error(`[CRONMANAGER]: ${name} is not a valid CRON job.`);
 			}
