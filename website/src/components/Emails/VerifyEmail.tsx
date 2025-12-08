@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import type { VerifyEmailProps } from '@/types/Components/Email';
 
 export default function VerifyEmail({ email, confirmURL }: VerifyEmailProps) {

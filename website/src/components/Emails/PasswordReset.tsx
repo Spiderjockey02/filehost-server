@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import type { PasswordResetProps } from '@/types/Components/Email';
 
 export default function PasswordReset({ email, resetPwdURL }: PasswordResetProps) {

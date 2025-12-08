@@ -6,29 +6,37 @@ export default function EmailAttemptChange({ oldEmail, newEmail, verifyURL }: Em
 	const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || '';
 
 	return (
-		<section className="d-flex flex-row align-items-center" style={{ 'backgroundColor': '#eee', padding: '0', minHeight: '100vh' }}>
-			<div className="container">
-				<div className="d-flex justify-content-center align-items-center">
-					<div className="shadow-sm text-center" style={{ maxWidth: 500, background: '#fff', padding: 30, borderRadius: 8 }}>
-						<Image src="/favicon.ico" className="logo mb-3" alt="Logo" width={40} height={40} />
-						<h3 className="mb-3">Email Address Change Attempted</h3>
-						<p className="text-muted mb-4">The email address for your {process.env.NEXT_PUBLIC_COMPANY_NAME} account has been requested to change.</p>
-						<div className="text-start mb-4 p-2" style={{ backgroundColor: 'rgb(238, 238, 238)', borderRadius: '0.375rem' }}>
-							<p className="label-title small text-muted mb-1">Previous email:</p>
-							<p className="fw-semibold">{oldEmail}</p>
-							<p className="label-title small text-muted mb-1 mt-3">New email:</p>
-							<p className="fw-semibold">{newEmail}</p>
-						</div>
-						<p className="text-muted mb-2">If you made this change, click the following:</p>
-						<a href={verifyURL} className="btn btn-dark mb-2">Confirm changes</a>
-						<hr />
-						<p className="text-muted text-start small">
-          		If you didn&apos;t authorize this change, please contact support immediately at
-							<Link href={`mailto:${supportEmail}`}> {supportEmail}</Link>.
-						</p>
-					</div>
-				</div>
-			</div>
-		</section>
+		<div style={{ backgroundColor: '#eee', width: '100%', padding: '0' }}>
+			<table width="100%" style={{ minHeight: '100vh' }}>
+				<tbody>
+					<tr>
+						<td align="center" valign="middle">
+							<div style={{ maxWidth: 500, background: '#fff', padding: 30, borderRadius: 8, boxShadow: '0 2px 6px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+								<img src={`${process.env.BETTER_AUTH_URL}/favicon.ico`} alt="Logo" width={40} height={40} style={{ marginBottom: 16 }} />
+								<h3 style={{ marginBottom: 16 }}>Email Address Change Attempted</h3>
+								<p style={{ textAlign: 'center', fontSize: '13px', marginTop: 10 }}>
+                  The email address for your {process.env.NEXT_PUBLIC_COMPANY_NAME} account has been requested to change.
+								</p>
+								<div style={{ backgroundColor: 'rgb(238, 238, 238)', borderRadius: '0.375rem', textAlign: 'left', padding: '0.5rem', marginBottom: '1.5rem' }}>
+									<p style={{ marginBottom: '0.25rem', fontSize: '0.875em' }}>Previous email:</p>
+									<p style={{ fontWeight: '500' }}>{oldEmail}</p>
+									<p style={{ marginBottom: '0.25rem', fontSize: '0.875em' }}>New email:</p>
+									<p style={{ fontWeight: '500' }}>{newEmail}</p>
+								</div>
+								<p>If you made this change, click the following:</p>
+								<button style={{ background: '#1f1f1f', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', display: 'inline-block' }}>
+									Confirm changes
+								</button>
+								<hr style={{ borderTop: '1px solid #ddd', margin: '24px 0' }} />
+								<p style={{ textAlign: 'left', fontSize: '0.875em' }}>
+             			If you didn&apos;t authorize this change, please contact support immediately at
+									<a href={`mailto:${supportEmail}`}> {supportEmail}</a>.
+								</p>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 	);
 }
