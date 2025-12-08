@@ -28,8 +28,8 @@ export default class StorageAccessor {
 
 			this.cache.set(storage.id, storage);
 			return storage;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -51,8 +51,8 @@ export default class StorageAccessor {
 			});
 			this.cache.set(storage.id, storage);
 			return storage;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -74,9 +74,9 @@ export default class StorageAccessor {
 	  * @param {string} storageId The ID of the storage
 	  * @param {bigint} size The size to modify the storage size by.
 	  * @param {storageDirection} direction The direction to modify the storage size.
-	  * @returns The updated storage.
+	  * @returns {StorageMedium} The updated storage.
 	*/
-	async modifyUsage(storageId: string, size: bigint, direction: storageDirection) {
+	async modifyUsage(storageId: string, size: bigint, direction: storageDirection): Promise<StorageMedium> {
 		try {
 			const storage = await client.storageMedium.update({
 				where: {
@@ -96,8 +96,8 @@ export default class StorageAccessor {
 
 			this.cache.set(storage.id, storage);
 			return storage;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -108,20 +108,18 @@ export default class StorageAccessor {
 	*/
 	async fetchById(id: string): Promise<StorageWithCounts | null> {
 		try {
-			let storage = this.cache.get(id) ?? null;
-			if (storage !== null) return storage;
-
-			storage = await client.storageMedium.findFirst({
-				where: { id },
-				include: {
-					_count: true,
-				},
-			});
+			const storage = this.cache.get(id)
+				?? await client.storageMedium.findFirst({
+					where: { id },
+					include: {
+						_count: true,
+					},
+				});
 
 			if (storage !== null) this.cache.set(id, storage);
 			return storage;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -131,9 +129,8 @@ export default class StorageAccessor {
 	*/
 	async fetchAvatarMedium(): Promise<StorageMedium | null> {
 		try {
-			let avatarMedium = this.cache.get('avatar') ?? null;
-			if (avatarMedium == null) {
-				avatarMedium = await client.storageMedium.findFirst({
+			const avatarMedium = this.cache.get('avatar')
+				?? await client.storageMedium.findFirst({
 					where: {
 						avatarOnly: true,
 					},
@@ -142,12 +139,10 @@ export default class StorageAccessor {
 					},
 				});
 
-				if (avatarMedium !== null) this.cache.set('avatar', avatarMedium);
-			}
-
+			if (avatarMedium !== null) this.cache.set('avatar', avatarMedium);
 			return avatarMedium;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -186,8 +181,8 @@ export default class StorageAccessor {
 			}
 
 			return typeWithCount;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -218,8 +213,8 @@ export default class StorageAccessor {
 
 			// Now calculate average
 			return groups.map(g => g._count).reduce((a, b) => a + b, 0) / groups.length;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -244,8 +239,8 @@ export default class StorageAccessor {
 
 			// Now calculate average
 			return groups.map(g => g._sum.size).reduce((a, b) => Number(a) + Number(b), 0) / groups.length;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 

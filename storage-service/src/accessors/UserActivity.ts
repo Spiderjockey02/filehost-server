@@ -1,14 +1,14 @@
-import type { fetchActivity, fetchUserAgentsParams, UserActivityInput } from '@/types/database/UserActivity';
+import type { fetchActivityParams, fetchTotalParams, fetchUserAgentsParams, NetworkFilter, UserActivityInput } from '@/types/database/UserActivity';
 import type { UserActivity, UserAgent } from '@/types/generated/client';
-import type { Pagination } from '@/types/database/File';
 import client from './prisma';
 
 export default class UserActivityAccessor {
 	/**
 	  *	Create a bulk activity
-		*	@param {UserActivityInput[]} data
+		*	@param {UserActivityInput[]} data A list of user activity data
+		* @returns {{count: number}} The number of entries that were created
 	*/
-	async createMany(data: UserActivityInput[]) {
+	async createMany(data: UserActivityInput[]): Promise<{count: number}> {
 		return client.userActivity.createMany({
 			data,
 		});
@@ -26,8 +26,8 @@ export default class UserActivityAccessor {
 				},
 			});
 			return result._sum;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -43,15 +43,16 @@ export default class UserActivityAccessor {
 
 			return result.map(r => ({
 				method: r.method,
-				_count: { history: r._count.method },
+				_count: r._count.method,
 			}));
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
 	  *	Fetch the counts of each HTTP status in the user activity
+		* @returns count of each HTTP status
 	*/
 	async fetchHTTPStatus() {
 		try {
@@ -62,17 +63,18 @@ export default class UserActivityAccessor {
 
 			return result.map(r => ({
 				code: r.statusCode,
-				_count: { history: r._count.statusCode },
+				_count: r._count.statusCode,
 			}));
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
 	  * Fetch the average duration of all API request
+		* @returns {number} Average duration
 	*/
-	async averageDuration() {
+	async averageDuration(): Promise<number> {
 		try {
 			const result = await client.userActivity.aggregate({
 				_avg: {
@@ -80,31 +82,32 @@ export default class UserActivityAccessor {
 				},
 			});
 			return result._avg.durationMs ?? 0;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
 	  * Fetch total user activity
-		* @param {fetchActivity} data Filter object
+		* @param {fetchActivity} filters Filter object
 	*/
-	async fetchTotal({ userId, statusCode, method }: fetchActivity) {
+	async fetchTotal(filters?: fetchTotalParams) {
 		return client.userActivity.count({
 			where: {
-				userId,
-				statusCode,
-				method,
+				userId: filters?.userId,
+				statusCode: filters?.statusCode,
+				method: filters?.method,
 			},
 		});
 	}
 
 	/**
 	  * Fetch list of activity between two dates
-	  * @param oldDate The first date
-		* @param newDate The old date
+	  * @param {Date} oldDate The first date
+		* @param {Date} newDate The old date
+		* @param {?NetworkFilter} filter For userId and/or storageId
 	*/
-	async fetchActivityBetweenTwoDates(oldDate: Date, newDate: Date, filter?: {userId?: string, storageId?: string }) {
+	async fetchActivityBetweenTwoDates(oldDate: Date, newDate: Date, filter?: NetworkFilter) {
 		return client.userActivity.count({
 			where: {
 				createdAt: {
@@ -121,10 +124,11 @@ export default class UserActivityAccessor {
 
 	/**
 	  * Calculate traffic between two dates
-	  * @param oldDate The first date
-		* @param newDate The old date
+	  * @param {Date} oldDate The first date
+		* @param {Date} newDate The old date
+		* @param {?NetworkFilter} filter For userId and/or storageId
 	*/
-	async calculateTransferBetweenTwoDates(oldDate: Date, newDate: Date, filter?: {userId?: string, storageId?: string }) {
+	async calculateTransferBetweenTwoDates(oldDate: Date, newDate: Date, filter?: NetworkFilter) {
 		try {
 			const result = await client.userActivity.aggregate({
 				_sum: {
@@ -143,8 +147,8 @@ export default class UserActivityAccessor {
 				},
 			});
 			return result._sum;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -153,7 +157,7 @@ export default class UserActivityAccessor {
 		* @param {fetchActivity & Pagination} data the filters
 		* @returns {UserActivity[]} list of user activity
 	*/
-	async fetchActivity({ userId, statusCode, method, page = 0 }: fetchActivity & Pagination): Promise<UserActivity[]> {
+	async fetchActivity({ userId, statusCode, method, page = 0 }: fetchActivityParams): Promise<UserActivity[]> {
 		return client.userActivity.findMany({
 			where: {
 				userId,
@@ -172,7 +176,7 @@ export default class UserActivityAccessor {
 	  * Fetch users who had activity between two dates
 	  * @param oldDate The first date
 		* @param newDate The old date
-	  * @returns
+	  * @returns {string[]} An array of user Id's
 	*/
 	async fetchUsersWhoHadActivityBetweenTwoDates(oldDate: Date, newDate: Date): Promise<string[]> {
 		try {
@@ -187,14 +191,15 @@ export default class UserActivityAccessor {
 
 			const users = [...new Set(activity.map(s => s.userId).filter(s => s !== null))];
 			return users;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
 	  * Fetch the list of user agents
-	  * @returns {UserAgent[]} list of user agents
+		* @param {fetchUserAgentsParams} param0
+	  * @returns {[UserAgent[], number]} list of user agents
 	*/
 	async fetchUserAgents({ sortBy, sortOrder, page = 0 }: fetchUserAgentsParams): Promise<[UserAgent[], number]> {
 		return Promise.all([

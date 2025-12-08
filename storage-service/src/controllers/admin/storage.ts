@@ -17,8 +17,8 @@ export const getStorages = (client: Client) => {
 			const storages = await client.FileManager.storageManager.fetchAll({ page: isNaN(Number(page)) ? undefined : Number(page) });
 
 			res.json({ storages: sanitiseObject(storages), avgFileCount: parseInt(`${avgFileCount}`), avgStorageUsage });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch storage mediums.');
 		}
 	};
@@ -32,9 +32,10 @@ export const getStorageById = (client: Client) => {
 		try {
 			const storage = await client.FileManager.storageManager.fetchById(storageId);
 			if (!storage) return Error.IncorrectQuery(res, 'Storage not found.');
+
 			res.json({ storage: sanitiseObject(storage) });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch storage medium.');
 		}
 	};
@@ -146,8 +147,8 @@ export const getStorageTypes = (client: Client) => {
 		try {
 			const storages = await client.FileManager.storageManager.fetchCountPerType();
 			res.json({ MediumCounts: storages });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch storage mediums.');
 		}
 	};
@@ -222,7 +223,7 @@ export const postMigrateUserFromStorage = (client: Client) => {
 		if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'userId must be string.');
 
 		// Fetch all user's files
-		const files = await client.FileManager.fetchAllByUserId(userId);
+		const files = await client.FileManager.fetchOwnedByUserId({ userId });
 		await client.userManager.update({ id: userId, isMigrating: true });
 
 		const storage = await client.FileManager.storageManager.fetchById(storageId);

@@ -1,4 +1,4 @@
-import type { CreateNotification, GetByUserIdParams } from '@/types/database/Notification';
+import type { CreateNotificationParams, FetchByUserIdParams } from '@/types/database/Notification';
 import type { Notification } from '@/types/generated/client';
 import type { Server } from 'socket.io';
 import { LRUCache } from 'lru-cache';
@@ -18,10 +18,10 @@ export default class NotificationManager {
 
 	/**
 	  * Creates a new notification
-	  * @param {CreateNotification} data The notification data.
+	  * @param {CreateNotificationParams} data The notification data.
 	  * @returns {Notification} The created notification.
 	*/
-	async create(data: CreateNotification): Promise<Notification> {
+	async create(data: CreateNotificationParams): Promise<Notification> {
 		try {
 			const notification = await client.notification.create({
 				data: {
@@ -40,8 +40,8 @@ export default class NotificationManager {
 			this.socket.to(notification.userId).emit('notification', notification);
 			this.cache.set(notification.id, notification);
 			return notification;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -51,17 +51,15 @@ export default class NotificationManager {
 	  * @param {string} id The notification id.
 	  * @returns {Notification | null} The notification.
 	*/
-	async getById(id: string): Promise<Notification | null> {
+	async fetchById(id: string): Promise<Notification | null> {
 		try {
-			let notif = this.cache.get(id) ?? null;
-			if (notif) return notif;
-			notif = await client.notification.findUnique({
-				where: { id },
-			});
-			if (notif) this.cache.set(notif.id, notif);
+			const notif = this.cache.get(id)
+				?? await client.notification.findUnique({ where: { id } });
+
+			if (notif) this.cache.set(id, notif);
 			return notif;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -76,8 +74,8 @@ export default class NotificationManager {
 				where: { id },
 			});
 			return this.cache.delete(notif.id);
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -86,7 +84,7 @@ export default class NotificationManager {
 	  * @param {string} userId The user id.
 	  * @returns {Notification[]} List of user's notifications
 	*/
-	async getByUserId({ userId, page }: GetByUserIdParams): Promise<Notification[]> {
+	async fetchByUserId({ userId, page }: FetchByUserIdParams): Promise<Notification[]> {
 		return client.notification.findMany({
 			where: {
 				userId,

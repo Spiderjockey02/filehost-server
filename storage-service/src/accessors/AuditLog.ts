@@ -12,11 +12,12 @@ export default class AuditLogAccessor {
 		this.listeners = new Map();
 		this.gclient = gclient;
 
-		this.getListeners();
+		// Fetch all listeners on load
+		this.fetchAllListeners();
 	}
 
 	/**
-	  * Create an audit log and sent to listeners (if set up)
+	  * Create an audit log and send to listeners (if set up)
 	  * @param {CreateAuditLogEntryParams} params The audit log data.
 		* @returns {AuditLog} The audit log.
 	*/
@@ -76,7 +77,7 @@ export default class AuditLogAccessor {
 			});
 
 			// Notify listeners
-			const listeners = this.listeners.size == 0 ? this.listeners : await this.getListeners();
+			const listeners = this.listeners.size == 0 ? this.listeners : await this.fetchAllListeners();
 			const interestedListeners = [...listeners.values()].filter(l => l.events.some(e => e.eventId === params.eventName) && l.enabled);
 			for (const listener of interestedListeners) {
 				if (listener.type === 'WEBHOOK' && listener.targetUrl) this.gclient.sendWebhook(listener, log);
@@ -84,8 +85,8 @@ export default class AuditLogAccessor {
 			}
 
 			return log;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -94,7 +95,7 @@ export default class AuditLogAccessor {
 	  * @param {fetchAuditLogsParams} data The filter data
 		* @returns {{logs: AuditLog[], total: number}} The list of logs and a total
 	*/
-	async fetch(data: fetchAuditLogsParams): Promise<{logs: AuditLog[], total: number}> {
+	async fetchAll(data: fetchAuditLogsParams): Promise<{logs: AuditLog[], total: number}> {
 		try {
 			const [logs, total] = await Promise.all([
 				client.auditLog.findMany({
@@ -117,8 +118,8 @@ export default class AuditLogAccessor {
 			]);
 
 			return { logs, total };
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -126,7 +127,7 @@ export default class AuditLogAccessor {
 	  * Fetch all event names
 		* @returns {AuditLogNames[]} The list of event names
 	*/
-	async getEvents(): Promise<AuditLogNames[]> {
+	async fetchAllEvents(): Promise<AuditLogNames[]> {
 		return client.auditLogNames.findMany();
 	}
 
@@ -134,7 +135,7 @@ export default class AuditLogAccessor {
 	  * Fetch total audit logs
 		* @returns {number} The total number of audit logs
 	*/
-	async getCount(): Promise<number> {
+	async fetchTotal(): Promise<number> {
 		return client.auditLog.count();
 	}
 
@@ -143,7 +144,7 @@ export default class AuditLogAccessor {
 		* @param {AuditLogResourceType} resourceType The resource type
 		* @returns {number} The total number of audit logs
 	*/
-	async getCountByResourceType(resourceType: AuditLogResourceType): Promise<number> {
+	async fetchCountByResourceType(resourceType: AuditLogResourceType): Promise<number> {
 		return client.auditLog.count({
 			where: {
 				event: {
@@ -194,8 +195,8 @@ export default class AuditLogAccessor {
 
 			this.listeners.set(fullListener!.id, fullListener!);
 			return listener;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -214,8 +215,8 @@ export default class AuditLogAccessor {
 
 			this.listeners.delete(listener.id);
 			return listener;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -272,16 +273,16 @@ export default class AuditLogAccessor {
 
 			this.listeners.set(fullListener!.id, fullListener!);
 			return fullListener!;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
-	  * Get all audit log listener
+	  * Fetch all audit log listeners
 		* @returns {FullAuditLogListener[]} The list of listeners
 	*/
-	async getListeners(): Promise<FullAuditLogListener[]> {
+	async fetchAllListeners(): Promise<FullAuditLogListener[]> {
 		try {
 			const listeners = await client.auditLogListener.findMany({
 				include: {
@@ -291,8 +292,8 @@ export default class AuditLogAccessor {
 
 			listeners.forEach(l => this.listeners.set(l.id, l));
 			return listeners;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -301,9 +302,9 @@ export default class AuditLogAccessor {
 		* @param {AuditLogResourceType} resourceType The resource type
 		* @param {Date} oldDate The old date.
 		* @param {Date} newDate The new date.
-		* @returns The number of logs filtered by the resource type
+		* @returns {number} The number of logs filtered by the resource type
 	*/
-	async fetchActivityByResourceTypeBetweenTwoDates(resourceType: AuditLogResourceType, oldDate: Date, newDate: Date) {
+	async fetchActivityByResourceTypeBetweenTwoDates(resourceType: AuditLogResourceType, oldDate: Date, newDate: Date): Promise<number> {
 		return client.auditLog.count({
 			where: {
 				event: {
@@ -319,9 +320,9 @@ export default class AuditLogAccessor {
 
 	/**
 	 * Fetch the success rate of audit logs
-	 * @returns The count of successful and failed audit logs
+	 * @returns {{[key:string]: number}} The count of successful and failed audit logs
 	*/
-	async fetchSuccessRate() {
+	async fetchSuccessRate(): Promise<{[key:string]: number}> {
 		try {
 			const res = await client.auditLog.groupBy({
 				by: ['success'],
@@ -334,8 +335,8 @@ export default class AuditLogAccessor {
 			}
 
 			return codesWithCount;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 }

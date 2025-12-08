@@ -17,6 +17,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 	const storage = await client.FileManager.storageManager.fetchById(user.storageId);
 	if (storage == null) throw 'Storage not found';
 	const fileProvider = await client.FileManager.storageManager.getProvider(storage);
+	if (fileProvider.isOnline == false) throw 'Storage medium is offline';
 
 	const form = formidable({
 		allowEmptyFiles: false,
@@ -41,7 +42,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 	for (const file of files.media ?? []) {
 		let uploadedFile: FullFile | null = null;
 		try {
-			let dir = await client.FileManager.getById(metadata.parentId);
+			let dir = await client.FileManager.fetchById(metadata.parentId);
 			if (!dir) throw 'Missing parent directory';
 
 			// Ensure the file would not bring the user over their max storage
@@ -51,7 +52,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			if ((BigInt(file.size) + storage.usedSize) >= storage.maxSize) throw 'Storage medium does not have enough space';
 
 			// Check the file isn't already in the directory (Upload CONFLICT)
-			const existingFile = await client.FileManager.getByFilePath(user.id, `${dir.path}${file.originalFilename}`);
+			const existingFile = await client.FileManager.fetchByFilePath(user.id, `${dir.path}${file.originalFilename}`);
 			if (existingFile) throw 'File with that name already exists';
 
 			// Update user's storage size
@@ -78,7 +79,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 					parentId: dir.id,
 				});
 			} else {
-				dir = await client.FileManager.getByFilePath(user.id, dir.path);
+				dir = await client.FileManager.fetchByFilePath(user.id, dir.path);
 				if (!dir) {
 					dir = await client.FileManager.create({
 						userId: user.id,
@@ -163,12 +164,12 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			});
 
 			user.totalStorageSize += BigInt(file.size);
-		} catch (error) {
+		} catch (err) {
 			// Delete the file from the storage system and/or database if it was created
 			if (uploadedFile) {
 				await client.FileManager.deleteFromDB(uploadedFile.id);
-				await fileProvider.deleteFile(uploadedFile?.id).catch((err) => {
-					console.error('Failed to delete file from system:', err);
+				await fileProvider.deleteFile(`${user.id}/${uploadedFile.id}`).catch((err) => {
+					client.logger.error(`Failed to delete file from system: ${err}`);
 				});
 			}
 
@@ -182,11 +183,11 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 					userId: user.id,
 					ip: getIP(req),
 					userAgent: `${req.headers['user-agent']}`,
-					message: `Failed to upload file due to error: ${error}.`,
+					message: `Failed to upload file due to error: ${err}.`,
 				});
 			});
 
-			throw error;
+			throw err;
 		}
 	}
 
@@ -202,7 +203,7 @@ async function ensureFolderExists(client: Client, parentDir: File, userId: strin
 	for (const part of pathParts) {
 		currentPath = `${currentPath.endsWith('/') ? currentPath : `${currentPath}/`}${part}`;
 		// Check if the directory already exists
-		dir = await client.FileManager.getByFilePath(userId, currentPath);
+		dir = await client.FileManager.fetchByFilePath(userId, currentPath);
 		if (!dir) {
 			// If it doesn't exist, create it
 			dir = await client.FileManager.create({

@@ -34,7 +34,7 @@ export default class FileManager extends FileAccessor {
 	async getDirectory(user: User, filePath: string) {
 		// eslint-disable-next-line prefer-const
 		let [files, storage] = await Promise.all([
-			this.getByFilePath(user.id, filePath),
+			this.fetchByFilePath(user.id, filePath),
 			this.storageManager.fetchById(user.storageId),
 		]);
 		if (storage == null) throw 'Storage not found';
@@ -47,7 +47,7 @@ export default class FileManager extends FileAccessor {
 				text: 'Thank you for registering. You can now start uploading files, customizing your storage, and exploring all the features.',
 				userId: user.id,
 			});
-			files = await this.getByFilePath(user.id, filePath);
+			files = await this.fetchByFilePath(user.id, filePath);
 		}
 
 		if (files?.deletedAt !== null) throw 'Directory not found';
@@ -75,8 +75,8 @@ export default class FileManager extends FileAccessor {
 		if (fileId === newDirId) throw 'Cannot move a file into itself.';
 
 		// Fetch the files from the database
-		const oldFile = await this.getById(fileId);
-		const newDir = await this.getById(newDirId);
+		const oldFile = await this.fetchById(fileId);
+		const newDir = await this.fetchById(newDirId);
 		if (oldFile == null) throw 'File not found';
 		if (newDir == null || newDir.type !== 'DIRECTORY') throw 'Directory not found';
 
@@ -87,11 +87,11 @@ export default class FileManager extends FileAccessor {
 		const newFilePathInDb = `${normalizePath(newDir.path)}${oldFile.path.split('/').at(-1)}`;
 
 		// Make sure a file with the potential same name doesn't already exist
-		const existingFile = await this.getByFilePath(user.id, newFilePathInDb);
+		const existingFile = await this.fetchByFilePath(user.id, newFilePathInDb);
 		if (existingFile) throw 'A file with that name already exists in the same directory.';
 
 		// Update the old parent directory
-		const oldParent = await this.getById(oldFile.parentId);
+		const oldParent = await this.fetchById(oldFile.parentId);
 		if (oldParent !== null) this.cache.delete(`${oldParent.userId}_${oldParent.path}`);
 
 		await this.update({
@@ -102,7 +102,7 @@ export default class FileManager extends FileAccessor {
 
 		// If it's a folder, process its children (don't move the folder itself again)
 		if (oldFile.type === 'DIRECTORY') {
-			const children = await this.getChildrenByParentId(oldFile.id);
+			const children = await this.fetchChildrenByParentId(oldFile.id);
 
 			// Check if the folder is empty
 			if (children.length > 0) {
@@ -121,7 +121,7 @@ export default class FileManager extends FileAccessor {
 		* @param {string} newName The new name for the file
 	*/
 	async rename(user: User, fileId: string, newName: string) {
-		const file = await this.getById(fileId);
+		const file = await this.fetchById(fileId);
 		if (file == null) throw 'File not found';
 
 		// Check the owner of the file
@@ -139,7 +139,7 @@ export default class FileManager extends FileAccessor {
 		if (newName.length > this.client.config.get('MAX_CHARS_FILE_NAME')) throw `New name must be less than ${this.client.config.get('MAX_CHARS_FILE_NAME')} characters.`;
 
 		// Make sure a file with the potential same name doesn't already exist
-		const existingFile = await this.getByFilePath(user.id, newPath);
+		const existingFile = await this.fetchByFilePath(user.id, newPath);
 		if (existingFile) throw 'A file with that name already exists in the same directory.';
 
 		// Will update to also support their children for path to be updated aswell (when it's a directory)
@@ -157,8 +157,8 @@ export default class FileManager extends FileAccessor {
 		* @param {string} newDirId The directory the file / directory will be copied into
 	*/
 	async copy(user: User, fileId: string, newDirId: string) {
-		const file = await this.getById(fileId);
-		const newDir = await this.getById(newDirId);
+		const file = await this.fetchById(fileId);
+		const newDir = await this.fetchById(newDirId);
 		if (file == null) throw 'File not found';
 		if (newDir == null || newDir.type !== 'DIRECTORY') throw 'Directory not found';
 
@@ -190,7 +190,7 @@ export default class FileManager extends FileAccessor {
 		if (this.client.config.get('INVALID_CHARS_IN_FILE_NAME').some(c => folderName.includes(c))) throw 'Folder name includes invalid characters.';
 
 		// Fetch the parent directory
-		const parentDir = await this.getById(parentId);
+		const parentDir = await this.fetchById(parentId);
 		if (parentDir == null || parentDir.type !== 'DIRECTORY') throw 'Directory not found';
 
 		// Check the owner of the file
@@ -229,7 +229,7 @@ export default class FileManager extends FileAccessor {
 		const newFilePath = `${newDir.path}${oldFile.path.substring(oldFile.path.lastIndexOf('/'))}`;
 
 		// Check if file already exists in the target directory
-		const existingFile = await this.getByFilePath(user.id, newFilePath);
+		const existingFile = await this.fetchByFilePath(user.id, newFilePath);
 		if (existingFile) throw 'A file with that name already exists in the same directory.';
 
 		// Create the new file entry in the database
@@ -264,7 +264,7 @@ export default class FileManager extends FileAccessor {
 		const newFilePath = `${newDir.path}${oldDir.path.substring(oldDir.path.lastIndexOf('/'))}`;
 
 		// Check if file already exists in the target directory
-		const existingFile = await this.getByFilePath(user.id, newFilePath);
+		const existingFile = await this.fetchByFilePath(user.id, newFilePath);
 		if (existingFile) throw 'A file with that name already exists in the same directory.';
 
 		// Create the new directory, but ensure the path doesn't include the old folder name twice
@@ -280,7 +280,7 @@ export default class FileManager extends FileAccessor {
 		});
 
 		// Recursively copy files and subdirectories inside this folder
-		const children = await this.getChildrenByParentId(oldDir.id);
+		const children = await this.fetchChildrenByParentId(oldDir.id);
 
 		for (const child of children) {
 			if (child.type === 'DIRECTORY') {
@@ -315,7 +315,7 @@ export default class FileManager extends FileAccessor {
 			// Now loop and get the children's files
 			for (const child of file.children) {
 				if (child.type == 'DIRECTORY') {
-					const newFile = await this.getByFilePath(user.id, child.path);
+					const newFile = await this.fetchByFilePath(user.id, child.path);
 					if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider, file.path);
 				} else {
 					archive.append(await fileProvider.readFile(child), { name: child.path.replace(file.path, '') });
@@ -331,7 +331,7 @@ export default class FileManager extends FileAccessor {
 	async traverseFilesForDownloading(archive: Archiver, file: FullFile, fileProvider: StorageProvider, parentFilePath: string) {
 		for (const child of file.children) {
 			if (child.type == 'DIRECTORY') {
-				const newFile = await this.getByFilePath(child.userId, child.path);
+				const newFile = await this.fetchByFilePath(child.userId, child.path);
 				if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider, parentFilePath);
 			} else {
 				archive.append(await fileProvider.readFile(child), { name: child.path.replace(parentFilePath, '') });
@@ -419,7 +419,7 @@ export default class FileManager extends FileAccessor {
 		res.setHeader('Cache-Control', 'public, max-age=3600');
 
 		// Get the mimeType of the file
-		const file = await this.getByFilePath(userId, filePath);
+		const file = await this.fetchByFilePath(userId, filePath);
 		if (file == null || file.mimetype == null || file.deletedAt !== null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 
 		// Fetch the storage medium and check it's online

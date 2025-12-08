@@ -232,11 +232,11 @@ export const postDownloadFile = (client: Client) => {
 			if (typeof id !== 'string' || id.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
 
 			// Fetch file from database
-			const file = await client.FileManager.getById(id);
+			const file = await client.FileManager.fetchById(id);
 			if (!file) return Error.MissingResource(res, 'File not found');
 			if (file.userId !== session.user.id) return Error.MissingResource(res, 'File not found');
 
-			const fullFile = await client.FileManager.getByFilePath(session.user.id, file.path);
+			const fullFile = await client.FileManager.fetchByFilePath(session.user.id, file.path);
 			await client.FileManager.downloadFile(res, session.user, fullFile!);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
@@ -281,10 +281,10 @@ export const getBulkDownload = (client: Client) => {
 			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
 			const filePaths: string[] = paths;
 
-			const files = await Promise.all(filePaths.map(async (f) => await client.FileManager.getByFilePath(session?.user.id, f)));
+			const files = await Promise.all(filePaths.map(async (f) => await client.FileManager.fetchByFilePath(session?.user.id, f)));
 			client.FileManager.downloadFiles(res, session.user, files.filter(s => s !== null));
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to download files.');
 		}
 	};

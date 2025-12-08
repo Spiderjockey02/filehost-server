@@ -30,7 +30,7 @@ export async function cleanUpVideo(client: Client, filePath: string, fileType: s
 		// Now remove and replace the old video with the new video
 		await fs.rm(filePath);
 		await fs.rename(`${filePath}-2.${fileType}`, filePath);
-	} catch (error) {
-		console.error('Error cleaning up video:', error);
+	} catch (err) {
+		client.logger.error(`Error cleaning up video: ${err}`);
 	}
 }

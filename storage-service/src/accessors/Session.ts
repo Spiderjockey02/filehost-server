@@ -49,8 +49,8 @@ export default class SessionManager {
 
 			const users = [...new Set(sessions.map(s => s.userId))];
 			return users;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -61,9 +61,8 @@ export default class SessionManager {
 	*/
 	async fetchByToken(token: string): Promise<FullSession | null> {
 		try {
-			let session = this.cache.get(token) ?? null;
-			if (session == null) {
-				session = await client.session.findUnique({
+			const session = this.cache.get(token)
+				?? await client.session.findUnique({
 					where: {
 						token,
 					},
@@ -75,40 +74,35 @@ export default class SessionManager {
 						},
 					},
 				});
-				if (session !== null) this.cache.set(token, session);
-			}
 
+			if (session !== null) this.cache.set(token, session);
 			return session;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
 	  * Delete a session by token
 	  * @param {String} token The token
-		* @returns {Session} Whether it was deleted or not
+		* @returns {Session} The deleted session
 	*/
 	async delete(token: string): Promise<Session> {
 		try {
-
-			const session = await client.session.delete({
-				where: {
-					token,
-				},
-			});
+			const session = await client.session.delete({ where: {	token } });
 
 			this.cache.delete(session.token);
 			return session;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
 	  * Delete expired sessions
+		* @returns {{count: number}} Number of sessions deleted
 	*/
-	async deleteExpired() {
+	async deleteExpired(): Promise<{count: number}> {
 		return client.session.deleteMany({
 			where: {
 				expiresAt: {

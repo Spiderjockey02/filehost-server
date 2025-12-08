@@ -231,8 +231,8 @@ export default class S3Manager implements StorageProvider {
 			await this.s3.send(command);
 			this.isOnline = true;
 			return this.isOnline;
-		} catch (error) {
-			this.client.logger.error(error);
+		} catch (err) {
+			this.client.logger.error(err);
 			this.isOnline = false;
 
 			// As it failed check in 5 minutes again, if it's back online

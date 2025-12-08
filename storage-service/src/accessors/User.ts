@@ -1,4 +1,4 @@
-import type { GetUsers, fetchUserbyParam, updateUser, FullUser, storageDirection, setUserBan, AddToPlanProps, fetchByStorageIdParams } from '@/types/database/User';
+import type { FetchUsers, fetchUserbyParam, updateUser, FullUser, storageDirection, setUserBan, AddToPlanProps, fetchByStorageIdParams } from '@/types/database/User';
 import type { Account, User, UserBans } from '@/types/generated/client';
 import type { Pagination } from '@/types/database/File';
 import { LRUCache } from 'lru-cache';
@@ -41,8 +41,8 @@ export default class UserManager {
 			});
 			this.cache.set(user.id, user);
 			return user;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -51,10 +51,8 @@ export default class UserManager {
 	  * @param {GetUsers} data The user data.
 		* @returns {UserWithGroup[]} The users.
 	*/
-	async fetchAll({ name, sortBy, sortOrder, storageId, page = 0 }: GetUsers & Pagination): Promise<FullUser[]> {
-		// Fetch paginated users first
+	async fetchAll({ name, sortBy, sortOrder, storageId, page = 0 }: FetchUsers & Pagination): Promise<FullUser[]> {
 		try {
-
 			const users = await client.user.findMany({
 				where: {
 					name: name?.length ? { startsWith: name } : undefined,
@@ -80,34 +78,29 @@ export default class UserManager {
 			});
 
 			// Sorting by uploaded file count
-			if (sortBy === 'uploadedFiles') {
-				users.sort((a, b) => {
-					const diff = (a._count.files ?? 0) - (b._count.files ?? 0);
-					return sortOrder === 'desc' ? -diff : diff;
-				});
+			switch (sortBy) {
+				case 'uploadedFiles':
+					return users.sort((a, b) => {
+						const diff = (a._count.files ?? 0) - (b._count.files ?? 0);
+						return sortOrder === 'desc' ? -diff : diff;
+					});
+				case 'createdAt':
+					return users.sort((a, b) => {
+						const diff = a.createdAt.getTime() - b.createdAt.getTime();
+						return sortOrder === 'desc' ? -diff : diff;
+					});
+				case 'lastActive':
+					return users.sort((a, b) => {
+						const aActivity = a.activity[0] !== undefined ? a.activity[0].createdAt?.getTime() : a.updatedAt.getTime();
+						const bActivity = b.activity[0] !== undefined ? b.activity[0].createdAt?.getTime() : b.updatedAt.getTime();
+						const diff = aActivity - bActivity;
+						return sortOrder === 'desc' ? -diff : diff;
+					});
+				default:
+					return users;
 			}
-
-			// Sorting by user createdAt
-			if (sortBy === 'createdAt') {
-				users.sort((a, b) => {
-					const diff = a.createdAt.getTime() - b.createdAt.getTime();
-					return sortOrder === 'desc' ? -diff : diff;
-				});
-			}
-
-			// Sorting by last activity
-			if (sortBy === 'lastActive') {
-				users.sort((a, b) => {
-					const aActivity = a.activity[0] !== undefined ? a.activity[0].createdAt?.getTime() : a.updatedAt.getTime();
-					const bActivity = b.activity[0] !== undefined ? b.activity[0].createdAt?.getTime() : b.updatedAt.getTime();
-					const diff = aActivity - bActivity;
-					return sortOrder === 'desc' ? -diff : diff;
-				});
-			}
-
-			return users;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -163,8 +156,8 @@ export default class UserManager {
 				if (user != null) this.cache.set(user?.id, user);
 			}
 			return user;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -233,8 +226,8 @@ export default class UserManager {
 			]);
 
 			return { total, active, new: newUser };
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -274,8 +267,8 @@ export default class UserManager {
 
 			const users = [...new Set(files.map(f => f.userId))];
 			return users;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -296,8 +289,8 @@ export default class UserManager {
 			}
 
 			return codesWithCount;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -321,13 +314,13 @@ export default class UserManager {
 			}
 
 			return domainCount;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
-		* Gets the average file size
+		* Fetch the average file size
 		* @returns The average file size.
 	*/
 	async fetchAverageStorageUsed() {
@@ -339,7 +332,7 @@ export default class UserManager {
 	}
 
 	/**
-		* Gets the average file size
+		* Fetch the average file size
 		* @returns The average file size.
 	*/
 	async fetchBannedTotal() {
@@ -349,8 +342,8 @@ export default class UserManager {
 			});
 
 			return bans.length;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -395,7 +388,7 @@ export default class UserManager {
 	}
 
 	/**
-		* Gets the number of admins
+		* Fetch the number of admins
 	*/
 	async fetchAdminTotal() {
 		try {
@@ -405,8 +398,8 @@ export default class UserManager {
 			});
 
 			return users.find(f => f.role == 'admin')?._count ?? 0;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -427,8 +420,8 @@ export default class UserManager {
 			}
 
 			return providerCount;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 

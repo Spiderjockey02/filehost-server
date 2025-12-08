@@ -1,15 +1,15 @@
-import express from 'express';
 import { generateRoutes, logUserActivity, PATHS } from './utils';
-import compression from 'compression';
 import type { customRequest, customResponse } from './types';
-import { join } from 'path';
-import cors from 'cors';
+import { userPostRateLimit } from './middleware/rateLimiter';
+import { getSession } from './middleware';
+import { createServer } from 'node:http';
+import compression from 'compression';
 import Client from './helpers/Client';
 import onFinished from 'on-finished';
-import { createServer } from 'node:http';
 import { Server } from 'socket.io';
-import { getSession } from './middleware';
-import { userPostRateLimit } from './middleware/rateLimiter';
+import express from 'express';
+import { join } from 'path';
+import cors from 'cors';
 
 const start = new Date();
 const app = express();

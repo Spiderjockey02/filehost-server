@@ -22,8 +22,8 @@ export default class PlanAccessor {
 
 			this.cache.set(plan.id, plan);
 			return plan;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -43,8 +43,8 @@ export default class PlanAccessor {
 
 			this.cache.set(plan.id, plan);
 			return plan;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -63,8 +63,8 @@ export default class PlanAccessor {
 
 			this.cache.delete(plan.id);
 			return plan;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -123,8 +123,8 @@ export default class PlanAccessor {
 			});
 
 			return subscribers;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -149,8 +149,8 @@ export default class PlanAccessor {
 			});
 
 			return plans[0]?.name ?? null;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -175,7 +175,7 @@ export default class PlanAccessor {
 	  * Calculates the total revenue from all active subscriptions.
 	  * @returns {number} The total revenue.
 	*/
-	async getTotalRevenue(): Promise<number> {
+	async fetchTotalRevenue(): Promise<number> {
 		try {
 			// Fetch all active subscriptions and group them by plan
 			const activeSubs = await client.subscription.groupBy({
@@ -183,10 +183,9 @@ export default class PlanAccessor {
 				where: { status: 'active' },
 				_count: { plan: true },
 			});
-
 			if (!activeSubs.length) return 0;
 
-			// Get all plan prices for those plan names
+			// Fetch all plan prices for those plan names
 			const plans = await client.plan.findMany({
 				where: {
 					name: {
@@ -209,8 +208,8 @@ export default class PlanAccessor {
 			}, 0);
 
 			return total;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 }

@@ -281,7 +281,7 @@ export const getUsersNotification = (client: Client) => {
 
 		try {
 			const [notifications, total] = await Promise.all([
-				client.notificationManager.getByUserId({ userId, page: result.data ?? 0 }),
+				client.notificationManager.fetchByUserId({ userId, page: result.data ?? 0 }),
 				client.notificationManager.fetchCount(userId),
 			]);
 
@@ -303,7 +303,7 @@ export const getUsersLogs = (client: Client) => {
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		try {
-			const { logs, total } = await client.AuditLogManager.fetch({ userId, page: result.data });
+			const { logs, total } = await client.AuditLogManager.fetchAll({ userId, page: result.data });
 			res.json({ logs, total });
 		} catch (err) {
 			client.logger.error(err);

@@ -1,13 +1,13 @@
 import { CronJobNames, Status } from '@/types/generated/client';
 
-export interface createCronJobLogType {
+export interface createCronJobLogTypeParams {
   jobName: CronJobNames
   status: Status
   message: string
   duration: number
 }
 
-export interface createCronJob {
+export interface createCronJobParams {
 	name: CronJobNames
 	schedule?: string
   latestStatus?: Status

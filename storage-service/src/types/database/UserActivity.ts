@@ -1,4 +1,5 @@
 import { HTTPMethod, Prisma } from '@/types/generated/client';
+import { Pagination } from './File';
 
 export type UserActivityInput = {
 	userId: string | null;
@@ -13,10 +14,17 @@ export type UserActivityInput = {
 	createdAt: Date;
 };
 
-export interface fetchActivity {
+export interface fetchTotalParams {
 	userId?: string
 	statusCode?: number
 	method?: HTTPMethod
+}
+
+export type fetchActivityParams = fetchTotalParams & Pagination
+
+export interface NetworkFilter {
+	userId?: string
+	storageId?: string
 }
 
 export interface fetchUserAgentsParams {

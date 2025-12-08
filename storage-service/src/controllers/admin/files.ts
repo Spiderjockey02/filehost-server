@@ -8,7 +8,7 @@ import type { CountMap } from '@/types';
 export const getFiles = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const [{ files, folders, newFiles }, avgSize, mostCommonFileTypes, deletedFiles, { _sum: { size } }] = await Promise.all([
+			const [{ files, folders, newFiles }, avgSize, mostCommonFileTypes, deletedFiles, size] = await Promise.all([
 				client.FileManager.fetchTotal(),
 				client.FileManager.fetchAverageSize(),
 				client.FileManager.fetchFileMediaTypes({}),
@@ -18,8 +18,8 @@ export const getFiles = (client: Client) => {
 
 			const mostCommonFileTypesCount = Object.fromEntries(Object.entries(mostCommonFileTypes).sort((a, b) => b[1] - a[1]).map(([type, count]) => [type, count]));
 			res.json({ files, folders, avgFileSize: avgSize._avg.size, mostCommonFileTypes: mostCommonFileTypesCount, deletedFiles, newFiles, totalStorageSize: Number(size) });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch files.');
 		}
 	};
@@ -105,8 +105,8 @@ export const getFileSizeCategories = (client: Client) => {
 		try {
 			const categories = await client.FileManager.fetchUploadSizeDistribution();
 			res.json({ categories });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch file size categories.');
 		}
 	};

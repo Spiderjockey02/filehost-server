@@ -15,9 +15,9 @@ export default class RecentlyViewedFileManager {
 	}
 
 	/**
-		* Gets all of the user's directories
-		* @param {CreateRecentlyViewedFile} data The user Id.
-		* @returns {RecentlyViewedFile[]} The files.
+		* Create or update an entry of recently viewed file
+		* @param {CreateRecentlyViewedFile} data The recently viewed file data
+		* @returns {RecentlyViewedFile} The recently viewed file.
 	*/
 	async upsert(data: CreateRecentlyViewedFile): Promise<RecentlyViewedFile> {
 		try {
@@ -46,15 +46,15 @@ export default class RecentlyViewedFileManager {
 			});
 			this.cache.delete(data.userId);
 			return history;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
-		* Gets a user's recently viewed files.
-		* @param {string} userId The user Id.
-		* @returns {RecentlyViewedFile[]} The files.
+		* Fetch a user's recently viewed files.
+		* @param {fetchUserLatestProps} data The filter data
+		* @returns {RecentlyViewedFile[]} The recently viewed files.
 	*/
 	async fetchUserLatest({ userId, sortBy = 'viewedAt', sortOrder = 'desc' }: fetchUserLatestProps): Promise<FullRecentlyViewedFile[]> {
 		try {
@@ -95,8 +95,8 @@ export default class RecentlyViewedFileManager {
 
 			this.cache.set(userId, history);
 			return history;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 

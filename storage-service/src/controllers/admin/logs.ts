@@ -16,10 +16,10 @@ export const getLogs = (client: Client) => {
 			const result = validateAdminLogs.safeParse({ userId, page, eventName: eventName == '' ? undefined : eventName, sortOrder });
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-			const { logs, total } = await client.AuditLogManager.fetch({ ...result.data, eventName: result.data.eventName as AuditLogEventName });
+			const { logs, total } = await client.AuditLogManager.fetchAll({ ...result.data, eventName: result.data.eventName as AuditLogEventName });
 			res.json({ logs, total });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch logs.');
 		}
 	};
@@ -30,11 +30,11 @@ export const getLogTypes = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
 			const p = await Promise.all([
-				client.AuditLogManager.getCountByResourceType('USER'),
-				client.AuditLogManager.getCountByResourceType('FILE'),
-				client.AuditLogManager.getCountByResourceType('STORAGE'),
-				client.AuditLogManager.getCountByResourceType('SYSTEM'),
-				client.AuditLogManager.getCountByResourceType('SESSION'),
+				client.AuditLogManager.fetchCountByResourceType('USER'),
+				client.AuditLogManager.fetchCountByResourceType('FILE'),
+				client.AuditLogManager.fetchCountByResourceType('STORAGE'),
+				client.AuditLogManager.fetchCountByResourceType('SYSTEM'),
+				client.AuditLogManager.fetchCountByResourceType('SESSION'),
 				client.AuditLogManager.fetchSuccessRate(),
 			]);
 			res.json({ resourceTypes: { user: p[0], file: p[1], storage: p[2], system: p[3], session: p[4] }, successRates: p[5] });
@@ -183,7 +183,7 @@ export const getLogHistory = (client: Client) => {
 export const getLogEvents = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const events = await client.AuditLogManager.getEvents();
+			const events = await client.AuditLogManager.fetchAllEvents();
 			res.json({ events });
 		} catch (err) {
 			client.logger.error(err);
@@ -196,7 +196,7 @@ export const getLogEvents = (client: Client) => {
 export const getLogListeners = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const listeners = await client.AuditLogManager.getListeners();
+			const listeners = await client.AuditLogManager.fetchAllListeners();
 			res.json({ listeners });
 		} catch (err) {
 			client.logger.error(err);
@@ -346,8 +346,8 @@ export const getLogFiles = (client: Client) => {
 			const totalLogSize = stats.reduce((acc, stat) => acc + stat.size, 0);
 
 			res.json({ logs: logs.reverse(), totalLogSize });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log files.');
 		}
 	};

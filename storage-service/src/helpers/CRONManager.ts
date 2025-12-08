@@ -36,8 +36,8 @@ export default class CRONManager extends CronJobAccessor {
 			if (!this.names.has(job.name)) {
 				try {
 					await this.create(job);
-				} catch (error) {
-					this.client.logger.error(`[CRONMANAGER]: Failed to create CRON job ${job.name}: ${error}`);
+				} catch (err) {
+					this.client.logger.error(`[CRONMANAGER]: Failed to create CRON job ${job.name}: ${err}`);
 				}
 			}
 		}
@@ -272,8 +272,8 @@ export default class CRONManager extends CronJobAccessor {
 			let updatedNum = 0;
 			for (const storage of storages) {
 				const size = await this.client.FileManager.fetchTotalStorageUsed(storage.id);
-				if (size._sum.size !== storage.maxSize) {
-					await this.client.FileManager.storageManager.update({ id: storage.id, usedSize: size._sum.size ?? 0n });
+				if (size && size !== storage.maxSize) {
+					await this.client.FileManager.storageManager.update({ id: storage.id, usedSize: size });
 					updatedNum++;
 				}
 			}

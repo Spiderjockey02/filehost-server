@@ -95,7 +95,7 @@ export const deleteNotification = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Get the notification from the database and make sure it exists and is owned by the person in session.
-			const notification = await client.notificationManager.getById(notifId);
+			const notification = await client.notificationManager.fetchById(notifId);
 			if (!notification) return Error.IncorrectQuery(res, 'Notification not found.');
 			if (notification.userId !== session.user.id) return Error.InvalidSession(res);
 
@@ -226,12 +226,12 @@ export const putRestore = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Get and validate the file paths for restoring
-			const { paths } = req.body;
-			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
+			const { fileIds } = req.body;
+			if (!Array.isArray(fileIds) || fileIds.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
 
-			// Loop through each path and restore them (Could take some time if the multiple deep directories)
-			for (const path of paths) {
-				await client.FileManager.TrashHandler.restoreFile(session.user.id, path);
+			// Loop through each path and restore them (Could take some time if it is multiple deep directories)
+			for (const fileId of fileIds) {
+				await client.FileManager.TrashHandler.restoreFile(session.user.id, fileId);
 			}
 
 			res.json({ success: 'Successfully restored file ' });
@@ -251,8 +251,8 @@ export const getUserGallery = (client: Client) => {
 
 			const files = await client.FileManager.fetchGalleryByUserId(session.user.id);
 			res.json({ files: sanitiseObject(files) });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to get user\'s gallery');
 		}
 	};

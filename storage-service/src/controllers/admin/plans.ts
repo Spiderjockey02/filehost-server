@@ -13,7 +13,7 @@ export const getPlanStats = (client: Client) => {
 				client.PlanManager.fetchPayingUsers(),
 				client.PlanManager.fetchNewCustomers(),
 				client.PlanManager.fetchMostPopular(),
-				client.PlanManager.getTotalRevenue(),
+				client.PlanManager.fetchTotalRevenue(),
 			]);
 
 			res.json({ payingUsers, newCustomers, mostPopular, totalRevenue });

@@ -37,7 +37,7 @@ export const getContent = (client: Client) => {
 		const path = req.params.path.join('/').split('?')[0];
 
 		// Fetch file from database
-		const file = await client.FileManager.getByFilePath(userId, path);
+		const file = await client.FileManager.fetchByFilePath(userId, path);
 		if (file == null || file.deletedAt !== null) return Error.MissingResource(res, 'File not found');
 
 		// Make sure they have access to view the file
@@ -101,8 +101,8 @@ export const getStatistics = (client: Client) => {
 			]);
 
 			res.json({ totalUsers, totalUsage: Number(totalUsage._sum.usedSize ?? 0), totalFileCount: totalFileCount.files + totalFileCount.folders });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to get statistics');
 		}
 	};
@@ -114,8 +114,8 @@ export const getPlans = (client: Client) => {
 		try {
 			const plans = await client.PlanManager.fetchAll();
 			res.json({ plans: sanitiseObject(plans) });
-		} catch (error) {
-			client.logger.error(error);
+		} catch (err) {
+			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to get plans');
 		}
 	};

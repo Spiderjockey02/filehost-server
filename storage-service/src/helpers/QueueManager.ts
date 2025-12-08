@@ -24,8 +24,8 @@ export default class QueueManager {
 		try {
 			const result = await task();
 			resolve(result);
-		} catch (error) {
-			reject(error);
+		} catch (err) {
+			reject(err);
 		} finally {
 			this.processing.set(key, false);
 			if (this.queues.get(key)!.length === 0) {

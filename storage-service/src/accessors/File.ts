@@ -1,5 +1,5 @@
 import type { addMetadata, createFile, fetchByOwner, fetchFileMediaTypesParams, FullFile, Pagination, updateFile, updateFilePath } from '@/types/database/File';
-import type { File, FileType, MediaType } from '@/types/generated/client';
+import type { File, FileMetadata, FileType, MediaType } from '@/types/generated/client';
 import { LRUCache } from 'lru-cache';
 import client from './prisma';
 
@@ -48,24 +48,29 @@ export default class FileAccessor {
 
 			// Have to do 2 layers (to get show proper children count)
 			if (file.parentId) {
-				const parent = await this.getById(file.parentId);
+				const parent = await this.fetchById(file.parentId);
 				if (parent) {
 					this.cache.delete(`${parent.userId}_${parent.path}`);
 					if (parent.parentId) {
-						const grandparent = await this.getById(parent.parentId);
+						const grandparent = await this.fetchById(parent.parentId);
 						if (grandparent) this.cache.delete(`${grandparent.userId}_${grandparent.path}`);
 					}
 				}
 			}
 
 			return file;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
-
-	async addMetadata(fileId: string, data: addMetadata) {
+	/**
+	  * Create a metadata entry for a file (width, height, duration etc)
+	  * @param fileId The file Id
+	  * @param data The metadata
+	  * @returns {FileMetadata} The new metadata
+	*/
+	async addMetadata(fileId: string, data: addMetadata): Promise<FileMetadata> {
 		return client.fileMetadata.create({
 			data: {
 				file: {
@@ -127,11 +132,11 @@ export default class FileAccessor {
 			this.cache.delete(`${file.userId}_${file.path}`);
 
 			// Update their parent's cached version aswell
-			const parentFile = await this.getById(file.parentId);
+			const parentFile = await this.fetchById(file.parentId);
 			if (parentFile) this.cache.delete(`${file.userId}_${parentFile.path}`);
 			return file;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -155,7 +160,7 @@ export default class FileAccessor {
 				parentId,
 			);
 
-			// Get the cached files that need replacing
+			// Fetch the cached files that need replacing
 			const keys = [...this.cache.keys()];
 			const filteredKeys = keys.filter(key => key.startsWith(`${userId}_${oldPath}`));
 			for (const key of filteredKeys) {
@@ -169,18 +174,19 @@ export default class FileAccessor {
 				this.cache.set(newKey, { ...file, path: file.path.replace(oldPath, newPath) });
 			}
 			return updatedRows;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
-		* Gets a file by it's path
+		* Fetch a file by it's path
 		* @param {string} userId The file's owners Id.
 		* @param {string} filePath The file path.
+		* @param {?boolean} includeDeleted Whether or not to check deleted file
 		* @returns {FullFile | null} The file.
 	*/
-	async getByFilePath(userId: string, filePath: string, includeDeleted?: boolean): Promise<FullFile | null> {
+	async fetchByFilePath(userId: string, filePath: string, includeDeleted?: boolean): Promise<FullFile | null> {
 		try {
 			const cleanedFilePath = filePath.startsWith('/') ? filePath : `/${filePath}`;
 			let file = this.cache.get(`${userId}_${cleanedFilePath}`) ?? null;
@@ -216,34 +222,43 @@ export default class FileAccessor {
 			});
 
 			if (file !== null) {
-				await this.getChildrenByParentId(file.id);
+				await this.fetchChildrenByParentId(file.id);
 				this.cache.set(`${userId}_${file.path.startsWith('/') ? file.path : `/${file.path}`}`, file);
 			}
 
 			return file;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
-		* Gets files by it's Id
+		* Fetch a file by it's Id
 		* @param {string} id The file id.
-		* @returns {File} The file.
+		* @returns {File | null} The file or null.
 	*/
-	async getById(id: string | null): Promise<File | null> {
+	async fetchById(id: string | null): Promise<File | null> {
 		if (id == null) return null;
-		return client.file.findUnique({
-			where: { id },
-		});
+
+		let file = this.cache.find(f => f.id == id) ?? null;
+		if (file == null) {
+			file = await client.file.findUnique({
+				where: { id },
+				include: {
+					children: true,
+				},
+			});
+		}
+
+		return file;
 	}
 
 	/**
-		* Gets files by it's parentId
-		* @param {string} parentId The file id.
+		* Fetch files by it's parentId
+		* @param {string} parentId The file's parent id.
 		* @returns {File[]} The files.
 	*/
-	async getChildrenByParentId(parentId: string): Promise<File[]> {
+	async fetchChildrenByParentId(parentId: string): Promise<File[]> {
 		try {
 			const files = await client.file.findMany({
 				where: {
@@ -271,15 +286,17 @@ export default class FileAccessor {
 
 			for (const file of files) this.cache.set(`${file.userId}_${file.path}`, file);
 			return files;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
-		* Gets a file by name
+		* Search for files by name
+		* @param {string} userId The user's file to look for
 		* @param {string} name The file name.
-		* @returns {File[]} The file.
+		* @param {FileType | undefined} type The type of files to search
+		* @returns {File[]} The files.
 	*/
 	async searchByName(userId: string, name: string, type: FileType | undefined): Promise<File[]> {
 		return client.file.findMany({
@@ -307,6 +324,7 @@ export default class FileAccessor {
 
 	/**
 		* Fetch files by user ID, filter for deleted only, or file type
+		* @param {fetchByOwner} filter Filter for fetching all files
 		* @returns {File[]} The files.
 	*/
 	async fetchOwnedByUserId({ userId, type, isDeleted }: fetchByOwner): Promise<File[]> {
@@ -320,7 +338,6 @@ export default class FileAccessor {
 			},
 		});
 	}
-
 
 	/**
 		* Delete a file from the system
@@ -338,8 +355,9 @@ export default class FileAccessor {
 	}
 
 	/**
-		* Gets all files
-		* @returns The total count of files.
+		* Fetch the total files, directories and new files within the last 7 days from a specific user
+		* @param {?string} userId The user Id.
+		* @returns Object of total files, directories and new file counts
 	*/
 	async fetchTotal(userId?: string) {
 		const last7days = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
@@ -369,16 +387,17 @@ export default class FileAccessor {
 			]);
 
 			return { files, folders, newFiles };
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
-		* Gets the 10 recently uploaded files
-		* @returns The files.
+		* Fetch the recently uploaded files
+		* @param {Pagination & { userId?: string }} filters The filters for getting these files
+		* @returns {File[]} The files.
 	*/
-	async fetchRecentlyUploaded({ page = 0, userId }: Pagination & { userId?: string }) {
+	async fetchRecentlyUploaded({ page = 0, userId }: Pagination & { userId?: string }): Promise<File[]> {
 		return client.file.findMany({
 			where: {
 				deletedAt: null,
@@ -394,7 +413,7 @@ export default class FileAccessor {
 	}
 
 	/**
-		* Gets the average file size
+		* Fetch the average file size
 		* @returns The average file size.
 	*/
 	async fetchAverageSize() {
@@ -462,8 +481,8 @@ export default class FileAccessor {
 			}
 
 			return category;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -481,20 +500,30 @@ export default class FileAccessor {
 		});
 	}
 
+	/**
+	  * Fetch the total storage used globally.
+	  * @returns The number of deleted files
+	*/
 	async fetchTotalStorageUsed(storageId?: string) {
-		return client.file.aggregate({
-			where: {
-				storageId,
-			},
-			_sum: {
-				size: true,
-			},
-		});
+		try {
+			const storageUsed = await client.file.aggregate({
+				where: {
+					storageId,
+				},
+				_sum: {
+					size: true,
+				},
+			});
+
+			return storageUsed._sum.size;
+		} catch (err) {
+			throw err;
+		}
 	}
 
 	/**
 		* Fetches or creates a file media type in the database.
-		* @param mimeType The mime type to fetch or create.
+		* @param {string} mimeType The mime type to fetch or create.
 		* @returns The media type object.
 	*/
 	async fetchOrCreateFileMediaType(mimeType: string) {
@@ -514,16 +543,17 @@ export default class FileAccessor {
 			}
 
 			return mediaType;
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
 	/**
 		* Fetches all media types from the database and the number of files associated with each type.
-		* @param [grouped=false]
+		* @param {fetchFileMediaTypesParams} filter The filter for fetching all file media types
+		* @returns {{[key:string]: number}} File media type and their count
 	*/
-	async fetchFileMediaTypes({ mediaType, grouped = false }: fetchFileMediaTypesParams) {
+	async fetchFileMediaTypes({ mediaType, grouped = false }: fetchFileMediaTypesParams): Promise<{[key:string]: number}> {
 		try {
 			const res = await client.mediaType.findMany({
 				where: {
@@ -556,38 +586,17 @@ export default class FileAccessor {
 				}
 				return group;
 			}
-		} catch (error) {
-			throw error;
+		} catch (err) {
+			throw err;
 		}
 	}
 
-	async fetchMostCommonFileTypes() {
-		return client.mediaType.findMany({
-			include: {
-				_count: {
-					select: {
-						files: true,
-					},
-				},
-			},
-			orderBy: {
-				files: {
-					_count: 'desc',
-				},
-			},
-			take: 10,
-		});
-	}
-
-	async fetchAllByUserId(userId: string) {
-		return client.file.findMany({
-			where: {
-				userId,
-			},
-		});
-	}
-
-	async fetchGalleryByUserId(userId: string) {
+	/**
+	  * Fetch a user's gallery file
+	  * @param userId The user's Id
+	  * @returns {File[]} The list of files served for gallery
+	*/
+	async fetchGalleryByUserId(userId: string): Promise<File[]> {
 		try {
 			const files = await client.file.findMany({
 				where: {
@@ -611,13 +620,11 @@ export default class FileAccessor {
 				},
 			});
 
-			files.sort((a, b) => {
+			return files.sort((a, b) => {
 				const dateA = a.metadata?.originalCreatedAt ?? a.createdAt;
 				const dateB = b.metadata?.originalCreatedAt ?? b.createdAt;
 				return dateB.getTime() - dateA.getTime();
 			});
-
-			return files;
 		} catch (err) {
 			throw err;
 		}

@@ -14,12 +14,12 @@ export const getNetworkStats = (client: Client) => {
 				client.userActivityManager.fetchHTTPMethods(),
 				client.userActivityManager.fetchHTTPStatus(),
 				client.userActivityManager.averageDuration(),
-				client.userActivityManager.fetchTotal({}),
+				client.userActivityManager.fetchTotal(),
 			]);
 
-			res.json({ network, methods: methods.filter(s => s._count.history > 0).map(m => ({ method: m.method, count: m._count.history })), status: status.filter(s => s._count.history > 0).map(s => ({ status: s.code, count: s._count.history })), duration, total });
-		} catch (error) {
-			client.logger.error(error);
+			res.json({ network, methods: methods.filter(s => s._count > 0), status: status.filter(s => s._count > 0), duration, total });
+		} catch (err) {
+			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch logs.');
 		}
 	};

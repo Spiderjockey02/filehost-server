@@ -1,7 +1,7 @@
 import { Prisma } from '@/types/generated/client';
 import { Pagination } from './File';
 
-export interface GetUsers {
+export interface FetchUsers {
 	name?: string
 	sortOrder?: 'desc' | 'asc'
 	sortBy?: 'createdAt' | 'lastActive' | 'uploadedFiles'
