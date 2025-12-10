@@ -120,3 +120,27 @@ export const getPlans = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint GET /metadata/:fileId
+export const getFilesMetadata = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const fileId = req.params.fileId;
+
+		try {
+			// Make sure only the file's owner can get the metadata
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			// Check the owner of the files
+			const file = await client.FileManager.fetchById(fileId);
+			if (file == null) return Error.MissingResource(res, 'File not found');
+			if (file.userId !== session.user.id) return Error.InvalidAccess(res);
+
+			const metadata = await client.FileManager.fetchFilesMetadata(file.id);
+			res.json({ metadata: { ...metadata, exif: undefined } });
+		} catch (err) {
+			client.logger.error(err);
+			return Error.GenericError(res, 'Failed to fetch file\'s metadata');
+		}
+	};
+};

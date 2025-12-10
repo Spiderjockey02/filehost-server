@@ -1,4 +1,4 @@
-import { getAvatar, getThumbnail, getContent, getStatistics, getPlans } from '@/controllers';
+import { getAvatar, getThumbnail, getContent, getStatistics, getPlans, getFilesMetadata } from '@/controllers';
 import type Client from '@/helpers/Client';
 import { Router } from 'express';
 const router = Router();
@@ -9,6 +9,8 @@ export default function(client: Client) {
 	router.get('/thumbnail/:userid/*path', getThumbnail(client));
 
 	router.get('/content/:userid/*path', getContent(client));
+
+	router.get('/api/metadata/:fileId', getFilesMetadata(client));
 
 	router.get('/api/statistics', getStatistics(client));
 

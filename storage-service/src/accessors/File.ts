@@ -662,4 +662,17 @@ export default class FileAccessor {
 			},
 		});
 	}
+
+	/**
+	  * Fetch file's metadata
+	  * @param fileId The file id
+	  * @returns {FileMetadata | null}
+	*/
+	async fetchFilesMetadata(fileId: string): Promise<FileMetadata | null> {
+		return client.fileMetadata.findUnique({
+			where: {
+				fileId,
+			},
+		});
+	}
 }
