@@ -112,7 +112,7 @@ export default class MetadataExtractor {
 			if (stream) {
 				width = stream.width ?? null;
 				height = stream.height ?? null;
-				duration = stream.duration ? parseFloat(stream.duration) : undefined;
+				duration = stream.duration ? Number(parseFloat(stream.duration).toFixed(2)) : undefined;
 				codec = stream.codec_name ?? null;
 
 				if (stream.avg_frame_rate && stream.avg_frame_rate !== '0/0') {
