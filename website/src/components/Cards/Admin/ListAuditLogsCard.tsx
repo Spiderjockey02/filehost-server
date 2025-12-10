@@ -47,7 +47,7 @@ export default function AdminListAuditLogsCard() {
 						<Table.Header>
 							<select className="form-select" onChange={(e) => {setFilters({ eventName: e.target.value, sortOrder: 'desc' }); setPage(0);}}>
 								<option value="" selected>Name</option>
-								{Object.keys(AuditLogEventName).map(e => (
+								{Object.keys(AuditLogEventName).sort((a, b) => a.localeCompare(b)).map(e => (
 									<option value={e} key={e}>{e}</option>
 								))}
 							</select>

@@ -342,6 +342,7 @@ enum AuditLogEventName {
   SUBSCRIPTION_START
   SUBSCRIPTION_ENDED
   EMAIL_SENT
+  CONFIG_UPDATED
 }
 
 model AuditLogNames {

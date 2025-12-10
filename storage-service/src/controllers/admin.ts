@@ -241,6 +241,10 @@ export const getConfig = (client: Client) => {
 // Endpoint: POST /api/admin/config
 export const postConfig = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		// Check session
+		const session = await getSession(client, req.headers);
+		if (!session?.user) return Error.InvalidSession(res);
+
 		const { MAX_AVATAR_SIZE, MAX_CHARS_FILE_NAME, DISALLOWED_MIME_TYPES, INVALID_CHARS_IN_FILE_NAME,
 			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE, RATE_LIMIT } = req.body;
 
@@ -248,7 +252,19 @@ export const postConfig = (client: Client) => {
 			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE, RATE_LIMIT });
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-		client.config.setAll(req.body);
+		// Log audit
+		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+			await client.AuditLogManager.create({
+				eventName: 'CONFIG_UPDATED',
+				resourceType: 'USER',
+				resourceId: '',
+				success: true,
+				message: 'Updated config',
+				userId: session.user.id,
+			});
+		});
+
+		client.config.setAll(result.data);
 		res.json({ success: 'Configuration updated successfully.' });
 	};
 };
