@@ -65,9 +65,8 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 								<div className="alert alert-danger" role="alert">
 									{data.error}
 								</div>
-								: <ObjectOrientedPieChart data={data.methods.reduce((acc, item) => {
-									// @ts-expect-error stuff
-									acc[item.method] = item.count;
+								: <ObjectOrientedPieChart data={data.methods.reduce((acc: {[key: string]: number}, item) => {
+									acc[item.method] = item._count;
 									return acc;
 								}, {})} />
 							}
@@ -84,9 +83,8 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 								<div className="alert alert-danger" role="alert">
 									{data.error}
 								</div>
-								: <ObjectOrientedPieChart data={data.status.reduce((acc, item) => {
-									// @ts-expect-error stuff
-									acc[item.status] = item.count;
+								: <ObjectOrientedPieChart data={data.status.reduce((acc: {[key: number]: number}, item) => {
+									acc[item.code] = item._count;
 									return acc;
 								}, {})} />
 							}

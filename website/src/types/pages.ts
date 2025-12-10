@@ -98,12 +98,12 @@ export interface AdminStoragePageProps {
 
 interface Methods {
   method: string
-  count: number
+  _count: number
 }
 
 interface Status {
-  status: number
-  count: number
+  code: number
+  _count: number
 }
 
 export interface AdminNetworkPageProps {
