@@ -3,8 +3,9 @@ import { DeleteFileModal, RenameFileModal, UpdateLocationModal } from '@/compone
 import type { FilePanelPopupProps } from '@/types/Components/Views';
 import type { HoverElementProps } from '@/types/Components/Navbars';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { formatBytes, queryOptions } from '@/utils/functions';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { formatBytes } from '@/utils/functions';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import Image from 'next/image';
@@ -17,11 +18,45 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 	const handleRowClick = () => router.push(`/files${file.path}`);
 	const imageLoader = () => path.join('/thumbnail', file.userId, file.path);
 
+	const { data } = useQuery({
+		queryKey: ['fileMetadata', file],
+		queryFn: async ({ signal }) => {
+			const res = await fetch(`/api/metadata/${file.id}`, { signal });
+			if (!res.ok) throw new Error(`Failed to fetch user agents: ${res.statusText}`);
+
+			const d = await res.json();
+			return formatMetadata(d.metadata);
+		},
+		...queryOptions,
+	});
+
 	const HoverElement = ({ title, children }: HoverElementProps) => (
 		<OverlayTrigger placement='top' overlay={<Tooltip>{title}</Tooltip>}>
 			{children}
 		</OverlayTrigger>
 	);
+
+	function formatMetadata(meta: any) {
+		if (file.type == 'DIRECTORY') return [{ label: 'Children', value: `${file._count.children} files` }];
+		if (!meta) return [];
+
+		const entries: { label: string; value: string }[] = [];
+		const push = (label: string, value: any) => {
+			if (value !== null && value !== undefined && value !== '') entries.push({ label, value: String(value) });
+		};
+
+		push('Original Created At', meta.originalCreatedAt ? new Date(meta.originalCreatedAt).toLocaleString() : null);
+		push('Width', `${meta.width}px`);
+		push('Height', `${meta.height}px`);
+		push('Duration (sec)', meta.duration);
+		push('Frame Rate', meta.frameRate);
+		push('Camera Model', meta.cameraModel);
+		push('Size', formatBytes(file.size));
+		push('Codec', meta.codec);
+
+		if (meta.gpsLatitude && meta.gpsLongitude) push('GPS Coordinates', `${meta.gpsLatitude}, ${meta.gpsLongitude}`);
+		return entries;
+	}
 
 	const handleDownload = async () => {
 		try {
@@ -90,44 +125,56 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 				<div className="offcanvas-body" style={{ padding: '3px' }}>
 					<div className='container justify-content-center text-center'>
 						<span onClick={handleRowClick} style={{ cursor: 'pointer' }}>
-							<Image src={file.name} alt={file.name} style={{ maxWidth: '100%', height: 'auto', border: '1px solid black' }} width={300} height={390} loader={imageLoader} loading='lazy' />
-							<br />
-							<h4 className='text-break'>{file.name}</h4>
+							<Image src={file.name} alt={file.name} style={{ maxWidth: '100%', height: 'auto', border: '1px solid black', borderRadius: '8px' }} width={300} height={390} loader={imageLoader} loading='lazy' />
+							<h5 className='text-break pt-2'>{file.name}</h5>
 						</span>
-						<p>Created on: {new Date(file.createdAt).toLocaleString('en-US')}</p>
-						<p>{file.type == 'FILE' ? formatBytes(file.size) : `${file._count?.children ?? 0} files`}</p>
+						<p>{data?.find(d => d.label == 'Original Created At') ? 'Uploaded On' : 'Created on'}: {new Date(file.createdAt).toLocaleString('en-US')}</p>
 					</div>
 					<div className='d-flex flex-wrap justify-content-evenly'>
-						<button className='btn'>
+						<button className='btn btn-outline-secondary'>
 							<HoverElement title="Share">
 								<FontAwesomeIcon icon={faShareAlt} />
 							</HoverElement>
 						</button>
-						<button className='btn' onClick={handleCopyURL}>
+						<button className='btn btn-outline-secondary' onClick={handleCopyURL}>
 							<HoverElement title="Copy">
 								<FontAwesomeIcon icon={faCopy} />
 							</HoverElement>
 						</button>
-						<button className='btn' onClick={handleDownload}>
+						<button className='btn btn-outline-secondary' onClick={handleDownload}>
 							<HoverElement title="Download">
 								<FontAwesomeIcon icon={faDownload} />
 							</HoverElement>
 						</button>
-						<button className='btn' onClick={() => setActiveModal('delete')}>
+						<button className='btn btn-outline-secondary' onClick={() => setActiveModal('delete')}>
 							<HoverElement title="Delete">
 								<FontAwesomeIcon icon={faTrash} />
 							</HoverElement>
 						</button>
-						<button className='btn' onClick={() => setActiveModal('change')}>
+						<button className='btn btn-outline-secondary' onClick={() => setActiveModal('change')}>
 							<HoverElement title="Change">
 								<FontAwesomeIcon icon={faFolderOpen} />
 							</HoverElement>
 						</button>
-						<button className="btn" onClick={() => setActiveModal('rename')}>
+						<button className='btn btn-outline-secondary' onClick={() => setActiveModal('rename')}>
 							<HoverElement title="Rename">
 								<FontAwesomeIcon icon={faFileSignature} />
 							</HoverElement>
 						</button>
+					</div>
+					<div className="mt-4 px-2">
+						{data && (
+							<div className="list-group shadow-sm rounded">
+								{data.map((item, index) => (
+									<div key={index} className="list-group-item d-flex justify-content-between align-items-start py-2">
+										<div className="fw-semibold">{item.label}</div>
+										<div className="text-muted text-end" style={{ whiteSpace: 'pre-wrap' }}>
+											{item.value}
+										</div>
+									</div>
+								))}
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
