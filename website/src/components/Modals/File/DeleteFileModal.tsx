@@ -1,6 +1,6 @@
-import { FileModalProps } from '@/types/Components/Modals';
+import type { FileModalProps } from '@/types/Components/Modals';
 import { useFolderRefetch } from '../../Hooks/FileManager';
-import { BaseSyntheticEvent } from 'react';
+import type { BaseSyntheticEvent } from 'react';
 import { Modal } from 'react-bootstrap';
 import axios from 'axios';
 
@@ -23,7 +23,7 @@ export default function DeleteFileModal({ file, show, onClose, closeContextMenu 
 	return (
 		<Modal show={show} onHide={onClose} centered>
 			<Modal.Header closeButton>
-				<Modal.Title>
+				<Modal.Title className='text-break'>
           Delete file: {file.name}
 				</Modal.Title>
 			</Modal.Header>

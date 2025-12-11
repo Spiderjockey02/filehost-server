@@ -1,8 +1,8 @@
-import { FileModalProps } from '@/types/Components/Modals';
-import { BaseSyntheticEvent, useState } from 'react';
+import type { FileModalProps } from '@/types/Components/Modals';
 import { useFolderRefetch } from '../../Hooks/FileManager';
-import axios from 'axios';
+import { BaseSyntheticEvent, useState } from 'react';
 import { Modal } from 'react-bootstrap';
+import axios from 'axios';
 
 const InputErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'red', borderLeftColor: 'red', borderBottomColor: 'red' } : {};
 const TextErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'red', borderRightColor: 'red', borderBottomColor: 'red' } : {};
@@ -30,7 +30,7 @@ export default function RenameFileModal({ file, closeContextMenu, show, onClose 
 	return (
 		<Modal show={show} onHide={onClose} centered>
 			<Modal.Header closeButton>
-				<Modal.Title>
+				<Modal.Title className='text-break'>
           Rename file: {file.name}
 				</Modal.Title>
 			</Modal.Header>
@@ -43,8 +43,8 @@ export default function RenameFileModal({ file, closeContextMenu, show, onClose 
 					{errorMsg && <div className="invalid-feedback" style={{ color: 'red', display: 'block' }}>{errorMsg}</div>}
 				</Modal.Body>
 				<Modal.Footer>
-					<button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
-					<button type="submit" className="btn btn-primary">Save</button>
+					<button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+					<button type="submit" className="btn btn-success">Save</button>
 				</Modal.Footer>
 			</form>
 		</Modal>

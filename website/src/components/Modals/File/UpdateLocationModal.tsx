@@ -74,7 +74,7 @@ export default function UpdateLocationModal({ file, closeContextMenu, show, onCl
 	return (
 		<Modal show={show} onHide={onClose} onShow={onShow} centered>
 			<Modal.Header closeButton>
-				<Modal.Title>
+				<Modal.Title className='text-break'>
           Move or Copy {file.name}
 				</Modal.Title>
 			</Modal.Header>
@@ -123,8 +123,8 @@ export default function UpdateLocationModal({ file, closeContextMenu, show, onCl
 			</form>
 			<Modal.Footer>
 				<button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-				<button type="submit" className="btn btn-primary" onClick={() => setAction('move')}>Move</button>
-				<button type="submit" className="btn btn-primary" onClick={() => setAction('copy')}>Copy</button>
+				<button type="submit" className="btn btn-success" onClick={() => setAction('move')}>Move</button>
+				<button type="submit" className="btn btn-success" onClick={() => setAction('copy')}>Copy</button>
 			</Modal.Footer>
 		</Modal>
 	);

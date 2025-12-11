@@ -1,9 +1,9 @@
-import { BaseSyntheticEvent, useState } from 'react';
-import { useFolderRefetch } from '../../Hooks/FileManager';
-import InputField from '../../Form/InputField';
-import axios from 'axios';
 import type { CreateFolderModalProps } from '@/types/Components/Modals';
+import { useFolderRefetch } from '../../Hooks/FileManager';
+import { BaseSyntheticEvent, useState } from 'react';
+import { InputField } from '@/components';
 import { Modal } from 'react-bootstrap';
+import axios from 'axios';
 
 export default function CreateFolderModal({ parentId, show, setShow }: CreateFolderModalProps) {
 	const [folderName, setFolderName] = useState('');
@@ -41,7 +41,7 @@ export default function CreateFolderModal({ parentId, show, setShow }: CreateFol
 					<InputField title='Folder name' name="folder" onChange={(e) => setFolderName(e.target.value)} errorMsg={errorMsg} autocomplete='off' />
 				</Modal.Body>
 				<Modal.Footer>
-					<button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
+					<button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
 					<button type="submit" className="btn btn-success">Create</button>
 				</Modal.Footer>
 			</form>
