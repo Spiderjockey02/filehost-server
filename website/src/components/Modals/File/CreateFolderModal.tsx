@@ -1,5 +1,5 @@
 import type { CreateFolderModalProps } from '@/types/Components/Modals';
-import { useFolderRefetch } from '../../Hooks/FileManager';
+import useManageFolder from '../../Hooks/FileManager';
 import { BaseSyntheticEvent, useState } from 'react';
 import { InputField } from '@/components';
 import { Modal } from 'react-bootstrap';
@@ -8,7 +8,7 @@ import axios from 'axios';
 export default function CreateFolderModal({ parentId, show, setShow }: CreateFolderModalProps) {
 	const [folderName, setFolderName] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
-	const refreshFolder = useFolderRefetch();
+	const { refreshFolder } = useManageFolder();
 
 	async function handleFolderSubmit(event: BaseSyntheticEvent) {
 		event.preventDefault();

@@ -1,11 +1,11 @@
 import type { FileModalProps } from '@/types/Components/Modals';
-import { useFolderRefetch } from '../../Hooks/FileManager';
+import useManageFolder from '../../Hooks/FileManager';
 import type { BaseSyntheticEvent } from 'react';
 import { Modal } from 'react-bootstrap';
 import axios from 'axios';
 
 export default function DeleteFileModal({ file, show, onClose, closeContextMenu }: FileModalProps) {
-	const refreshFolder = useFolderRefetch();
+	const { refreshFolder } = useManageFolder();
 
 	const onSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();

@@ -1,5 +1,5 @@
 import { Directory, PhotoAlbum, FileViewer, RecentNavbar, BreadcrumbNav, UploadStatusToast } from '@/components';
-import { useFolder, useFolderLoading } from '@/components/Hooks/FileManager';
+import useManageFolder from '@/components/Hooks/FileManager';
 import type { FilePageProps, viewTypeTypes } from '@/types/pages';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
@@ -10,10 +10,9 @@ import type { User } from 'better-auth';
 
 export default function Files({ path = '/' }: FilePageProps) {
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
+	const { file, error, isLoading } = useManageFolder();
 	const { data: session } = authClient.useSession();
-	const { isLoading, error } = useFolderLoading();
 	const { showToast } = useToast();
-	const file = useFolder();
 
 	useEffect(() => {
 		if (error) showToast('error', error.message);

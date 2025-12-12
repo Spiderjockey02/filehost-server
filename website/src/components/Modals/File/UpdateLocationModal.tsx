@@ -1,5 +1,5 @@
 import type { FileModalProps } from '@/types/Components/Modals';
-import { useFolderRefetch } from '../../Hooks/FileManager';
+import useManageFolder from '../../Hooks/FileManager';
 import type { File } from '@/types/generated/browser';
 import { BaseSyntheticEvent, useState } from 'react';
 import { Modal } from 'react-bootstrap';
@@ -39,7 +39,7 @@ export default function UpdateLocationModal({ file, closeContextMenu, show, onCl
 	const [selectedDestination, setSelectedDestination] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
 	const [currentPath, setCurrentPath] = useState<string[]>([]);
-	const refreshFolder = useFolderRefetch();
+	const { refreshFolder } = useManageFolder();
 
 	const handleActionSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();

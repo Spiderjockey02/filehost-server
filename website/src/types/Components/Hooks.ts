@@ -1,11 +1,16 @@
 import type { FileWithDeepChildren } from '../database';
 import type { Socket } from 'socket.io-client';
+import { sortKeyTypes, SortOrder } from './Tables';
 
 export interface FileContextType {
 	file: FileWithDeepChildren | null;
 	isLoading: boolean;
 	error: Error | null;
 	refetch: () => void;
+  sortBy: sortKeyTypes
+  sortDir: SortOrder
+  setSortBy: (sortBy: sortKeyTypes) => void
+  toggleSortDir: () => void
 }
 
 export interface SocketContextType {

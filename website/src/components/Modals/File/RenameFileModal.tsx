@@ -1,5 +1,5 @@
 import type { FileModalProps } from '@/types/Components/Modals';
-import { useFolderRefetch } from '../../Hooks/FileManager';
+import useManageFolder from '../../Hooks/FileManager';
 import { BaseSyntheticEvent, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import axios from 'axios';
@@ -10,7 +10,7 @@ const TextErrorStyles = (showError: boolean) => showError ? { borderTopColor: 'r
 export default function RenameFileModal({ file, closeContextMenu, show, onClose }: FileModalProps) {
 	const [rename, setRename] = useState(file.name);
 	const [errorMsg, setErrorMsg] = useState('');
-	const refreshFolder = useFolderRefetch();
+	const { refreshFolder } = useManageFolder();
 
 	const handleRenameSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();

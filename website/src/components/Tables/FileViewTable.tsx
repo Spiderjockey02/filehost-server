@@ -1,8 +1,9 @@
-import { FileViewProps, sortKeyTypes, SortOrder } from '@/types/Components/Tables';
 import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import type { FileViewProps, sortKeyTypes } from '@/types/Components/Tables';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState, MouseEvent, useMemo } from 'react';
+import useManageFolder from '@/components/Hooks/FileManager';
 import type { File } from '@/types/generated/browser';
+import { useState, MouseEvent } from 'react';
 import FileItemRow from './FileItemRow';
 import { FileContextMenu } from '..';
 import Table from '../UI/Table';
@@ -15,49 +16,18 @@ const initalContextMenu = {
 };
 
 export default function FileViewTable({ files, setFilePanelToShow, showMoreDetail = false }: FileViewProps) {
-	const [sortKey, setSortKey] = useState<sortKeyTypes>('Name');
-	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
+	const { sortBy, sortDir, setSortBy, toggleSortDir } = useManageFolder();
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
 	const [filesSelected, setFilesSelected] = useState<File[]>([]);
 	const [allSelected, setAllSelected] = useState(false);
 
 	function updateSortKey(key: sortKeyTypes) {
-		if (sortKey === key) {
-			setSortOrder(prev => prev === 'ascn' ? 'dscn' : 'ascn');
+		if (sortBy === key) {
+			toggleSortDir();
 		} else {
-			setSortKey(key);
-			setSortOrder('ascn');
+			setSortBy(key);
 		}
 	}
-
-	const sortedFiles = useMemo(() => {
-		const isAscending = sortOrder === 'ascn';
-		const sorted = [...files];
-
-		return sorted.sort((a, b) => {
-			switch (sortKey) {
-				case 'Name':
-					return isAscending ? a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }) : b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' });
-				case 'Size':
-					if (a.type === 'DIRECTORY' && b.type === 'DIRECTORY') {
-						return isAscending
-							? a._count.children - b._count.children
-							: b._count.children - a._count.children;
-					}
-					if (a.type === 'FILE' && b.type === 'FILE') {
-						return isAscending ? a.size - b.size : b.size - a.size;
-					}
-					return a.type === 'DIRECTORY' ? -1 : 1;
-				case 'Date_Mod': {
-					const dateA = new Date(a.createdAt).getTime();
-					const dateB = new Date(b.createdAt).getTime();
-					return isAscending ? dateA - dateB : dateB - dateA;
-				}
-				default:
-					return 0;
-			}
-		});
-	}, [files, sortKey, sortOrder]);
 
 	function openContextMenu(e: MouseEvent<HTMLTableRowElement>, selected: File) {
 		e.preventDefault();
@@ -117,24 +87,24 @@ export default function FileViewTable({ files, setFilePanelToShow, showMoreDetai
 						<input className="form-check-input" type="checkbox" name="exampleRadios" id="All" onChange={handleSelectAllToggle} />
 					</Table.Header>
 					<Table.Header id="Name" className="th-header" onClick={() => updateSortKey('Name')} style={{ cursor: 'pointer' }}>
-          	Name <FontAwesomeIcon icon={sortKey == 'Name' ? (sortOrder == 'ascn' ? faSortUp : faSortDown) : faSort} />
+          	Name <FontAwesomeIcon icon={sortBy == 'Name' ? (sortDir == 'ascn' ? faSortUp : faSortDown) : faSort} />
 					</Table.Header>
 					<Table.Header id="Size" className="th-header" onClick={() => updateSortKey('Size')} style={{ cursor: 'pointer' }}>
-          	Size <FontAwesomeIcon icon={sortKey == 'Size' ? (sortOrder == 'ascn' ? faSortUp : faSortDown) : faSort} />
+          	Size <FontAwesomeIcon icon={sortBy == 'Size' ? (sortDir == 'ascn' ? faSortUp : faSortDown) : faSort} />
 					</Table.Header>
 					<Table.Header id="Date modified" className="th-header hide-on-mobile" onClick={() => updateSortKey('Date_Mod')} style={{ cursor: 'pointer' }}>
-          	Date modified <FontAwesomeIcon icon={sortKey == 'Date_Mod' ? (sortOrder == 'ascn' ? faSortUp : faSortDown) : faSort} />
+          	Date modified <FontAwesomeIcon icon={sortBy == 'Date_Mod' ? (sortDir == 'ascn' ? faSortUp : faSortDown) : faSort} />
 					</Table.Header>
 				</Table.HeaderRow>
 				<Table.Body>
-					{sortedFiles.filter(f => f.type == 'DIRECTORY').map(_ => (
+					{files.filter(f => f.type == 'DIRECTORY').map(_ => (
 						<FileItemRow key={_.name}
 							file={_} showMoreDetail={showMoreDetail}
 							isChecked={filesSelected.includes(_)} openContextMenu={openContextMenu}
 							handleCheckboxToggle={handleCheckboxToggle} setShow={(fileId) => setFilePanelToShow(fileId)}
 						/>
 					))}
-					{sortedFiles.filter(f => f.type == 'FILE').map(_ => (
+					{files.filter(f => f.type == 'FILE').map(_ => (
 						<FileItemRow key={_.name}
 							file={_} showMoreDetail={showMoreDetail}
 							isChecked={filesSelected.includes(_)} openContextMenu={openContextMenu}

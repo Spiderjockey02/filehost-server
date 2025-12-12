@@ -3,21 +3,21 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import type { ImageLoaderProps } from 'next/image';
 import Image from 'next/image';
 import Link from 'next/link';
+const fileTypes = {
+	'DIRECTORY': 0,
+	'FILE': 1,
+};
 
 export default function PhotoAlbum({ folder }: DirectoryProps) {
 	const [itemsToShow, setItemsToShow] = useState(40);
 	const observerRef = useRef<HTMLDivElement | null>(null);
 	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${folder.userId}${encodeURI(src)}`;
 
-	const files = useMemo(() => {
-		return folder.children.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-	}, [folder.children]);
-	const visibleFiles = useMemo(() => files.slice(0, itemsToShow), [files, itemsToShow]);
-
+	const visibleFiles = useMemo(() => folder.children.sort((a, b) => fileTypes[a.type] - fileTypes[b.type]).slice(0, itemsToShow), [folder.children, itemsToShow]);
 	useEffect(() => {
 		const observer = new IntersectionObserver(
 			(entries) => {
-				if (entries[0].isIntersecting && itemsToShow < files.length) setItemsToShow((prev) => Math.min(prev + 40, files.length));
+				if (entries[0].isIntersecting && itemsToShow < folder.children.length) setItemsToShow((prev) => Math.min(prev + 40, folder.children.length));
 			},
 			{ rootMargin: '200px' },
 		);
@@ -26,7 +26,7 @@ export default function PhotoAlbum({ folder }: DirectoryProps) {
 		return () => {
 			if (observerRef.current) observer.unobserve(observerRef.current);
 		};
-	}, [itemsToShow, files.length]);
+	}, [itemsToShow, folder.children.length]);
 
 	return (
 		<>
@@ -51,7 +51,7 @@ export default function PhotoAlbum({ folder }: DirectoryProps) {
 				))}
 			</div>
 
-			{itemsToShow < files.length && (
+			{itemsToShow < folder.children.length && (
 				<div ref={observerRef} className="text-center py-3">
 					<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>{' '}
 					Loading more...
