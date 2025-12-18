@@ -37,8 +37,11 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 	);
 
 	function formatMetadata(meta: any) {
+		// For directories display the number of children it contains
 		if (file.type == 'DIRECTORY') return [{ label: 'Children', value: `${file._count.children} files` }];
-		if (!meta) return [];
+
+		// Don't show any metadata if its missing or not an image or video.
+		if (!meta || !(file.mimetype?.startsWith('image') || file.mimetype?.startsWith('video'))) return [];
 
 		const entries: { label: string; value: string }[] = [];
 		const push = (label: string, value: any) => {
