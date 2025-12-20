@@ -6,64 +6,89 @@ import MainLayout from '@/layouts/main';
 import type { User } from 'better-auth';
 import Link from 'next/link';
 import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { Notification } from '@/types/generated/browser';
+import { queryOptions } from '@/utils/functions';
+import { Table } from '@/components';
 
 export default function Notifications() {
 	const { data: session, refetch } = authClient.useSession();
+	const [page, setPage] = useState(0);
+
+	const { data, isLoading, refetch: refreshTable } = useQuery({
+		queryKey: ['notifications', page],
+		queryFn: async ({ signal }) => {
+			const res = await fetch(`/api/session/notifications?page=${page}`, { signal });
+			if (!res.ok) throw new Error(`Failed to fetch notifications: ${res.statusText}`);
+
+			const d = await res.json();
+			return d as { notifications: Notification[], total: number };
+		},
+		...queryOptions,
+	});
 
 	async function deleteNotification(id: string) {
 		try {
 			await axios.delete(`/api/session/notifications/${id}`);
 			refetch();
-		} catch (error) {
-			console.log(error);
+			refreshTable();
+		} catch (err) {
+			console.log(err);
 		}
 	}
 
 	if (session == null) return null;
 	return (
-		<MainLayout user={session.user as User} tabName={`Notifications (${session.user?.notifications.length})`}>
+		<MainLayout user={session.user as User} tabName={`Notifications (${isLoading ? 'Loading...' : data?.total ?? 0})`}>
 			<div className="container py-4" style={{ minHeight: '70vh' }}>
 				<h1 className="text-center mb-4">
 					<FontAwesomeIcon icon={faBell} className='me-2' />
-					Notifications ({session.user?.notifications.length})
+					Notifications ({isLoading ? 'Loading...' : data?.total ?? 0})
 				</h1>
-				{session.user?.notifications.length === 0 ?
+				{isLoading || data == null ? (
 					<div className="alert alert-info text-center" role="alert">
 						<FontAwesomeIcon icon={faCheckCircle} className="me-2"/>
 						You&apos;re all caught up! No new notifications.
 					</div>
-				 : <div className="row row-cols-1 g-3">
-						{session.user?.notifications
-							.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-							.map((notification) => (
-								<div className="col" key={notification.id}>
-									<div className="card shadow-sm border-0">
-										<div className="card-body">
-											<h5 className="card-title mb-2">
-												<FontAwesomeIcon icon={faInfoCircle} className="text-primary me-2" />
-												{notification.title}
-											</h5>
-											<p className="card-text text-muted small mb-2">
-												<FontAwesomeIcon icon={faClock} className='me-1' />
-												{new Date(notification.createdAt).toLocaleString()}
-											</p>
-											<p className="card-text">{notification.text}</p>
-											{notification.url && (
-												<Link href={notification.url} className="btn btn-sm btn-outline-primary mt-2">
-													<FontAwesomeIcon icon={faArrowRight} className="me-1" />
+				) :
+					(
+						<>
+							<div className="row row-cols-1 g-3">
+								{data.notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+									.map((notification) => (
+										<div className="col" key={notification.id}>
+											<div className="card shadow-sm border-0">
+												<div className="card-body">
+													<h5 className="card-title mb-2">
+														<FontAwesomeIcon icon={faInfoCircle} className="text-primary me-2" />
+														{notification.title}
+													</h5>
+													<p className="card-text text-muted small mb-2">
+														<FontAwesomeIcon icon={faClock} className='me-1' />
+														{new Date(notification.createdAt).toLocaleString()}
+													</p>
+													<p className="card-text">{notification.text}</p>
+													{notification.url && (
+														<Link href={notification.url} className="btn btn-sm btn-outline-primary mt-2">
+															<FontAwesomeIcon icon={faArrowRight} className="me-1" />
 													View Details
-												</Link>
-											)}
+														</Link>
+													)}
 											&nbsp;
-											<button className="btn btn-sm btn-outline-danger mt-2" onClick={() => deleteNotification(notification.id)}>
-												<FontAwesomeIcon icon={faTrash} className="me-1" />
+													<button className="btn btn-sm btn-outline-danger mt-2" onClick={() => deleteNotification(notification.id)}>
+														<FontAwesomeIcon icon={faTrash} className="me-1" />
 												Delete
-											</button>
+													</button>
+												</div>
+											</div>
 										</div>
-									</div>
-								</div>
-							))}
-					</div>
+									))}
+							</div>
+							&nbsp;
+							<Table.PaginationFooter isLoading={isLoading} total={data?.total ?? 0} page={page} setPage={setPage} />
+						</>
+					)
 				}
 			</div>
 		</MainLayout>

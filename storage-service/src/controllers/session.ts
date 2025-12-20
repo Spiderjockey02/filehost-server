@@ -1,6 +1,6 @@
 import { Error, getIP, sanitiseObject } from '@/utils';
 import { avatarForm, getSession } from '@/middleware';
-import { validateRecentlyViewed } from '@/validators';
+import { validatePage, validateRecentlyViewed } from '@/validators';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 
@@ -85,6 +85,31 @@ export const deleteResetAvatar = (client: Client) => {
 	};
 };
 
+// Endpoint GET /api/session/notifications
+export const getNotifications = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+			const { page } = req.query;
+			const result = validatePage.safeParse(page);
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+
+			// Fetch notifications from the user
+			const [notifications, total] = await Promise.all([
+				client.notificationManager.fetchByUserId({ userId: session.user.id, page: result.data ?? 0 }),
+				client.notificationManager.fetchCount(session.user.id),
+			]);
+
+			res.json({ notifications: sanitiseObject(notifications), total });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to delete notification.');
+		}
+	};
+};
+
+
 // Endpoint DELETE /api/session/notifications/:id
 export const deleteNotification = (client: Client) => {
 	return async (req: Request, res: Response) => {
@@ -103,7 +128,7 @@ export const deleteNotification = (client: Client) => {
 			res.json({ success: 'Successfully deleted notification.' });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to delete user\'s avatar.');
+			Error.GenericError(res, 'Failed to delete notification.');
 		}
 	};
 };

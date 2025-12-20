@@ -48,7 +48,12 @@ export const auth = betterAuth({
 				},
 				include: {
 					plan: true,
-					notifications: true,
+					notifications: {
+						take: 10,
+						orderBy: {
+							createdAt: 'desc',
+						},
+					},
 				},
 			});
 			if (updatedUser == null) return { user: null, session: null };
