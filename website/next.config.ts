@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
 		return config;
 	},
 	experimental: {
-		middlewareClientMaxBodySize: '10gb',
+		proxyClientMaxBodySize: '10gb',
 	},
 	images: {
 		remotePatterns: [new URL('https://cdn.discordapp.com/**'), new URL('https://placehold.co/**') ],

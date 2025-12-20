@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
 	// Fetch user session from the server
 	try {
 		const res = await fetch(`${request.nextUrl.origin}/api/auth/get-session`, {
