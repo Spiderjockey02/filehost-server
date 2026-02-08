@@ -114,6 +114,7 @@ export const getNotifications = (client: Client) => {
 export const deleteNotification = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const notifId = req.params.id;
+		if (typeof notifId !== 'string') return Error.IncorrectQuery(res, 'Notification ID is required.');
 
 		try {
 			const session = await getSession(client, req.headers);

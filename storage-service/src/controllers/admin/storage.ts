@@ -28,6 +28,7 @@ export const getStorages = (client: Client) => {
 export const getStorageById = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const storageId = req.params.storageId;
+		if (typeof storageId !== 'string') return Error.IncorrectQuery(res, 'Storage ID is required.');
 
 		try {
 			const storage = await client.FileManager.storageManager.fetchById(storageId);
@@ -46,6 +47,7 @@ export const deleteStorageById = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		const { storageId } = req.params;
+		if (typeof storageId !== 'string') return Error.IncorrectQuery(res, 'Storage ID is required.');
 
 		try {
 			const storage = await client.FileManager.storageManager.fetchById(storageId);
@@ -159,6 +161,7 @@ export const postStorageByStorageId = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		const storageId = req.params.storageId;
+		if (typeof storageId !== 'string') return Error.IncorrectQuery(res, 'Storage ID is required.');
 
 		try {
 			const { name, maxSize, isPrivate } = req.body;
@@ -220,6 +223,7 @@ export const postMigrateUserFromStorage = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const storageId = req.params.storageId;
 		const { userId } = req.query;
+		if (typeof storageId !== 'string') return Error.IncorrectQuery(res, 'Storage ID is required.');
 		if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'userId must be string.');
 
 		// Fetch all user's files

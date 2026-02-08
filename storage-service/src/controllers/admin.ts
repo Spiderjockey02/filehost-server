@@ -56,7 +56,7 @@ export const getCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const name = req.params.name;
 		try {
-			if (!client.CRONManager.isValidCronJobName(name)) return Error.MissingResource(res, `${name} is not a valid CRON job.`);
+			if (typeof name !== 'string' || !client.CRONManager.isValidCronJobName(name)) return Error.MissingResource(res, `${name} is not a valid CRON job.`);
 			const logs = await client.CRONManager.fetchAllLogs(name);
 
 			res.json({ logs });
@@ -75,7 +75,7 @@ export const postCronJobsByName = (client: Client) => {
 			const { schedule } = req.body;
 
 			// Validate cronJob name and schedule (CRON format)
-			if (!client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res, `${cronJob} is not a valid CRON job.`);
+			if (typeof cronJob !== 'string' || !client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res, `${cronJob} is not a valid CRON job.`);
 			const result = validateCRONSchedule.safeParse(schedule);
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
@@ -94,6 +94,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const name = req.params.name;
 		let log: CronJobLog;
+
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
 		try {
@@ -139,7 +140,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 				await client.AuditLogManager.create({
 					eventName: 'CRONJOB_RAN',
 					resourceType: 'SYSTEM',
-					resourceId: name,
+					resourceId: `${name}`,
 					success: false,
 					message: `Failed to run CRON job due to error: ${err}.`,
 					userId: session.user?.id,

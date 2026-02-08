@@ -217,6 +217,8 @@ export const getUserById = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const userId = req.params.id;
+			if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
+
 			const [user, bannedStatus] = await Promise.all([
 				client.userManager.fetchbyParam({ id: userId, force: true }),
 				client.userManager.fetchBanStatus(userId),
@@ -235,6 +237,7 @@ export const getUserByIdAccounts = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const userId = req.params.id;
+			if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
 			const accounts = await client.userManager.fetchAccountsByUserId(userId);
 			res.json({ accounts });
 		} catch (err) {
@@ -253,6 +256,7 @@ export const banUserById = (client: Client) => {
 			const { expiresAt, reason } = req.body;
 
 			// Validate inputs
+			if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
 			if (adminUser.userId === userId) return Error.IncorrectQuery(res, 'You cannot ban yourself.');
 			const result = validateBan.safeParse({ expiresAt, reason });
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
@@ -276,7 +280,9 @@ export const getUsersNotification = (client: Client) => {
 		const userId = req.params.id;
 		const { page } = req.query;
 
+		// Validate input
 		const result = validatePage.safeParse(page);
+		if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		try {
@@ -299,7 +305,9 @@ export const getUsersLogs = (client: Client) => {
 		const userId = req.params.id;
 		const page = req.query.page;
 
+		// Validate input
 		const result = validatePage.safeParse(page);
+		if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		try {

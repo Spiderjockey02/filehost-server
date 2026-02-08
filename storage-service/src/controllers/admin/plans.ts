@@ -174,7 +174,9 @@ export const patchPlan = (client: Client) => {
 		const session = await getSession(client, req.headers);
 		const planId = req.params.planId;
 
+		// Validate input
 		const result = createPlanSchema.safeParse({ name, price, maxStorageSize, maxFileSize, deletedFileRetentionDays, priceId });
+		if (typeof planId !== 'string') return Error.IncorrectQuery(res, 'Plan ID is required.');
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 		try {
@@ -220,6 +222,7 @@ export const deletePlan = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		const planId = req.params.planId;
+		if (typeof planId !== 'string') return Error.IncorrectQuery(res, 'Plan ID is required.');
 
 		try {
 			const plan = await client.PlanManager.delete(planId);

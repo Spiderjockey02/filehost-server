@@ -8,6 +8,8 @@ import { getSession } from '@/middleware';
 // Endpoint GET /avatar/:userId
 export const getAvatar = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		if (typeof req.params.userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
+
 		client.FileManager.sendAvatar(res, req.params.userId);
 	};
 };
@@ -124,7 +126,9 @@ export const getPlans = (client: Client) => {
 // Endpoint GET /metadata/:fileId
 export const getFilesMetadata = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		// Validate file ID
 		const fileId = req.params.fileId;
+		if (typeof fileId !== 'string') return Error.IncorrectQuery(res, 'File ID is required.');
 
 		try {
 			// Make sure only the file's owner can get the metadata

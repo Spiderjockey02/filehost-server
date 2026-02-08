@@ -252,9 +252,11 @@ export const postLogListener = (client: Client) => {
 // Endpoint: DELETE /api/admin/logs/listeners/:id
 export const deleteLogListener = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const { id } = req.params;
 		const session = await getSession(client, req.headers);
 
+		// Fetch and validate listener ID
+		const { id } = req.params;
+		if (typeof id !== 'string') return Error.IncorrectQuery(res, 'Listener ID is required.');
 		try {
 			const listener = await client.AuditLogManager.removeListener(id);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
@@ -293,9 +295,11 @@ export const deleteLogListener = (client: Client) => {
 // Endpoint: PATCH /api/admin/logs/listeners/:id
 export const patchLogListener = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const { id } = req.params;
 		const session = await getSession(client, req.headers);
 
+		// Fetch and validate listener ID
+		const { id } = req.params;
+		if (typeof id !== 'string') return Error.IncorrectQuery(res, 'Listener ID is required.');
 		try {
 			const { type, events, name, targetUrl, enabled } = req.body;
 			const result = validateLogListener.safeParse({ type, events, name, targetUrl, enabled });
