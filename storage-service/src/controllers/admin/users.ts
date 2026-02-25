@@ -28,8 +28,8 @@ export const getUsers = (client: Client) => {
 export const getUsersByLanguageCode = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const langaugeCodes = await client.userManager.fetchGroupCountsByLanguageCodes();
-			res.json({ langaugeCodes });
+			const languageCodes = await client.userManager.fetchGroupCountsByLanguageCodes();
+			res.json({ languageCodes });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of users.');
