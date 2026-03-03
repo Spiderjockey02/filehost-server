@@ -2,9 +2,9 @@ import type { AdminManageUsersCardProps, ManageUsersFilterProps } from '@/types/
 import { format, formatBytes, generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import { faSearch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { UserWithCount } from '@/types/database';
 import { Table, CollapsibleCard } from '@/components';
 import { useQuery } from '@tanstack/react-query';
+import API from '@/services/api';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -19,16 +19,8 @@ export default function AdminManageUsersCard({ storageId }: AdminManageUsersCard
 	const { data, isLoading, error } = useQuery({
 		queryKey: storageId ? ['users', page, name, filters, storageId] : ['users', page, name, filters],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({
-				page: `${page}`,
-				name, ...filters,
-			});
-
-			const res = await fetch(`/api/admin/users?${params}${storageId ? `&storageId=${storageId}` : ''}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { users: UserWithCount[], total: number };
+			const params = new URLSearchParams({ page: `${page}`, name, ...filters, storageId: storageId ?? '' });
+			return API.ADMIN.fetchAllUsers(signal, params);
 		},
 		...queryOptions,
 	});

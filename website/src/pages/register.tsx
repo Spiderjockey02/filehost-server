@@ -1,6 +1,7 @@
 import type { GetServerSidePropsContext } from 'next/types';
 import RegisterForm from '@/components/Form/RegisterForm';
 import { Card, Col, Row } from '@/components';
+import API from '@/services/api';
 import Image from 'next/image';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -38,13 +39,7 @@ export default function RegisterPage() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
-
-	const data = await res.json();
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 	if (data !== null) {
 		return {
 			redirect: {

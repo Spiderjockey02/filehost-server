@@ -2,23 +2,17 @@ import { generatePlaceholderTable, formatBytes, queryOptions } from '@/utils/fun
 import { AdminEditPlanModal, AdminCreatePlanModal } from '@/components/Modals';
 import { faAdd, faPen } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { Plan } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
 import { Table, Card } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function AdminManageSubscriptionCard() {
 	const [activeModal, setActiveModal] = useState<string | null>(null);
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['plans'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/plans', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch plans: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { plans: Plan[] };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchPlans(signal),
 		...queryOptions,
 	});
 

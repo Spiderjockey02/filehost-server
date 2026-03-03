@@ -12,6 +12,7 @@ import AdminLayout from '@/layouts/admin';
 import type { AdminUser } from '@/types';
 import type { User } from 'better-auth';
 import { useEffect } from 'react';
+import API from '@/services/api';
 
 export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
 	const { data: session } = authClient.useSession();
@@ -70,13 +71,7 @@ export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
 };
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
-
-	const data = await res.json();
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 	if (data == null) {
 		return {
 			redirect: {

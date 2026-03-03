@@ -1,10 +1,10 @@
 import type { requestTimeFrames } from '@/types/pages';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
-import type { StringNumberObj } from '@/types';
 import LineChart from '../Charts/Line';
 import { Card } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function UserGrowthLineChart() {
 	const [userGrowthFrame, setUserGrowthFrame] = useState<requestTimeFrames>('monthly');
@@ -12,11 +12,8 @@ export default function UserGrowthLineChart() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['userGrowth', userGrowthFrame],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/users/growth?frame=${userGrowthFrame}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user growth: ${res.statusText}`);
-			const d = await res.json();
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey] as StringNumberObj;
+			const params = new URLSearchParams({ frame: userGrowthFrame });
+			return API.ADMIN.fetchUserGrowth(signal, params);
 		},
 		...queryOptions,
 	});

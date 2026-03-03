@@ -1,12 +1,12 @@
 import { faChevronDown, faChevronUp, faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
 import Image, { ImageLoaderProps } from 'next/image';
-import Link from 'next/link';
-import Card from '../UI/Card';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
-import { UserHistoryWithFile } from '@/types/database';
+import API from '@/services/api';
+import { useState } from 'react';
+import Card from '../UI/Card';
+import Link from 'next/link';
 
 export default function RecentNavbar() {
 	const [show, setShow] = useState(false);
@@ -15,11 +15,9 @@ export default function RecentNavbar() {
 	const { data, isLoading } = useQuery({
 		queryKey: ['recentViewed'],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/session/recently-viewed?sortBy=viewedAt&sortOrder=desc', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
+			const params = new URLSearchParams({ sortBy: 'viewedAt', sortOrder: 'desc' });
 
-			const d = await res.json();
-			return d as { files: UserHistoryWithFile[] };
+			return API.SESSION.fetchRecentlyViewed(signal, params);
 		},
 		...queryOptions,
 	});

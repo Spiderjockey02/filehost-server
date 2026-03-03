@@ -2,10 +2,10 @@ import { getStatusColor, formatBytes, queryOptions } from '@/utils/functions';
 import { faDiscord, faGoogle } from '@fortawesome/free-brands-svg-icons';
 import type { AdminManageUserCardProps } from '@/types/Components/Card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { Account } from '@/types/generated/browser';
 import { AdminBanUserModal } from '@/components/Modals';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Col, Row } from '@/components';
+import API from '@/services/api';
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,13 +15,7 @@ export default function AdminManageUserCard({ isLoading, user, bannedStatus, isC
 
 	const { data } = useQuery({
 		queryKey: ['userAccounts', user?.id],
-		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/users/${user?.id}/accounts`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { accounts: Account[] };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchUserAccounts(signal, user!.id),
 		...queryOptions,
 	});
 

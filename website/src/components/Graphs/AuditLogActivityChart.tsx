@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Line } from 'react-chartjs-2';
 import { Card } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function AuditLogActivityChart() {
 	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('daily');
@@ -11,12 +12,8 @@ export default function AuditLogActivityChart() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['auditLogActivity', trafficGrowthFrame],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/logs/history?frame=${trafficGrowthFrame}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch audit log activity data: ${res.statusText}`);
-
-			const d = await res.json();
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey];
+			const params = new URLSearchParams({ frame: trafficGrowthFrame });
+			return API.ADMIN.fetchAuditLogActivity(signal, params);
 		},
 		...queryOptions,
 	});

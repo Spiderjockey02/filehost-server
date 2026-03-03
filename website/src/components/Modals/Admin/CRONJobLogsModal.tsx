@@ -2,11 +2,11 @@ import { faCheck, faRedoAlt, faSave, faX } from '@fortawesome/free-solid-svg-ico
 import type { AdminCRONJobLogsModalProps } from '@/types/Components/Modals';
 import { generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { CronJobLog } from '@/types/generated/browser';
 import { Table, InputField } from '@/components';
 import { useQuery } from '@tanstack/react-query';
 import { Modal } from 'react-bootstrap';
 import { useState } from 'react';
+import API from '@/services/api';
 import axios from 'axios';
 
 export default function AdminCRONJobLogsModal({ CRONJob, onClose, refetch, show }: AdminCRONJobLogsModalProps) {
@@ -14,11 +14,7 @@ export default function AdminCRONJobLogsModal({ CRONJob, onClose, refetch, show 
 	const { data, isLoading, error, refetch: refreshLog } = useQuery({
 		queryKey: ['CRONJon', CRONJob.name],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/cron-jobs/${CRONJob.name}/logs`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch CRON job logs: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { logs: CronJobLog[], total: number };
+			return API.ADMIN.fetchCRONJobByName(signal, CRONJob.name);
 		},
 		...queryOptions,
 	});

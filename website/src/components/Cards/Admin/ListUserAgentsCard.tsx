@@ -1,10 +1,10 @@
 import { faSortUp, faSortDown, faSort } from '@fortawesome/free-solid-svg-icons';
 import { generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { UserAgentWithCounts } from '@/types/database';
 import { Table, CollapsibleCard } from '@/components';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function AdminListUserAgentsCard() {
 	const [page, setPage] = useState(0);
@@ -16,16 +16,8 @@ export default function AdminListUserAgentsCard() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['userAgents', filters, page],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({
-				page: `${page}`,
-				...filters,
-			});
-
-			const res = await fetch(`/api/admin/network/user-agents?${params}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user agents: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { agents: UserAgentWithCounts[], total: number };
+			const params = new URLSearchParams({ page: `${page}`, ...filters });
+			return API.ADMIN.fetchUserAgents(signal, params);
 		},
 		...queryOptions,
 	});

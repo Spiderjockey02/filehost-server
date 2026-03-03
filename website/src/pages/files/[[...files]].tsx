@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
 import type { User } from 'better-auth';
+import API from '@/services/api';
 
 export default function Files({ path = '/' }: FilePageProps) {
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
@@ -39,13 +40,8 @@ export default function Files({ path = '/' }: FilePageProps) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 
-	const data = await res.json();
 	if (data == null) {
 		return {
 			redirect: {

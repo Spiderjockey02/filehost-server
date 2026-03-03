@@ -6,6 +6,7 @@ import { formatBytes } from '@/utils/functions';
 import { authClient } from '@/auth/client';
 import { Col, Row } from '../../UI/Grid';
 import { Modal } from 'react-bootstrap';
+import API from '@/services/api';
 
 export default function BillingPanelModal({ show, onClose, currentPlan }: BillingPanelModalProps) {
 	const { showToast } = useToast();
@@ -13,11 +14,7 @@ export default function BillingPanelModal({ show, onClose, currentPlan }: Billin
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['plans'],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/plans', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { plans: Plan[] };
+			return API.fetchPlans(signal);
 		},
 		...queryOptions,
 	});

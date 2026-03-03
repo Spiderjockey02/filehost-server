@@ -2,16 +2,13 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
 import LineChart from '../Charts/Line';
+import API from '@/services/api';
 
 export default function UserRetentionLineChart() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['userRentention'],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/admin/users/retention', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user retention: ${res.statusText}`);
-			const d = await res.json();
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey];
+			return API.ADMIN.fetchUserRetention(signal);
 		},
 		...queryOptions,
 	});

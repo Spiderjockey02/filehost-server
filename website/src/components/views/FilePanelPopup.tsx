@@ -8,6 +8,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
+import API from '@/services/api';
 import Image from 'next/image';
 import axios from 'axios';
 import path from 'path';
@@ -21,11 +22,8 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 	const { data } = useQuery({
 		queryKey: ['fileMetadata', file],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/metadata/${file.id}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user agents: ${res.statusText}`);
-
-			const d = await res.json();
-			return formatMetadata(d.metadata);
+			const metadata = await API.FILE.fetchMetadata(signal, file.id);
+			return formatMetadata(metadata);
 		},
 		...queryOptions,
 	});

@@ -2,9 +2,10 @@ import { Chart as ChartJS,	CategoryScale, LinearScale, PointElement,	LineElement
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import type { requestTimeFrames } from '@/types/pages';
 import { formatBytes } from '@/utils/functions';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Card } from '..';
+import API from '@/services/api';
 ChartJS.register(CategoryScale,	LinearScale,	PointElement,	LineElement,	Filler,	Tooltip,	Legend);
 
 interface Props {
@@ -17,12 +18,11 @@ export default function ActivityTransferAreaChart({ userId, storageId }: Props) 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['networkTraffic', trafficGrowthFrame],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/network/traffic?frame=${trafficGrowthFrame}${userId ? `&userId=${userId}` : ''}${storageId ? `&storageId=${storageId}` : ''}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch activity transfer data: ${res.statusText}`);
+			const params = new URLSearchParams({ frame: trafficGrowthFrame });
+			if (userId) params.append('userId', userId);
+			if (storageId) params.append('storageId', storageId);
 
-			const d = await res.json();
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey];
+			return API.ADMIN.fetchNetworkTraffic(signal, params);
 		},
 		...queryOptions,
 	});

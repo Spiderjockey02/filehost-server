@@ -3,10 +3,10 @@ import { faCircleInfo, faDownLong, faUpLong } from '@fortawesome/free-solid-svg-
 import type { AdminListActivitiesCardProps } from '@/types/Components/Card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminActivityDetailsModal } from '@/components/Modals';
-import type { UserActivity } from '@/types/generated/browser';
 import { Table, CollapsibleCard } from '@/components';
 import { useQuery } from '@tanstack/react-query';
 import { ChangeEvent, useState } from 'react';
+import API from '@/services/api';
 import Link from 'next/link';
 
 export default function AdminListActivitiesCard({ userId }: AdminListActivitiesCardProps) {
@@ -20,16 +20,8 @@ export default function AdminListActivitiesCard({ userId }: AdminListActivitiesC
 	const { data, isLoading, error } = useQuery({
 		queryKey: userId ? ['recentActivity', page, userId, filters] : ['recentActivity', page, filters],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({
-				page: `${page}`,
-				...filters,
-			});
-
-			const res = await fetch(`/api/admin/network/list?${userId ? `userId=${userId}&` : ''}${params.toString()}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { activity: UserActivity[], total: number };
+			const params = new URLSearchParams({ page: `${page}`, ...filters });
+			return API.ADMIN.fetchNetworkActivities(signal, params);
 		},
 		...queryOptions,
 	});

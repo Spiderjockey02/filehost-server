@@ -5,6 +5,7 @@ import LineChart from '../Charts/Line';
 import { ChartData } from 'chart.js';
 import { Card } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 
 interface Props {
 	userId?: string
@@ -16,11 +17,11 @@ export default function NetworkRequestsLineChart({ userId, storageId }: Props) {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['networkRequests', requestGrowthFrame, userId, storageId],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/network/requests?frame=${requestGrowthFrame}${userId ? `&userId=${userId}` : ''}${storageId ? `&storageId=${storageId}` : ''}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch network requests: ${res.statusText}`);
+			const params = new URLSearchParams({ frame: requestGrowthFrame });
+			if (userId) params.append('userId', userId);
+			if (storageId) params.append('storageId', storageId);
 
-			const d = await res.json();
-			return d[Object.keys(d)[0]];
+			return API.ADMIN.fetchNetworkRequestGrowth(signal, params);
 		},
 		...queryOptions,
 	});

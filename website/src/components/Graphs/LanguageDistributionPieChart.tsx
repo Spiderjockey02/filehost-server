@@ -1,18 +1,14 @@
 import ObjectOrientedPieChart from './ObjectOrientedPieChart';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
-import type { StringNumberObj } from '@/types';
 import { Card } from '@/components';
+import API from '@/services/api';
 
 export default function LanguageDistributionPieChart() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['languageDistribution'],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/admin/users/language-codes', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch language distribution: ${res.statusText}`);
-
-			const d = await res.json();
-			return d.langaugeCodes as StringNumberObj;
+			return API.ADMIN.fetchLanguageDistribution(signal);
 		},
 		...queryOptions,
 	});

@@ -2,23 +2,17 @@ import { faQuestion, faCheck, faX, faCircleInfo } from '@fortawesome/free-solid-
 import { generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminCRONJobLogsModal } from '@/components/Modals';
-import type { CronJob } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Table } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function AdminManageCRONjobsCard() {
 	const [activeModal, setActiveModal] = useState<string | null>(null);
 
 	const { data, isLoading, refetch, error } = useQuery({
 		queryKey: ['cronJobs'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/admin/cron-jobs', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch CRON jobs: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { cronJobs: CronJob[] };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchCronJobs(signal),
 		...queryOptions,
 	});
 

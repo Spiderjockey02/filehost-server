@@ -6,6 +6,7 @@ import type { StorageWithCounts } from '@/types/database';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Table } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 import Link from 'next/link';
 
 export default function AdminManageStorageCard() {
@@ -13,13 +14,7 @@ export default function AdminManageStorageCard() {
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['storages'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/admin/storage', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch storage mediums: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { storages: StorageWithCounts[] };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchStorages(signal),
 		...queryOptions,
 	});
 

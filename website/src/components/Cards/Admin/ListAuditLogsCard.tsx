@@ -1,11 +1,12 @@
 import { format, generatePlaceholderTable, parseUserAgent } from '@/utils/functions';
-import { AuditLogEventName, type AuditLog } from '@/types/generated/browser';
 import { faSortUp, faSortDown } from '@fortawesome/free-solid-svg-icons';
 import type { ListAuditLogsFilterProps } from '@/types/Components/Card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { queryOptions, useQuery } from '@tanstack/react-query';
+import { AuditLogEventName } from '@/types/generated/browser';
 import { Table, CollapsibleCard } from '@/components';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import API from '@/services/api';
 import Link from 'next/link';
 
 export default function AdminListAuditLogsCard() {
@@ -18,23 +19,13 @@ export default function AdminListAuditLogsCard() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['AdminAuditLogs', page, filters],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({
-				...filters,
-			});
+			const params = new URLSearchParams({ page: `${page}`, ...filters });
 			if (filters.eventName == '') params.delete('name');
 
-			const res = await fetch(`/api/admin/logs?page=${page}&${params}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch audit logs: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { logs: AuditLog[], total: number };
+			return API.ADMIN.fetchAuditLogs(signal, params);
 		},
 		...queryOptions,
 	});
-
-	useEffect(() => {
-		console.log(filters);
-	}, [filters]);
 
 	return (
 		<CollapsibleCard className='mb-4'>

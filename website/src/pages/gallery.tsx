@@ -1,4 +1,4 @@
-import type { FileWithMetadata } from '@/types/database';
+import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
@@ -6,38 +6,33 @@ import Gallery from '@/components/views/Gallery';
 import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
 import type { User } from 'better-auth';
+import { useEffect } from 'react';
+import API from '@/services/api';
 
 export default function GalleryPage() {
 	const { data: session } = authClient.useSession();
+	const { showToast } = useToast();
 
-	const { data } = useQuery({
-		queryKey: ['gallery', session?.user?.id],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/session/gallery', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user's gallery: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { files: FileWithMetadata[] };
-		},
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['gallery'],
+		queryFn: async ({ signal }) => API.SESSION.fetchGallery(signal),
 		...queryOptions,
 	});
+
+	useEffect(() => {
+		if (error) showToast('error', error.message);
+	}, [error]);
 
 	if (session == null) return null;
 	return (
 		<FileLayout user={session.user as User} activeTab='gallery' tabName="Gallery">
-			<Gallery files={data?.files ?? []} />
+			<Gallery files={data?.files ?? []} isLoading={isLoading || error !== null} />
 		</FileLayout>
 	);
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
-
-	const data = await res.json();
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 	if (data == null) {
 		return {
 			redirect: {

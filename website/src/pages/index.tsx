@@ -1,12 +1,12 @@
 import { faCommentDots, faEarthEurope, faFile, faGauge, faHardDrive, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatBytes, queryOptions } from '@/utils/functions';
-import type { Plan } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
 import { Col, Row } from '@/components/UI/Grid';
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import CountUp from 'react-countup';
+import API from '@/services/api';
 import config from '../config';
 import Link from 'next/link';
 
@@ -16,11 +16,7 @@ export default function Home() {
 	const { data, isLoading } = useQuery({
 		queryKey: ['homePageStatistics'],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/statistics', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { totalUsers: { total: number }, totalUsage: number, totalFileCount: number };
+			return API.fetchStatistics(signal);
 		},
 		...queryOptions,
 	});
@@ -28,11 +24,7 @@ export default function Home() {
 	const { data: plans, isLoading: isLoadingPlans } = useQuery({
 		queryKey: ['homePagePlans'],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/plans', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { plans: Plan[] };
+			return API.fetchPlans(signal);
 		},
 		...queryOptions,
 	});

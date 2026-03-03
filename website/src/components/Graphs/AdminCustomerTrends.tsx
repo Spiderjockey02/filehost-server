@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import LineChart from '../Charts/Line';
 import { Card } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function AdminCustomerTrend() {
 	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('daily');
@@ -11,12 +12,8 @@ export default function AdminCustomerTrend() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['customerTrends', trafficGrowthFrame],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/plan/trends?frame=${trafficGrowthFrame}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch monthly revenue data: ${res.statusText}`);
-
-			const d = await res.json();
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey];
+			const params = new URLSearchParams({ frame: trafficGrowthFrame });
+			return API.ADMIN.fetchCustomerTrends(signal, params);
 		},
 		...queryOptions,
 	});

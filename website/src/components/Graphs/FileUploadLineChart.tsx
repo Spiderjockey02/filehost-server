@@ -6,6 +6,7 @@ import type { StringNumberObj } from '@/types';
 import LineChart from '../Charts/Line';
 import { Card } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function FileUploadLineChart({ storageId }: AdminManageUsersCardProps) {
 	const [uploadGrowthFrame, setUploadGrowthFrame] = useState<requestTimeFrames>('daily');
@@ -13,11 +14,10 @@ export default function FileUploadLineChart({ storageId }: AdminManageUsersCardP
 	const { data, isLoading, error } = useQuery({
 		queryKey: storageId ? ['fileUploads', uploadGrowthFrame, storageId] : ['fileUploads', uploadGrowthFrame],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/files/growth?frame=${uploadGrowthFrame}${storageId ? `&storageId=${storageId}` : ''}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch file upload trend: ${res.statusText}`);
-			const d = await res.json();
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey] as StringNumberObj;
+			const params = new URLSearchParams({ frame: uploadGrowthFrame });
+			if (storageId) params.append('storageId', storageId);
+
+			return API.ADMIN.fetchFileUploadGrowth(signal, params);
 		},
 		...queryOptions,
 	});

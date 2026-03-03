@@ -2,19 +2,14 @@ import { generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import { Card, CollapsibleCard } from '@/components';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function AdminListLogFilesCard() {
 	const [fileName, setFileName] = useState<string | null>(null);
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['logFiles', fileName],
-		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/logs/files/${fileName == null ? '' : fileName}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch log files: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { logs: string[] };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchLogFiles(signal, fileName),
 		...queryOptions,
 	});
 
@@ -24,7 +19,7 @@ export default function AdminListLogFilesCard() {
 				<Card.Header>Log files</Card.Header>
 				<Card.Body>
 					<div className="text-center text-danger fw-bold">
-						{error?.message ?? 'Failed to load log files'}
+						{error.message}
 					</div>
 				</Card.Body>
 			</Card>

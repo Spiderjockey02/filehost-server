@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, InputField } from '@/components';
 import { authClient } from '@/auth/client';
 import { useRouter } from 'next/router';
+import API from '@/services/api';
 import Head from 'next/head';
 import Link from 'next/link';
 
@@ -83,13 +84,7 @@ export default function ResetPasswordPage() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
-
-	const data = await res.json();
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 	if (data !== null) {
 		return {
 			redirect: {

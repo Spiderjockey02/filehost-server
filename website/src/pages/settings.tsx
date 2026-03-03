@@ -12,6 +12,7 @@ import type { AccountProviders } from '@/types';
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function Settings() {
 	const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -218,13 +219,7 @@ export default function Settings() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
-
-	const data = await res.json();
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 	if (data == null) {
 		return {
 			redirect: {

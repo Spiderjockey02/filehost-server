@@ -5,6 +5,7 @@ import { GetServerSidePropsContext } from 'next';
 import { useEffect, useState } from 'react';
 import { authClient } from '@/auth/client';
 import { Card } from '@/components';
+import API from '@/services/api';
 import Link from 'next/link';
 import Head from 'next/head';
 
@@ -71,13 +72,8 @@ export default function SignIn() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 
-	const data = await res.json();
 	if (data !== null) {
 		return {
 			redirect: {

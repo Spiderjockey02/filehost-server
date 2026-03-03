@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import type { Config } from '@/types';
 import Select from 'react-select';
+import API from '@/services/api';
 import axios from 'axios';
 
 export default function AdminManageConfigCard() {
@@ -11,22 +12,12 @@ export default function AdminManageConfigCard() {
 
 	const { data: config, isLoading: loadingConfig, error: configError } = useQuery({
 		queryKey: ['config'],
-		queryFn: async () => {
-			const res = await fetch('/api/admin/config');
-			if (!res.ok) throw new Error('Failed to fetch config');
-			return res.json() as Promise<Config>;
-		},
+		queryFn: async () => API.ADMIN.fetchConfig(),
 	});
 
 	const { data: mimeTypes, isLoading: loadingMimes } = useQuery({
 		queryKey: ['mime-types', mimeTypeValue],
-		queryFn: async () => {
-			const res = await fetch(`/api/admin/mime-types/search?query=${mimeTypeValue}`);
-			if (!res.ok) throw new Error('Failed to fetch mime-types');
-
-			const d = await res.json();
-			return d.list as string[];
-		},
+		queryFn: async () => API.ADMIN.searchMimeType(mimeTypeValue),
 	});
 
 	const handleInputChange = <K extends keyof Config>(key: K, value: Config[K]) => {
@@ -65,7 +56,7 @@ export default function AdminManageConfigCard() {
 							<InputField name="MAX_CHARS_FILE_NAME" title="Max Characters in File Name" type="number" value={config.MAX_CHARS_FILE_NAME} onChange={(e) => handleInputChange('MAX_CHARS_FILE_NAME', parseInt(e.target.value))} />
 							<div className="mb-3">
 								<label className="form-label">Disallowed MIME Types</label>
-								<Select isMulti isLoading={loadingMimes} options={mimeTypes?.map((v) => ({ value: v, label: v })) || []}
+								<Select isMulti isLoading={loadingMimes} options={mimeTypes?.list?.map((v) => ({ value: v, label: v })) || []}
 									defaultValue={config.DISALLOWED_MIME_TYPES.map((v) => ({ value: v, label: v }))}
 									onInputChange={(inputValue) => setMimeTypeValue(inputValue)}
 									onChange={(vals) => handleInputChange('DISALLOWED_MIME_TYPES', vals.map((v) => v.value))}

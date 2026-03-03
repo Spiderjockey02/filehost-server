@@ -11,7 +11,7 @@ import { format } from '@/utils/functions';
 import FileLayout from '@/layouts/file';
 import type { User } from 'better-auth';
 import { Table } from '@/components';
-import React from 'react';
+import API from '@/services/api';
 
 type sortKeyTypes = 'name' | 'viewedAt'
 type SortOrder = 'asc' | 'desc';
@@ -27,12 +27,11 @@ export default function Recent() {
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['recent', sortKey, sortOrder],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/session/recently-viewed?sortBy=${sortKey}&sortOrder=${sortOrder}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch recent activity: ${res.statusText}`);
-
-			const d = await res.json();
+			const params = new URLSearchParams({ sortBy: sortKey, sortOrder });
+			const d = await API.SESSION.fetchRecentlyViewed(signal, params);
 			setFilters([...new Set((d.files as UserHistoryWithFile[]).map(c => `*.${c.file.name.split('.').at(-1)}`))]);
-			return d as { files: UserHistoryWithFile[] };
+
+			return d;
 		},
 		...queryOptions,
 	});
@@ -117,13 +116,7 @@ export default function Recent() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
-
-	const data = await res.json();
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 	if (data == null) {
 		return {
 			redirect: {

@@ -6,11 +6,11 @@ import { format, queryOptions } from '@/utils/functions';
 import { useState, MouseEvent, useEffect } from 'react';
 import type { File } from '@/types/generated/browser';
 import type { GetServerSidePropsContext } from 'next';
-import type { DeletedFile } from '@/types/database';
 import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
 import type { User } from 'better-auth';
+import API from '@/services/api';
 import axios from 'axios';
 
 const initalContextMenu = {
@@ -29,11 +29,7 @@ export default function Trash() {
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['trash'],
 		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/session/trash', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user's trashed files: ${res.statusText}`);
-
-			const d = await res.json();
-			const files = d.files as DeletedFile[];
+			const { files } = await API.SESSION.fetchTrash(signal);
 			const parentIds = new Set(files.map(f => f.id));
 			const filtered = files.filter(f => !parentIds.has(f.parentId ?? ''));
 			return { files: filtered };
@@ -171,13 +167,7 @@ export default function Trash() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
-
-	const data = await res.json();
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 	if (data == null) {
 		return {
 			redirect: {

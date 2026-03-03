@@ -1,26 +1,19 @@
 import { convertMiliseconds, generatePlaceholderTable, queryOptions } from '@/utils/functions';
-import type { cacheStat, cacheStats } from '@/types/Components/Card';
+import type { cacheStat } from '@/types/Components/Card';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Table } from '@/components';
+import API from '@/services/api';
 
 export default function AdminManageCacheCard() {
 	const { data: stats, isLoading, refetch, error } = useQuery({
 		queryKey: ['cacheStats'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/admin/cache/stats', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch cache stats: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as cacheStats;
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchCacheStats(signal),
 		...queryOptions,
 	});
 
 	async function deleteCache(name: string) {
 		try {
-			await fetch(`/api/admin/cache/${name}`, {
-				method: 'DELETE',
-			});
+			await API.ADMIN.deleteCache(name);
 			await refetch();
 		} catch (err) {
 			console.log(err);

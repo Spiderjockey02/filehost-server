@@ -1,50 +1,49 @@
 import { faArrowRight, faBell, faCheckCircle, faClock, faInfoCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
+import { useQuery } from '@tanstack/react-query';
+import { queryOptions } from '@/utils/functions';
+import { useEffect, useState } from 'react';
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import type { User } from 'better-auth';
+import { Table } from '@/components';
+import API from '@/services/api';
 import Link from 'next/link';
 import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Notification } from '@/types/generated/browser';
-import { queryOptions } from '@/utils/functions';
-import { Table } from '@/components';
 
 export default function Notifications() {
 	const { data: session, refetch } = authClient.useSession();
 	const [page, setPage] = useState(0);
+	const { showToast } = useToast();
 
-	const { data, isLoading, refetch: refreshTable } = useQuery({
+	const { data, isLoading, refetch: refreshTable, error } = useQuery({
 		queryKey: ['notifications', page],
-		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/session/notifications?page=${page}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch notifications: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { notifications: Notification[], total: number };
-		},
+		queryFn: async ({ signal }) => API.SESSION.fetchUsersNotifications(signal),
 		...queryOptions,
 	});
 
 	async function deleteNotification(id: string) {
 		try {
 			await axios.delete(`/api/session/notifications/${id}`);
-			refetch();
-			refreshTable();
+			await Promise.all([refetch(), refreshTable()]);
 		} catch (err) {
 			console.log(err);
 		}
 	}
 
+	useEffect(() => {
+		if (error) showToast('error', error.message);
+	}, [error]);
+
 	if (session == null) return null;
 	return (
-		<MainLayout user={session.user as User} tabName={`Notifications (${isLoading ? 'Loading...' : data?.total ?? 0})`}>
+		<MainLayout user={session.user as User} tabName={`Notifications (${isLoading ? '-1' : data?.total ?? 0})`}>
 			<div className="container py-4" style={{ minHeight: '70vh' }}>
 				<h1 className="text-center mb-4">
 					<FontAwesomeIcon icon={faBell} className='me-2' />
-					Notifications ({isLoading ? 'Loading...' : data?.total ?? 0})
+					Notifications ({isLoading ? '-1' : data?.total ?? 0})
 				</h1>
 				{isLoading || data == null ? (
 					<div className="alert alert-info text-center" role="alert">
@@ -96,13 +95,8 @@ export default function Notifications() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-	const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
-		headers: {
-			cookie: context.req.headers.cookie || '',
-		},
-	});
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
 
-	const data = await res.json();
 	if (data == null) {
 		return {
 			redirect: {

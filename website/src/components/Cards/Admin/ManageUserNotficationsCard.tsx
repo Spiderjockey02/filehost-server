@@ -3,10 +3,10 @@ import { format, generatePlaceholderTable } from '@/utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminSendNotificationModal } from '@/components/Modals';
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import type { Notification } from '@/types/generated/browser';
 import { faAdd } from '@fortawesome/free-solid-svg-icons';
 import { Card, Table } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function AdminManageUserNotficationsCard({ userId }: AdminManageUserNotficationsCardProps) {
 	const [showModal, setShowModal] = useState(false);
@@ -14,13 +14,7 @@ export default function AdminManageUserNotficationsCard({ userId }: AdminManageU
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['userNotifications', userId, page],
-		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/users/${userId}/notifications?page=${page}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user's notifications: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { notifications: Notification[], total: number };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchUserNotifications(signal, { userId, page }),
 		...queryOptions,
 	});
 

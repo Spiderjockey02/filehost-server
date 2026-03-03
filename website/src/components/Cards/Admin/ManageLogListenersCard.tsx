@@ -2,10 +2,10 @@ import { AdminCreateListenerModal, AdminEditListenerModal } from '@/components/M
 import { generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import { faAdd, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { FullAuditLogListener } from '@/types/database';
 import { useQuery } from '@tanstack/react-query';
 import { Table, Card } from '@/components';
 import { useState } from 'react';
+import API from '@/services/api';
 import Link from 'next/link';
 
 export default function AdminManageLogListenersCard() {
@@ -13,13 +13,7 @@ export default function AdminManageLogListenersCard() {
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['auditLogs'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/admin/logs/listeners', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch audit log listeners: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { listeners: FullAuditLogListener[] };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchLogListeners(signal),
 		...queryOptions,
 	});
 

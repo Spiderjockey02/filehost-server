@@ -4,19 +4,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminBackupModal } from '@/components/Modals';
 import { Table, CollapsibleCard } from '@/components';
 import { useQuery } from '@tanstack/react-query';
-import type { DatabaseBackup } from '@/types';
 import { useState } from 'react';
+import API from '@/services/api';
 
 export default function AdminManageDatabaseBackupsCard() {
 	const [activeModal, setActiveModal] = useState<string | null>(null);
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['databaseBackups'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/admin/database/backups', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch backups: ${res.statusText}`);
-			return (await res.json()) as { backups: DatabaseBackup[] };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchDatabaseBackups(signal),
 		...queryOptions,
 	});
 

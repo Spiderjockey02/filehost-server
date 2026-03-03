@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import type { sortKeyTypes, SortOrder } from '@/types/Components/Tables';
 import type { FileContextType } from '@/types/Components/Hooks';
-import type { FileWithDeepChildren } from '@/types/database';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
+import API from '@/services/api';
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
 export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -19,11 +19,7 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['folder', path],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/files/${path.join('/')}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user's files: ${res.statusText}`);
-
-			const { file } = await res.json();
-			return file as FileWithDeepChildren;
+			return API.FILE.fetch(signal, path.join('/'));
 		},
 		enabled: router.isReady && router.pathname.startsWith('/files'),
 	});

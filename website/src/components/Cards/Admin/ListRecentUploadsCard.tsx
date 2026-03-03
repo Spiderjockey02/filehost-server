@@ -1,9 +1,9 @@
 import { format, formatBytes, generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import type { AdminListActivitiesCardProps } from '@/types/Components/Card';
 import { Table, CollapsibleCard } from '@/components';
-import type { File } from '@/types/generated/browser';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import API from '@/services/api';
 import Link from 'next/link';
 
 export default function AdminListRecentUploadsCard({ userId }: AdminListActivitiesCardProps) {
@@ -12,11 +12,10 @@ export default function AdminListRecentUploadsCard({ userId }: AdminListActiviti
 	const { data, isLoading, error } = useQuery({
 		queryKey: userId ? ['recentUploads', page, userId] : ['recentUploads', page ],
 		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/files/recently-uploaded?page=${page}${userId ? `&userId=${userId}` : ''}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch recently uploaded files: ${res.statusText}`);
+			const params = new URLSearchParams({ page:`${page}` });
+			if (userId) params.append('userId', userId);
 
-			const d = await res.json();
-			return d as { files: File[], total: number };
+			return API.ADMIN.fetchRecentlyUploadedFiles(signal, params);
 		},
 		...queryOptions,
 	});
