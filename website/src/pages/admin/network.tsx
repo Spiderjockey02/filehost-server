@@ -3,29 +3,37 @@ import { faDownload, faEarthEurope, faStopwatch, faUpload } from '@fortawesome/f
 import { AdminListActivitiesCard, AdminListUserAgentsCard } from '@/components/Cards';
 import NetworkRequestsLineChart from '@/components/Graphs/NetworkRequestsLineChart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { formatBytes, queryOptions } from '@/utils/functions';
 import { useToast } from '@/components/Hooks/ToastManager';
-import { formatBytes, headers } from '@/utils/functions';
-import { AdminNetworkPageProps } from '@/types/pages';
+import { useQuery } from '@tanstack/react-query';
 import { GetServerSidePropsContext } from 'next';
+import type { Session } from '@/auth/server';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
-import { User } from 'better-auth';
 import { useEffect } from 'react';
-import Link from 'next/link';
-import axios from 'axios';
 import API from '@/services/api';
+import Link from 'next/link';
 
-export default function AdminNetworkPage(data: AdminNetworkPageProps) {
+export default function AdminNetworkPage() {
 	const { data: session } = authClient.useSession();
 	const { showToast } = useToast();
 
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['adminNetwork'],
+		queryFn: async ({ signal }) => Promise.all([
+			API.ADMIN.fetchNetworkStats(signal),
+			API.ADMIN.fetchNetworkStatusDistribution(signal, new URLSearchParams('frame=daily')),
+		]),
+		...queryOptions,
+	});
+
 	useEffect(() => {
-		if (data.error) showToast('error', data.error);
-	}, [data.error]);
+		if (error) showToast('error', error.message);
+	}, [error]);
 
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='network' user={session.user as User} tabName='Admin File'>
+		<AdminLayout activeTab='network' user={session.user as Session['user']} tabName='Admin File'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Network Dashboard</h1>
@@ -35,16 +43,16 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 			</div>
 			<Row>
 				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title="Total Incoming Bytes" text={formatBytes(data.network.incomingBytes)} icon={faDownload} />
+					<InfoPill title="Total Incoming Bytes" text={formatBytes(data?.[0].network.incomingBytes)} icon={faDownload} isLoading={isLoading} />
 				</Col>
 				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title="Total Outgoing Bytes" text={formatBytes(data.network.outgoingBytes)} icon={faUpload} />
+					<InfoPill title="Total Outgoing Bytes" text={formatBytes(data?.[0].network.outgoingBytes)} icon={faUpload} isLoading={isLoading} />
 				</Col>
 				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title="Average Duration" text={`${Number.parseFloat(`${data.duration}`).toFixed(1)}ms`} icon={faStopwatch} />
+					<InfoPill title="Average Duration" text={`${Number.parseFloat(`${data?.[0].duration}`).toFixed(1)}ms`} icon={faStopwatch} isLoading={isLoading} />
 				</Col>
 				<Col xl={3} md={6} className='mb-4'>
-					<InfoPill title="Total Requests" text={data.total} icon={faEarthEurope} />
+					<InfoPill title="Total Requests" text={`${data?.[0].total}`} icon={faEarthEurope} isLoading={isLoading} />
 				</Col>
 			</Row>
 			<Row>
@@ -62,11 +70,11 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 							<Link href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods" className='fw-bold' target='_blank'>Method Distribution</Link>
 						</Card.Header>
 						<Card.Body>
-							{data.error ?
+							{error ?
 								<div className="alert alert-danger" role="alert">
-									{data.error}
+									{error.message}
 								</div>
-								: <ObjectOrientedPieChart data={data.methods.reduce((acc: {[key: string]: number}, item) => {
+								: <ObjectOrientedPieChart data={(data?.[0].methods ?? []).reduce((acc: {[key: string]: number}, item) => {
 									acc[item.method] = item._count;
 									return acc;
 								}, {})} />
@@ -80,11 +88,11 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 							<Link href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status" className='fw-bold' target='_blank'>Status Code Distribution</Link>
 						</Card.Header>
 						<Card.Body>
-							{data.error ?
+							{error ?
 								<div className="alert alert-danger" role="alert">
-									{data.error}
+									{error.message}
 								</div>
-								: <ObjectOrientedPieChart data={data.status.reduce((acc: {[key: number]: number}, item) => {
+								: <ObjectOrientedPieChart data={(data?.[0].status ?? []).reduce((acc: {[key: number]: number}, item) => {
 									acc[item.code] = item._count;
 									return acc;
 								}, {})} />
@@ -100,15 +108,19 @@ export default function AdminNetworkPage(data: AdminNetworkPageProps) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+// Check is user is logged in
 	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
-	if (data == null) {
+	if (!data.isLoggedin) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
-	} else if (data.user.role !== 'admin') {
+	}
+
+	// Check if user is admin
+	if (!data.isAdmin) {
 		return {
 			redirect: {
 				destination: '/files',
@@ -116,20 +128,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		try {
-			const [{ data: stats }, { data: history }] = await Promise.all([
-				// For the top bar of stats
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/network/stats`, headers(context.req)),
-				// For the Requests Over Time
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/network/requests?frame=hourly`, headers(context.req)),
-
-			]);
-
-			return { props: { network: stats.network, methods: stats.methods, status: stats.status, duration: stats.duration, total: stats.total, history: history.hours } };
-		} catch (err) {
-			console.log(err);
-			return { props: { network: { incomingBytes: 0,
-				outgoingBytes: 0 }, methods: [], status: [], duration: 0, total: 0, history: {}, error: 'API server currently unavailable' } };
-		}
+		return { props: {} };
 	}
 }

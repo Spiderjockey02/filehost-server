@@ -121,15 +121,6 @@ export const queryOptions = {
 	staleTime: 1000 * 60 * 5,
 };
 
-export function headers(req: IncomingMessage & { cookies: NextApiRequestCookies }) {
-	return {
-		headers: {
-			cookie: `${req.headers.cookie}`,
-			'user-agent': `${req.headers['user-agent']}`,
-		},
-	};
-}
-
 export function signOutOptions(router: NextRouter) {
 	return {
 		fetchOptions: {

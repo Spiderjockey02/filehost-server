@@ -30,7 +30,7 @@ export default function Home() {
 	});
 
 	return (
-		<MainLayout user={session?.user} tabName='Home page'>
+		<MainLayout user={session?.user ?? null} tabName='Home page'>
 			<section id="hero" className="d-flex align-items-center large-padding">
 				<div className="container">
 					<h1>Welcome to <span>{config.company.name}</span></h1>

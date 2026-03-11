@@ -1,7 +1,7 @@
 import type { UserHistoryWithFile } from '../database';
 import type { adminSidebarTabs } from '../pages';
+import type { Session } from '@/auth/server';
 import type { ReactElement } from 'react';
-import type { User } from 'better-auth';
 
 export type viewTypeTypes = 'List' | 'Tiles';
 
@@ -28,11 +28,11 @@ export interface AdminSideBarProps {
 }
 
 export interface FileNavBarProps {
-  user: User
+  user: Session['user']
 }
 
 export interface HomeNavbarProps {
-  user?: User | null
+  user: Session['user'] | null
 }
 
 export interface RecentNavbarProps {
@@ -42,7 +42,7 @@ export interface RecentNavbarProps {
 export interface AdminNavbarProps {
   showSidebar: boolean;
   setShowSidebar: (arg0: boolean) => void;
-  user: User
+  user: Session['user']
 }
 
 export interface AutoComplete {

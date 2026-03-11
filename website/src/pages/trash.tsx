@@ -8,8 +8,8 @@ import type { File } from '@/types/generated/browser';
 import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@/auth/client';
+import { Session } from '@/auth/server';
 import FileLayout from '@/layouts/file';
-import type { User } from 'better-auth';
 import API from '@/services/api';
 import axios from 'axios';
 
@@ -118,7 +118,7 @@ export default function Trash() {
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as User} activeTab='bin' tabName='Trash'>
+		<FileLayout user={session.user as Session['user']} activeTab='bin' tabName='Trash'>
 			<div className="d-flex justify-content-between align-items-center mb-3">
 				<nav aria-label="breadcrumb">
 					<ol className="breadcrumb bg-white mb-0">

@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { FileSideBarProps } from './Navbars';
 import type { adminSidebarTabs } from '../pages';
-import type { User } from 'better-auth';
+import type { Session } from '@/auth/server';
 
 export interface GridLayoutProps {
 	readonly children?: ReactNode
@@ -24,7 +24,7 @@ export type ColPrefix = 'xs' | 'sm' | 'md' | 'lg' | 'xl'| 'xxl'
 
 export interface AdminLayoutProps {
 	children: ReactNode;
-	user: User;
+	user: Session['user'];
 	activeTab: adminSidebarTabs
 	tabName?: string
 }
@@ -36,6 +36,6 @@ export interface FileLayoutProps extends FileSideBarProps {
 
 export interface MainLayoutProps {
   children: ReactNode;
-	user?: User | null
+	user: Session['user'] | null
 	tabName?: string
 }

@@ -1,29 +1,34 @@
 import { AdminListLogFilesCard, AdminManageCacheCard, AdminManageConfigCard, AdminManageCRONjobsCard, AdminManageDatabaseBackupsCard } from '@/components/Cards';
 import { faClock, faDownload, faFolderTree, faHardDrive, faMemory } from '@fortawesome/free-solid-svg-icons';
-import { convertMiliseconds, formatBytes, headers } from '@/utils/functions';
+import { convertMiliseconds, formatBytes, queryOptions } from '@/utils/functions';
 import { Row, Col, InfoPill, InfoPillProgress } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useToast } from '@/components/Hooks/ToastManager';
-import type { AdminSystemPageProps } from '@/types/pages';
 import type { GetServerSidePropsContext } from 'next';
+import { useQuery } from '@tanstack/react-query';
+import type { Session } from '@/auth/server';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
-import type { User } from 'better-auth';
 import { useEffect } from 'react';
-import axios from 'axios';
 import API from '@/services/api';
 
-export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) {
+export default function AdminSystemPage() {
 	const { data: session } = authClient.useSession();
 	const { showToast } = useToast();
 
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['adminSystem'],
+		queryFn: async ({ signal }) => API.ADMIN.fetchSystemStats(signal),
+		...queryOptions,
+	});
+
 	useEffect(() => {
-		if (error) showToast('error', error);
+		if (error) showToast('error', error.message);
 	}, [error]);
 
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='system' user={session.user as User} tabName='Admin System'>
+		<AdminLayout activeTab='system' user={session.user as Session['user']} tabName='Admin System'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">System Dashboard</h1>
@@ -33,16 +38,16 @@ export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) 
 			</div>
 			<Row>
 				<Col lg={3} md={6} className="mb-4">
-					<InfoPill title="Log File Size" text={`${formatBytes(stats.logs.totalByteSize)} (${stats.logs.count})`} icon={faFolderTree} />
+					<InfoPill title="Log File Size" text={`${formatBytes(data?.logs.totalByteSize)} (${data?.logs.count})`} icon={faFolderTree} isLoading={isLoading} />
 				</Col>
 				<Col lg={3} md={6} className="mb-4">
-					<InfoPillProgress title="RAM usage" text={`${formatBytes(stats.memory.using)}/${formatBytes(stats.memory.total)}`} icon={faHardDrive} max={stats.memory.total} current={stats.memory.using} />
+					<InfoPillProgress title="RAM usage" text={`${formatBytes(data?.memory.using)}/${formatBytes(data?.memory.total)}`} icon={faHardDrive} max={data?.memory.total ?? 0} current={data?.memory.using ?? 0} isLoading={isLoading} />
 				</Col>
 				<Col lg={3} md={6} className="mb-4">
-					<InfoPill title="Network usage (7 days)" text={formatBytes(stats.network)} icon={faMemory} />
+					<InfoPill title="Network usage (7 days)" text={formatBytes(data?.network)} icon={faMemory} isLoading={isLoading} />
 				</Col>
 				<Col lg={3} md={6} className="mb-4">
-					<InfoPill title="System Uptime" text={convertMiliseconds(stats.uptime)} icon={faClock} />
+					<InfoPill title="System Uptime" text={convertMiliseconds(data?.uptime ?? 0)} icon={faClock} isLoading={isLoading} />
 				</Col>
 			</Row>
 			<Row>
@@ -63,15 +68,19 @@ export default function AdminSystemPage({ stats, error }: AdminSystemPageProps) 
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+// Check is user is logged in
 	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
-	if (data == null) {
+	if (!data.isLoggedin) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
-	} else if (data.user.role !== 'admin') {
+	}
+
+	// Check if user is admin
+	if (!data.isAdmin) {
 		return {
 			redirect: {
 				destination: '/files',
@@ -79,24 +88,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		try {
-			const { data: stats } = await axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/system/stats`, headers(context.req));
-
-			// Add the frontend RAM usage to total
-			stats.memory.using = stats.memory.using + process.memoryUsage().heapUsed;
-			return { props: { stats } };
-		} catch {
-			return { props: { stats: { memory: {
-				using: 0,
-				total: 0,
-			},
-			uptime: 0,
-			logs: {
-				totalByteSize: 0,
-				count: 0,
-			},
-			network: 0,
-			backup: {} }, error: 'API server currently unavailable' } };
-		}
+		return { props: {} };
 	}
 }

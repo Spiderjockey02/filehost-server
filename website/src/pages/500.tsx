@@ -6,7 +6,7 @@ export default function Custom500() {
 	const { data } = authClient.useSession();
 
 	return (
-		<MainLayout user={data?.user} tabName='Error'>
+		<MainLayout user={data?.user ?? null} tabName='Error'>
 			<div className="page-wrap d-flex flex-row align-items-center" style={{ backgroundColor:'#f1f6fe', minHeight: '70vh' }}>
 				<div className="container justify-content-center text-center">
 					<span className="display-1">500</span>

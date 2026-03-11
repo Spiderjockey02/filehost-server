@@ -4,10 +4,10 @@ import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
+import type { Session } from '@/auth/server';
 import { useEffect, useState } from 'react';
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
-import type { User } from 'better-auth';
 import { Table } from '@/components';
 import API from '@/services/api';
 import Link from 'next/link';
@@ -39,7 +39,7 @@ export default function Notifications() {
 
 	if (session == null) return null;
 	return (
-		<MainLayout user={session.user as User} tabName={`Notifications (${isLoading ? '-1' : data?.total ?? 0})`}>
+		<MainLayout user={session.user as Session['user']} tabName={`Notifications (${isLoading ? '-1' : data?.total ?? 0})`}>
 			<div className="container py-4" style={{ minHeight: '70vh' }}>
 				<h1 className="text-center mb-4">
 					<FontAwesomeIcon icon={faBell} className='me-2' />

@@ -5,11 +5,11 @@ import FileDetail from '@/components/Tables/FileDetailCell';
 import type { UserHistoryWithFile } from '@/types/database';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
+import type { Session } from '@/auth/server';
 import { useEffect, useState } from 'react';
 import { authClient } from '@/auth/client';
 import { format } from '@/utils/functions';
 import FileLayout from '@/layouts/file';
-import type { User } from 'better-auth';
 import { Table } from '@/components';
 import API from '@/services/api';
 
@@ -71,7 +71,7 @@ export default function Recent() {
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as User} activeTab='recent' tabName='Recent files'>
+		<FileLayout user={session.user as Session['user']} activeTab='recent' tabName='Recent files'>
 			<div className="d-flex flex-row justify-content-between">
 				<h5><b>Recently viewed files</b></h5>
 				<div className="dropdown">

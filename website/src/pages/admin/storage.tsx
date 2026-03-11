@@ -1,30 +1,38 @@
 import { faDownload, faFile, faFileImage, faHardDrive } from '@fortawesome/free-solid-svg-icons';
 import { Card, Col, InfoPill, Row, ObjectOrientedPieChart } from '@/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { formatBytes, queryOptions } from '@/utils/functions';
 import { AdminManageStorageCard } from '@/components/Cards';
 import { useToast } from '@/components/Hooks/ToastManager';
-import type { AdminStoragePageProps } from '@/types/pages';
-import { formatBytes, headers } from '@/utils/functions';
 import { GetServerSidePropsContext } from 'next/types';
+import { useQuery } from '@tanstack/react-query';
+import type { Session } from '@/auth/server';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
-import { User } from 'better-auth';
 import { useEffect } from 'react';
-import axios from 'axios';
 import API from '@/services/api';
 
-export default function AdminStoragePage({ error, storages, MediumCounts, avgFileCount, avgStorageUsage }: AdminStoragePageProps) {
+export default function AdminStoragePage() {
 	const { data: session } = authClient.useSession();
 	const { showToast } = useToast();
 
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['adminStorage'],
+		queryFn: async ({ signal }) => Promise.all([
+			API.ADMIN.fetchStorages(signal),
+			API.ADMIN.fetchStorageTypes(signal),
+		]),
+		...queryOptions,
+	});
+
 	useEffect(() => {
-		if (error) showToast('error', error);
+		if (error) showToast('error', error.message);
 	}, [error]);
 
-	const avatarMedium = storages.find(s => s.avatarOnly);
+	const avatarMedium = data?.[0].storages.find(s => s.avatarOnly);
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='storage' user={session.user as User} tabName='Admin Storage'>
+		<AdminLayout activeTab='storage' user={session.user as Session['user']} tabName='Admin Storage'>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Storage Dashboard</h1>
@@ -34,13 +42,13 @@ export default function AdminStoragePage({ error, storages, MediumCounts, avgFil
 			</div>
 			<Row>
 				<Col xl={4} md={6} className="mb-4">
-					<InfoPill title="Avatar Storage" text={formatBytes(avatarMedium?.usedSize)} icon={faFileImage} />
+					<InfoPill title="Avatar Storage" text={formatBytes(avatarMedium?.usedSize)} icon={faFileImage} isLoading={isLoading} />
 				</Col>
 				<Col xl={4} md={6} className="mb-4">
-					<InfoPill title="Average file count" text={`${avgFileCount}`} icon={faFile} />
+					<InfoPill title="Average file count" text={`${data?.[0].avgFileCount}`} icon={faFile} isLoading={isLoading} />
 				</Col>
 				<Col xl={4} md={6} className="mb-4">
-					<InfoPill title="Average usage" text={formatBytes(avgStorageUsage)} icon={faHardDrive} />
+					<InfoPill title="Average usage" text={formatBytes(data?.[0].avgStorageUsage)} icon={faHardDrive} isLoading={isLoading} />
 				</Col>
 			</Row>
 			<Row>
@@ -52,9 +60,9 @@ export default function AdminStoragePage({ error, storages, MediumCounts, avgFil
 						<Card.Body>
 							{error ?
 								<div className="alert alert-danger" role="alert">
-									{error}
+									{error.message}
 								</div>
-								: <ObjectOrientedPieChart data={MediumCounts} />
+								: <ObjectOrientedPieChart data={data?.[1].MediumCounts ?? {}} />
 							}
 						</Card.Body>
 					</Card>
@@ -66,15 +74,19 @@ export default function AdminStoragePage({ error, storages, MediumCounts, avgFil
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+// Check is user is logged in
 	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
-	if (data == null) {
+	if (!data.isLoggedin) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
-	} else if (data.user.role !== 'admin') {
+	}
+
+	// Check if user is admin
+	if (!data.isAdmin) {
 		return {
 			redirect: {
 				destination: '/files',
@@ -82,16 +94,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		try {
-			const [{ data: storageData }, { data: { MediumCounts } }] = await Promise.all([
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/storage`, headers(context.req)),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/storage/types`, headers(context.req)),
-			]);
-
-			return { props: { storages: storageData.storages, avgFileCount: storageData.avgFileCount, avgStorageUsage: storageData.avgStorageUsage, MediumCounts } };
-		} catch (err) {
-			console.log(err);
-			return { props: { storages: [], avgFileCount: 0, avgStorageUsage: 0, MediumCounts: {}, error: 'API server currently unavailable' } };
-		}
+		return { props: {} };
 	}
 }

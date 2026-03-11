@@ -1,6 +1,6 @@
-import type { Notification, User } from '@/types/generated/browser';
 import type { DeletedFile, FileWithMetadata, UserHistoryWithFile } from '@/types/database';
-import type { Session } from 'better-auth/types';
+import type { CurrentSessionResult, GetSessionAccountsResults, GetSessionResult } from '@/types/Services/session';
+import type { Notification } from '@/types/generated/browser';
 import API from './api';
 
 export default class APISession {
@@ -40,7 +40,7 @@ export default class APISession {
 		try {
 			return await API.fetch(`/api/session/recently-viewed?${params.toString()}`, { signal });
 		} catch(error) {
-			throw `Failed to fetch recently viewed files: ${error}`;
+			throw new Error(`Failed to fetch recently viewed files: ${error}`);
 		}
 	}
 
@@ -53,22 +53,46 @@ export default class APISession {
 		try {
 			return await API.fetch('/api/session/trash', { signal });
 		} catch (error) {
-			throw 'Failed to fetch user\'s trashed files.';
+			throw new Error('Failed to fetch user\'s trashed files.');
+		}
+	}
+
+	async fetchAccounts(signal: AbortSignal): Promise<GetSessionAccountsResults> {
+		try {
+			return await API.fetch('/api/session/accounts', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch user\'s linked accounts.');
 		}
 	}
 
 	/**
 	  * Fetches the current session based on the provided cookie headers.
 	  * @param {string} cookie - The cookie headers.
-	  * @returns {{user: User; session: Session} | null}
+	  * @returns {CurrentSessionResult}
 	*/
-	async fetchCurrentSession(cookie: string): Promise<{user: User, session: Session} | null> {
+	async fetchCurrentSession(cookie: string): Promise<CurrentSessionResult> {
 		try {
-			return await API.fetch(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
+			const data = await API.fetch<GetSessionResult | null>(`${process.env.BETTER_AUTH_URL}/api/auth/get-session`, {
 				headers: {
 					cookie: cookie,
 				},
 			});
+
+			if (!data) {
+				return {
+					isLoggedin: false,
+					user: null,
+					session: null,
+					isAdmin: false,
+				};
+			} else {
+				return {
+					isLoggedin: true,
+					user: data.user,
+					session: data.session,
+					isAdmin: data.user.role === 'admin',
+				};
+			}
 		} catch (error) {
 			throw `Failed to fetch current session: ${error}`;
 		}

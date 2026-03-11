@@ -73,15 +73,13 @@ export default function SignIn() {
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
+	if (!data.isLoggedin) return { props: { } };
 
-	if (data !== null) {
-		return {
-			redirect: {
-				destination: '/files',
-				permanent: false,
-			},
-		};
-	} else {
-		return { props: { } };
-	}
+	return {
+		redirect: {
+			destination: '/files',
+			permanent: false,
+		},
+	};
+
 }

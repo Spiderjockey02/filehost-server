@@ -19,7 +19,7 @@ export default function NavBar({ user }: HomeNavbarProps) {
 				<ul className="navbar-nav me-auto mb-2 mb-lg-0">
 				</ul>
 				<ul className="navbar-nav">
-					{!!user ?
+					{user != null ?
 						<>
 							<NotificationBell notifications={user.notifications} />
 							&nbsp;

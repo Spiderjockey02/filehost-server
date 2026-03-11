@@ -3,9 +3,9 @@ import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
 import Gallery from '@/components/views/Gallery';
+import type { Session } from '@/auth/server';
 import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
-import type { User } from 'better-auth';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
@@ -25,7 +25,7 @@ export default function GalleryPage() {
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as User} activeTab='gallery' tabName="Gallery">
+		<FileLayout user={session.user as Session['user']} activeTab='gallery' tabName="Gallery">
 			<Gallery files={data?.files ?? []} isLoading={isLoading || error !== null} />
 		</FileLayout>
 	);

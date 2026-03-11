@@ -3,14 +3,13 @@ import NetworkRequestsLineChart from '@/components/Graphs/NetworkRequestsLineCha
 import { ActivityTransferAreaChart, Col, Row } from '@/components';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { AdminUserIdPageProps } from '@/types/pages';
-import type { UserBans } from '@/types/generated/browser';
 import type { GetServerSidePropsContext } from 'next';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
+import type { Session } from '@/auth/server';
 import { authClient } from '@/auth/client';
+import { notFound } from 'next/navigation';
 import AdminLayout from '@/layouts/admin';
-import type { AdminUser } from '@/types';
-import type { User } from 'better-auth';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
@@ -20,13 +19,7 @@ export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['adminUser', userId],
-		queryFn: async ({ signal }) => {
-			const res = await fetch(`/api/admin/users/${userId}`, { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { user: AdminUser, bannedStatus: UserBans | null };
-		},
+		queryFn: async ({ signal }) => API.ADMIN.fetchUserById(signal, userId),
 		...queryOptions,
 	});
 
@@ -36,7 +29,7 @@ export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
 
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab="users" user={session.user as User} tabName={`Admin user: ${data?.user.name}`}>
+		<AdminLayout activeTab="users" user={session.user as Session['user']} tabName={`Admin user: ${data?.user.name}`}>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">User: {data?.user.name}</h1>
@@ -71,15 +64,19 @@ export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
 };
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+	// Check is user is logged in
 	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
-	if (data == null) {
+	if (!data.isLoggedin) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
-	} else if (data.user.role !== 'admin') {
+	}
+
+	// Check if user is admin
+	if (!data.isAdmin) {
 		return {
 			redirect: {
 				destination: '/files',
@@ -88,6 +85,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		};
 	} else {
 		const userId = context.params?.id;
+		if (typeof userId !== 'string') return notFound();
 		return { props: { userId } };
 	}
 }

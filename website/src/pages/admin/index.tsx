@@ -4,26 +4,31 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminListRecentUploadsCard } from '@/components/Cards';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
-import type { AdminPageProps } from '@/types/pages';
-import { headers } from '@/utils/functions';
+import { queryOptions } from '@/utils/functions';
+import { useQuery } from '@tanstack/react-query';
+import type { Session } from '@/auth/server';
 import { authClient } from '@/auth/client';
 import AdminLayout from '@/layouts/admin';
-import { User } from 'better-auth';
 import { useEffect } from 'react';
-import axios from 'axios';
 import API from '@/services/api';
 
-export default function AdminPage({ stats, error }: AdminPageProps) {
+export default function AdminPage() {
 	const { data: session } = authClient.useSession();
 	const { showToast } = useToast();
 
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['adminHome'],
+		queryFn: async ({ signal }) => API.ADMIN.fetchAdminStats(signal),
+		...queryOptions,
+	});
+
 	useEffect(() => {
-		if (error) showToast('error', error);
+		if (error) showToast('error', error.message);
 	}, [error]);
 
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab="dashboard" user={session.user as User} tabName="Admin Dashboard">
+		<AdminLayout activeTab="dashboard" user={session.user as Session['user']} tabName="Admin Dashboard">
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Admin Dashboard</h1>
@@ -33,13 +38,13 @@ export default function AdminPage({ stats, error }: AdminPageProps) {
 			</div>
 			<Row>
 				<Col xl={4} md={6} className="mb-4">
-					<InfoPill title="Total Users (Active)" text={`${stats.users.total} (${stats.users.active})`} icon={faUsers} />
+					<InfoPill title="Total Users (Active)" text={`${data?.users.total} (${data?.users.active})`} icon={faUsers} isLoading={isLoading} />
 				</Col>
 				<Col xl={4} md={6} className="mb-4">
-					<InfoPill title="Total files" text={stats.storage.totalFiles} icon={faFolderTree} />
+					<InfoPill title="Total files" text={data?.storage.totalFiles ?? 0} icon={faFolderTree} isLoading={isLoading} />
 				</Col>
 				<Col xl={4} md={6} className="mb-4">
-					<InfoPill title="System Health" text="True" icon={faHardDrive} />
+					<InfoPill title="System Health" text="True" icon={faHardDrive} isLoading={isLoading} />
 				</Col>
 			</Row>
 			<Row className="mb-4">
@@ -56,15 +61,19 @@ export default function AdminPage({ stats, error }: AdminPageProps) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+	// Check is user is logged in
 	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
-	if (data == null) {
+	if (!data.isLoggedin) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
-	} else if (data.user.role !== 'admin') {
+	}
+
+	// Check if user is admin
+	if (!data.isAdmin) {
 		return {
 			redirect: {
 				destination: '/files',
@@ -72,18 +81,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		try {
-			const { data: stats } = await axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/stats`, headers(context.req));
-			return { props: { stats } };
-		} catch (err) {
-			console.log(err);
-			return { props: {
-				stats: {
-					users: { total: 0, active: 0 },
-					storage: { totalFiles: 0 },
-				},
-				error: 'API server currently unavailable',
-			} };
-		}
+		return { props: {} };
 	}
 }

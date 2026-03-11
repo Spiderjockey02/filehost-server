@@ -7,7 +7,7 @@ import config from '@/config';
 import Link from 'next/link';
 
 export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
-	const size = user.totalStorageSize;
+	const size = user!.totalStorageSize;
 
 	const HoverElement = ({ title, children }: HoverElementProps) => (
 	  <OverlayTrigger placement='right' overlay={<Tooltip>{title}</Tooltip>}>
@@ -56,9 +56,9 @@ export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 						</li>
 						<li className="bottom" style={{ position:'absolute', bottom:'0', width: '100%' }}>
 							<div className='d-flex flex-column align-items-center'>
-								<label>{formatBytes(size)} of {formatBytes(user.plan.maxStorageSize)} used</label>
+								<label>{formatBytes(size)} of {formatBytes(user!.plan.maxStorageSize)} used</label>
 								<div className="progress" style={{ width:'200px' }}>
-									<div className={`progress-bar ${getStatusColor(size, user.plan.maxStorageSize)}`} role="progressbar" style={{ width:`${(size / (user.plan.maxStorageSize ?? 1)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.plan.maxStorageSize}></div>
+									<div className={`progress-bar ${getStatusColor(size, user!.plan.maxStorageSize)}`} role="progressbar" style={{ width:`${(size / (user!.plan.maxStorageSize ?? 1)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user!.plan.maxStorageSize}></div>
 								</div>
 							</div>
 							<Link href="/trash" className={`btn sidebar-btn ${activeTab === 'bin' ? 'active' : ''}`} style={{ marginTop: '0.5rem' }}>
@@ -96,9 +96,9 @@ export default function FileSideBar({ user, activeTab }: FileSideBarProps) {
 				</li>
 				<li className="bottom" style={{ position:'absolute', bottom:'0', width: '100%' }}>
 					<div className='d-flex flex-column align-items-center'>
-						<label className="side-text">{formatBytes(size)} of {formatBytes(user.plan.maxStorageSize)} used</label>
+						<label className="side-text">{formatBytes(size)} of {formatBytes(user!.plan.maxStorageSize)} used</label>
 						<div className="progress side-text" style={{ width:'200px' }}>
-							<div className={`progress-bar ${getStatusColor(size, user.plan.maxStorageSize)}`} role="progressbar" style={{ width:`${(size / user.plan.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.plan.maxStorageSize}></div>
+							<div className={`progress-bar ${getStatusColor(size, user!.plan.maxStorageSize)}`} role="progressbar" style={{ width:`${(size / (user!.plan.maxStorageSize ?? 1)) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user!.plan.maxStorageSize}></div>
 						</div>
 					</div>
 					<Link href="/trash" className={`btn sidebar-btn ${activeTab === 'bin' ? 'active' : ''}`} style={{ marginTop: '0.5rem' }}>

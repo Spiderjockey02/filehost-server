@@ -1,7 +1,7 @@
-import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCogs, faFile, faFileLines, faHardDrive, faLaughWink, faSackDollar, faTachometerAlt, faUsers, faWifi } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminSideBarProps } from '@/types/Components/Navbars';
+import Link from 'next/link';
 
 export default function AdminSideBar({ activeTab, showSidebar }: AdminSideBarProps) {
 	return (

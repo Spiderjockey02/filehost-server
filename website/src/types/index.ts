@@ -1,5 +1,5 @@
-import { File, Plan } from '@/types/generated/browser';
-import type { Session, User } from 'better-auth';
+import { File, Plan, User } from '@/types/generated/browser';
+import type { Session } from 'better-auth';
 
 export interface DatabaseBackup {
   createdAt: Date
@@ -12,7 +12,7 @@ export interface DatabaseBackup {
 
 export type AdminUser = {
   totalStorageSize: number
-  plan: Plan | null
+  plan: Plan
   sessions: Session[]
   files: File[]
   _count: {
@@ -48,8 +48,3 @@ export type Config = {
     ABUSE_WINDOW: number
   }
 };
-
-export interface AccountProviders {
-  id: string
-  provider: string
-}

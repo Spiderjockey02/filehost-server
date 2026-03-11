@@ -1,11 +1,26 @@
-import type { AuditLog, UserActivity, File, CronJob, Plan, Account, Notification, CronJobLog } from '@/types/generated/browser';
-import type { FullAuditLogListener, StorageWithCounts, UserAgentWithCounts, UserWithCount } from '@/types/database';
-import type { Config, DatabaseBackup, StringNumberObj } from '@/types';
+import type { AuditLog, UserActivity, File, CronJob, Plan, Account, Notification, CronJobLog, UserBans } from '@/types/generated/browser';
+import type { FullAuditLogListener, StorageWithCounts, UserWithCount } from '@/types/database';
+import type { AdminNetworkUserAgentsListResult } from '@/types/Services/api';
+import type { AdminUser, Config, DatabaseBackup, StringNumberObj } from '@/types';
+import type { GetAdminStatsResult, GetFileCategoriesResult, GetFileStatsResult, GetLogTypesResult, GetNetworkStatsResult, GetSubscriptionStatsResult, GetSystemStatsResult, GetUserStatsResult } from '@/types/Services/admin';
 import type { cacheStats } from '@/types/Components/Card';
 import API from './api';
-import { AdminNetworkUserAgentsListResult } from '@/types/Services/api';
 
 export default class APIAdmin {
+
+	/**
+	  * Fetches admin dashboard statistics.
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+	  * @returns {Promise<GetAdminStatsResult>}
+	*/
+	async fetchAdminStats(signal: AbortSignal): Promise<GetAdminStatsResult> {
+		try {
+			return await API.fetch('/api/admin/stats', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch admin stats');
+		}
+	}
+
 	/**
 	  * Fetches network activities with pagination and filtering.
 	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
@@ -165,11 +180,20 @@ export default class APIAdmin {
 	*/
 	async fetchStorages(signal: AbortSignal) {
 		try {
-			return await API.fetch<{ storages: StorageWithCounts[] }>('/api/admin/storage', { signal });
+			return await API.fetch<{ storages: StorageWithCounts[], avgFileCount: number, avgStorageUsage: number }>('/api/admin/storage', { signal });
 		} catch {
 			throw new Error('Failed to fetch storage mediums');
 		}
 	}
+
+	async fetchStorageTypes(signal: AbortSignal) {
+		try {
+			return await API.fetch<{ MediumCounts: { [key: string]: number } }>('/api/admin/storage/types', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch storage types');
+		}
+	}
+
 
 	/**
 	  * Fetches subscription plans available in the application.
@@ -183,6 +207,15 @@ export default class APIAdmin {
 			throw new Error('Failed to fetch plans');
 		}
 	}
+
+	async fetchUserById(signal: AbortSignal, userId: string) {
+		try {
+			return await API.fetch<{ user: AdminUser, bannedStatus: UserBans | null }>(`/api/admin/users/${userId}`, { signal });
+		} catch {
+			throw new Error('Failed to fetch user details');
+		}
+	}
+
 
 	/**
 	  * Fetches accounts associated with a specific user by their ID.
@@ -258,6 +291,15 @@ export default class APIAdmin {
 		}
 	}
 
+	async fetchSubscriptionStats(signal: AbortSignal): Promise<GetSubscriptionStatsResult> {
+		try {
+			return await API.fetch('/api/admin/plan/stats', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch subscription stats');
+		}
+	}
+
+
 	/**
 	  * Fetches audit log activity data with pagination and filtering.
 	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
@@ -273,6 +315,20 @@ export default class APIAdmin {
 			throw new Error('Failed to fetch audit log activity data');
 		}
 	}
+
+	/**
+	  * Fetches file statistics.
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+	  * @returns
+	*/
+	async fetchFileStats(signal: AbortSignal): Promise<GetFileStatsResult> {
+		try {
+			return await API.fetch('/api/admin/files', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch file stats');
+		}
+	}
+
 
 	/**
 	  * Fetches file upload growth data with pagination and filtering.
@@ -291,6 +347,19 @@ export default class APIAdmin {
 	}
 
 	/**
+	  * Fetches file size categories with pagination and filtering.
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+	  * @returns
+	*/
+	async fetchFileSizeCategories(signal: AbortSignal): Promise<GetFileCategoriesResult> {
+		try {
+			return await API.fetch('/api/admin/files/sized-categories', { signal });
+		 } catch (error) {
+			throw new Error('Failed to fetch file size categories');
+		}
+	}
+
+	/**
 	  * Fetches language distribution data for users with pagination and filtering.
 	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
 	  * @returns
@@ -301,6 +370,30 @@ export default class APIAdmin {
 			return d['languageCodes'] as StringNumberObj;
 		} catch {
 			throw new Error('Failed to fetch language distribution data');
+		}
+	}
+
+	async fetchUserEmailDomains(signal: AbortSignal): Promise<{emails: StringNumberObj}> {
+		try {
+			return await API.fetch('/api/admin/users/emails', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch user email domains');
+		}
+	}
+
+	async fetchUserSignupSources(signal: AbortSignal): Promise<{signupSource: StringNumberObj}> {
+		try {
+			return await API.fetch('/api/admin/users/signup-source', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch user signup sources');
+		}
+	}
+
+	async fetchUserStats(signal: AbortSignal): Promise<GetUserStatsResult> {
+		try {
+			return await API.fetch('/api/admin/users/stats', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch user stats');
 		}
 	}
 
@@ -367,21 +460,92 @@ export default class APIAdmin {
 	/**
 	  * Fetches cache statistics for admin users.
 	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
-	  * @returns
+	  * @returns {Promise<cacheStats>}
 	*/
-	async fetchCacheStats(signal: AbortSignal) {
+	async fetchCacheStats(signal: AbortSignal): Promise<cacheStats> {
 		try {
-			return await API.fetch<cacheStats>('/api/admin/cache/stats', { signal });
+			return await API.fetch('/api/admin/cache/stats', { signal });
 		} catch {
 			throw new Error('Failed to fetch cache stats');
 		}
 	}
 
-	async fetchStorageById(id: string) {
+	/**
+	  * Fetches storage details by its ID.
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+		* @param {string} id - The ID of the storage.
+	  * @returns {{storage: StorageWithCounts}}
+	*/
+	async fetchStorageById(signal: AbortSignal, id: string): Promise<{storage: StorageWithCounts}> {
 		try {
-			return await API.fetch(`/api/admin/storage/${id}`);
+			return await API.fetch<{storage: StorageWithCounts}>(`/api/admin/storage/${id}`, { signal });
+		} catch (err: unknown) {
+			throw new Error(`Failed to fetch storage details: ${err instanceof Error ? err.message : 'Unknown error'}`);
+		}
+	}
+
+	/**
+	  * Fetches logs with pagination and filtering.
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+	  * @returns
+	*/
+	async fetchLogs(signal: AbortSignal): Promise<{logs: AuditLog[]; total: number}> {
+		try {
+			return await API.fetch('/api/admin/logs', { signal });
 		} catch (error) {
-			throw new Error('Failed to fetch storage details');
+			throw new Error('Failed to fetch logs');
+		}
+	}
+
+	/**
+	  * Fetches log types with pagination and filtering.
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+	  * @returns
+  */
+	async fetchLogTypes(signal: AbortSignal): Promise<GetLogTypesResult> {
+		try {
+			return await API.fetch('/api/admin/logs/types', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch log types');
+		}
+	}
+
+	/**
+	  * Fetches network statistics for admin users.
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+	  * @returns {Promise<GetNetworkStatsResult>}
+	*/
+	async fetchNetworkStats(signal: AbortSignal): Promise<GetNetworkStatsResult> {
+		try {
+			return await API.fetch('/api/admin/network/stats', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch network stats');
+		}
+	}
+
+	/**
+	  * Fetches network status code distribution data with pagination and filtering.
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+	  * @param params
+	  * @returns
+	*/
+	async fetchNetworkStatusDistribution(signal: AbortSignal, params: URLSearchParams) {
+		try {
+			return await API.fetch(`/api/admin/network/requests?${params}`, { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch network status distribution');
+		}
+	}
+
+	/**
+	  *
+	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
+	*/
+	async fetchSystemStats(signal: AbortSignal): Promise<GetSystemStatsResult> {
+		try {
+			return await API.fetch('/api/admin/system/stats', { signal });
+		} catch (error) {
+			throw new Error('Failed to fetch system stats');
 		}
 	}
 }

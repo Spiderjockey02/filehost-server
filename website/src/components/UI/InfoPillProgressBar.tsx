@@ -6,7 +6,7 @@ import Card from './Card';
   * A progress-based information card (or "pill") that displays a title, value, progress bar, and icon.
   * @param {InfoPillProgressProps} props - The component props.
 */
-export default function InfoPillProgress({ title, text, icon, colour, max, current = 0 }: InfoPillProgressProps) {
+export default function InfoPillProgress({ title, text, icon, colour, max, current = 0, isLoading }: InfoPillProgressProps) {
 	const randomColor = colour ?? `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
 	return (

@@ -8,7 +8,6 @@ import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
 import { InputField, Card } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
-import type { AccountProviders } from '@/types';
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import { useState } from 'react';
@@ -30,13 +29,7 @@ export default function Settings() {
 
 	const { data: accountData } = useQuery({
 		queryKey: ['userAccounts'],
-		queryFn: async ({ signal }) => {
-			const res = await fetch('/api/session/accounts', { signal });
-			if (!res.ok) throw new Error(`Failed to fetch user information: ${res.statusText}`);
-
-			const d = await res.json();
-			return d as { accounts: AccountProviders[] };
-		},
+		queryFn: async ({ signal }) => API.SESSION.fetchAccounts(signal),
 		...queryOptions,
 	});
 

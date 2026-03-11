@@ -25,6 +25,7 @@ export interface DirectoryProps {
 
 export interface GalleryProps {
   files: FileWithMetadata[]
+  isLoading: boolean
 }
 
 export interface FilePanelPopupProps {

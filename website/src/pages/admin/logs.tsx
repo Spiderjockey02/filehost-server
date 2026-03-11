@@ -4,30 +4,35 @@ import AuditLogActivityChart from '@/components/Graphs/AuditLogActivityChart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { useToast } from '@/components/Hooks/ToastManager';
-import type { AdminLogsPageProps } from '@/types/pages';
+import { useQuery } from '@tanstack/react-query';
 import { GetServerSidePropsContext } from 'next';
-import { headers } from '@/utils/functions';
-import AdminLayout from '@/layouts/admin';
+import { queryOptions } from '@/utils/functions';
+import type { Session } from '@/auth/server';
 import { authClient } from '@/auth/client';
-import type { User } from 'better-auth';
+import AdminLayout from '@/layouts/admin';
 import { useEffect } from 'react';
-import axios from 'axios';
 import API from '@/services/api';
 
-export default function AdminLogsPage({ error, total, resourceTypes, successRates }: AdminLogsPageProps) {
+export default function AdminLogsPage() {
 	const { data: session } = authClient.useSession();
 	const { showToast } = useToast();
 
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['adminUser'],
+		queryFn: async ({ signal }) => Promise.all([API.ADMIN.fetchLogs(signal), API.ADMIN.fetchLogTypes(signal)]),
+		...queryOptions,
+	});
+
 	useEffect(() => {
-		if (error) showToast('error', error);
+		if (error) showToast('error', error.message);
 	}, [error]);
 
-	const mostPopularEventType = Object.entries(resourceTypes).sort((a, b) => a[1] - b[1])[0][0];
-	const successRatesPercent = ((successRates.true / (successRates.true + successRates.false)) * 100).toFixed(2);
+	const mostPopularEventType = Object.entries(data?.[1].resourceTypes ?? {}).sort((a, b) => a[1] - b[1])[0]?.[0];
+	const successRatesPercent = data ? ((data[1].successRates.true / (data[1].successRates.true + data[1].successRates.false)) * 100).toFixed(2) : '0';
 
 	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='logs' user={session.user as User} tabName='Admin Audit Logs'>
+		<AdminLayout activeTab='logs' user={session.user as Session['user']} tabName='Admin Audit Logs'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Audit logs Dashboard</h1>
@@ -37,13 +42,13 @@ export default function AdminLogsPage({ error, total, resourceTypes, successRate
 			</div>
 			<Row>
 				<Col xl={4} md={6} className='mb-4'>
-					<InfoPill title="Total events" text={total} icon={faDownload} />
+					<InfoPill title="Total events" text={data?.[0].total ?? '0'} icon={faDownload} isLoading={isLoading} />
 				</Col>
 				<Col xl={4} md={6} className='mb-4'>
-					<InfoPill title="Success rate" text={`${successRatesPercent}%`} icon={faDownload} />
+					<InfoPill title="Success rate" text={`${successRatesPercent}%`} icon={faDownload} isLoading={isLoading} />
 				</Col>
 				<Col xl={4} md={6} className='mb-4'>
-					<InfoPill title="Most popular event" text={mostPopularEventType} icon={faDownload} />
+					<InfoPill title="Most popular event" text={mostPopularEventType} icon={faDownload} isLoading={isLoading} />
 				</Col>
 			</Row>
 			&nbsp;
@@ -58,9 +63,9 @@ export default function AdminLogsPage({ error, total, resourceTypes, successRate
 						<Card.Body>
 							{error ?
 								<div className="alert alert-danger" role="alert">
-									{error}
+									{error.message}
 								</div>
-								: <ObjectOrientedPieChart data={resourceTypes} />
+								: <ObjectOrientedPieChart data={data?.[1].resourceTypes ?? {}} />
 							}
 						</Card.Body>
 					</Card>
@@ -72,15 +77,19 @@ export default function AdminLogsPage({ error, total, resourceTypes, successRate
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+// Check is user is logged in
 	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
-	if (data == null) {
+	if (!data.isLoggedin) {
 		return {
 			redirect: {
 				destination: '/login',
 				permanent: false,
 			},
 		};
-	} else if (data.user.role !== 'admin') {
+	}
+
+	// Check if user is admin
+	if (!data.isAdmin) {
 		return {
 			redirect: {
 				destination: '/files',
@@ -88,27 +97,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		try {
-			const [{ data: stats }, { data: resourceData }] = await Promise.all([
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/logs`, headers(context.req)),
-				axios.get(`${process.env.BETTER_AUTH_URL}/api/admin/logs/types`, headers(context.req)),
-			]);
-
-			return { props: { total: stats.total, resourceTypes: resourceData.resourceTypes, successRates: resourceData.successRates } };
-		} catch (err) {
-			console.log(err);
-			return { props: { total: 0,
-				resourceTypes: {
-					user: 0,
-					file: 0,
-					storage: 0,
-					system: 0,
-					session: 0,
-				},
-				successRates: {
-					true: 0,
-					false: 0,
-				}, error: 'API server currently unavailable' } };
-		}
+		return { props: {} };
 	}
 }

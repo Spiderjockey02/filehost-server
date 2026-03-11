@@ -2,10 +2,10 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import type { GetServerSidePropsContext } from 'next/types';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { SearchPageProps } from '@/types/pages';
+import type { Session } from '@/auth/server';
 import { FileViewTable } from '@/components';
 import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
-import type { User } from 'better-auth';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
@@ -27,7 +27,7 @@ export default function Search({ query: { query, fileType, dateUpdated } }: Sear
 
 	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as User} activeTab='files' tabName={`Searched for: ${query}`}>
+		<FileLayout user={session.user as Session['user']} activeTab='files' tabName={`Searched for: ${query}`}>
 			<h4><b>Search for: {query}</b></h4>
 			{isLoading || data == null ?
 				<p>Loading</p> :

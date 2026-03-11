@@ -38,13 +38,10 @@ export interface InfoPillProps {
   text: string | number
   icon: IconDefinition
   colour?: string
+  isLoading: boolean
 }
 
-export interface InfoPillProgressProps {
-  title: string
-  text: string
-  icon: IconDefinition
-  colour?: string
+export interface InfoPillProgressProps extends InfoPillProps {
   max: number
   current: number
 }
