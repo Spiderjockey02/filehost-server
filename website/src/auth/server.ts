@@ -1,20 +1,23 @@
 import { sendEmailChangedAttemptEmail, sendPasswordChangedEmail, sendPasswordResetEmail, sendVerificationEmail } from '@/utils/mail';
-import { customSession, organization, admin, twoFactor, lastLoginMethod, createAuthMiddleware } from 'better-auth/plugins';
+import { customSession, organization, admin, twoFactor, lastLoginMethod, haveIBeenPwned } from 'better-auth/plugins';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { nextCookies } from 'better-auth/next-js';
 import { stripe } from '@better-auth/stripe';
-import { APIError } from 'better-auth/api';
 import { betterAuth } from 'better-auth';
 import client from './prisma';
 import Stripe from 'stripe';
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-	apiVersion: '2025-12-15.clover',
+	apiVersion: '2026-02-25.clover',
 });
 
 export const auth = betterAuth({
 	appName: process.env.NEXT_PUBLIC_COMPANY_NAME,
 	plugins: [
+		haveIBeenPwned({
+			customPasswordCompromisedMessage: 'Please choose a more secure password.',
+		}),
 		lastLoginMethod(),
 		twoFactor(),
 		stripe({
@@ -375,6 +378,7 @@ export const auth = betterAuth({
 
 			// Get error code
 			if (!(ctx.context.returned instanceof APIError)) return;
+			// @ts-expect-error cba
 			const code = ctx.context.returned.body?.code;
 
 			switch (ctx.path) {
@@ -392,3 +396,5 @@ export const auth = betterAuth({
 		}),
 	},
 });
+
+export type Session = typeof auth.$Infer.Session
