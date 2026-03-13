@@ -1,32 +1,38 @@
-import type { AutoComplete, FileNavBarProps } from '@/types/Components/Navbars';
 import { faSearch, faSlidersH } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { queryOptions, signOutOptions } from '@/utils/functions';
+import { useDebounce } from '@/components/Hooks/useDebounce';
 import { SearchFileModal } from '@/components/Modals';
-import { signOutOptions } from '@/utils/functions';
+import { useQuery } from '@tanstack/react-query';
 import { NotificationBell } from '@/components';
 import type { PageProps } from '@/types/pages';
 import { authClient } from '@/auth/client';
 import { useRouter } from 'next/router';
+import API from '@/services/api';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import axios from 'axios';
 
 export default function FileNavBar({ user }: PageProps) {
+	const [searchQuery, setSearchQuery] = useState({
+		query: '',
+		fileType: '0',
+		updatedSince: '0',
+	});
 	const [showSearchModal, setShowSearchModal] = useState(false);
+	const debouncedSearchQuery = useDebounce(searchQuery, 300);
 	const router = useRouter();
 
 	// Update to only use useStates not from documents
-	async function autoComplete(e: ChangeEvent<HTMLInputElement>) {
-		const search = e.target.value.trim();
-		const fileType = document.getElementById('fileTypeSelector') as HTMLSelectElement;
-		const dateUpdatedSelector = document.getElementById('dateUpdatedSelector') as HTMLSelectElement;
-		if (search) {
-			const { data } = await axios.get(`${window.origin}/api/files/search?query=${search}&fileType=${fileType.value}&updatedSince=${dateUpdatedSelector.value}`);
-			setSrchRes(data.files);
-		} else {
-			setSrchRes([]);
-		}
-	}
+	const { data } = useQuery({
+		queryKey: ['search', debouncedSearchQuery],
+		queryFn: async ({ signal }) => {
+			const params = new URLSearchParams(debouncedSearchQuery);
+			return API.FILE.search(signal, params);
+		},
+		enabled: debouncedSearchQuery.query.length > 1,
+		...queryOptions,
+	});
 
 	return (
 		<nav className="navbar navbar-expand sticky-top" style={{ backgroundColor: '#ffffff' }}>
@@ -41,10 +47,10 @@ export default function FileNavBar({ user }: PageProps) {
 											<FontAwesomeIcon icon={faSearch} />
 										</button>
 									</div>
-									<input onChange={(e) => autoComplete(e)} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="query" autoComplete="off" />
-									{srchRes.length >= 1 && (
+									<input onChange={(e) => setSearchQuery((q) => ({ ...q, query: e.target.value }))} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="query" autoComplete="off" />
+									{data && data.files.length >= 1 && (
 										<div className="autocomplete-items">
-											{srchRes.slice(0, 5).map((file) => (
+											{data.files.slice(0, 5).map((file) => (
 												<Link style={{ textDecoration: 'none', color: 'black' }}	href={`/files${file.path}`} key={file.path}>
 													<div className="d-flex flex-column ms-2">
 														<span className="fw-bold text-truncate" >{file.name}</span>
@@ -64,7 +70,7 @@ export default function FileNavBar({ user }: PageProps) {
 											<div className="dropdown-menu dropdown-menu-end" style={{ width:'100%', padding:'5px' }} >
 												<div className="form-group">
 													<label htmlFor="inputGroupSelect01">File type(s)</label>
-													<select className="form-select" id="fileTypeSelector" name="fileType">
+													<select className="form-select" id="fileTypeSelector" name="fileType" onChange={(e) => setSearchQuery((q) => ({ ...q, fileType: e.target.value }))}>
 														<option value="0">Any type</option>
 														<option value="1">Files</option>
 														<option value="2">Folders</option>
@@ -72,7 +78,7 @@ export default function FileNavBar({ user }: PageProps) {
 												</div>
 												<div className="form-group">
 													<label htmlFor="inputGroupSelect01">Date updated</label>
-													<select className="form-select" id="dateUpdatedSelector" name="dateUpdated">
+													<select className="form-select" id="dateUpdatedSelector" name="dateUpdated" onChange={(e) => setSearchQuery((q) => ({ ...q, updatedSince: e.target.value }))}>
 														<option value="0">Any time</option>
 														<option value="1">Past day</option>
 														<option value="2">Past week</option>

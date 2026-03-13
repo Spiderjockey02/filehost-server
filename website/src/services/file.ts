@@ -21,14 +21,11 @@ export default class APIFile {
 	/**
 	  * Searches for files based on a query, file type, and date updated.
 	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
-	  * @param {string} query - The search query.
-	  * @param {string} fileType - The file type to filter by.
-	  * @param {string} dateUpdated - The date updated to filter by.
 	  * @returns {FileWithCount[]}
 	*/
-	async search(signal: AbortSignal, query: string, fileType: string, dateUpdated: string): Promise<{ files: FileWithCount[] }> {
+	async search(signal: AbortSignal, params: URLSearchParams): Promise<{ files: FileWithCount[] }> {
 		try {
-			return await API.fetch(`/api/files/search?query=${query}&fileType=${fileType}&updatedSince=${dateUpdated}`, { signal });
+			return await API.fetch(`/api/files/search?${params}`, { signal });
 		} catch (error) {
 			throw 'Failed to search user\'s files';
 		}

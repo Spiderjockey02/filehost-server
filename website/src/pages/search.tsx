@@ -13,7 +13,8 @@ export default function Search({ query: { query, fileType, dateUpdated }, user }
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['recent', query, fileType, dateUpdated],
 		queryFn: async ({ signal }) => {
-			return await API.FILE.search(signal, query, fileType, dateUpdated);
+			const params = new URLSearchParams({ query, fileType, dateUpdated });
+			return API.FILE.search(signal, params);
 		},
 		...queryOptions,
 	});
@@ -24,7 +25,7 @@ export default function Search({ query: { query, fileType, dateUpdated }, user }
 
 	return (
 		<FileLayout user={user} activeTab='files' tabName={`Searched for: ${query}`}>
-			<h4><b>Search for: {query}</b></h4>
+			<h4 className='fw-bold'>Search for: {query}</h4>
 			{isLoading || data == null ?
 				<p>Loading</p> :
 				<FileViewTable files={data.files} showMoreDetail={true} setFilePanelToShow={() => null} />
