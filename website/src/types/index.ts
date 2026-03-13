@@ -48,3 +48,9 @@ export type Config = {
     ABUSE_WINDOW: number
   }
 };
+
+export type viewTypeTypes = 'List' | 'Tiles';
+
+export type timeInterval = 'daily' | 'monthly' | 'yearly' | 'hourly'
+
+export type adminSidebarTabs = 'dashboard' | 'users' | 'files' | 'system' | 'network' | 'storage' | 'subscriptions' | 'logs'

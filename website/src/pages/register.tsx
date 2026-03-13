@@ -48,8 +48,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		// Get the path from the URL
-		const path = [context.params?.files].flat();
-		return { props: { path: path.join('/') } };
+		return { props: { } };
 	}
 }

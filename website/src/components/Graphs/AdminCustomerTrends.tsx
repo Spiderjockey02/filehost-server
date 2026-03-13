@@ -1,6 +1,6 @@
-import type { timeInterval } from '@/types/pages';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
+import type { timeInterval } from '@/types';
 import LineChart from '../Charts/Line';
 import { Card } from '@/components';
 import { useState } from 'react';

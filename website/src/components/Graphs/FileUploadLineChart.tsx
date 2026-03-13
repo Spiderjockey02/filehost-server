@@ -1,7 +1,7 @@
 import type { AdminManageUsersCardProps } from '@/types/Components/Card';
-import type { timeInterval } from '@/types/pages';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
+import type { timeInterval } from '@/types';
 import LineChart from '../Charts/Line';
 import { Card } from '@/components';
 import { useState } from 'react';

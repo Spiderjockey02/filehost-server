@@ -6,14 +6,12 @@ import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
-import type { Session } from '@/auth/server';
-import { authClient } from '@/auth/client';
+import type { PageProps } from '@/types/pages';
 import AdminLayout from '@/layouts/admin';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
-export default function AdminPage() {
-	const { data: session } = authClient.useSession();
+export default function AdminPage({ user }: PageProps) {
 	const { showToast } = useToast();
 
 	const { data, isLoading, error } = useQuery({
@@ -26,9 +24,8 @@ export default function AdminPage() {
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	return (
-		<AdminLayout activeTab="dashboard" user={session.user as Session['user']} tabName="Admin Dashboard">
+		<AdminLayout user={user} activeTab="dashboard" tabName="Admin Dashboard">
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Admin Dashboard</h1>
@@ -81,6 +78,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: {} };
+		return { props: { user: data.user } };
 	}
 }

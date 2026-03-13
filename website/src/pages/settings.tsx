@@ -8,14 +8,15 @@ import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
 import { InputField, Card } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
+import type { PageProps } from '@/types/pages';
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import { useState } from 'react';
 import API from '@/services/api';
 
-export default function Settings() {
+export default function Settings({ user }: PageProps) {
 	const [activeModal, setActiveModal] = useState<string | null>(null);
-	const { data: session, refetch } = authClient.useSession();
+	const { refetch } = authClient.useSession();
 	const [errors, setErrors] = useState<SettingsFormError[]>([]);
 	const [newUser, setNewUser] = useState({
 		email: '',
@@ -76,9 +77,8 @@ export default function Settings() {
 		}
 	};
 
-	if (session == null) return null;
 	return (
-		<MainLayout user={session.user} tabName="Settings">
+		<MainLayout user={user} tabName="Settings">
 			<section className="d-flex flex-row align-items-center" style={{ backgroundColor: '#eee', padding: '5% 0' }}>
 				<Card className="container">
 					<Card.Body>
@@ -97,7 +97,7 @@ export default function Settings() {
 							<div className="col-lg-10 tab-content" id="v-pills-tabContent">
 								<div className="tab-pane fade show active" id="v-pills-account" role="tabpanel" aria-labelledby="v-pills-account-tab">
 									<h3 className="mb-4">Account Settings</h3>
-									<AvatarUploadForm user={session.user} />
+									<AvatarUploadForm user={user} />
 									<ul className="nav nav-tabs mt-4" id="account-tabs">
 										<li className="nav-item">
 											<a className="nav-link active" href="#personal-info" data-bs-toggle="tab">
@@ -120,9 +120,9 @@ export default function Settings() {
 									<div className="tab-content mt-3">
 										<div className="tab-pane fade show active" id="personal-info">
 											<form className="mt-4" onSubmit={onPersonalSubmit}>
-												<InputField title="Update Name" name="name" placeholder={session.user?.name} errorMsg={errors.find((e) => e.type == 'name')?.text} onChange={(e) => setNewUser((u) => ({ ...u, name: e.target.value }))} />
+												<InputField title="Update Name" name="name" placeholder={user!.name} errorMsg={errors.find((e) => e.type == 'name')?.text} onChange={(e) => setNewUser((u) => ({ ...u, name: e.target.value }))} />
 												{accountData?.accounts.find(a => a.provider === 'credential') !== undefined && (
-													<InputField title="Update Email" name="email" placeholder={session.user?.email} errorMsg={errors.find((e) => e.type == 'email')?.text} onChange={(e) => setNewUser((u) => ({ ...u, email: e.target.value }))} />
+													<InputField title="Update Email" name="email" placeholder={user!.email} errorMsg={errors.find((e) => e.type == 'email')?.text} onChange={(e) => setNewUser((u) => ({ ...u, email: e.target.value }))} />
 												)}
 												<button type="submit" className="btn btn-primary float-end">
                       		Save Changes
@@ -190,9 +190,9 @@ export default function Settings() {
 									<div className="d-flex flex-column gap-3">
 										<div className="card p-3">
 											<h5>Current Plan</h5>
-											<p>{session.user?.plan.name} — Active</p>
+											<p>{user!.plan.name} — Active</p>
 										</div>
-										{activeModal == 'billing' && <BillingPanelModal show={true} onClose={() => setActiveModal(null)} currentPlan={session.user!.plan} /> }
+										{activeModal == 'billing' && <BillingPanelModal show={true} onClose={() => setActiveModal(null)} currentPlan={user!.plan} /> }
 										<button className="btn btn-primary" onClick={() => setActiveModal('billing')}>
                   		Manage Subscription
 										</button>
@@ -200,7 +200,7 @@ export default function Settings() {
 								</div>
 								{/* Sessions Tab */}
 								<div className="tab-pane fade" id="v-pills-sessions" role="tabpanel" aria-labelledby="v-pills-sessions-tab">
-									<SessionTable userId={session.session!.userId} isAdmin={false} />
+									<SessionTable userId={user!.id} isAdmin={false} />
 								</div>
 							</div>
 						</div>
@@ -221,6 +221,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: { } };
+		return { props: { user: data.user } };
 	}
 }

@@ -5,9 +5,8 @@ import FileDetail from '@/components/Tables/FileDetailCell';
 import type { UserHistoryWithFile } from '@/types/database';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
-import type { Session } from '@/auth/server';
+import type { PageProps } from '@/types/pages';
 import { useEffect, useState } from 'react';
-import { authClient } from '@/auth/client';
 import { format } from '@/utils/functions';
 import FileLayout from '@/layouts/file';
 import { Table } from '@/components';
@@ -16,8 +15,7 @@ import API from '@/services/api';
 type sortKeyTypes = 'name' | 'viewedAt'
 type SortOrder = 'asc' | 'desc';
 
-export default function Recent() {
-	const { data: session } = authClient.useSession();
+export default function Recent({ user }: PageProps) {
 	const [sortKey, setSortKey] = useState<sortKeyTypes>('viewedAt');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 	const [filters, setFilters] = useState<string[]>(['']);
@@ -69,9 +67,8 @@ export default function Recent() {
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as Session['user']} activeTab='recent' tabName='Recent files'>
+		<FileLayout user={user} activeTab='recent' tabName='Recent files'>
 			<div className="d-flex flex-row justify-content-between">
 				<h5><b>Recently viewed files</b></h5>
 				<div className="dropdown">
@@ -125,8 +122,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		// Get the path from the URL
-		const path = [context.params?.files].flat();
-		return { props: { path: path.join('/') } };
+		return { props: { user: data.user } };
 	}
 }

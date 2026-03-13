@@ -6,14 +6,12 @@ import { AdminManageStorageCard } from '@/components/Cards';
 import { useToast } from '@/components/Hooks/ToastManager';
 import { GetServerSidePropsContext } from 'next/types';
 import { useQuery } from '@tanstack/react-query';
-import type { Session } from '@/auth/server';
-import { authClient } from '@/auth/client';
+import type { PageProps } from '@/types/pages';
 import AdminLayout from '@/layouts/admin';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
-export default function AdminStoragePage() {
-	const { data: session } = authClient.useSession();
+export default function AdminStoragePage({ user }: PageProps) {
 	const { showToast } = useToast();
 
 	const { data, isLoading, error } = useQuery({
@@ -30,9 +28,8 @@ export default function AdminStoragePage() {
 	}, [error]);
 
 	const avatarMedium = data?.[0].storages.find(s => s.avatarOnly);
-	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='storage' user={session.user as Session['user']} tabName='Admin Storage'>
+		<AdminLayout user={user} activeTab='storage' tabName='Admin Storage'>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Storage Dashboard</h1>
@@ -94,6 +91,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: {} };
+		return { props: { user: data.user } };
 	}
 }

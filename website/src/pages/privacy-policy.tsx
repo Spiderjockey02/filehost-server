@@ -1,11 +1,11 @@
-import { authClient } from '@/auth/client';
+import type { GetServerSidePropsContext } from 'next';
+import type { PageProps } from '@/types/pages';
 import MainLayout from '@/layouts/main';
+import API from '@/services/api';
 
-export default function PrivacyPolicyPage() {
-	const { data } = authClient.useSession();
-
+export default function PrivacyPolicyPage({ user }: PageProps) {
 	return (
-		<MainLayout user={data?.user ?? null} tabName='Privacy Policy'>
+		<MainLayout user={user} tabName='Privacy Policy'>
 			<div className="container py-5">
 				<header className="mb-5">
 					<h1 className="display-5 fw-bold">Privacy Policy</h1>
@@ -75,4 +75,9 @@ export default function PrivacyPolicyPage() {
 			</div>
 		</MainLayout>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
+	return { props: { user: data.user } };
 }

@@ -7,15 +7,13 @@ import { formatBytes, queryOptions } from '@/utils/functions';
 import { useToast } from '@/components/Hooks/ToastManager';
 import { useQuery } from '@tanstack/react-query';
 import { GetServerSidePropsContext } from 'next';
-import type { Session } from '@/auth/server';
-import { authClient } from '@/auth/client';
+import type { PageProps } from '@/types/pages';
 import AdminLayout from '@/layouts/admin';
 import { useEffect } from 'react';
 import API from '@/services/api';
 import Link from 'next/link';
 
-export default function AdminNetworkPage() {
-	const { data: session } = authClient.useSession();
+export default function AdminNetworkPage({ user }: PageProps) {
 	const { showToast } = useToast();
 
 	const { data, isLoading, error } = useQuery({
@@ -31,9 +29,8 @@ export default function AdminNetworkPage() {
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='network' user={session.user as Session['user']} tabName='Admin File'>
+		<AdminLayout user={user} activeTab='network' tabName='Admin File'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Network Dashboard</h1>
@@ -128,6 +125,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: {} };
+		return { props: { user: data.user } };
 	}
 }

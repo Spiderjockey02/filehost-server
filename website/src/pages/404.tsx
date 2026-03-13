@@ -2,11 +2,11 @@ import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
 import Link from 'next/link';
 
-export default function FourOhFour() {
-	const { data } = authClient.useSession();
+export default function FourZeroFour() {
+	const { data: session } = authClient.useSession();
 
 	return (
-		<MainLayout user={data?.user ?? null} tabName='404'>
+		<MainLayout user={session?.user ?? null} tabName='404'>
 			<div className="page-wrap d-flex flex-row align-items-center" style={{ backgroundColor:'#f1f6fe', minHeight: '70vh' }}>
 				<div className="container justify-content-center text-center">
 					<span className="display-1">404</span>

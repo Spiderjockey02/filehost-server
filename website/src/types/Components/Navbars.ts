@@ -1,20 +1,21 @@
+import type { viewTypeTypes, adminSidebarTabs } from '..';
 import type { UserHistoryWithFile } from '../database';
-import type { adminSidebarTabs } from '../pages';
 import type { Session } from '@/auth/server';
+import type { PageProps } from '../pages';
 import type { ReactElement } from 'react';
 
-export type viewTypeTypes = 'List' | 'Tiles';
 
 export interface BreadcrumbNavProps {
   path: string
   isFile: boolean
   parentId: string
-	setviewType: (viewType: 'List' | 'Tiles') => void
+	setviewType: (viewType: viewTypeTypes) => void
 	viewType: viewTypeTypes
 }
 
-export interface FileSideBarProps extends FileNavBarProps {
+export interface FileSideBarProps {
   activeTab: 'files' | 'recent' | 'bin' | 'gallery'
+  user: Session['user']
 }
 
 export interface HoverElementProps {
@@ -27,25 +28,11 @@ export interface AdminSideBarProps {
   showSidebar: boolean
 }
 
-export interface FileNavBarProps {
-  user: Session['user']
-}
-
-export interface HomeNavbarProps {
-  user: Session['user'] | null
-}
-
 export interface RecentNavbarProps {
   files: UserHistoryWithFile[];
 }
 
-export interface AdminNavbarProps {
+export interface AdminNavbarProps extends PageProps {
   showSidebar: boolean;
   setShowSidebar: (arg0: boolean) => void;
-  user: Session['user']
-}
-
-export interface AutoComplete {
-  name: string
-  path: string
 }

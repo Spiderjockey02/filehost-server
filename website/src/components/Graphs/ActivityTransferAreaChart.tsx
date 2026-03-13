@@ -1,7 +1,7 @@
 import { Chart as ChartJS,	CategoryScale, LinearScale, PointElement,	LineElement, Filler,	Tooltip, Legend, ChartOptions } from 'chart.js';
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import type { timeInterval } from '@/types/pages';
 import { formatBytes } from '@/utils/functions';
+import type { timeInterval } from '@/types';
 import { Line } from 'react-chartjs-2';
 import { useState } from 'react';
 import API from '@/services/api';

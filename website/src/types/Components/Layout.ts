@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
-import type { FileSideBarProps } from './Navbars';
-import type { adminSidebarTabs } from '../pages';
-import type { Session } from '@/auth/server';
+import type { adminSidebarTabs } from '..';
+import type { PageProps } from '../pages';
 
 export interface GridLayoutProps {
 	readonly children?: ReactNode
@@ -22,20 +21,19 @@ export interface ColProps {
 
 export type ColPrefix = 'xs' | 'sm' | 'md' | 'lg' | 'xl'| 'xxl'
 
-export interface AdminLayoutProps {
+export interface AdminLayoutProps extends PageProps {
 	children: ReactNode;
-	user: Session['user'];
 	activeTab: adminSidebarTabs
 	tabName?: string
 }
 
-export interface FileLayoutProps extends FileSideBarProps {
+export interface FileLayoutProps extends PageProps {
   children: ReactNode
 	tabName?: string
+	activeTab: 'files' | 'recent' | 'bin' | 'gallery'
 }
 
-export interface MainLayoutProps {
+export interface MainLayoutProps extends PageProps {
   children: ReactNode;
-	user: Session['user'] | null
 	tabName?: string
 }

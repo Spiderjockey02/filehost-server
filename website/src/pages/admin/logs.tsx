@@ -7,14 +7,12 @@ import { useToast } from '@/components/Hooks/ToastManager';
 import { useQuery } from '@tanstack/react-query';
 import { GetServerSidePropsContext } from 'next';
 import { queryOptions } from '@/utils/functions';
-import type { Session } from '@/auth/server';
-import { authClient } from '@/auth/client';
+import type { PageProps } from '@/types/pages';
 import AdminLayout from '@/layouts/admin';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
-export default function AdminLogsPage() {
-	const { data: session } = authClient.useSession();
+export default function AdminLogsPage({ user }: PageProps) {
 	const { showToast } = useToast();
 
 	const { data, isLoading, error } = useQuery({
@@ -30,9 +28,8 @@ export default function AdminLogsPage() {
 	const mostPopularEventType = Object.entries(data?.[1].resourceTypes ?? {}).sort((a, b) => a[1] - b[1])[0]?.[0];
 	const successRatesPercent = data ? ((data[1].successRates.true / (data[1].successRates.true + data[1].successRates.false)) * 100).toFixed(2) : '0';
 
-	if (session == null) return null;
 	return (
-		<AdminLayout activeTab='logs' user={session.user as Session['user']} tabName='Admin Audit Logs'>
+		<AdminLayout user={user} activeTab='logs' tabName='Admin Audit Logs'>
 			&nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Audit logs Dashboard</h1>
@@ -97,6 +94,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: {} };
+		return { props: { user: data.user } };
 	}
 }

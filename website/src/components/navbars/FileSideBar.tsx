@@ -1,5 +1,5 @@
 import { faBars, faClock, faFolder, faImages, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { FileSideBarProps, HoverElementProps } from '@/types/Components/Navbars';
+import type { FileSideBarProps, HoverElementProps } from '@/types/Components/Navbars';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatBytes, getStatusColor } from '@/utils/functions';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';

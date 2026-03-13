@@ -6,15 +6,12 @@ import { AdminManageUsersCard } from '@/components/Cards';
 import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
-import type { Session } from '@/auth/server';
-import { authClient } from '@/auth/client';
 import { notFound } from 'next/navigation';
 import AdminLayout from '@/layouts/admin';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
-export default function AdminStorageIdPage({ storageId }: AdminStorageIdPageProps) {
-	const { data: session } = authClient.useSession();
+export default function AdminStorageIdPage({ user, storageId }: AdminStorageIdPageProps) {
 	const { showToast } = useToast();
 
 	const { data, error, isLoading } = useQuery({
@@ -27,10 +24,9 @@ export default function AdminStorageIdPage({ storageId }: AdminStorageIdPageProp
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	const storage = data?.storage;
 	return (
-		<AdminLayout activeTab="storage" user={session.user as Session['user']} tabName={`Storage Id: ${storage?.name}`}>
+		<AdminLayout user={user} activeTab="storage" tabName={`Storage Id: ${storage?.name}`}>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">Storage: {storage?.name}</h1>
@@ -72,6 +68,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	} else {
 		const storageId = context.params?.id;
 		if (typeof storageId !== 'string') return notFound();
-		return { props: { storageId: storageId } };
+		return { props: { storageId: storageId, user: data.user } };
 	}
 }

@@ -2,15 +2,12 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import type { GetServerSidePropsContext } from 'next/types';
 import { useToast } from '@/components/Hooks/ToastManager';
 import type { SearchPageProps } from '@/types/pages';
-import type { Session } from '@/auth/server';
 import { FileViewTable } from '@/components';
-import { authClient } from '@/auth/client';
 import FileLayout from '@/layouts/file';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
-export default function Search({ query: { query, fileType, dateUpdated } }: SearchPageProps) {
-	const { data: session } = authClient.useSession();
+export default function Search({ query: { query, fileType, dateUpdated }, user }: SearchPageProps) {
 	const { showToast } = useToast();
 
 	const { data, isLoading, error } = useQuery({
@@ -25,9 +22,8 @@ export default function Search({ query: { query, fileType, dateUpdated } }: Sear
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as Session['user']} activeTab='files' tabName={`Searched for: ${query}`}>
+		<FileLayout user={user} activeTab='files' tabName={`Searched for: ${query}`}>
 			<h4><b>Search for: {query}</b></h4>
 			{isLoading || data == null ?
 				<p>Loading</p> :
@@ -47,6 +43,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: { query: context.query } };
+		return { props: { query: context.query, user: data.user } };
 	}
 }

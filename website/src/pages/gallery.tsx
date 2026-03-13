@@ -3,14 +3,12 @@ import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
 import Gallery from '@/components/views/Gallery';
-import type { Session } from '@/auth/server';
-import { authClient } from '@/auth/client';
+import type { PageProps } from '@/types/pages';
 import FileLayout from '@/layouts/file';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
-export default function GalleryPage() {
-	const { data: session } = authClient.useSession();
+export default function GalleryPage({ user }: PageProps) {
 	const { showToast } = useToast();
 
 	const { data, isLoading, error } = useQuery({
@@ -23,9 +21,8 @@ export default function GalleryPage() {
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as Session['user']} activeTab='gallery' tabName="Gallery">
+		<FileLayout user={user} activeTab='gallery' tabName="Gallery">
 			<Gallery files={data?.files ?? []} isLoading={isLoading || error !== null} />
 		</FileLayout>
 	);
@@ -41,6 +38,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: { } };
+		return { props: { user: data.user } };
 	}
 }

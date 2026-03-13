@@ -1,18 +1,17 @@
 import { faCommentDots, faEarthEurope, faFile, faGauge, faHardDrive, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatBytes, queryOptions } from '@/utils/functions';
+import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
 import { Col, Row } from '@/components/UI/Grid';
-import { authClient } from '@/auth/client';
+import type { PageProps } from '@/types/pages';
 import MainLayout from '@/layouts/main';
 import CountUp from 'react-countup';
 import API from '@/services/api';
 import config from '../config';
 import Link from 'next/link';
 
-export default function Home() {
-	const { data: session } = authClient.useSession();
-
+export default function Home({ user }: PageProps) {
 	const { data, isLoading } = useQuery({
 		queryKey: ['homePageStatistics'],
 		queryFn: async ({ signal }) => {
@@ -30,7 +29,7 @@ export default function Home() {
 	});
 
 	return (
-		<MainLayout user={session?.user ?? null} tabName='Home page'>
+		<MainLayout user={user} tabName='Home page'>
 			<section id="hero" className="d-flex align-items-center large-padding">
 				<div className="container">
 					<h1>Welcome to <span>{config.company.name}</span></h1>
@@ -205,4 +204,9 @@ export default function Home() {
 			</main>
 		</MainLayout>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
+	return { props: { user: data.user } };
 }

@@ -6,15 +6,12 @@ import type { AdminUserIdPageProps } from '@/types/pages';
 import type { GetServerSidePropsContext } from 'next';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
-import type { Session } from '@/auth/server';
-import { authClient } from '@/auth/client';
 import { notFound } from 'next/navigation';
 import AdminLayout from '@/layouts/admin';
 import { useEffect } from 'react';
 import API from '@/services/api';
 
-export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
-	const { data: session } = authClient.useSession();
+export default function AdminUserIdPage({ userId, user }: AdminUserIdPageProps) {
 	const { showToast } = useToast();
 
 	const { data, isLoading, error } = useQuery({
@@ -27,16 +24,15 @@ export default function AdminUserIdPage({ userId }: AdminUserIdPageProps) {
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	return (
-		<AdminLayout activeTab="users" user={session.user as Session['user']} tabName={`Admin user: ${data?.user.name}`}>
+		<AdminLayout user={user} activeTab="users" tabName={`Admin user: ${data?.user.name}`}>
       &nbsp;
 			<div className="d-sm-flex align-items-center justify-content-between mb-4">
 				<h1 className="h3 mb-0 text-gray-800">User: {data?.user.name}</h1>
 			</div>
 			<Row>
 				<Col lg={4}>
-					<AdminManageUserCard isLoading={isLoading} user={data?.user ?? null} bannedStatus={data?.bannedStatus ?? null} isCurrentUser={data?.user.id === session.user?.id} />
+					<AdminManageUserCard isLoading={isLoading} user={data?.user ?? null} bannedStatus={data?.bannedStatus ?? null} isCurrentUser={data?.user.id === user!.id} />
 				</Col>
 				<Col lg={8}>
 					<AdminListSessionsCard userId={userId} isAdmin={true} />
@@ -86,6 +82,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	} else {
 		const userId = context.params?.id;
 		if (typeof userId !== 'string') return notFound();
-		return { props: { userId } };
+		return { props: { userId, user: data.user } };
 	}
 }

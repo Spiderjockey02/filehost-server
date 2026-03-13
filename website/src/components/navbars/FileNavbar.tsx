@@ -4,15 +4,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { SearchFileModal } from '@/components/Modals';
 import { signOutOptions } from '@/utils/functions';
 import { NotificationBell } from '@/components';
-import { useState, ChangeEvent } from 'react';
+import type { PageProps } from '@/types/pages';
 import { authClient } from '@/auth/client';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
 import axios from 'axios';
 
-export default function FileNavBar({ user }: FileNavBarProps) {
-	const [srchRes, setSrchRes] = useState<AutoComplete[]>([]);
+export default function FileNavBar({ user }: PageProps) {
 	const [showSearchModal, setShowSearchModal] = useState(false);
 	const router = useRouter();
 

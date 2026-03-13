@@ -1,12 +1,12 @@
-import { authClient } from '@/auth/client';
+import type { GetServerSidePropsContext } from 'next';
+import type { PageProps } from '@/types/pages';
 import MainLayout from '@/layouts/main';
+import API from '@/services/api';
 import config from '@/config';
 
-export default function TermsOfService() {
-	const { data } = authClient.useSession();
-
+export default function TermsOfService({ user }: PageProps) {
 	return (
-		<MainLayout user={data?.user ?? null} tabName='Terms of Service'>
+		<MainLayout user={user} tabName='Terms of Service'>
 			<div className="container my-5">
 				<h1 className="text-center mb-4">Terms of Service</h1>
 				<p className="text-muted text-center">Effective Date: <strong>22 January 2025</strong></p>
@@ -108,4 +108,9 @@ export default function TermsOfService() {
 			</div>
 		</MainLayout>
 	);
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const data = await API.SESSION.fetchCurrentSession(context.req.headers.cookie || '');
+	return { props: { user: data.user } };
 }

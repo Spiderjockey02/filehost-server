@@ -4,7 +4,7 @@ import { useToast } from '@/components/Hooks/ToastManager';
 import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
-import type { Session } from '@/auth/server';
+import type { PageProps } from '@/types/pages';
 import { useEffect, useState } from 'react';
 import { authClient } from '@/auth/client';
 import MainLayout from '@/layouts/main';
@@ -13,8 +13,8 @@ import API from '@/services/api';
 import Link from 'next/link';
 import axios from 'axios';
 
-export default function Notifications() {
-	const { data: session, refetch } = authClient.useSession();
+export default function Notifications({ user }: PageProps) {
+	const { refetch } = authClient.useSession();
 	const [page, setPage] = useState(0);
 	const { showToast } = useToast();
 
@@ -37,9 +37,8 @@ export default function Notifications() {
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	return (
-		<MainLayout user={session.user as Session['user']} tabName={`Notifications (${isLoading ? '-1' : data?.total ?? 0})`}>
+		<MainLayout user={user} tabName={`Notifications (${isLoading ? '-1' : data?.total ?? 0})`}>
 			<div className="container py-4" style={{ minHeight: '70vh' }}>
 				<h1 className="text-center mb-4">
 					<FontAwesomeIcon icon={faBell} className='me-2' />
@@ -71,13 +70,13 @@ export default function Notifications() {
 													{notification.url && (
 														<Link href={notification.url} className="btn btn-sm btn-outline-primary mt-2">
 															<FontAwesomeIcon icon={faArrowRight} className="me-1" />
-													View Details
+																View Details
 														</Link>
 													)}
-											&nbsp;
+													&nbsp;
 													<button className="btn btn-sm btn-outline-danger mt-2" onClick={() => deleteNotification(notification.id)}>
 														<FontAwesomeIcon icon={faTrash} className="me-1" />
-												Delete
+														Delete
 													</button>
 												</div>
 											</div>
@@ -105,8 +104,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		// Get the path from the URL
-		const path = [context.params?.files].flat();
-		return { props: { path: path.join('/') } };
+		return { props: { user: data.user } };
 	}
 }

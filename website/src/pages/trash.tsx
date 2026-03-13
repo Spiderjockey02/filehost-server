@@ -7,12 +7,10 @@ import { useState, MouseEvent, useEffect } from 'react';
 import type { File } from '@/types/generated/browser';
 import type { GetServerSidePropsContext } from 'next';
 import { useQuery } from '@tanstack/react-query';
-import { authClient } from '@/auth/client';
-import { Session } from '@/auth/server';
+import type { PageProps } from '@/types/pages';
 import FileLayout from '@/layouts/file';
 import API from '@/services/api';
 import axios from 'axios';
-
 const initalContextMenu = {
 	show: false,
 	x: 0,
@@ -20,8 +18,7 @@ const initalContextMenu = {
 	selected: [] as File[],
 };
 
-export default function Trash() {
-	const { data: session } = authClient.useSession();
+export default function Trash({ user }: PageProps) {
 	const [selected, setSelected] = useState<File[]>([]);
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
 	const { showToast } = useToast();
@@ -116,9 +113,8 @@ export default function Trash() {
 		if (error) showToast('error', error.message);
 	}, [error]);
 
-	if (session == null) return null;
 	return (
-		<FileLayout user={session.user as Session['user']} activeTab='bin' tabName='Trash'>
+		<FileLayout user={user} activeTab='bin' tabName='Trash'>
 			<div className="d-flex justify-content-between align-items-center mb-3">
 				<nav aria-label="breadcrumb">
 					<ol className="breadcrumb bg-white mb-0">
@@ -176,6 +172,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			},
 		};
 	} else {
-		return { props: { } };
+		return { props: { user: data.user } };
 	}
 }

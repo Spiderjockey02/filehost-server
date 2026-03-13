@@ -1,12 +1,12 @@
-import { HomeNavbarProps } from '@/types/Components/Navbars';
+import { signOutOptions } from '@/utils/functions';
 import NotificationBell from '../UI/Notification';
+import type { PageProps } from '@/types/pages';
 import { authClient } from '@/auth/client';
+import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { signOutOptions } from '@/utils/functions';
 
-export default function NavBar({ user }: HomeNavbarProps) {
+export default function NavBar({ user }: PageProps) {
 	const router = useRouter();
 
 	return (
