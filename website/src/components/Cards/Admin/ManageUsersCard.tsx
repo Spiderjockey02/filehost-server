@@ -19,7 +19,9 @@ export default function AdminManageUsersCard({ storageId }: AdminManageUsersCard
 	const { data, isLoading, error } = useQuery({
 		queryKey: storageId ? ['users', page, name, filters, storageId] : ['users', page, name, filters],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({ page: `${page}`, name, ...filters, storageId: storageId ?? '' });
+			const params = new URLSearchParams({ page: `${page}`, name, ...filters });
+			if (storageId) params.append('storageId', storageId);
+
 			return API.ADMIN.fetchAllUsers(signal, params);
 		},
 		...queryOptions,

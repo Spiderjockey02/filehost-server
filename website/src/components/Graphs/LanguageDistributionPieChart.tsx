@@ -28,7 +28,7 @@ export default function LanguageDistributionPieChart() {
 						{error.message}
 					</div>
 				) : (
-					<ObjectOrientedPieChart data={data ?? {}} />
+					<ObjectOrientedPieChart data={data?.languageCodes ?? {}} />
 				)}
 			</Card.Body>
 		</Card>

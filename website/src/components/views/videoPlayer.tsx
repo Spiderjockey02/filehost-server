@@ -353,8 +353,7 @@ export default function VideoPlayer({ videoPath, thumbnailPath }: VideoPlayerPro
 				{showStats && (
 					<div className={styles.statsBox}>
 						<div>Resolution: {nerdStats.resolution}</div>
-						<div>Duration: {formatTime(duration)}</div>
-						<div>Current Time: {formatTime(currentTime)}</div>
+						<div>Time: {formatTime(currentTime)} / {formatTime(duration)}</div>
 						<div>Dropped Frames: {nerdStats.dropped} / {nerdStats.total}</div>
 						<div>Buffer Ahead: {nerdStats.bufferAhead}s</div>
 						<div>Bitrate: {nerdStats.bitrate} kbps</div>
