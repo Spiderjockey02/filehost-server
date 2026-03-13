@@ -20,7 +20,7 @@ export default function AdminFilesPage() {
 		queryFn: async ({ signal }) => Promise.all([
 			API.ADMIN.fetchFileStats(signal),
 			API.ADMIN.fetchFileSizeCategories(signal),
-			API.ADMIN.fetchFileUploadGrowth(signal, new URLSearchParams('frame=daily')),
+			API.ADMIN.fetchFileUploadGrowth(signal, new URLSearchParams('interval=daily')),
 		]),
 		...queryOptions,
 	});

@@ -1,4 +1,4 @@
-import { requestTimeFrames } from '@/types/pages';
+import type { timeInterval } from '@/types/pages';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
 import LineChart from '../Charts/Line';
@@ -13,11 +13,11 @@ interface Props {
 }
 
 export default function NetworkRequestsLineChart({ userId, storageId }: Props) {
-	const [requestGrowthFrame, setRequestGrowthFrame] = useState<requestTimeFrames>('hourly');
+	const [requestGrowthInterval, setRequestGrowthInterval] = useState<timeInterval>('hourly');
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['networkRequests', requestGrowthFrame, userId, storageId],
+		queryKey: ['networkRequests', requestGrowthInterval, userId, storageId],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({ frame: requestGrowthFrame });
+			const params = new URLSearchParams({ interval: requestGrowthInterval });
 			if (userId) params.append('userId', userId);
 			if (storageId) params.append('storageId', storageId);
 
@@ -45,13 +45,13 @@ export default function NetworkRequestsLineChart({ userId, storageId }: Props) {
         Requests over time
 				<div className="dropdown">
 					<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-						{requestGrowthFrame}
+						{requestGrowthInterval}
 					</button>
 					<ul className="dropdown-menu dropdown-menu-end">
-						<li><a className="dropdown-item" href="#" onClick={() => setRequestGrowthFrame('yearly')}>Yearly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setRequestGrowthFrame('monthly')}>Monthly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setRequestGrowthFrame('daily')}>Daily</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setRequestGrowthFrame('hourly')}>Hourly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setRequestGrowthInterval('yearly')}>Yearly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setRequestGrowthInterval('monthly')}>Monthly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setRequestGrowthInterval('daily')}>Daily</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setRequestGrowthInterval('hourly')}>Hourly</a></li>
 					</ul>
 				</div>
 			</Card.Header>

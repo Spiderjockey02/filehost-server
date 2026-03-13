@@ -1,4 +1,5 @@
-import { createPlanSchema, validateFrame } from '@/validators';
+import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
+import { createPlanSchema, validateInterval } from '@/validators';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 import { getSession } from '@/middleware';
@@ -27,94 +28,27 @@ export const getPlanStats = (client: Client) => {
 // Endpoint: GET /api/admin/plan/trends
 export const getPlanTrends = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const frame = req.query.frame;
-		const result = validateFrame.safeParse(frame);
+		const interval = req.query.interval;
+		const result = validateInterval.safeParse(interval);
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-		switch (frame) {
+		let data: CountMap = {};
+		switch (result.data) {
 			case 'yearly': {
-				const years: CountMap = {};
-				const currentYear = new Date().getFullYear();
-				let cumulativeTotal = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1));
-
-				for (let i = 9; i >= 0; i--) {
-					const start = new Date(currentYear - i, 0, 1);
-					const end = new Date(currentYear - i + 1, 0, 1);
-					const files = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(start, end);
-					cumulativeTotal += files;
-					years[currentYear - i] = cumulativeTotal;
-				}
-				res.json({ years });
-				break;
+				data = await buildYearlyHistory({ func: client.PlanManager.fetchSubscriptionStartsBetweenTwoDates });
+				return res.json({ data });
 			}
 			case 'monthly': {
-				const months: CountMap = {};
-				const current = new Date();
-				current.setDate(1);
-
-				const firstMonthDate = new Date();
-				firstMonthDate.setMonth(current.getMonth() - 11);
-
-				let cumulativeTotal = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate));
-				for (let i = 11; i >= 0; i--) {
-					const start = new Date(current);
-					start.setMonth(current.getMonth() - i);
-					const end = new Date(start);
-					end.setMonth(start.getMonth() + 1);
-
-					const monthName = start.toLocaleString('default', { month: 'long' });
-					const files = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(start, end);
-					cumulativeTotal += files;
-					months[monthName] = cumulativeTotal;
-				}
-				res.json({ months });
-				break;
+				data = await buildMonthlyHistory({ func: client.PlanManager.fetchSubscriptionStartsBetweenTwoDates });
+				return res.json({ data });
 			}
 			case 'daily': {
-				const days: CountMap = {};
-				const today = new Date();
-				today.setHours(0, 0, 0, 0);
-				const frameStart = new Date(today);
-				frameStart.setDate(today.getDate() - 14);
-				let cumulativeTotal = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(new Date(2023, 0, 1), frameStart);
-
-				for (let i = 14; i >= 0; i--) {
-					const end = new Date();
-					end.setHours(0, 0, 0, 0);
-					end.setDate(end.getDate() - i + 1);
-
-					const start = new Date(end);
-					start.setDate(start.getDate() - 1);
-
-					const dateStr = start.toISOString().split('T')[0];
-					const files = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(start, end);
-					cumulativeTotal += files;
-					days[dateStr] = cumulativeTotal;
-				}
-				res.json({ days });
-				break;
+				data = await buildDailyHistory({ func: client.PlanManager.fetchSubscriptionStartsBetweenTwoDates });
+				return res.json({ data });
 			}
 			case 'hourly': {
-				const hours: CountMap = {};
-				const now = new Date();
-				const frameStart = new Date(now);
-				frameStart.setHours(now.getHours() - 23, 0, 0, 0);
-
-				let cumulativeTotal = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(new Date(2023, 0, 1), new Date(frameStart));
-
-				for (let i = 0; i < 24; i++) {
-					const start = new Date(frameStart);
-					start.setHours(frameStart.getHours() + i);
-					const end = new Date(start);
-					end.setHours(start.getHours() + 1);
-
-					const hourLabel = `${start.getHours().toString().padStart(2, '0')}:00`;
-					const files = await client.PlanManager.fetchSubscriptionStartsBetweenTwoDates(start, end);
-					cumulativeTotal += files;
-					hours[hourLabel] = cumulativeTotal;
-				}
-				res.json({ hours });
-				break;
+				data = await buildHourlyHistory({ func: client.PlanManager.fetchSubscriptionStartsBetweenTwoDates });
+				return res.json({ data });
 			}
 		}
 	};

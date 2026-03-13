@@ -146,7 +146,11 @@ export default class UserActivityAccessor {
 					},
 				},
 			});
-			return result._sum;
+
+			return {
+				incomingBytes: result._sum.incomingBytes ?? 0,
+				outgoingBytes: result._sum.outgoingBytes ?? 0,
+			};
 		} catch (err) {
 			throw err;
 		}

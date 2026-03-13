@@ -1,4 +1,5 @@
-import { validateBan, validateFrame, validatePage, validateUser } from '@/validators';
+import { buildDailyHistory, buildHourlyHistory, buildMonthlyHistory, buildYearlyHistory } from '@/utils/analyticTimeSeries';
+import { validateBan, validateInterval, validatePage, validateUser } from '@/validators';
 import type { FullSession } from '@/types/database/Session';
 import type { Request, Response } from 'express';
 import { Error, sanitiseObject } from '@/utils';
@@ -41,72 +42,27 @@ export const getUsersByLanguageCode = (client: Client) => {
 // Endpoint: GET /api/admin/users/growth
 export const getUserGrowth = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const frame = req.query.frame;
-		const result = validateFrame.safeParse(frame);
+		const interval = req.query.interval;
+		const result = validateInterval.safeParse(interval);
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-		switch (frame) {
+		let data: CountMap = {};
+		switch (result.data) {
 			case 'yearly': {
-				const years: CountMap = {};
-				const currentYear = new Date().getFullYear();
-				let cumulativeTotal = await client.userManager.fetchUserJoinesBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1));
-
-				for (let i = 9; i >= 0; i--) {
-					const start = new Date(currentYear - i, 0, 1);
-					const end = new Date(currentYear - i + 1, 0, 1);
-					const users = await client.userManager.fetchUserJoinesBetweenTwoDates(start, end);
-					cumulativeTotal += users;
-					years[currentYear - i] = cumulativeTotal;
-				}
-				res.json({ years });
-				break;
+				data = await buildYearlyHistory({ func: client.userManager.fetchUserJoinesBetweenTwoDates });
+				return res.json({ data });
 			}
 			case 'monthly': {
-				const months: CountMap = {};
-				const current = new Date();
-				current.setDate(1);
-
-				const firstMonthDate = new Date();
-				firstMonthDate.setMonth(current.getMonth() - 11);
-
-				let cumulativeTotal = await client.userManager.fetchUserJoinesBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate));
-				for (let i = 11; i >= 0; i--) {
-					const start = new Date(current);
-					start.setMonth(current.getMonth() - i);
-					const end = new Date(start);
-					end.setMonth(start.getMonth() + 1);
-
-					const monthName = start.toLocaleString('default', { month: 'long' });
-					const users = await client.userManager.fetchUserJoinesBetweenTwoDates(start, end);
-					cumulativeTotal += users;
-					months[monthName] = cumulativeTotal;
-				}
-				res.json({ months });
-				break;
+				data = await buildMonthlyHistory({ func: client.userManager.fetchUserJoinesBetweenTwoDates });
+				return res.json({ data });
 			}
 			case 'daily': {
-				const days: CountMap = {};
-				const today = new Date();
-				today.setHours(0, 0, 0, 0);
-				const frameStart = new Date(today);
-				frameStart.setDate(today.getDate() - 14);
-				let cumulativeTotal = await client.userManager.fetchUserJoinesBetweenTwoDates(new Date(2023, 0, 1), frameStart);
-
-				for (let i = 14; i >= 0; i--) {
-					const end = new Date();
-					end.setHours(0, 0, 0, 0);
-					end.setDate(end.getDate() - i + 1);
-
-					const start = new Date(end);
-					start.setDate(start.getDate() - 1);
-
-					const dateStr = start.toISOString().split('T')[0];
-					const users = await client.userManager.fetchUserJoinesBetweenTwoDates(start, end);
-					cumulativeTotal += users;
-					days[dateStr] = cumulativeTotal;
-				}
-				res.json({ days });
-				break;
+				data = await buildDailyHistory({ func: client.userManager.fetchUserJoinesBetweenTwoDates });
+				return res.json({ data });
+			}
+			case 'hourly': {
+				data = await buildHourlyHistory({ func: client.userManager.fetchUserJoinesBetweenTwoDates });
+				return res.json({ data });
 			}
 		}
 	};
@@ -204,7 +160,7 @@ export const getUserRetention = (client: Client) => {
 				sessions[dateStr] = session.length / total;
 			}
 
-			res.json({ retention: { files: days, sessions } });
+			res.json({ files: days, sessions });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user.');

@@ -1,5 +1,3 @@
-import { DatabaseBackup, StringNumberObj } from '.';
-
 export interface AdminStorageIdPageProps {
   storageId: string
 }
@@ -28,6 +26,6 @@ export interface SearchPageProps {
 
 export type viewTypeTypes = 'List' | 'Tiles';
 
-export type requestTimeFrames = 'daily' | 'monthly' | 'yearly' | 'hourly'
+export type timeInterval = 'daily' | 'monthly' | 'yearly' | 'hourly'
 
 export type adminSidebarTabs = 'dashboard' | 'users' | 'files' | 'system' | 'network' | 'storage' | 'subscriptions' | 'logs'

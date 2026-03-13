@@ -1,11 +1,11 @@
 import { Chart as ChartJS,	CategoryScale, LinearScale, PointElement,	LineElement, Filler,	Tooltip, Legend, ChartOptions } from 'chart.js';
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import type { requestTimeFrames } from '@/types/pages';
+import type { timeInterval } from '@/types/pages';
 import { formatBytes } from '@/utils/functions';
-import { useState } from 'react';
 import { Line } from 'react-chartjs-2';
-import { Card } from '..';
+import { useState } from 'react';
 import API from '@/services/api';
+import { Card } from '..';
 ChartJS.register(CategoryScale,	LinearScale,	PointElement,	LineElement,	Filler,	Tooltip,	Legend);
 
 interface Props {
@@ -13,12 +13,12 @@ interface Props {
 	storageId?: string
 }
 export default function ActivityTransferAreaChart({ userId, storageId }: Props) {
-	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('hourly');
+	const [trafficGrowthInterval, setTrafficGrowthInterval] = useState<timeInterval>('hourly');
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['networkTraffic', trafficGrowthFrame],
+		queryKey: ['networkTraffic', trafficGrowthInterval],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({ frame: trafficGrowthFrame });
+			const params = new URLSearchParams({ interval: trafficGrowthInterval });
 			if (userId) params.append('userId', userId);
 			if (storageId) params.append('storageId', storageId);
 
@@ -28,8 +28,8 @@ export default function ActivityTransferAreaChart({ userId, storageId }: Props) 
 	});
 
 	const labels = Object.keys(data ?? {});
-	const incomingData = labels.map(hour => data[hour]?.incomingBytes ?? 0);
-	const outgoingData = labels.map(hour => data[hour]?.outgoingBytes ?? 0);
+	const incomingData = labels.map(hour => data?.[hour]?.incomingBytes ?? 0);
+	const outgoingData = labels.map(hour => data?.[hour]?.outgoingBytes ?? 0);
 
 	const chartData = {
 		labels,
@@ -86,13 +86,13 @@ export default function ActivityTransferAreaChart({ userId, storageId }: Props) 
 				Traffic over time
 				<div className="dropdown">
 					<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-						{trafficGrowthFrame}
+						{trafficGrowthInterval}
 					</button>
 					<ul className="dropdown-menu dropdown-menu-end">
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('yearly')}>Yearly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('monthly')}>Monthly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('daily')}>Daily</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('hourly')}>Hourly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('yearly')}>Yearly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('monthly')}>Monthly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('daily')}>Daily</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('hourly')}>Hourly</a></li>
 					</ul>
 				</div>
 			</Card.Header>

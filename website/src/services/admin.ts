@@ -1,8 +1,8 @@
+import type { GetAdminStatsResult, GetAuditLogActivityResult, GetFileCategoriesResult, GetFileStatsResult, GetLogTypesResult, GetNetworkStatsResult, GetNetworkTrafficResult, GetSubscriptionStatsResult, GetSystemStatsResult, GetUserRetentionResults, GetUserStatsResult } from '@/types/Services/admin';
 import type { AuditLog, UserActivity, File, CronJob, Plan, Account, Notification, CronJobLog, UserBans } from '@/types/generated/browser';
 import type { FullAuditLogListener, StorageWithCounts, UserWithCount } from '@/types/database';
-import type { AdminNetworkUserAgentsListResult } from '@/types/Services/api';
 import type { AdminUser, Config, DatabaseBackup, StringNumberObj } from '@/types';
-import type { GetAdminStatsResult, GetFileCategoriesResult, GetFileStatsResult, GetLogTypesResult, GetNetworkStatsResult, GetSubscriptionStatsResult, GetSystemStatsResult, GetUserStatsResult } from '@/types/Services/admin';
+import type { AdminNetworkUserAgentsListResult } from '@/types/Services/api';
 import type { cacheStats } from '@/types/Components/Card';
 import API from './api';
 
@@ -263,13 +263,12 @@ export default class APIAdmin {
 	  * Fetches all users with pagination and filtering.
 	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
 	  * @param params
-	  * @returns
+	  * @returns {GetNetworkTrafficResult}
 	*/
-	async fetchNetworkTraffic(signal: AbortSignal, params: URLSearchParams) {
+	async fetchNetworkTraffic(signal: AbortSignal, params: URLSearchParams): Promise<GetNetworkTrafficResult> {
 		try {
-			const d = await API.fetch<any>(`/api/admin/network/traffic?${params}`, { signal });
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey]!;
+			const { data } = await API.fetch<{data: GetNetworkTrafficResult}>(`/api/admin/network/traffic?${params}`, { signal });
+			return data;
 		} catch {
 			throw new Error('Failed to fetch network traffic');
 		}
@@ -283,9 +282,8 @@ export default class APIAdmin {
 	*/
 	async fetchCustomerTrends(signal: AbortSignal, params: URLSearchParams) {
 		try {
-			const d = await API.fetch<any>(`/api/admin/plan/trends?${params}`, { signal });
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey]!;
+			const { data } = await API.fetch<{data: StringNumberObj}>(`/api/admin/plan/trends?${params}`, { signal });
+			return data;
 		} catch {
 			throw new Error('Failed to fetch customer trends');
 		}
@@ -306,11 +304,10 @@ export default class APIAdmin {
 	  * @param params
 	  * @returns
 	*/
-	async fetchAuditLogActivity(signal: AbortSignal, params: URLSearchParams) {
+	async fetchAuditLogActivity(signal: AbortSignal, params: URLSearchParams): Promise<GetAuditLogActivityResult> {
 		try {
-			const d = await API.fetch<any>(`/api/admin/logs/history?${params}`, { signal });
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey]!;
+			const { data } = await API.fetch<{data: GetAuditLogActivityResult}>(`/api/admin/logs/history?${params}`, { signal });
+			return data;
 		} catch {
 			throw new Error('Failed to fetch audit log activity data');
 		}
@@ -338,9 +335,8 @@ export default class APIAdmin {
 	*/
 	async fetchFileUploadGrowth(signal: AbortSignal, params: URLSearchParams) {
 		try {
-			const d = await API.fetch<any>(`/api/admin/files/growth?${params}`, { signal });
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey] as StringNumberObj;
+			const { data } = await API.fetch<{data: StringNumberObj}>(`/api/admin/files/growth?${params}`, { signal });
+			return data;
 		} catch {
 			throw new Error('Failed to fetch file upload growth data');
 		}
@@ -364,10 +360,9 @@ export default class APIAdmin {
 	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
 	  * @returns
 	*/
-	async fetchLanguageDistribution(signal: AbortSignal) {
+	async fetchLanguageDistribution(signal: AbortSignal): Promise<{languageCodes: StringNumberObj}> {
 		try {
-			const d = await API.fetch<any>('/api/admin/users/language-codes', { signal });
-			return d['languageCodes'] as StringNumberObj;
+			return await API.fetch('/api/admin/users/language-codes', { signal });
 		} catch {
 			throw new Error('Failed to fetch language distribution data');
 		}
@@ -405,9 +400,8 @@ export default class APIAdmin {
 	*/
 	async fetchNetworkRequestGrowth(signal: AbortSignal, params: URLSearchParams) {
 		try {
-			const d = await API.fetch<any>(`/api/admin/network/requests?${params}`, { signal });
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey] as StringNumberObj;
+			const { data } = await API.fetch<{data: StringNumberObj}>(`/api/admin/network/requests?${params}`, { signal });
+			return data;
 		} catch {
 			throw new Error('Failed to fetch network request growth data');
 		}
@@ -419,11 +413,10 @@ export default class APIAdmin {
 	  * @param params
 	  * @returns
 	*/
-	async fetchUserGrowth(signal: AbortSignal, params: URLSearchParams) {
+	async fetchUserGrowth(signal: AbortSignal, params: URLSearchParams): Promise<StringNumberObj> {
 		try {
-			const d = await API.fetch<any>(`/api/admin/users/growth?${params}`, { signal });
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey] as StringNumberObj;
+			const { data } = await API.fetch<{data: StringNumberObj}>(`/api/admin/users/growth?${params}`, { signal });
+			return data;
 		} catch {
 			throw new Error('Failed to fetch user growth data');
 		}
@@ -434,11 +427,9 @@ export default class APIAdmin {
 	  * @param {AbortSignal} signal - The abort signal to cancel the request if needed.
 	  * @returns
 	*/
-	async fetchUserRetention(signal: AbortSignal) {
+	async fetchUserRetention(signal: AbortSignal): Promise<GetUserRetentionResults> {
 		try {
-			const d = await API.fetch<any>('/api/admin/users/retention', { signal });
-			const firstKey = Object.keys(d)[0];
-			return d[firstKey];
+			return await API.fetch('/api/admin/users/retention', { signal });
 		} catch {
 			throw new Error('Failed to fetch user retention data');
 		}

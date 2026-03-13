@@ -113,3 +113,25 @@ export interface GetUserStatsResult {
   banned: number
   admins: number
 }
+
+export interface GetUserRetentionResults {
+  files: StringNumberObj
+  sessions: StringNumberObj
+}
+
+export interface GetNetworkTrafficResult {
+  [key: string]: {
+    incomingBytes: number
+    outgoingBytes: number
+  }
+}
+
+export interface GetAuditLogActivityResult {
+  [key: string]: {
+    user: number
+    file: number
+    storage: number
+    system: number
+    session: number
+  }
+}

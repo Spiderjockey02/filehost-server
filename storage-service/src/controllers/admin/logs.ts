@@ -1,4 +1,4 @@
-import { validateAdminLogs, validateFrame, validateLogListener } from '@/validators';
+import { validateAdminLogs, validateInterval, validateLogListener } from '@/validators';
 import type { AuditLogEventName, ListenerType } from '@/types/generated/client';
 import type { Request, Response } from 'express';
 import type { EntityCountMap } from '@/types';
@@ -49,13 +49,13 @@ export const getLogTypes = (client: Client) => {
 export const getLogHistory = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		// Get time frame and validate it
-		const frame = req.query.frame;
-		const result = validateFrame.safeParse(frame);
+		const interval = req.query.interval;
+		const result = validateInterval.safeParse(interval);
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-		switch (frame) {
+		const data: EntityCountMap = {};
+		switch (result.data) {
 			case 'yearly': {
-				const years: EntityCountMap = {};
 				const currentYear = new Date().getFullYear();
 				let cumulativeTotal = await Promise.all([
 					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1)),
@@ -77,7 +77,7 @@ export const getLogHistory = (client: Client) => {
 					]);
 
 					cumulativeTotal = Array.from({ length: 5 }, (_, j) => (users[j] ?? 0) + (cumulativeTotal[j] ?? 0));
-					years[currentYear - i] = {
+					data[currentYear - i] = {
 						user: cumulativeTotal[0],
 						file: cumulativeTotal[1],
 						storage: cumulativeTotal[2],
@@ -85,11 +85,10 @@ export const getLogHistory = (client: Client) => {
 						session: cumulativeTotal[4],
 					};
 				}
-				res.json({ years });
-				break;
+
+				return res.json({ data });
 			}
 			case 'monthly': {
-				const months: EntityCountMap = {};
 				const current = new Date();
 				current.setDate(1);
 
@@ -120,7 +119,7 @@ export const getLogHistory = (client: Client) => {
 					]);
 
 					cumulativeTotal = Array.from({ length: 5 }, (_, j) => (users[j] ?? 0) + (cumulativeTotal[j] ?? 0));
-					months[monthName] = {
+					data[monthName] = {
 						user: cumulativeTotal[0],
 						file: cumulativeTotal[1],
 						storage: cumulativeTotal[2],
@@ -128,11 +127,10 @@ export const getLogHistory = (client: Client) => {
 						session: cumulativeTotal[4],
 					};
 				}
-				res.json({ months });
-				break;
+
+			 return res.json({ data });
 			}
 			case 'daily': {
-				const days: EntityCountMap = {};
 				const today = new Date();
 				today.setHours(0, 0, 0, 0);
 				const frameStart = new Date(today);
@@ -164,7 +162,7 @@ export const getLogHistory = (client: Client) => {
 					]);
 
 					cumulativeTotal = Array.from({ length: 5 }, (_, j) => (users[j] ?? 0) + (cumulativeTotal[j] ?? 0));
-					days[dateStr] = {
+					data[dateStr] = {
 						user: cumulativeTotal[0],
 						file: cumulativeTotal[1],
 						storage: cumulativeTotal[2],
@@ -172,8 +170,46 @@ export const getLogHistory = (client: Client) => {
 						session: cumulativeTotal[4],
 					};
 				}
-				res.json({ days });
-				break;
+				return res.json({ data });
+			}
+			case 'hourly': {
+				const now = new Date();
+				const frameStart = new Date(now);
+				frameStart.setHours(now.getHours() - 23, 0, 0, 0);
+				let cumulativeTotal = await Promise.all([
+					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', new Date(2023, 0, 1), frameStart),
+					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', new Date(2023, 0, 1), frameStart),
+					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', new Date(2023, 0, 1), frameStart),
+					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', new Date(2023, 0, 1), frameStart),
+					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', new Date(2023, 0, 1), frameStart),
+				]) as number[];
+
+				for (let i = 0; i < 24; i++) {
+					const start = new Date(frameStart);
+					start.setHours(frameStart.getHours() + i);
+					const end = new Date(start);
+					end.setHours(start.getHours() + 1);
+
+					const dateStr = `${start.getHours().toString().padStart(2, '0')}:00`;
+					const users = await Promise.all([
+						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', start, end),
+						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', start, end),
+						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', start, end),
+						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', start, end),
+						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', start, end),
+					]);
+
+					cumulativeTotal = Array.from({ length: 5 }, (_, j) => (users[j] ?? 0) + (cumulativeTotal[j] ?? 0));
+					data[dateStr] = {
+						user: cumulativeTotal[0],
+						file: cumulativeTotal[1],
+						storage: cumulativeTotal[2],
+						system: cumulativeTotal[3],
+						session: cumulativeTotal[4],
+					};
+				}
+
+				return res.json({ data });
 			}
 		}
 	};

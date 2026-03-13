@@ -1,20 +1,19 @@
 import type { AdminManageUsersCardProps } from '@/types/Components/Card';
-import type { requestTimeFrames } from '@/types/pages';
+import type { timeInterval } from '@/types/pages';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
-import type { StringNumberObj } from '@/types';
 import LineChart from '../Charts/Line';
 import { Card } from '@/components';
 import { useState } from 'react';
 import API from '@/services/api';
 
 export default function FileUploadLineChart({ storageId }: AdminManageUsersCardProps) {
-	const [uploadGrowthFrame, setUploadGrowthFrame] = useState<requestTimeFrames>('daily');
+	const [uploadGrowthInterval, setUploadGrowthInterval] = useState<timeInterval>('daily');
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: storageId ? ['fileUploads', uploadGrowthFrame, storageId] : ['fileUploads', uploadGrowthFrame],
+		queryKey: storageId ? ['fileUploads', uploadGrowthInterval, storageId] : ['fileUploads', uploadGrowthInterval],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({ frame: uploadGrowthFrame });
+			const params = new URLSearchParams({ interval: uploadGrowthInterval });
 			if (storageId) params.append('storageId', storageId);
 
 			return API.ADMIN.fetchFileUploadGrowth(signal, params);
@@ -40,12 +39,12 @@ export default function FileUploadLineChart({ storageId }: AdminManageUsersCardP
 				File Uploads Over Time
 				<div className="dropdown">
 					<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-						{uploadGrowthFrame.charAt(0).toUpperCase() + uploadGrowthFrame.slice(1)}
+						{uploadGrowthInterval.charAt(0).toUpperCase() + uploadGrowthInterval.slice(1)}
 					</button>
 					<ul className="dropdown-menu dropdown-menu-end">
-						<li><a className="dropdown-item" href="#" onClick={() => setUploadGrowthFrame('daily')}>Daily</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setUploadGrowthFrame('monthly')}>Monthly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setUploadGrowthFrame('yearly')}>Yearly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setUploadGrowthInterval('daily')}>Daily</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setUploadGrowthInterval('monthly')}>Monthly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setUploadGrowthInterval('yearly')}>Yearly</a></li>
 					</ul>
 				</div>
 			</Card.Header>

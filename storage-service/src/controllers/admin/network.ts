@@ -1,8 +1,9 @@
+import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
+import { validateIntervalWithFilters } from '@/validators';
 import { HTTPMethod } from '@/types/generated/client';
 import type { Request, Response } from 'express';
-import { validateFrameWithFilters } from '@/validators';
 import type Client from '@/helpers/Client';
-import type { CountMap, TrafficHistoryByDate } from '@/types';
+import type { CountMap } from '@/types';
 import { Error } from '@/utils';
 
 // Endpoint: GET /api/admin/network/stats
@@ -28,94 +29,27 @@ export const getNetworkStats = (client: Client) => {
 // Endpoint: GET /api/admin/network/requests
 export const getActivityRequests = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const { frame, userId, storageId } = req.query;
-		const result = validateFrameWithFilters.safeParse({ frame, userId, storageId });
+		const { interval, userId, storageId } = req.query;
+		const result = validateIntervalWithFilters.safeParse({ interval, userId, storageId });
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-		switch (frame) {
+		let data: CountMap = {};
+		switch (result.data.interval) {
 			case 'yearly': {
-				const years: CountMap = {};
-				const currentYear = new Date().getFullYear();
-				let cumulativeTotal = await client.userActivityManager.fetchActivityBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1), { userId: result.data.userId, storageId: result.data.storageId });
-
-				for (let i = 9; i >= 0; i--) {
-					const start = new Date(currentYear - i, 0, 1);
-					const end = new Date(currentYear - i + 1, 0, 1);
-					const files = await client.userActivityManager.fetchActivityBetweenTwoDates(start, end, { userId: result.data.userId, storageId: result.data.storageId });
-					cumulativeTotal += files;
-					years[currentYear - i] = cumulativeTotal;
-				}
-				res.json({ years });
-				break;
+				data = await buildYearlyHistory({ func: client.userActivityManager.fetchActivityBetweenTwoDates, params: { userId: result.data.userId, storageId: result.data.storageId } });
+				return res.json({ data });
 			}
 			case 'monthly': {
-				const months: CountMap = {};
-				const current = new Date();
-				current.setDate(1);
-
-				const firstMonthDate = new Date();
-				firstMonthDate.setMonth(current.getMonth() - 11);
-
-				let cumulativeTotal = await client.userActivityManager.fetchActivityBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate), { userId: result.data.userId, storageId: result.data.storageId });
-				for (let i = 11; i >= 0; i--) {
-					const start = new Date(current);
-					start.setMonth(current.getMonth() - i);
-					const end = new Date(start);
-					end.setMonth(start.getMonth() + 1);
-
-					const monthName = start.toLocaleString('default', { month: 'long' });
-					const files = await client.userActivityManager.fetchActivityBetweenTwoDates(start, end, { userId: result.data.userId, storageId: result.data.storageId });
-					cumulativeTotal += files;
-					months[monthName] = cumulativeTotal;
-				}
-				res.json({ months });
-				break;
+				data = await buildMonthlyHistory({ func: client.userActivityManager.fetchActivityBetweenTwoDates, params: { userId: result.data.userId, storageId: result.data.storageId } });
+				return res.json({ data });
 			}
 			case 'daily': {
-				const days: CountMap = {};
-				const today = new Date();
-				today.setHours(0, 0, 0, 0);
-				const frameStart = new Date(today);
-				frameStart.setDate(today.getDate() - 14);
-				let cumulativeTotal = await client.userActivityManager.fetchActivityBetweenTwoDates(new Date(2023, 0, 1), frameStart, { userId: result.data.userId, storageId: result.data.storageId });
-
-				for (let i = 14; i >= 0; i--) {
-					const end = new Date();
-					end.setHours(0, 0, 0, 0);
-					end.setDate(end.getDate() - i + 1);
-
-					const start = new Date(end);
-					start.setDate(start.getDate() - 1);
-
-					const dateStr = start.toISOString().split('T')[0];
-					const files = await client.userActivityManager.fetchActivityBetweenTwoDates(start, end, { userId: result.data.userId, storageId: result.data.storageId });
-					cumulativeTotal += files;
-					days[dateStr] = cumulativeTotal;
-				}
-				res.json({ days });
-				break;
+				data = await buildDailyHistory({ func: client.userActivityManager.fetchActivityBetweenTwoDates, params: { userId: result.data.userId, storageId: result.data.storageId } });
+				return res.json({ data });
 			}
 			case 'hourly': {
-				const hours: CountMap = {};
-				const now = new Date();
-				const frameStart = new Date(now);
-				frameStart.setHours(now.getHours() - 23, 0, 0, 0);
-
-				let cumulativeTotal = await client.userActivityManager.fetchActivityBetweenTwoDates(new Date(2023, 0, 1), new Date(frameStart), { userId: result.data.userId, storageId: result.data.storageId });
-
-				for (let i = 0; i < 24; i++) {
-					const start = new Date(frameStart);
-					start.setHours(frameStart.getHours() + i);
-					const end = new Date(start);
-					end.setHours(start.getHours() + 1);
-
-					const hourLabel = `${start.getHours().toString().padStart(2, '0')}:00`;
-					const files = await client.userActivityManager.fetchActivityBetweenTwoDates(start, end, { userId: result.data.userId, storageId: result.data.storageId });
-					cumulativeTotal += files;
-					hours[hourLabel] = cumulativeTotal;
-				}
-				res.json({ hours });
-				break;
+				data = await buildHourlyHistory({ func: client.userActivityManager.fetchActivityBetweenTwoDates, params: { userId: result.data.userId, storageId: result.data.storageId } });
+				return res.json({ data });
 			}
 		}
 	};
@@ -124,96 +58,29 @@ export const getActivityRequests = (client: Client) => {
 // Endpoint: GET /api/admin/network/traffic
 export const getActivityTraffic = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const { frame, userId, storageId } = req.query;
-		const result = validateFrameWithFilters.safeParse({ frame, userId, storageId });
+		const { interval, userId, storageId } = req.query;
+		const result = validateIntervalWithFilters.safeParse({ interval, userId, storageId });
 		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-		switch (frame) {
+		let data: CountMap = {};
+		switch (result.data.interval) {
 			case 'yearly': {
-				const years: TrafficHistoryByDate = {};
-				const currentYear = new Date().getFullYear();
-
-				for (let i = 9; i >= 0; i--) {
-					const start = new Date(currentYear - i, 0, 1);
-					const end = new Date(currentYear - i + 1, 0, 1);
-					const data = await client.userActivityManager.calculateTransferBetweenTwoDates(start, end, { userId: result.data.userId, storageId: result.data.storageId });
-					if (data.incomingBytes === null) data.incomingBytes = 0;
-					if (data.outgoingBytes === null) data.outgoingBytes = 0;
-					years[currentYear - i] = data;
-				}
-				res.json({ years });
-				break;
+				data = await buildYearlyHistory({ func: client.userActivityManager.calculateTransferBetweenTwoDates, params: { userId: result.data.userId, storageId: result.data.storageId } });
+				return res.json({ data });
 			}
 			case 'monthly': {
-				const months: TrafficHistoryByDate = {};
-				const current = new Date();
-				current.setDate(1);
-
-				const firstMonthDate = new Date();
-				firstMonthDate.setMonth(current.getMonth() - 11);
-
-				for (let i = 11; i >= 0; i--) {
-					const start = new Date(current);
-					start.setMonth(current.getMonth() - i);
-					const end = new Date(start);
-					end.setMonth(start.getMonth() + 1);
-
-					const monthName = start.toLocaleString('default', { month: 'long' });
-					const data = await client.userActivityManager.calculateTransferBetweenTwoDates(start, end, { userId: result.data.userId, storageId: result.data.storageId });
-					if (data.incomingBytes === null) data.incomingBytes = 0;
-					if (data.outgoingBytes === null) data.outgoingBytes = 0;
-					months[monthName] = data;
-				}
-				res.json({ months });
-				break;
+				data = await buildMonthlyHistory({ func: client.userActivityManager.calculateTransferBetweenTwoDates, params: { userId: result.data.userId, storageId: result.data.storageId } });
+				return res.json({ data });
 			}
 			case 'daily': {
-				const days: TrafficHistoryByDate = {};
-				const today = new Date();
-				today.setHours(0, 0, 0, 0);
-				const frameStart = new Date(today);
-				frameStart.setDate(today.getDate() - 14);
-
-				for (let i = 14; i >= 0; i--) {
-					const end = new Date();
-					end.setHours(0, 0, 0, 0);
-					end.setDate(end.getDate() - i + 1);
-
-					const start = new Date(end);
-					start.setDate(start.getDate() - 1);
-
-					const dateStr = start.toISOString().split('T')[0];
-					const data = await client.userActivityManager.calculateTransferBetweenTwoDates(start, end, { userId: result.data.userId, storageId: result.data.storageId });
-					if (data.incomingBytes === null) data.incomingBytes = 0;
-					if (data.outgoingBytes === null) data.outgoingBytes = 0;
-					days[dateStr] = data;
-				}
-				res.json({ days });
-				break;
+				data = await buildDailyHistory({ func: client.userActivityManager.calculateTransferBetweenTwoDates, params: { userId: result.data.userId, storageId: result.data.storageId } });
+				return res.json({ data });
 			}
 			case 'hourly': {
-				const hours: TrafficHistoryByDate = {};
-				const now = new Date();
-				const frameStart = new Date(now);
-				frameStart.setHours(now.getHours() - 23, 0, 0, 0);
-
-				for (let i = 0; i < 24; i++) {
-					const start = new Date(frameStart);
-					start.setHours(frameStart.getHours() + i);
-					const end = new Date(start);
-					end.setHours(start.getHours() + 1);
-
-					const hourLabel = `${start.getHours().toString().padStart(2, '0')}:00`;
-					const data = await client.userActivityManager.calculateTransferBetweenTwoDates(start, end, { userId: result.data.userId, storageId: result.data.storageId });
-					if (data.incomingBytes === null) data.incomingBytes = 0;
-					if (data.outgoingBytes === null) data.outgoingBytes = 0;
-
-					hours[hourLabel] = data;
-				}
-				res.json({ hours });
-				break;
+				data = await buildHourlyHistory({ func: client.userActivityManager.calculateTransferBetweenTwoDates, params: { userId: result.data.userId, storageId: result.data.storageId } });
+				return res.json({ data });
 			}
-		};
+		}
 	};
 };
 

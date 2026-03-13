@@ -1,4 +1,4 @@
-import type { requestTimeFrames } from '@/types/pages';
+import type { timeInterval } from '@/types/pages';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
 import LineChart from '../Charts/Line';
@@ -7,12 +7,12 @@ import { useState } from 'react';
 import API from '@/services/api';
 
 export default function AdminCustomerTrend() {
-	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('daily');
+	const [trafficGrowthInterval, setTrafficGrowthInterval] = useState<timeInterval>('daily');
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['customerTrends', trafficGrowthFrame],
+		queryKey: ['customerTrends', trafficGrowthInterval],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({ frame: trafficGrowthFrame });
+			const params = new URLSearchParams({ interval: trafficGrowthInterval });
 			return API.ADMIN.fetchCustomerTrends(signal, params);
 		},
 		...queryOptions,
@@ -36,12 +36,12 @@ export default function AdminCustomerTrend() {
         Monthly Revenue Trend
 				<div className="dropdown">
 					<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-						{trafficGrowthFrame}
+						{trafficGrowthInterval}
 					</button>
 					<ul className="dropdown-menu dropdown-menu-end">
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('yearly')}>Yearly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('monthly')}>Monthly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('daily')}>Daily</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('yearly')}>Yearly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('monthly')}>Monthly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('daily')}>Daily</a></li>
 					</ul>
 				</div>
 			</Card.Header>

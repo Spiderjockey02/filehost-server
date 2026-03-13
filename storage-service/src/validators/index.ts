@@ -21,19 +21,19 @@ export const validateGrouped = z.object({
 });
 
 
-export const validateFrame = z.enum(['yearly', 'monthly', 'daily', 'hourly'], {
-	message: 'frame must be one of the following: yearly, monthly, daily or hourly',
+export const validateInterval = z.enum(['yearly', 'monthly', 'daily', 'hourly'], {
+	message: 'interval must be one of the following: yearly, monthly, daily or hourly',
 });
 
-export const validateFrameWithFilters = z.object({
-	frame: validateFrame,
+export const validateIntervalWithFilters = z.object({
+	interval: validateInterval,
 	storageId: z.string().optional(),
 	userId: z.string().optional(),
 });
 
 export const validateFileGrowth = z.object({
 	storageId: z.string().optional(),
-	frame: validateFrame,
+	interval: validateInterval,
 });
 
 export const validateAdminLogs = z.object({

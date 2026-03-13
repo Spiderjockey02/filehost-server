@@ -1,4 +1,4 @@
-import type { requestTimeFrames } from '@/types/pages';
+import type { timeInterval } from '@/types/pages';
 import { useQuery } from '@tanstack/react-query';
 import { queryOptions } from '@/utils/functions';
 import LineChart from '../Charts/Line';
@@ -7,12 +7,12 @@ import { useState } from 'react';
 import API from '@/services/api';
 
 export default function UserGrowthLineChart() {
-	const [userGrowthFrame, setUserGrowthFrame] = useState<requestTimeFrames>('monthly');
+	const [userGrowthFrame, setUserGrowthFrame] = useState<timeInterval>('monthly');
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['userGrowth', userGrowthFrame],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({ frame: userGrowthFrame });
+			const params = new URLSearchParams({ interval: userGrowthFrame });
 			return API.ADMIN.fetchUserGrowth(signal, params);
 		},
 		...queryOptions,

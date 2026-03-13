@@ -1,4 +1,4 @@
-import { requestTimeFrames } from '@/types/pages';
+import type { timeInterval } from '@/types/pages';
 import { queryOptions } from '@/utils/functions';
 import { useQuery } from '@tanstack/react-query';
 import { Line } from 'react-chartjs-2';
@@ -7,12 +7,12 @@ import { useState } from 'react';
 import API from '@/services/api';
 
 export default function AuditLogActivityChart() {
-	const [trafficGrowthFrame, setTrafficGrowthFrame] = useState<requestTimeFrames>('daily');
+	const [trafficGrowthInterval, setTrafficGrowthInterval] = useState<timeInterval>('daily');
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['auditLogActivity', trafficGrowthFrame],
+		queryKey: ['auditLogActivity', trafficGrowthInterval],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({ frame: trafficGrowthFrame });
+			const params = new URLSearchParams({ interval: trafficGrowthInterval });
 			return API.ADMIN.fetchAuditLogActivity(signal, params);
 		},
 		...queryOptions,
@@ -30,7 +30,7 @@ export default function AuditLogActivityChart() {
 
 	const datasets = config.map(({ key, label, color }) => ({
 		label,
-		data: labels.map(hour => data[hour]?.[key] ?? 0),
+		data: labels.map(hour => data?.[hour]?.[key as keyof typeof data[typeof hour]] ?? 0),
 		backgroundColor: `rgba(${color}, 0.2)`,
 		borderColor: `rgba(${color}, 1)`,
 	}));
@@ -41,12 +41,12 @@ export default function AuditLogActivityChart() {
         Audit Log Activity Over Time
 				<div className="dropdown">
 					<button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-						{trafficGrowthFrame}
+						{trafficGrowthInterval}
 					</button>
 					<ul className="dropdown-menu dropdown-menu-end">
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('yearly')}>Yearly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('monthly')}>Monthly</a></li>
-						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthFrame('daily')}>Daily</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('yearly')}>Yearly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('monthly')}>Monthly</a></li>
+						<li><a className="dropdown-item" href="#" onClick={() => setTrafficGrowthInterval('daily')}>Daily</a></li>
 					</ul>
 				</div>
 			</Card.Header>

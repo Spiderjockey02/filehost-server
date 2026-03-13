@@ -22,7 +22,7 @@ export default function AdminNetworkPage() {
 		queryKey: ['adminNetwork'],
 		queryFn: async ({ signal }) => Promise.all([
 			API.ADMIN.fetchNetworkStats(signal),
-			API.ADMIN.fetchNetworkStatusDistribution(signal, new URLSearchParams('frame=daily')),
+			API.ADMIN.fetchNetworkStatusDistribution(signal, new URLSearchParams('interval=daily')),
 		]),
 		...queryOptions,
 	});
