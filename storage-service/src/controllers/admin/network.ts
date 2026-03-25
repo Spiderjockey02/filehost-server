@@ -1,6 +1,5 @@
 import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
-import { validateIntervalWithFilters } from '@/validators';
-import { HTTPMethod } from '@/types/generated/client';
+import { validateIntervalWithFilters, validateNetworkList } from '@/validators';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 import type { CountMap } from '@/types';
@@ -90,22 +89,12 @@ export const getActivityList = (client: Client) => {
 		try {
 			// Allow pagination
 			const { page, userId, status, method } = req.query;
-
-			// Validate page
-			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
-
-			// Validate `status` as a number
-			if (typeof status == 'string' && isNaN(Number(status))) return Error.IncorrectQuery(res, 'status if present must be a number.');
-			const validMethods = Object.values(HTTPMethod) as string[];
-			const parsedMethod = typeof method === 'string' && validMethods.includes(method) ? method as HTTPMethod : undefined;
+			const result = validateNetworkList.safeParse({ page, userId, status, method });
+			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			const [activity, total] = await Promise.all([
-				client.userActivityManager.fetchActivity({
-					page: page ? Number(page) : undefined, userId: userId ? `${userId}` : undefined, statusCode: status?.length == 0 ? undefined : Number(status), method: parsedMethod,
-				}),
-				client.userActivityManager.fetchTotal({
-					userId: userId ? `${userId}` : undefined, statusCode: status?.length == 0 ? undefined : Number(status), method: parsedMethod,
-				}),
+				client.userActivityManager.fetchActivity({ page: result.data.page, userId: result.data.userId, statusCode: result.data.status, method: result.data.method }),
+				client.userActivityManager.fetchTotal({ userId: result.data.userId, statusCode: result.data.status, method: result.data.method }),
 			]);
 			res.json({ activity, total });
 		} catch (err) {

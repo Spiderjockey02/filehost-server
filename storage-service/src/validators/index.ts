@@ -1,4 +1,4 @@
-import { AuditLogEventName } from '@/types/generated/client';
+import { AuditLogEventName, HTTPMethod } from '@/types/generated/client';
 import MIMEList from '../../assets/MIME-list.json';
 import { z } from 'zod';
 
@@ -294,7 +294,6 @@ export const createPlanSchema = z.object({
 	isDefault: z.boolean().optional(),
 });
 
-
 export const validateRecentlyViewed = z.object({
 	sortOrder: z
 		.enum(['asc', 'desc'], {
@@ -304,4 +303,18 @@ export const validateRecentlyViewed = z.object({
 		.enum(['name', 'viewedAt'], {
 			message: 'sortBy must be a valid string, name or viewedAt',
 		}),
+});
+
+export const validateNetworkList = z.object({
+	userId: z.string().optional(),
+	page: validatePage,
+	status: z
+		.union([
+			z.number(),
+			z.string().regex(/^\d+$/, 'status must be a valid number').transform(Number),
+		])
+		.optional()
+		.refine((val) => val === undefined || val >= 0, { message: 'deletedFileRetentionDays must be non-negative.' }),
+	method: z
+		.enum(HTTPMethod).optional(),
 });
