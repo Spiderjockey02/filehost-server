@@ -22,7 +22,7 @@ export default function AdminManageUsersCard({ storageId }: AdminManageUsersCard
 			const params = new URLSearchParams({ page: `${page}`, name, ...filters });
 			if (storageId) params.append('storageId', storageId);
 
-			return API.ADMIN.fetchAllUsers(signal, params);
+			return API.ADMIN.USERS.fetchAll(signal, params);
 		},
 		...queryOptions,
 	});

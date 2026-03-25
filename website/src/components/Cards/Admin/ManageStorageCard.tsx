@@ -14,7 +14,7 @@ export default function AdminManageStorageCard() {
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['storages'],
-		queryFn: async ({ signal }) => API.ADMIN.fetchStorages(signal),
+		queryFn: async ({ signal }) => API.ADMIN.STORAGE.fetchAll(signal),
 		...queryOptions,
 	});
 

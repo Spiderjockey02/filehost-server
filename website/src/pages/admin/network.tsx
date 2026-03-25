@@ -19,8 +19,8 @@ export default function AdminNetworkPage({ user }: PageProps) {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['adminNetwork'],
 		queryFn: async ({ signal }) => Promise.all([
-			API.ADMIN.fetchNetworkStats(signal),
-			API.ADMIN.fetchNetworkStatusDistribution(signal, new URLSearchParams('interval=daily')),
+			API.ADMIN.NETWORK.fetchNetworkStats(signal),
+			API.ADMIN.NETWORK.fetchNetworkStatusDistribution(signal, new URLSearchParams({ interval: 'daily' })),
 		]),
 		...queryOptions,
 	});

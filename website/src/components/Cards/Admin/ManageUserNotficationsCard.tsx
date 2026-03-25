@@ -14,7 +14,7 @@ export default function AdminManageUserNotficationsCard({ userId }: AdminManageU
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['userNotifications', userId, page],
-		queryFn: async ({ signal }) => API.ADMIN.fetchUserNotifications(signal, { userId, page }),
+		queryFn: async ({ signal }) => API.ADMIN.USERS.fetchNotificationsByUserId(signal, { userId, page }),
 		...queryOptions,
 	});
 

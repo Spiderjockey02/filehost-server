@@ -16,9 +16,9 @@ export default function AdminUsersPage({ user }: PageProps) {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['adminUsers'],
 		queryFn: async ({ signal }) => Promise.all([
-			API.ADMIN.fetchUserEmailDomains(signal),
-			API.ADMIN.fetchUserSignupSources(signal),
-			API.ADMIN.fetchUserStats(signal),
+			API.ADMIN.USERS.fetchEmailDomains(signal),
+			API.ADMIN.USERS.fetchSignupSources(signal),
+			API.ADMIN.USERS.fetchStats(signal),
 		]),
 		...queryOptions,
 	});

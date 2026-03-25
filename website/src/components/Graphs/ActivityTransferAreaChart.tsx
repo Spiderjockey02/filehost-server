@@ -22,7 +22,7 @@ export default function ActivityTransferAreaChart({ userId, storageId }: Props) 
 			if (userId) params.append('userId', userId);
 			if (storageId) params.append('storageId', storageId);
 
-			return API.ADMIN.fetchNetworkTraffic(signal, params);
+			return API.ADMIN.NETWORK.fetchNetworkTraffic(signal, params);
 		},
 		...queryOptions,
 	});

@@ -21,7 +21,7 @@ export default function NetworkRequestsLineChart({ userId, storageId }: Props) {
 			if (userId) params.append('userId', userId);
 			if (storageId) params.append('storageId', storageId);
 
-			return API.ADMIN.fetchNetworkRequestGrowth(signal, params);
+			return API.ADMIN.NETWORK.fetchNetworkRequestGrowth(signal, params);
 		},
 		...queryOptions,
 	});

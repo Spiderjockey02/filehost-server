@@ -11,7 +11,7 @@ export default function Search({ query: { query, fileType, dateUpdated }, user }
 	const { showToast } = useToast();
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['recent', query, fileType, dateUpdated],
+		queryKey: ['search', query, fileType, dateUpdated],
 		queryFn: async ({ signal }) => {
 			const params = new URLSearchParams({ query, fileType, dateUpdated });
 			return API.FILE.search(signal, params);

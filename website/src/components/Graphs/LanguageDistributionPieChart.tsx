@@ -8,7 +8,7 @@ export default function LanguageDistributionPieChart() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['languageDistribution'],
 		queryFn: async ({ signal }) => {
-			return API.ADMIN.fetchLanguageDistribution(signal);
+			return API.ADMIN.USERS.fetchLanguageDistribution(signal);
 		},
 		...queryOptions,
 	});

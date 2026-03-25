@@ -1,5 +1,84 @@
-import { DatabaseBackup, StringNumberObj } from '..';
-import { HTTPMethod } from '../generated/browser';
+import type { Account, AuditLog, HTTPMethod, UserBans, Notification } from '../generated/browser';
+import type { AdminUser, DatabaseBackup, StringNumberObj } from '..';
+import type { StorageWithCounts, UserWithCount } from '../database';
+
+// Types for Admin Logs Services
+export interface GetAuditLogActivityResult {
+  [key: string]: {
+    user: number
+    file: number
+    storage: number
+    system: number
+    session: number
+  }
+}
+
+export interface GetLogListResult {
+  logs: AuditLog[]
+  total: number
+}
+
+export interface GetFileByNameResult {
+  logs: string[]
+  total: number
+}
+
+export interface GetLogTypesResult {
+  resourceTypes: {
+    user: number
+    file: number
+    storage: number
+    system: number
+    session: number
+  },
+  successRates: {
+    true: number
+    false: number
+  }
+}
+
+export interface GetAuditLogsResult {
+  logs: AuditLog[]
+  total: number
+}
+
+// Types for Admin Storage Services
+export interface GetStorageListResult {
+  storages: StorageWithCounts[]
+  avgFileCount: number
+  avgStorageUsage: number
+}
+
+export interface GetStorageTypesResult {
+  MediumCounts: {
+    [key: string]: number
+  }
+}
+
+// Types for Admin User Services
+export interface GetAdminUserIdResult {
+  user: AdminUser
+  bannedStatus: UserBans | null
+}
+
+export interface GetAccountsByUserIdResult {
+  accounts: Account[]
+}
+
+export interface GetNotificationsByUserIdParams {
+  userId: string
+  page: number
+}
+
+export interface GetNotificationsByUserIdResult {
+  notifications: Notification[]
+  total: number
+}
+
+export interface GetAllResult {
+  users: UserWithCount[]
+  total: number
+}
 
 type StorageMediumStats = {
   name: string
@@ -46,20 +125,6 @@ export interface GetFileCategoriesResult {
     'Large (50 MB - 500 MB)': number
     'Very Large (500 MB - 1 GB)': number
     'Huge (> 1 GB)': number
-  }
-}
-
-export interface GetLogTypesResult {
-  resourceTypes: {
-    user: number
-    file: number
-    storage: number
-    system: number
-    session: number
-  },
-  successRates: {
-    true: number
-    false: number
   }
 }
 
@@ -123,15 +188,5 @@ export interface GetNetworkTrafficResult {
   [key: string]: {
     incomingBytes: number
     outgoingBytes: number
-  }
-}
-
-export interface GetAuditLogActivityResult {
-  [key: string]: {
-    user: number
-    file: number
-    storage: number
-    system: number
-    session: number
   }
 }

@@ -22,7 +22,7 @@ export default function AdminListAuditLogsCard() {
 			const params = new URLSearchParams({ page: `${page}`, ...filters });
 			if (filters.eventName == '') params.delete('name');
 
-			return API.ADMIN.fetchAuditLogs(signal, params);
+			return API.ADMIN.LOGS.fetchAuditLogs(signal, params);
 		},
 		...queryOptions,
 	});

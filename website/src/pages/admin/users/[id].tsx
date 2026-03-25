@@ -16,7 +16,7 @@ export default function AdminUserIdPage({ userId, user }: AdminUserIdPageProps) 
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['adminUser', userId],
-		queryFn: async ({ signal }) => API.ADMIN.fetchUserById(signal, userId),
+		queryFn: async ({ signal }) => API.ADMIN.USERS.fetchById(signal, userId),
 		...queryOptions,
 	});
 

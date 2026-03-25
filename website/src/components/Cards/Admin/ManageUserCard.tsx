@@ -15,7 +15,7 @@ export default function AdminManageUserCard({ isLoading, user, bannedStatus, isC
 
 	const { data } = useQuery({
 		queryKey: ['userAccounts', user?.id],
-		queryFn: async ({ signal }) => API.ADMIN.fetchUserAccounts(signal, user!.id),
+		queryFn: async ({ signal }) => API.ADMIN.USERS.fetchAccountsByUserId(signal, user!.id),
 		...queryOptions,
 	});
 

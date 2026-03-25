@@ -13,7 +13,7 @@ export default function UserGrowthLineChart() {
 		queryKey: ['userGrowth', userGrowthFrame],
 		queryFn: async ({ signal }) => {
 			const params = new URLSearchParams({ interval: userGrowthFrame });
-			return API.ADMIN.fetchUserGrowth(signal, params);
+			return API.ADMIN.USERS.fetchGrowth(signal, params);
 		},
 		...queryOptions,
 	});

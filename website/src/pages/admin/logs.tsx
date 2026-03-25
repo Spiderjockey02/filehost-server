@@ -17,7 +17,7 @@ export default function AdminLogsPage({ user }: PageProps) {
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['adminUser'],
-		queryFn: async ({ signal }) => Promise.all([API.ADMIN.fetchLogs(signal), API.ADMIN.fetchLogTypes(signal)]),
+		queryFn: async ({ signal }) => Promise.all([API.ADMIN.LOGS.fetchAll(signal), API.ADMIN.LOGS.fetchTypes(signal)]),
 		...queryOptions,
 	});
 

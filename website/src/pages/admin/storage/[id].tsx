@@ -15,8 +15,8 @@ export default function AdminStorageIdPage({ user, storageId }: AdminStorageIdPa
 	const { showToast } = useToast();
 
 	const { data, error, isLoading } = useQuery({
-		queryKey: [`storage_${storageId}`],
-		queryFn: async ({ signal }) => API.ADMIN.fetchStorageById(signal, storageId),
+		queryKey: ['storage', storageId],
+		queryFn: async ({ signal }) => API.ADMIN.STORAGE.fetchById(signal, storageId),
 		...queryOptions,
 	});
 

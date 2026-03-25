@@ -13,7 +13,7 @@ export default function AdminManageLogListenersCard() {
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['auditLogs'],
-		queryFn: async ({ signal }) => API.ADMIN.fetchLogListeners(signal),
+		queryFn: async ({ signal }) => API.ADMIN.LOGS.fetchListeners(signal),
 		...queryOptions,
 	});
 

@@ -17,8 +17,8 @@ export default function AdminStoragePage({ user }: PageProps) {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['adminStorage'],
 		queryFn: async ({ signal }) => Promise.all([
-			API.ADMIN.fetchStorages(signal),
-			API.ADMIN.fetchStorageTypes(signal),
+			API.ADMIN.STORAGE.fetchAll(signal),
+			API.ADMIN.STORAGE.fetchTypes(signal),
 		]),
 		...queryOptions,
 	});

@@ -13,7 +13,7 @@ export default function AuditLogActivityChart() {
 		queryKey: ['auditLogActivity', trafficGrowthInterval],
 		queryFn: async ({ signal }) => {
 			const params = new URLSearchParams({ interval: trafficGrowthInterval });
-			return API.ADMIN.fetchAuditLogActivity(signal, params);
+			return API.ADMIN.LOGS.fetchAuditLogActivity(signal, params);
 		},
 		...queryOptions,
 	});

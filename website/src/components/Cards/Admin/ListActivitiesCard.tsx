@@ -4,6 +4,7 @@ import type { AdminListActivitiesCardProps } from '@/types/Components/Card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AdminActivityDetailsModal } from '@/components/Modals';
 import { Table, CollapsibleCard } from '@/components';
+import { HTTPMethod } from '@/types/generated/enums';
 import { useQuery } from '@tanstack/react-query';
 import { ChangeEvent, useState } from 'react';
 import API from '@/services/api';
@@ -20,8 +21,11 @@ export default function AdminListActivitiesCard({ userId }: AdminListActivitiesC
 	const { data, isLoading, error } = useQuery({
 		queryKey: userId ? ['recentActivity', page, userId, filters] : ['recentActivity', page, filters],
 		queryFn: async ({ signal }) => {
-			const params = new URLSearchParams({ page: `${page}`, ...filters });
-			return API.ADMIN.fetchNetworkActivities(signal, params);
+			const params = new URLSearchParams({ page: `${page}` });
+			if (filters.method) params.append('method', filters.method);
+			if (filters.status) params.append('status', filters.status);
+
+			return API.ADMIN.NETWORK.fetchNetworkActivities(signal, params);
 		},
 		...queryOptions,
 	});
@@ -43,7 +47,7 @@ export default function AdminListActivitiesCard({ userId }: AdminListActivitiesC
 						<Table.Header>
 							<select className="form-select" onChange={(e) => onColumnChange(e, 'method')}>
 								<option selected value="">Method</option>
-								{['DELETE', 'GET', 'PATCH', 'POST', 'PUT'].map(i => (
+								{Object.values(HTTPMethod).map(i => (
 									<option value={i} key={i}>{i}</option>
 								))}
 							</select>

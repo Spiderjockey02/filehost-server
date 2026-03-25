@@ -17,7 +17,7 @@ export default function AdminListUserAgentsCard() {
 		queryKey: ['userAgents', filters, page],
 		queryFn: async ({ signal }) => {
 			const params = new URLSearchParams({ page: `${page}`, ...filters });
-			return API.ADMIN.fetchUserAgents(signal, params);
+			return API.ADMIN.NETWORK.fetchUserAgents(signal, params);
 		},
 		...queryOptions,
 	});

@@ -8,7 +8,7 @@ export default function UserRetentionLineChart() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['userRentention'],
 		queryFn: async ({ signal }) => {
-			return API.ADMIN.fetchUserRetention(signal);
+			return API.ADMIN.USERS.fetchRetention(signal);
 		},
 		...queryOptions,
 	});

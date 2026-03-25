@@ -9,7 +9,7 @@ export default function AdminListLogFilesCard() {
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['logFiles', fileName],
-		queryFn: async ({ signal }) => API.ADMIN.fetchLogFiles(signal, fileName),
+		queryFn: async ({ signal }) => API.ADMIN.LOGS.fetchFileByName(signal, fileName),
 		...queryOptions,
 	});
 
@@ -37,10 +37,10 @@ export default function AdminListLogFilesCard() {
 						<tbody>
 							{isLoading ?
 								generatePlaceholderTable(7, 1)
-							  : data?.logs.map(name => (
-									<tr key={data?.logs.indexOf(name)}>
+							  : data?.logs.map(line => (
+									<tr key={data?.logs.indexOf(line)}>
 										<td>
-											<button className="btn" onClick={() => setFileName(name)}>{name}</button>
+											<button className="btn" onClick={() => setFileName(line)}>{line}</button>
 										</td>
 									</tr>
 								))
