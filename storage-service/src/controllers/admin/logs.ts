@@ -385,7 +385,7 @@ export const getLogFiles = (client: Client) => {
 			const stats = await Promise.all(logs.map(path => fs.stat(`${process.cwd()}/src/utils/logs/${path}`)));
 			const totalLogSize = stats.reduce((acc, stat) => acc + stat.size, 0);
 
-			res.json({ logs: logs.reverse(), totalLogSize });
+			res.json({ logs: logs.reverse(), total: totalLogSize });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log files.');
@@ -403,7 +403,8 @@ export const getSpecificLog = (client: Client) => {
 			if (!existsSync(`${process.cwd()}/src/utils/logs/${date}`)) return Error.IncorrectQuery(res, 'Log file does not exist.');
 
 			const log = await fs.readFile(`${process.cwd()}/src/utils/logs/${date}`, 'utf-8');
-			res.json({ logs: log.toString().split(/\r?\n/) });
+			const logs = log.split(/\r?\n/).filter(line => line.trim() !== '');
+			res.json({ logs: logs, total: logs.length });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log file.');
