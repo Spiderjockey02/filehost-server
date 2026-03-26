@@ -1,6 +1,8 @@
 import type { DirectoryProps } from '@/types/Components/Views';
 import { useState, useEffect, useMemo, useRef } from 'react';
+import type { File } from '@/types/generated/browser';
 import type { ImageLoaderProps } from 'next/image';
+import MediaLightBox from './MediaLightbox';
 import Image from 'next/image';
 import Link from 'next/link';
 const fileTypes = {
@@ -9,6 +11,7 @@ const fileTypes = {
 };
 
 export default function PhotoAlbum({ folder }: DirectoryProps) {
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [itemsToShow, setItemsToShow] = useState(40);
 	const observerRef = useRef<HTMLDivElement | null>(null);
 	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${folder.userId}${encodeURI(src)}`;
@@ -28,29 +31,45 @@ export default function PhotoAlbum({ folder }: DirectoryProps) {
 		};
 	}, [itemsToShow, folder.children.length]);
 
+
 	return (
 		<>
 			<div className="d-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, max-content))', gap: '5px', justifyContent: 'start' }}>
 				{visibleFiles.map((file) => (
 					<div key={file.name} className="text-center rounded position-relative file-container">
-						<Link href={`/files${file.path}`} className="text-decoration-none">
-							<Image
-								className="center img-fluid"
-								loader={myLoader}
-								src={file.path}
-								alt={file.name}
-								width={200}
-								height={file.type === 'DIRECTORY' ? 236 : 260}
-								style={{
-									borderRadius: '8px',
-								}}
-							/>
-						</Link>
+						{file.mimetype?.startsWith('image') || file.mimetype?.startsWith('video') ?
+							<div role="button" onClick={() => setSelectedFile(file)} style={{ cursor: 'pointer' }}>
+								<Image
+									className="center img-fluid"
+									loader={myLoader}
+									src={file.path}
+									alt={file.name}
+									width={200}
+									height={file.type === 'DIRECTORY' ? 236 : 260}
+									style={{
+										borderRadius: '8px',
+									}}
+								/>
+							</div>
+							:	<Link href={`/files${file.path}`} className="text-decoration-none">
+								<Image
+									className="center img-fluid"
+									loader={myLoader}
+									src={file.path}
+									alt={file.name}
+									width={200}
+									height={file.type === 'DIRECTORY' ? 236 : 260}
+									style={{
+										borderRadius: '8px',
+									}}
+								/>
+							</Link>
+						}
 						<div className="file-name-overlay text-truncate">{file.name}</div>
 					</div>
 				))}
 			</div>
-
+			<MediaLightBox files={folder.children} selectedFile={selectedFile} setSelectedFile={setSelectedFile } />
 			{itemsToShow < folder.children.length && (
 				<div ref={observerRef} className="text-center py-3">
 					<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>{' '}

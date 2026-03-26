@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import type { GalleryProps } from '@/types/Components/Views';
 import type { File } from '@/types/generated/browser';
 import type { ImageLoaderProps } from 'next/image';
+import MediaLightBox from './MediaLightbox';
 import Image from 'next/image';
-import Link from 'next/link';
 
-export default function Gallery({ files }: GalleryProps) {
+export default function Gallery({ files, isLoading }: GalleryProps) {
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${files[0].userId}${encodeURI(src)}`;
 	const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -74,6 +75,21 @@ export default function Gallery({ files }: GalleryProps) {
 		container.scrollTo({ top: targetScroll, behavior: 'smooth' });
 	};
 
+	if (isLoading) {
+		return (
+			<>
+				<h5 className="fw-bold text-muted mb-2 py-2">Loading gallery...</h5>
+				<div className="d-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, max-content))', gap: '5px', justifyContent: 'start' }}>
+					{Array.from({ length: 12 }).map((_, index) => (
+						<div key={index} className="text-center rounded position-relative file-container placeholder" style={{ height: '260px', width: '200px' }}>
+							<div className="center img-fluid" style={{ borderRadius: '8px' }}></div>
+						</div>
+					))}
+				</div>
+			</>
+		);
+	}
+
 	return (
 		<div className="position-relative">
 			{Object.entries(groupedFiles).map(([monthYear, days]) => (
@@ -86,11 +102,9 @@ export default function Gallery({ files }: GalleryProps) {
 								{f.map(lf => {
 									return (
 										<div key={lf.id} className="text-center rounded position-relative file-container" data-observe data-id={lf.id}>
-											<Link href={`/files${lf.path}`} className="text-decoration-none">
-												<Image className="center img-fluid" loader={myLoader} src={lf.path} alt={lf.name}
-													width={200} height={260} style={{ borderRadius: '8px' }} loading='lazy'
-												/>
-											</Link>
+											<div role="button" onClick={() => setSelectedFile(lf)} style={{ cursor: 'pointer' }}>
+												<Image className="center img-fluid" loader={myLoader} src={lf.path} alt={lf.name} width={200} height={260} style={{ borderRadius: '8px' }} loading='lazy'/>
+											</div>
 											<div className="file-name-overlay text-truncate">{lf.name}</div>
 										</div>
 									);
@@ -100,6 +114,7 @@ export default function Gallery({ files }: GalleryProps) {
 					))}
 				</section>
 			))}
+			<MediaLightBox files={files} selectedFile={selectedFile} setSelectedFile={setSelectedFile} />
 			<div className="position-fixed end-0 me-3 d-flex flex-column align-items-end bottom-0">
 				<div className="d-flex flex-column justify-content-between align-items-end w-100" style={{ height: 'calc(100vh - 75px)', paddingBottom: '8px' }}>
 					{monthNames.map((month) => (

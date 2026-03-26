@@ -38,3 +38,9 @@ export interface FileViewerProps {
   file: File
   userId: string
 }
+
+export interface MediaLightBoxProps {
+  files: File[]
+  selectedFile: File | null
+  setSelectedFile: (file: File | null) => void
+}
