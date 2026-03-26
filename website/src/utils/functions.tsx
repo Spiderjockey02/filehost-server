@@ -1,12 +1,10 @@
 import { faFile, faFileAlt, faFileAudio, faFileImage, faFilePdf, faFileVideo, faFolder } from '@fortawesome/free-solid-svg-icons';
-import type { NextApiRequestCookies } from 'next/dist/server/api-utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { MySQLConnectionOptions } from '@/types/database';
 import type { File } from '@/types/generated/browser';
-import { UAParser } from 'ua-parser-js';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
-import { IncomingMessage } from 'http';
+import { UAParser } from 'ua-parser-js';
 import { NextRouter } from 'next/router';
 
 TimeAgo.addDefaultLocale(en);
