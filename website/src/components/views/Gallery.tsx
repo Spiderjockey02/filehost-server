@@ -16,12 +16,12 @@ export default function Gallery({ files, isLoading }: GalleryProps) {
 		for (const file of files) {
 			const date = new Date(file.metadata?.originalCreatedAt ?? file.createdAt);
 
-			const monthKey = date.toLocaleDateString('en-GB', {
+			const monthKey = date.toLocaleDateString(undefined, {
 				month: 'long',
 				year: 'numeric',
 			});
 
-			const dayKey = date.toLocaleDateString('en-GB', {
+			const dayKey = date.toLocaleDateString(undefined, {
 				day: '2-digit',
 				month: 'long',
 				year: 'numeric',

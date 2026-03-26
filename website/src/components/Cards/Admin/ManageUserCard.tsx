@@ -64,7 +64,7 @@ export default function AdminManageUserCard({ isLoading, user, bannedStatus, isC
 						<strong>Account Status: </strong>
 						{isLoading || user == null ? <span className='placeholder col-1'></span> :
 							bannedStatus !== null ? (
-								<span className="text-danger">Banned ({new Intl.DateTimeFormat('en-GB', {
+								<span className="text-danger">Banned ({new Intl.DateTimeFormat(undefined, {
 									dateStyle: 'full',
 								}).format(new Date(bannedStatus.expiresAt))})</span>
 							) : (
@@ -112,14 +112,14 @@ export default function AdminManageUserCard({ isLoading, user, bannedStatus, isC
 
 				<div className="text-muted small">
 					{isLoading || user == null ? <p className="mb-0">Created: <span className='placeholder col-4'></span></p> :
-						<p className="mb-0">Created: {new Intl.DateTimeFormat('en-GB', {
+						<p className="mb-0">Created: {new Intl.DateTimeFormat(undefined, {
 							dateStyle: 'full',
 							timeStyle: 'long',
 						}).format(new Date(user.createdAt))}</p>
 					}
 
 					{isLoading || user == null ? <p className="mb-0">Updated: <span className='placeholder col-4'></span></p> :
-						<p>Updated: {new Intl.DateTimeFormat('en-GB', {
+						<p>Updated: {new Intl.DateTimeFormat(undefined, {
 							dateStyle: 'full',
 							timeStyle: 'long',
 						}).format(new Date(user.updatedAt))}</p>

@@ -129,7 +129,7 @@ export default function FilePanelPopup({ file, setShow, show }: FilePanelPopupPr
 							<Image src={file.name} alt={file.name} style={{ maxWidth: '100%', height: 'auto', border: '1px solid black', borderRadius: '8px' }} width={300} height={390} loader={imageLoader} loading='lazy' />
 							<h5 className='text-break pt-2'>{file.name}</h5>
 						</span>
-						<p>{data?.find(d => d.label == 'Original Created At') ? 'Uploaded On' : 'Created on'}: {new Date(file.createdAt).toLocaleString('en-US')}</p>
+						<p>{data?.find(d => d.label == 'Original Created At') ? 'Uploaded On' : 'Created on'}: {new Date(file.createdAt).toLocaleString()}</p>
 					</div>
 					<div className='d-flex flex-wrap justify-content-evenly'>
 						<button className='btn btn-outline-secondary'>

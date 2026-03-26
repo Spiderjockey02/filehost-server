@@ -27,7 +27,7 @@ export default function FileItemRow({ file, isChecked, openContextMenu, handleCh
 					}
 				</th>
 				<td>{file.type == 'FILE' ? formatBytes(file.size) : `${file._count.children} files`}</td>
-				<td className='hide-on-mobile'>{new Date(file.createdAt).toLocaleString('en-GB')}</td>
+				<td className='hide-on-mobile'>{new Date(file.createdAt).toLocaleString()}</td>
 			</tr>
 		</>
 	);
