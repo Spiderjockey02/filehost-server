@@ -1,5 +1,7 @@
 import { format, formatBytes, generatePlaceholderTable, queryOptions } from '@/utils/functions';
 import type { AdminListActivitiesCardProps } from '@/types/Components/Card';
+import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Table, CollapsibleCard } from '@/components';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -43,7 +45,7 @@ export default function AdminListRecentUploadsCard({ userId }: AdminListActiviti
 										<tr key={index}>
 											<td>{file.id}</td>
 											<td className='text-truncate' style={{ maxWidth: '300px' }}>
-												<Link href={`https://mimetype.io/${file.mimetype}`} target="_blank">{file.mimetype}</Link>
+												<Link href={`https://mimetype.io/${file.mimetype}`} target="_blank">{file.mimetype} <FontAwesomeIcon icon={faUpRightFromSquare} /></Link>
 											</td>
 											<td>{formatBytes(file.size)}</td>
 											<td>{format(new Date().getTime() - (new Date().getTime() - new Date(file.createdAt).getTime()))}</td>
