@@ -16,6 +16,7 @@ export interface FileContextType {
 export interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
+  latency: number;
 };
 
 export interface UploadFile {

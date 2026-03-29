@@ -102,6 +102,9 @@ const client = new Client(io);
 			return;
 		}
 
+		// Handle latency checks
+		socket.on('latency', () => socket.emit('latency'));
+
 		client.logger.log(`Socket connected: ${session.user.name} (${session.user.id})`);
 		socket.join(session.user.id);
 	});
