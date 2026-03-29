@@ -6,6 +6,7 @@ import client from './prisma';
 export default class FileAccessor {
 	cache: LRUCache<string, FullFile>;
 	mimeTypeCache: LRUCache<string, MediaType>;
+	fileMetadata: LRUCache<string, FileMetadata>;
 
 	constructor() {
 		this.cache = new LRUCache({
@@ -15,6 +16,11 @@ export default class FileAccessor {
 
 		this.mimeTypeCache = new LRUCache({
 			max: 100,
+			ttl: 1000 * 60 * 60,
+		});
+
+		this.fileMetadata = new LRUCache({
+			max: 10_000,
 			ttl: 1000 * 60 * 60,
 		});
 	}
@@ -669,10 +675,13 @@ export default class FileAccessor {
 	  * @returns {FileMetadata | null}
 	*/
 	async fetchFilesMetadata(fileId: string): Promise<FileMetadata | null> {
-		return client.fileMetadata.findUnique({
+		const metadata = this.fileMetadata.get(fileId) ?? await client.fileMetadata.findUnique({
 			where: {
 				fileId,
 			},
 		});
+
+		if (metadata) this.fileMetadata.set(fileId, metadata);
+		return metadata;
 	}
 }

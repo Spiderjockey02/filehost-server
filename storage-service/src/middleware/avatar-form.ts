@@ -19,7 +19,6 @@ export default async (client: Client, req: Request, user: User) => {
 		maxFiles: 1,
 		filename: () => `${user.id}.webp`,
 		filter: function({ mimetype }) {
-			// @ts-expect-error Broken types for error event
 			if (!mimetype?.includes('image')) form.emit('error', 'The uploaded avatar must be an image file (e.g., JPEG, PNG, GIF).');
 			return true;
 		},
