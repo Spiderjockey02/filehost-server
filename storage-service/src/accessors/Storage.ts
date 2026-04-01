@@ -2,7 +2,7 @@ import type { createStorageMedium, StorageWithCounts, updateStorageMedium } from
 import type { StorageMedium } from '@/types/generated/client';
 import type { storageDirection } from '@/types/database/User';
 import type { Pagination } from '@/types/database/File';
-import client from './prisma';
+import client from '.';
 
 export default class StorageAccessor {
 	// Don't need any special caching as it's a set number

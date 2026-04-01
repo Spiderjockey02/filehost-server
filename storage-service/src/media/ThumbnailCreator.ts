@@ -1,12 +1,12 @@
+import FileManager from '../helpers/SystemManagers/FileOperationManager';
 import type { File, StorageMedium } from '@/types/generated/client';
 import { pipeline as _pipeline, Readable } from 'node:stream';
-import { handleFFMPEGEncoding } from '../utils/Streams';
-import FileManager from './FileOperationManager';
+import { handleFFMPEGEncoding } from '../media/Streams';
 import { exec, spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
+import type Client from '../helpers/Client';
 import { randomUUID } from 'node:crypto';
 import { createCanvas } from 'canvas';
-import type Client from './Client';
 import { join } from 'node:path';
 import { promisify } from 'util';
 import { tmpdir } from 'node:os';

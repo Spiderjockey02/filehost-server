@@ -1,11 +1,10 @@
 import type { UserActivityInput } from '@/types/database/UserActivity';
 import type { IpAddress, UserAgent } from '@/types/generated/client';
-import UserActivity from '@/accessors/UserActivity';
+import client, { UserActivityAccessor } from '@/accessors';
 import { parseIP, parseUserAgent } from '@/utils';
-import client from '../accessors/prisma';
 import { LRUCache } from 'lru-cache';
 
-export default class UserActivityManager extends UserActivity {
+export default class UserActivityManager extends UserActivityAccessor {
 	ipCache: LRUCache<string, IpAddress>;
 	userAgentCache: LRUCache<string, UserAgent>;
 	private queue: UserActivityInput[] = [];

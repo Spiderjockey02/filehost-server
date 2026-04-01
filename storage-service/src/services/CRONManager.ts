@@ -1,8 +1,7 @@
 import type { CronJobLog, CronJobNames } from '@/types/generated/client';
 import type { CronJobList } from '@/types/database/CronJob';
-import CronJobAccessor from '@/accessors/CronJob';
-import extendedClient from '@/accessors/prisma';
-import type Client from './Client';
+import dbClient, { CronJobAccessor } from '@/accessors';
+import type Client from '../helpers/Client';
 import { CronJob } from 'cron';
 import fs from 'fs/promises';
 
@@ -150,7 +149,7 @@ export default class CRONManager extends CronJobAccessor {
 		const start = Date.now();
 
 		try {
-			const metadata = await extendedClient.$backup();
+			const metadata = await dbClient.$backup();
 
 			const duration = Date.now() - start;
 			return this.createLog({ jobName: 'BACKED_UP_DATABASE', status: 'SUCCESS', message: `File name: ${metadata.filename}, Size: ${metadata.sizeBytes}`, duration });

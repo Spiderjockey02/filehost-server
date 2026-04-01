@@ -1,6 +1,6 @@
 import type { UserWithPlan } from '@/types/database/User';
-import MetadataExtractor from '@/utils/MetadataExtractor';
-import { cleanUpVideo } from '@/utils/VideoPreprocessor';
+import MetadataExtractor from '@/media/MetadataExtractor';
+import { cleanUpVideo } from '@/media/VideoPreprocessor';
 import type { FullFile } from '@/types/database/File';
 import type { File } from '@/types/generated/client';
 import { getIP, normalizePath } from '@/utils';

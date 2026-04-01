@@ -2,7 +2,7 @@ import type { AddAuditLogListenerParams, CreateAuditLogEntryParams, fetchAuditLo
 import type { AuditLog, AuditLogListener, AuditLogNames, AuditLogResourceType } from '@/types/generated/client';
 import { parseIP, parseUserAgent } from '../utils';
 import type Client from '@/helpers/Client';
-import client from './prisma';
+import client from '.';
 
 export default class AuditLogAccessor {
 	listeners: Map<string, FullAuditLogListener>;

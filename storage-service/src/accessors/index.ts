@@ -1,3 +1,15 @@
+// All accessor imports
+import RecentlyViewedFileManager from './RecentlyViewedFile';
+import UserActivityAccessor from './UserActivity';
+import NotificationManager from './Notification';
+import AuditLogAccessor from './AuditLog';
+import CronJobAccessor from './CronJob';
+import StorageAccessor from './Storage';
+import SessionManager from './Session';
+import PlanAccessor from './Plan';
+import FileAccessor from './File';
+import UserManager from './User';
+
 import { Logger, parseMySQLConnectionString, PATHS } from '@/utils';
 import { PrismaClient } from '@/types/generated/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
@@ -80,3 +92,8 @@ const prismaClient = client.$extends({
 });
 
 export default prismaClient;
+export {
+	RecentlyViewedFileManager, UserActivityAccessor, NotificationManager, AuditLogAccessor,
+	CronJobAccessor, StorageAccessor, SessionManager, PlanAccessor,
+	FileAccessor, UserManager,
+};

@@ -2,7 +2,7 @@ import type { CreateNotificationParams, FetchByUserIdParams } from '@/types/data
 import type { Notification } from '@/types/generated/client';
 import type { Server } from 'socket.io';
 import { LRUCache } from 'lru-cache';
-import client from './prisma';
+import client from '.';
 
 export default class NotificationManager {
 	cache: LRUCache<string, Notification>;

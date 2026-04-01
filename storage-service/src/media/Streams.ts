@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process';
 import { Readable, Writable } from 'node:stream';
+import { spawn } from 'node:child_process';
 
 export async function handleFFMPEGEncoding(args: string[], buffer: Buffer | Readable, output: Writable) {
 	const ffmpeg = spawn('ffmpeg', args);

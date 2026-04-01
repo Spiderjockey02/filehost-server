@@ -210,7 +210,6 @@ export function parseSFTPUrl(sftpUrl: string): SFTPOptions {
 	};
 }
 
-
 /**
   * Middleware to log user activity for each request.
   * @param {Client} client The client instance containing the userActivityManager.

@@ -1,7 +1,7 @@
 import type { FullSession } from '@/types/database/Session';
 import type { Session } from '@/types/generated/client';
 import { LRUCache } from 'lru-cache';
-import client from './prisma';
+import client from '.';
 
 export default class SessionManager {
 	cache: LRUCache<string, FullSession>;

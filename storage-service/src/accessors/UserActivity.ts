@@ -1,6 +1,6 @@
 import type { fetchActivityParams, fetchTotalParams, fetchUserAgentsParams, NetworkFilter, UserActivityInput } from '@/types/database/UserActivity';
 import type { UserActivity, UserAgent } from '@/types/generated/client';
-import client from './prisma';
+import client from '.';
 
 export default class UserActivityAccessor {
 	/**

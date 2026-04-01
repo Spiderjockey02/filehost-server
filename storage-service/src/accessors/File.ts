@@ -1,7 +1,7 @@
 import type { addMetadata, createFile, fetchByOwner, fetchFileMediaTypesParams, FullFile, Pagination, updateFile, updateFilePath } from '@/types/database/File';
 import type { File, FileMetadata, FileType, MediaType } from '@/types/generated/client';
 import { LRUCache } from 'lru-cache';
-import client from './prisma';
+import client from '.';
 
 export default class FileAccessor {
 	cache: LRUCache<string, FullFile>;

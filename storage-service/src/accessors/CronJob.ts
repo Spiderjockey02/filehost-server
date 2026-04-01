@@ -1,6 +1,6 @@
 import type { createCronJobParams, createCronJobLogTypeParams } from '@/types/database/CronJob';
 import type { CronJob, CronJobLog, CronJobNames } from '@/types/generated/client';
-import client from './prisma';
+import client from '.';
 
 export default class CronJobAccessor {
 	names: Map<CronJobNames, CronJob>;

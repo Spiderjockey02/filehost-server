@@ -1,11 +1,11 @@
 import type { StorageMedium, File } from '@/types/generated/client';
-import FileSystemManager from './SystemManagers/FileSystem';
 import { S3ServiceException } from '@aws-sdk/client-s3';
-import StorageAccessor from '@/accessors/Storage';
-import SFTPManager from './SystemManagers/SFTP';
 import type { StorageProvider } from '@/types';
-import S3Manager from './SystemManagers/S3';
-import Client from './Client';
+import FileSystemManager from './FileSystem';
+import { StorageAccessor } from '@/accessors';
+import SFTPManager from './SFTP';
+import Client from '../Client';
+import S3Manager from './S3';
 
 export default class StorageManager extends StorageAccessor {
 	client: Client;

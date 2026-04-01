@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
-import fs from 'node:fs/promises';
 import Client from '@/helpers/Client';
+import fs from 'node:fs/promises';
 
 /**
   * Clean up the videos by moving the metadata to the start of the file and stripping optional metadata.

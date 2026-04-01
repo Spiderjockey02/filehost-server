@@ -1,18 +1,13 @@
-import RecentlyViewedFileManager from '@/accessors/RecentlyViewedFile';
+import { UserManager, NotificationManager, RecentlyViewedFileManager, SessionManager, AuditLogAccessor, PlanAccessor } from '@/accessors';
+import FileManager from '@/helpers/SystemManagers/FileOperationManager';
 import type { AuditLogListener } from '@/types/generated/client';
 import type { FullAuditLog } from '@/types/database/AuditLogs';
-import NotificationManager from '@/accessors/Notification';
-import FileManager from '@/helpers/FileOperationManager';
+import StorageManager from './SystemManagers/StorageManager';
+import { ConfigManager } from '../services/ConfigManager';
 import UserActivityManager from './UserActivityManager';
-import AuditLogAccessor from '@/accessors/AuditLog';
-import SessionManager from '@/accessors/Session';
+import QueueManager from '../services/QueueManager';
+import CRONManager from '../services/CRONManager';
 import { parseUserAgent, Logger } from '@/utils';
-import { ConfigManager } from './ConfigManager';
-import StorageManager from './StorageManager';
-import PlanAccessor from '@/accessors/Plan';
-import UserManager from '@/accessors/User';
-import QueueManager from './QueueManager';
-import CRONManager from './CRONManager';
 import type { Server } from 'socket.io';
 
 export default class Client {

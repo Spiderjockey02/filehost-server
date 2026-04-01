@@ -1,6 +1,6 @@
 import type { createPlan, updatePlan } from '@/types/database/Plan';
 import type { Plan } from '@/types/generated/client';
-import client from './prisma';
+import client from '.';
 
 export default class PlanAccessor {
 	cache: Map<string, Plan>;
