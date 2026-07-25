@@ -40,7 +40,7 @@ export const getContent = (client: Client) => {
 
 		// Fetch file from database
 		const file = await client.FileManager.fetchByFilePath(userId, path);
-		if (file == null || file.deletedAt !== null) return Error.MissingResource(res, 'File not found');
+		if (file == null || file.deletedAt !== null) return Error.MissingResource(res);
 
 		// Make sure they have access to view the file
 		if (file.userId !== session.user.id) return Error.InvalidAccess(res);
@@ -68,7 +68,7 @@ export const getContent = (client: Client) => {
 		} catch (err) {
 			if (err instanceof S3ServiceException) {
 				client.logger.error(`S3 error: ${err}`);
-				if (err.name == 'NotFound' && !res.headersSent) Error.MissingResource(res, 'File not found on storage server.');
+				if (err.name == 'NotFound' && !res.headersSent) Error.MissingResource(res);
 			} else {
 				client.logger.error(`Non-S3 error: ${err}`);
 				if (!res.headersSent) Error.GenericError(res, 'Failed to send file');
@@ -137,7 +137,7 @@ export const getFilesMetadata = (client: Client) => {
 
 			// Check the owner of the files
 			const file = await client.FileManager.fetchById(fileId);
-			if (file == null) return Error.MissingResource(res, 'File not found');
+			if (file == null) return Error.MissingResource(res);
 			if (file.userId !== session.user.id) return Error.InvalidAccess(res);
 
 			const metadata = await client.FileManager.fetchFilesMetadata(file.id);

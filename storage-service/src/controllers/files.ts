@@ -14,8 +14,9 @@ export const getFiles = (client: Client) => {
 			const filePath = req.params.path.join('/');
 			const file = await client.FileManager.getDirectory(session.user, filePath);
 			res.json({ file });
-		} catch (err) {
+		} catch (err: any) {
 			client.logger.error(err);
+			if (err == 'Directory not found') return Error.MissingResource(res);
 			Error.GenericError(res, 'Failed to fetch file.');
 		}
 	};
@@ -233,8 +234,8 @@ export const postDownloadFile = (client: Client) => {
 
 			// Fetch file from database
 			const file = await client.FileManager.fetchById(id);
-			if (!file) return Error.MissingResource(res, 'File not found');
-			if (file.userId !== session.user.id) return Error.MissingResource(res, 'File not found');
+			if (!file) return Error.MissingResource(res);
+			if (file.userId !== session.user.id) return Error.MissingResource(res);
 
 			const fullFile = await client.FileManager.fetchByFilePath(session.user.id, file.path);
 			await client.FileManager.downloadFile(res, session.user, fullFile!);

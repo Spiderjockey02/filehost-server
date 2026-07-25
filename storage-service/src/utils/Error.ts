@@ -45,12 +45,11 @@ export default class Error {
 	/**
 		* Tell the requestee the requested data doesn't exists
 		* @param {Response} res The response to the requestee
-		* @param {string} errMsg The error message to send
 	*/
-	public static MissingResource(res: Response, errMsg: string) {
+	public static MissingResource(res: Response) {
 		res
 			.status(404)
-			.json({ error: errMsg });
+			.json({ error: 'The resource you have requested has not been found.' });
 	}
 
 	/**

@@ -56,7 +56,7 @@ export const getCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const name = req.params.name;
 		try {
-			if (typeof name !== 'string' || !client.CRONManager.isValidCronJobName(name)) return Error.MissingResource(res, `${name} is not a valid CRON job.`);
+			if (typeof name !== 'string' || !client.CRONManager.isValidCronJobName(name)) return Error.MissingResource(res);
 			const logs = await client.CRONManager.fetchAllLogs(name);
 
 			res.json({ logs });
@@ -75,7 +75,7 @@ export const postCronJobsByName = (client: Client) => {
 			const { schedule } = req.body;
 
 			// Validate cronJob name and schedule (CRON format)
-			if (typeof cronJob !== 'string' || !client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res, `${cronJob} is not a valid CRON job.`);
+			if (typeof cronJob !== 'string' || !client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res);
 			const result = validateCRONSchedule.safeParse(schedule);
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
@@ -118,7 +118,7 @@ export const postCronJobsByNameRun = (client: Client) => {
 					log = await client.CRONManager.deleteOldBackups();
 					break;
 				default:
-					return Error.MissingResource(res, `${name} is not a valid CRON job.`);
+					return Error.MissingResource(res);
 			}
 
 			if (log.status == 'FAILURE') throw log.message ?? 'CRON job failed to execute.';

@@ -44,7 +44,7 @@ export const deleteBackupByName = (client: Client) => {
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			// Check if the database backups folder exists
-			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res, 'Database backup not found.');
+			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res);
 
 			// Delete the backup files
 			await Promise.all([
@@ -69,7 +69,7 @@ export const downloadBackupByName = (client: Client) => {
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
 			// Check if the database backups folder exists
-			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res, 'Database backup not found.');
+			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res);
 			res.download(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`);
 		} catch (err) {
 			client.logger.error(err);
