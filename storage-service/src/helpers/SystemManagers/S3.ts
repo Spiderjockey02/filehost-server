@@ -89,6 +89,9 @@ export default class S3Manager implements StorageProvider {
 				Key: filePath,
 				Body: pass,
 			},
+			// 10 MB chunks & 4 concurrent uploads at once
+			partSize: 10 * 1024 * 1024,
+			queueSize: 4,
 		});
 
 		upload.on('httpUploadProgress', (progress) => {
@@ -113,6 +116,9 @@ export default class S3Manager implements StorageProvider {
 				Key: filePath,
 				Body: data,
 			},
+			// 10 MB chunks & 4 concurrent uploads at once
+			partSize: 10 * 1024 * 1024,
+			queueSize: 4,
 		});
 
 		upload.on('httpUploadProgress', (progress) => {
