@@ -1,6 +1,6 @@
+import { validatePage, validateRecentlyViewed } from '@/validators';
 import { Error, getIP, sanitiseObject } from '@/utils';
 import { avatarForm, getSession } from '@/middleware';
-import { validatePage, validateRecentlyViewed } from '@/validators';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 
@@ -30,13 +30,17 @@ export const getRecentlyViewed = (client: Client) => {
 		try {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
-			const { sortBy, sortOrder } = req.query;
+			const { sortBy, sortOrder, page } = req.query;
 
-			const result = validateRecentlyViewed.safeParse({ sortBy, sortOrder });
+			const result = validateRecentlyViewed.safeParse({ sortBy, sortOrder, page });
 			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
 
-			const files = await client.recentlyViewedFileManager.fetchUserLatest({ userId: session.user.id, ...result.data });
-			res.json({ files: sanitiseObject(files) });
+			const [files, total] = await Promise.all([
+				client.recentlyViewedFileManager.fetchUsersRecentlyViewed({ userId: session.user.id, ...result.data }),
+				client.recentlyViewedFileManager.fetchUsersTotalViewed(session.user.id),
+			]);
+
+			res.json({ files: sanitiseObject(files), total });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch recently viewed files.');

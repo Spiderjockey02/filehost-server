@@ -303,6 +303,7 @@ export const validateRecentlyViewed = z.object({
 		.enum(['name', 'viewedAt'], {
 			message: 'sortBy must be a valid string, name or viewedAt',
 		}),
+	page: validatePage,
 });
 
 export const validateNetworkList = z.object({

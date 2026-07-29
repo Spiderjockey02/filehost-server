@@ -56,31 +56,10 @@ export default class RecentlyViewedFileManager {
 		* @param {fetchUserLatestProps} data The filter data
 		* @returns {RecentlyViewedFile[]} The recently viewed files.
 	*/
-	async fetchUserLatest({ userId, sortBy = 'viewedAt', sortOrder = 'desc' }: fetchUserLatestProps): Promise<FullRecentlyViewedFile[]> {
+	async fetchUsersRecentlyViewed({ userId, sortBy = 'viewedAt', sortOrder = 'desc', page = 0 }: fetchUserLatestProps): Promise<FullRecentlyViewedFile[]> {
 		try {
-			let history = this.cache.get(userId) ?? null;
-			const sortFn = (a: FullRecentlyViewedFile, b: FullRecentlyViewedFile) => {
-				let valA: number | string = '';
-				let valB: number | string = '';
-
-				if (sortBy === 'viewedAt') {
-					valA = new Date(a.viewedAt).getTime();
-					valB = new Date(b.viewedAt).getTime();
-				} else if (sortBy === 'name') {
-					valA = a.file?.name?.toLowerCase() ?? '';
-					valB = b.file?.name?.toLowerCase() ?? '';
-				}
-
-				if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-				if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-				return 0;
-			};
-
-			// Send cached history with correct sorting
-			if (history) return [...history].filter(h => h.file?.deletedAt === null).sort(sortFn);
-
 			// Fetch from database as it's not in cache
-			history = await client.recentlyViewedFile.findMany({
+			const history = await client.recentlyViewedFile.findMany({
 				where: { userId,
 					file: { deletedAt: null },
 				},
@@ -91,13 +70,26 @@ export default class RecentlyViewedFileManager {
 					} : undefined,
 				},
 				include: { file: true },
+				take: 20,
+				skip: page * 20,
 			});
-
-			this.cache.set(userId, history);
 			return history;
 		} catch (err) {
 			throw err;
 		}
+	}
+
+	/**
+	  * Fetch a user's total viewed file count
+	  * @param {string} userId The user Id
+	  * @returns {number} Total count
+	*/
+	async fetchUsersTotalViewed(userId: string): Promise<number> {
+		return client.recentlyViewedFile.count({
+			where: {
+				userId,
+			},
+		});
 	}
 
 	/**
