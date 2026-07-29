@@ -429,10 +429,13 @@ model Plan {
 }
 
 model twoFactor {
-  id              String    @id   @default(cuid())
-  userId          String
-  secret          String
-  backupCodes     String
+  id                      String    @id   @default(cuid())
+  userId                  String
+  secret                  String
+  backupCodes             String
+  verified                Boolean
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime?
 }
 
 enum SubscriptionStatus {
