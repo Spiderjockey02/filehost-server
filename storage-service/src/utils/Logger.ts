@@ -1,8 +1,8 @@
 import type { loggerTypes, customRequest, customResponse } from '@/types';
 import { createRollingFileLogger } from 'simple-node-logger';
 import onFinished from 'on-finished';
-import pino from 'pino';
 import { getIP } from './';
+import pino from 'pino';
 
 const fileLogger = createRollingFileLogger({
 	logDirectory: './src/utils/logs',

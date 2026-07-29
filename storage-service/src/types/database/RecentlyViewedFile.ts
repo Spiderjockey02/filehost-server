@@ -9,6 +9,7 @@ export interface fetchUserLatestProps {
 	userId: string
   sortOrder?: Prisma.SortOrder
   sortBy?: 'name' | 'viewedAt'
+  page?: number
 }
 
 export type FullRecentlyViewedFile = Prisma.RecentlyViewedFileGetPayload<{

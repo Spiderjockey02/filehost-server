@@ -1,5 +1,5 @@
 import { Prisma } from '@/types/generated/client';
-import { Pagination } from './File';
+import type { Pagination } from './File';
 
 export interface FetchUsers {
 	name?: string

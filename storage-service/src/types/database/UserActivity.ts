@@ -1,5 +1,5 @@
-import { HTTPMethod, Prisma } from '@/types/generated/client';
-import { Pagination } from './File';
+import { type HTTPMethod, Prisma } from '@/types/generated/client';
+import type { Pagination } from './File';
 
 export type UserActivityInput = {
 	userId: string | null;

@@ -1,4 +1,4 @@
-import { Prisma, StorageType } from '@/types/generated/client';
+import { Prisma, type StorageType } from '@/types/generated/client';
 
 export interface createStorageMedium {
   type: StorageType

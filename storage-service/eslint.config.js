@@ -1,4 +1,5 @@
 import tseslint from '@typescript-eslint/eslint-plugin';
+import perfectionist from 'eslint-plugin-perfectionist';
 import tsParser from '@typescript-eslint/parser';
 
 export default [{
@@ -14,8 +15,12 @@ export default [{
 	},
 	plugins: {
 		'@typescript-eslint': tseslint,
+		perfectionist,
 	},
 	rules: {
+		'perfectionist/sort-imports': [
+			'error', { type: 'line-length', order: 'desc', groups: []	},
+		],
 		'brace-style': ['error', '1tbs', { allowSingleLine: true }],
 		'comma-dangle': ['error', 'always-multiline'],
 		'comma-spacing': 'error',

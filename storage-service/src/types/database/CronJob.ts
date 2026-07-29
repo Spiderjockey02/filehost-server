@@ -1,4 +1,4 @@
-import { CronJobNames, Status } from '@/types/generated/client';
+import type { CronJobNames, Status } from '@/types/generated/client';
 
 export interface createCronJobLogTypeParams {
   jobName: CronJobNames

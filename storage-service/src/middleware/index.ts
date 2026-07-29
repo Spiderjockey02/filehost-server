@@ -17,7 +17,7 @@ export async function getSession(client: Client, headers: IncomingHttpHeaders): 
 	if (headers.cookie == undefined) return null;
 	const cookies = headers['cookie'].split('; ');
 	const parsedCookies = cookies.map((i: string) => i.split('='));
-	const sessionToken = parsedCookies.find(i => i[0] == 'better-auth.session_token' || i[0] == '__Secure-better-auth.session_token')?.[1];
+	const sessionToken = parsedCookies.find(i => ['better-auth.session_token', '__Secure-better-auth.session_token'].includes(i[0]))?.[1];
 	if (!sessionToken) return null;
 
 	// Fetch the session using the session token
