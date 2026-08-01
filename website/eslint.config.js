@@ -1,6 +1,7 @@
-import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
+import perfectionist from 'eslint-plugin-perfectionist';
 import nextPlugin from '@next/eslint-plugin-next';
+import tsParser from '@typescript-eslint/parser';
 
 export default [
 	{
@@ -11,6 +12,7 @@ export default [
 		plugins: {
 			'@typescript-eslint': tsPlugin,
 			'@next/next': nextPlugin,
+			perfectionist,
 		},
 		languageOptions: {
 			parser: tsParser,
@@ -22,6 +24,21 @@ export default [
 		},
 		rules: {
 			...nextPlugin.configs['core-web-vitals'].rules,
+			'@typescript-eslint/no-unused-vars': ['error', {
+				args: 'after-used',
+				argsIgnorePattern: '^_',
+				varsIgnorePattern: '^_',
+				caughtErrors: 'all',
+				caughtErrorsIgnorePattern: '^_',
+				ignoreRestSiblings: true,
+				destructuredArrayIgnorePattern: '^_',
+			}],
+			'perfectionist/sort-imports': [
+				'error', { type: 'line-length', order: 'desc', groups: []	},
+			],
+			'perfectionist/sort-named-imports': [
+				'error', { type: 'alphabetical', order: 'asc', ignoreCase: true },
+			],
 			'brace-style': ['error', '1tbs', { allowSingleLine: true }],
 			'comma-dangle': ['error', 'always-multiline'],
 			'comma-spacing': 'error',
@@ -32,6 +49,7 @@ export default [
 			indent: ['error', 'tab', { SwitchCase: 1 }],
 			'max-nested-callbacks': ['error', { max: 6 }],
 			'max-statements-per-line': ['error', { max: 2 }],
+			'no-unused-vars': 'off',
 			'no-console': 'off',
 			'no-empty-function': 'error',
 			'no-floating-decimal': 'error',

@@ -50,6 +50,7 @@
     "@typescript-eslint/parser": "^8.29.1",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.1.0",
+    "eslint-plugin-perfectionist": "^5.9.1",
     "next-devtools-mcp": "^0.3.7",
     "prisma": "^7.0.0",
     "typescript": "^5.4.5"
