@@ -1,0 +1,204 @@
+enum Status {
+  SUCCESS
+  FAILURE
+}
+
+model CronJobLog {
+  id        Int         @id       @default(autoincrement())
+  status    Status
+  message   String      @db.LongText
+  ranAt     DateTime    @default(now())
+  duration  Int?        @default(0)
+  cronJob   CronJob     @relation(fields: [jobName], references: [name], onDelete: Cascade)
+  jobName   CronJobNames
+
+  @@index([jobName])
+  @@index([ranAt])
+}
+
+enum CronJobNames {
+  BACKED_UP_DATABASE
+  DELETE_OLD_BACKUPS
+  DELETE_OLD_LOG_FILES
+  DELETE_EXPIRED_SESSIONS
+  RECALCULATE_USER_STORAGE
+  RECALCULATE_STORAGE_USAGE
+  DELETE_OLD_TRASHED_FILES
+}
+
+model CronJob {
+  name          CronJobNames    @id
+  latestStatus  Status? 
+  CronJobLog    CronJobLog[]
+  schedule      String          @default("0 * * * *")
+}
+
+enum HTTPMethod {
+  CONNECT
+  DELETE
+  GET
+  HEAD
+  OPTIONS
+  PATCH
+  POST
+  PUT
+  TRACE
+}
+
+model UserActivity {
+  id            String        @id       @default(cuid())
+  method        HTTPMethod
+  endpoint      String
+  statusCode    Int
+  incomingBytes Int
+  outgoingBytes Int
+  ipCon         IpAddress?    @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
+  ipAddress     String?
+  UserAgentCon  UserAgent?    @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
+  userAgent     String?
+  durationMs    Int
+  createdAt     DateTime      @default(now())
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId        String?
+
+  @@index([userId])
+  @@index([statusCode])
+  @@index([method])
+  @@index([ipAddress])
+  @@index([userAgent])
+  @@index([createdAt])
+}
+
+model IpAddress {
+  ip        String      @id
+  country   String?
+  city      String?
+  latitude  Float?
+  longitude Float?
+  isp       String?
+  isVPN     Boolean    @default(false)
+  isCrawler Boolean    @default(false)
+  
+  activity  UserActivity[]
+  logs      AuditLog[]
+}
+
+model UserAgent {
+  agent           String    @id
+  browserName     String?
+  browserVersion  String?
+  osName          String?
+  osVersion       String?
+  isBot           Boolean   @default(false)
+
+  activity        UserActivity[]
+  logs            AuditLog[]
+}
+
+enum AuditLogResourceType {
+  FILE
+  USER
+  STORAGE
+  SYSTEM
+  SESSION
+  SUBSCRIPTION
+  EMAIL
+}
+
+enum AuditLogEventName {
+  FILE_UPLOAD
+  FILE_DOWNLOAD
+  FILE_RENAME
+  FILE_COPY
+  FILE_MOVE
+  FILE_DELETE
+  FILE_TRASHED
+  FILE_RECOVERED_ALL
+  FILE_RECOVERED
+  FILE_VIEWED
+  FOLDER_CREATE
+  NOTIFICATION_SENT
+  CRONJOB_RAN
+  USER_REGISTERED
+  USER_LOGIN
+  USER_UPDATE
+  USER_AVATAR_CHANGE
+  USER_TWOFA_CHANGE
+  USER_PASSWORD_RESET
+  SYSTEM_ONLINE
+  RATE_LIMIT_ABUSE
+  STORAGE_CREATED
+  STORAGE_UPDATED
+  STORAGE_DELETED
+  LISTENER_CREATED
+  LISTENER_DELETED
+  LISTENER_UPDATED
+  PLAN_CREATED
+  PLAN_UPDATED
+  PLAN_DELETED
+  SUBSCRIPTION_START
+  SUBSCRIPTION_ENDED
+  EMAIL_SENT
+  CONFIG_UPDATED
+}
+
+model AuditLogNames {
+  name          AuditLogEventName        @id
+  resourceType  AuditLogResourceType
+  displayName   String?
+  logs          AuditLog[]
+  subscriptions AuditLogEventSubscription[]
+
+  @@index([resourceType])
+}
+
+model AuditLog {
+  id           String         @id @default(cuid())
+  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId       String?
+  event        AuditLogNames  @relation(fields: [eventId], references: [name], onDelete: Cascade)
+  eventId      AuditLogEventName
+  message      String?        @db.LongText
+  resourceId   String?
+  success      Boolean
+  ipCon        IpAddress?     @relation(fields: [ipAddress], references: [ip], onDelete: SetNull)
+  ipAddress    String?
+  userAgentCon UserAgent?     @relation(fields: [userAgent], references: [agent], onDelete: SetNull)
+  userAgent    String?
+  createdAt    DateTime       @default(now())
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum ListenerType {
+  WEBHOOK
+  NOTIFICATION
+}
+
+model AuditLogListener {
+  id          String        @id @default(cuid())
+  admin       User          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  adminId     String
+  name        String
+  enabled     Boolean        @default(true)
+  type        ListenerType
+  targetUrl   String?
+  events      AuditLogEventSubscription[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([adminId])
+}
+
+model AuditLogEventSubscription {
+  id           String           @id @default(cuid())
+  listener     AuditLogListener @relation(fields: [listenerId], references: [id], onDelete: Cascade)
+  listenerId   String
+  event        AuditLogNames    @relation(fields: [eventId], references: [name], onDelete: Cascade)
+  eventId      AuditLogEventName
+
+  @@unique([listenerId, eventId])
+  @@index([eventId])
+}

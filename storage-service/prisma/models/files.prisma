@@ -1,0 +1,92 @@
+enum FileType {
+  FILE
+  DIRECTORY
+}
+
+model File {
+  id                String          @id       @default(cuid())
+  path              String
+  name              String
+  size              BigInt
+  type              FileType        @default(FILE)    
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+  children          File[]          @relation("FileToParent")
+  parent            File?           @relation("FileToParent", fields: [parentId], references: [id])
+  parentId          String?   
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  mediatype         MediaType?      @relation(fields: [mimetype], references: [name])
+  mimetype          String?
+  storage           StorageMedium   @relation(fields: [storageId], references: [id])
+  storageId         String
+  recentlyViewedBy  RecentlyViewedFile[]
+  metadata          FileMetadata?
+
+  @@unique([path, userId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([storageId])
+  @@index([deletedAt])
+  @@index([mimetype])
+}
+
+model FileMetadata {
+  id                String    @id       @default(uuid())
+  file              File      @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId            String    @unique
+  originalCreatedAt DateTime?
+  width             Int?
+  height            Int?
+  duration          Float?
+  frameRate         Float?
+  cameraModel       String?
+  gpsLatitude       Float?
+  gpsLongitude      Float?
+  codec             String?
+  exif              Json?
+}
+
+enum StorageType {
+  FILE_SYSTEM
+  SFTP
+  S3
+}
+
+model StorageMedium {
+  id            String      @id     @default(cuid())
+  type          StorageType
+  name          String
+  basePath      String
+  location      String      @default("Europe")
+  endpoint      String?
+  maxSize       BigInt      @default(0)
+  usedSize      BigInt      @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  isPrivate     Boolean     @default(false)
+  avatarOnly    Boolean     @default(false)
+
+  files         File[]
+  users         User[]
+}
+
+model MediaType {
+  name        String  @id
+  files       File[]
+}
+
+model RecentlyViewedFile {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId      String
+  viewedAt    DateTime @default(now())
+
+  @@unique([fileId, userId])
+  @@index([userId])
+  @@index([fileId])
+}

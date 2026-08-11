@@ -1,0 +1,159 @@
+model User {
+  id                String            @id     @default(cuid())
+  name              String
+  email             String            @unique
+  image             String?
+  emailVerified     Boolean
+  languageCode      String            @default("en-GB")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt
+  sessions          Session[]
+  accounts          Account[]
+  notifications     Notification[]
+  recentlyViewed    RecentlyViewedFile[]
+  files             File[]
+  activity          UserActivity[]
+  logs              AuditLog[]
+  auditListeners    AuditLogListener[]
+  bans              UserBans[]        @relation("bannedUser")
+  issuedBans        UserBans[]        @relation("issuedUser")
+  banned            Boolean           @default(false)
+  plan              Plan              @relation(fields: [planId], references: [id])
+  planId            String
+  totalStorageSize  BigInt            @default(0)
+  role              String            @default("user")
+  storage           StorageMedium     @relation(fields: [storageId], references: [id])
+  storageId         String
+  twoFactorEnabled  Boolean           @default(false)
+  isMigrating       Boolean           @default(false)
+  stripeCustomerId  String?
+
+  @@index([planId])
+  @@index([storageId])
+  @@index([role])
+  @@index([createdAt])
+}
+
+model Session {
+  id              String   @id
+  expiresAt       DateTime
+  token           String
+  createdAt       DateTime
+  updatedAt       DateTime
+  ipAddress       String?  @db.Text
+  userAgent       String?  @db.Text
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy  String?
+
+  @@unique([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @db.Text
+  providerId            String    @db.Text
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@index([userId])
+  @@index([providerId(length: 191)])
+  @@index([accountId(length: 191)])
+  @@map("account")
+}
+
+model Verification {
+  id	          String	@id
+  identifier	  String
+  value	        String  @db.VarChar(500)
+  expiresAt	    DateTime
+  createdAt	    DateTime
+  updatedAt	    DateTime
+
+  @@index([identifier])
+  @@index([expiresAt])
+}
+
+model Notification {
+  id          String    @id             @default(cuid())
+  createdAt   DateTime  @default(now())
+  text        String    @db.LongText
+  title       String
+  url         String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserBans {
+  id            String    @id   @default(cuid())
+  user          User      @relation("bannedUser", fields: [userId], references: [id])
+  userId        String
+  issuedByUser  User      @relation("issuedUser", fields: [issuedBy], references: [id])
+  issuedBy      String
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  reason        String
+}
+
+model Plan {
+  id                        String    @id       @default(cuid())
+  name                      String
+  maxStorageSize            BigInt    @default(5368709120)
+  maxFileSize               BigInt    @default(2147483648)
+  deletedFileRetentionDays  Int       @default(30)
+  price                     Int       @default(0)
+  priceId                   String?
+  isDefault                 Boolean   @default(false)
+  users                     User[]
+}
+
+model twoFactor {
+  id                      String    @id   @default(cuid())
+  userId                  String
+  secret                  String
+  backupCodes             String    @db.Text
+  verified                Boolean   
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime?
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  incomplete
+  incomplete_expired
+  past_due
+  canceled
+  unpaid
+  paused
+}
+
+model subscription {
+  id                    String    @id   @default(cuid())
+  plan	                String
+  referenceId	          String
+  stripeCustomerId	    String?
+  stripeSubscriptionId	String?
+  status	              SubscriptionStatus
+  periodStart	          DateTime?
+  periodEnd	            DateTime?
+  cancelAtPeriodEnd	    Boolean?
+  seats	                Int?
+  trialStart            DateTime?
+  trialEnd              DateTime?
+}
