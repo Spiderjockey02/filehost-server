@@ -17,12 +17,12 @@ export async function getSession(client: Client, headers: IncomingHttpHeaders): 
 	if (headers.cookie == undefined) return null;
 	const cookies = headers['cookie'].split('; ');
 	const parsedCookies = cookies.map((i: string) => i.split('='));
-	const sessionToken = parsedCookies.find(i => ['better-auth.session_token', '__Secure-better-auth.session_token'].includes(i[0]))?.[1];
+	const sessionToken = parsedCookies.find(i => ['better-auth.session_token', '__Secure-better-auth.session_token'].includes(i[0]!))?.[1];
 	if (!sessionToken) return null;
 
 	// Fetch the session using the session token
 	try {
-		return client.sessionManager.fetchByToken(sessionToken.split('.')[0]);
+		return client.sessionManager.fetchByToken(sessionToken.split('.')[0]!);
 	} catch (err) {
 		client.logger.error(err);
 		return null;

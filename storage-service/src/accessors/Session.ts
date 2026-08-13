@@ -1,5 +1,6 @@
 import type { FullSession } from '@/types/database/Session';
 import type { Session } from '@/types/generated/client';
+import { skipUndefined } from '@/utils';
 import { LRUCache } from 'lru-cache';
 import client from '.';
 
@@ -22,7 +23,7 @@ export default class SessionManager {
 	async fetchAll(userId?: string): Promise<Session[]> {
 		return client.session.findMany({
 			where: {
-				userId,
+				userId: skipUndefined(userId),
 			},
 			orderBy: {
 				createdAt: 'desc',

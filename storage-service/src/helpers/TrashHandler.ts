@@ -16,13 +16,13 @@ export default class TrashHandler {
 	*/
 	async moveToTrash(user: UserWithPlan, fileId: string) {
 		const file = await this.client.FileManager.fetchById(fileId);
-		if (file == null) throw 'The specified file does not exist.';
+		if (file == null) throw new Error('The specified file does not exist.');
 
 		// Check the owner of the file and folder
-		if (file.userId !== user.id) throw 'You do not have permission to delete this file.';
+		if (file.userId !== user.id) throw new Error('You do not have permission to delete this file.');
 
 		// Check if the file is already in the trash
-		if (file.deletedAt != null) throw 'File already in the trash';
+		if (file.deletedAt != null) throw new Error('File already in the trash');
 
 		// Calculate how long the file should stay in the trash before being removed
 		const dateToDelete = new Date();
@@ -77,9 +77,9 @@ export default class TrashHandler {
 	 */
 	async restoreFile(userId: string, fileId: string): Promise<File> {
 		const file = await this.client.FileManager.fetchById(fileId);
-		if (file == null) throw 'The specified file does not exist.';
-		if (userId !== file.userId) throw 'You do not have permission to restore this file.';
-		if (file.deletedAt == null) throw 'File is not in the trash.';
+		if (file == null) throw new Error('The specified file does not exist.');
+		if (userId !== file.userId) throw new Error('You do not have permission to restore this file.');
+		if (file.deletedAt == null) throw new Error('File is not in the trash.');
 
 		// Update the current file/folder in the database
 		await this.client.FileManager.update({
@@ -118,6 +118,7 @@ export default class TrashHandler {
 	*/
 	async emptyTrash(userId: string): Promise<boolean> {
 		const filesInTrash = await this.client.FileManager.fetchOwnedByUserId({ userId, isDeleted: true });
+		if (filesInTrash.length == 0) return false;
 
 		try {
 			const { count } = await this.client.FileManager.updateAllFilesFromTrash(userId);
@@ -127,7 +128,7 @@ export default class TrashHandler {
 					resourceType: 'FILE',
 					resourceId: '',
 					success: true,
-					userId: filesInTrash[0].userId,
+					userId: filesInTrash[0]!.userId,
 					message: `Successfully empited trash with ${count} files.`,
 				});
 			});
@@ -141,7 +142,7 @@ export default class TrashHandler {
 					resourceType: 'FILE',
 					resourceId: '',
 					success: false,
-					userId: filesInTrash[0].userId,
+					userId: filesInTrash[0]!.userId,
 					message: 'Successfully recovered file.',
 				});
 			});
@@ -157,9 +158,9 @@ export default class TrashHandler {
 	*/
 	async removeFileFromSystem(userId: string, fileId: string) {
 		const file = await this.client.FileManager.fetchById(fileId);
-		if (file == null) throw 'The specified file does not exist.';
-		if (file.userId !== userId) throw 'You do not have permission to restore this file.';
-		if (file.deletedAt == null) throw 'File is not in the trash.';
+		if (file == null) throw new Error('The specified file does not exist.');
+		if (file.userId !== userId) throw new Error('You do not have permission to restore this file.');
+		if (file.deletedAt == null) throw new Error('File is not in the trash.');
 
 		// Only remove file from system if it's older than current time
 		if (file.deletedAt < new Date()) {

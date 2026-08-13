@@ -1,6 +1,6 @@
-import type { CreateRecentlyViewedFile, fetchUserLatestProps } from '@/types/database/RecentlyViewedFile';
-import type { FullRecentlyViewedFile } from '@/types/database/RecentlyViewedFile';
+import type { FetchUserViewHistoryParams, FullRecentlyViewedFile, UpsertRecentlyViewedParams } from '@/types/database/RecentlyViewedFile';
 import type { RecentlyViewedFile } from '@/types/generated/client';
+import { skip } from '@prisma/client/runtime/client';
 import { LRUCache } from 'lru-cache';
 import client from '.';
 
@@ -19,7 +19,7 @@ export default class RecentlyViewedFileManager {
 		* @param {CreateRecentlyViewedFile} data The recently viewed file data
 		* @returns {RecentlyViewedFile} The recently viewed file.
 	*/
-	async upsert(data: CreateRecentlyViewedFile): Promise<RecentlyViewedFile> {
+	async upsert(data: UpsertRecentlyViewedParams): Promise<RecentlyViewedFile> {
 		try {
 			const history = await client.recentlyViewedFile.upsert({
 				where: {
@@ -56,7 +56,7 @@ export default class RecentlyViewedFileManager {
 		* @param {fetchUserLatestProps} data The filter data
 		* @returns {RecentlyViewedFile[]} The recently viewed files.
 	*/
-	async fetchUsersRecentlyViewed({ userId, sortBy = 'viewedAt', sortOrder = 'desc', page = 0 }: fetchUserLatestProps): Promise<FullRecentlyViewedFile[]> {
+	async fetchUsersRecentlyViewed({ userId, sortBy = 'viewedAt', sortOrder = 'desc', page = 0 }: FetchUserViewHistoryParams): Promise<FullRecentlyViewedFile[]> {
 		try {
 			// Fetch from database as it's not in cache
 			const history = await client.recentlyViewedFile.findMany({
@@ -64,10 +64,10 @@ export default class RecentlyViewedFileManager {
 					file: { deletedAt: null },
 				},
 				orderBy: {
-					viewedAt: sortBy == 'viewedAt' ? sortOrder : undefined,
+					viewedAt: sortBy == 'viewedAt' ? sortOrder : skip,
 					file: sortBy == 'name' ? {
 						name: sortOrder,
-					} : undefined,
+					} : skip,
 				},
 				include: { file: true },
 				take: 20,

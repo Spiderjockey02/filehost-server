@@ -1,5 +1,7 @@
-import type { fetchActivityParams, fetchTotalParams, fetchUserAgentsParams, NetworkFilter, UserActivityInput } from '@/types/database/UserActivity';
+import type { FetchActivityParams, FetchTotalParams, FetchUserAgentsParams, NetworkFilter, UserActivityInput } from '@/types/database/UserActivity';
 import type { UserActivity, UserAgent } from '@/types/generated/client';
+import { skip } from '@prisma/client/runtime/client';
+import { skipUndefined } from '@/utils';
 import client from '.';
 
 export default class UserActivityAccessor {
@@ -91,12 +93,12 @@ export default class UserActivityAccessor {
 	  * Fetch total user activity
 		* @param {fetchActivity} filters Filter object
 	*/
-	async fetchTotal(filters?: fetchTotalParams) {
+	async fetchTotal(filters?: FetchTotalParams) {
 		return client.userActivity.count({
 			where: {
-				userId: filters?.userId,
-				statusCode: filters?.statusCode,
-				method: filters?.method,
+				userId: skipUndefined(filters?.userId),
+				statusCode: skipUndefined(filters?.statusCode),
+				method: skipUndefined(filters?.method),
 			},
 		});
 	}
@@ -114,9 +116,9 @@ export default class UserActivityAccessor {
 					gte: oldDate,
 					lte: newDate,
 				},
-				userId: filter?.userId,
+				userId: skipUndefined(filter?.userId),
 				user: {
-					storageId: filter?.storageId,
+					storageId: skipUndefined(filter?.storageId),
 				},
 			},
 		});
@@ -140,9 +142,9 @@ export default class UserActivityAccessor {
 						gte: oldDate,
 						lte: newDate,
 					},
-					userId: filter?.userId,
+					userId: skipUndefined(filter?.userId),
 					user: {
-						storageId: filter?.storageId,
+						storageId: skipUndefined(filter?.storageId),
 					},
 				},
 			});
@@ -161,12 +163,12 @@ export default class UserActivityAccessor {
 		* @param {fetchActivity & Pagination} data the filters
 		* @returns {UserActivity[]} list of user activity
 	*/
-	async fetchActivity({ userId, statusCode, method, page = 0 }: fetchActivityParams): Promise<UserActivity[]> {
+	async fetchActivity({ userId, statusCode, method, page = 0 }: FetchActivityParams): Promise<UserActivity[]> {
 		return client.userActivity.findMany({
 			where: {
-				userId,
-				statusCode,
-				method,
+				userId: skipUndefined(userId),
+				statusCode: skipUndefined(statusCode),
+				method: skipUndefined(method),
 			},
 			orderBy: {
 				createdAt: 'desc',
@@ -205,20 +207,20 @@ export default class UserActivityAccessor {
 		* @param {fetchUserAgentsParams} param0
 	  * @returns {[UserAgent[], number]} list of user agents
 	*/
-	async fetchUserAgents({ sortBy, sortOrder, page = 0 }: fetchUserAgentsParams): Promise<[UserAgent[], number]> {
+	async fetchUserAgents({ sortBy, sortOrder, page = 0 }: FetchUserAgentsParams): Promise<[UserAgent[], number]> {
 		return Promise.all([
 			client.userAgent.findMany({
 				include: {
 					_count: true,
 				},
 				orderBy: {
-					agent: sortBy == 'name' ? sortOrder : undefined,
+					agent: sortBy == 'name' ? sortOrder ?? skip : skip,
 					activity: sortBy == 'activity' ? {
-						_count: sortOrder,
-					} : undefined,
+						_count: sortOrder ?? skip,
+					} : skip,
 					logs: sortBy == 'logs' ? {
-						_count: sortOrder,
-					} : undefined,
+						_count: sortOrder ?? skip,
+					} : skip,
 				},
 				take: 20,
 				skip: page * 20,

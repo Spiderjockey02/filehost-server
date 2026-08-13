@@ -1,5 +1,4 @@
-import { validateAdminLogs, validateInterval, validateLogListener } from '@/validators';
-import type { AuditLogEventName, ListenerType } from '@/types/generated/client';
+import { validateAdminLogs, validateInterval, validateLogListener, validateString } from '@/validators';
 import type { Request, Response } from 'express';
 import type { EntityCountMap } from '@/types';
 import type Client from '@/helpers/Client';
@@ -12,15 +11,14 @@ import fs from 'fs/promises';
 export const getLogs = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { userId, page, eventName, sortOrder } = req.query;
-			const result = validateAdminLogs.safeParse({ userId, page, eventName: eventName == '' ? undefined : eventName, sortOrder });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			const result = validateAdminLogs.safeParse(req.query);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const { logs, total } = await client.AuditLogManager.fetchAll({ ...result.data, eventName: result.data.eventName as AuditLogEventName });
-			res.json({ logs, total });
+			const { logs, total } = await client.AuditLogManager.fetchAll(result.data);
+			return res.json({ logs, total });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch logs.');
+			return Error.GenericError(res, 'Failed to fetch logs.');
 		}
 	};
 };
@@ -29,15 +27,12 @@ export const getLogs = (client: Client) => {
 export const getLogTypes = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const p = await Promise.all([
-				client.AuditLogManager.fetchCountByResourceType('USER'),
-				client.AuditLogManager.fetchCountByResourceType('FILE'),
-				client.AuditLogManager.fetchCountByResourceType('STORAGE'),
-				client.AuditLogManager.fetchCountByResourceType('SYSTEM'),
-				client.AuditLogManager.fetchCountByResourceType('SESSION'),
+			const [resourceTypes, successRates] = await Promise.all([
+				client.AuditLogManager.fetchCountByResourceType(),
 				client.AuditLogManager.fetchSuccessRate(),
 			]);
-			res.json({ resourceTypes: { user: p[0], file: p[1], storage: p[2], system: p[3], session: p[4] }, successRates: p[5] });
+
+			res.json({ resourceTypes, successRates });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log types.');
@@ -49,41 +44,28 @@ export const getLogTypes = (client: Client) => {
 export const getLogHistory = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		// Get time frame and validate it
-		const interval = req.query.interval;
-		const result = validateInterval.safeParse(interval);
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		const result = validateInterval.safeParse(req.query['interval']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		const data: EntityCountMap = {};
 		switch (result.data) {
 			case 'yearly': {
 				const currentYear = new Date().getFullYear();
-				let cumulativeTotal = await Promise.all([
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1)),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1)),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1)),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1)),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1)),
-				]) as number[];
+				const startingValue = await client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates(new Date(2023, 0, 1), new Date(currentYear - 9, 0, 1));
 
 				for (let i = 9; i >= 0; i--) {
 					const start = new Date(currentYear - i, 0, 1);
 					const end = new Date(currentYear - i + 1, 0, 1);
-					const users = await Promise.all([
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', start, end),
-					]);
+					const nextValue = await client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates(start, end);
 
-					cumulativeTotal = Array.from({ length: 5 }, (_, j) => (users[j] ?? 0) + (cumulativeTotal[j] ?? 0));
-					data[currentYear - i] = {
-						user: cumulativeTotal[0],
-						file: cumulativeTotal[1],
-						storage: cumulativeTotal[2],
-						system: cumulativeTotal[3],
-						session: cumulativeTotal[4],
+					const cumulativeTotal = {
+						user: startingValue.USER + nextValue.USER,
+						file: startingValue.FILE + nextValue.FILE,
+						storage: startingValue.STORAGE + nextValue.STORAGE,
+						system: startingValue.SYSTEM + nextValue.SYSTEM,
+						session: startingValue.SESSION + nextValue.SESSION,
 					};
+					data[currentYear - i] = cumulativeTotal;
 				}
 
 				return res.json({ data });
@@ -95,14 +77,7 @@ export const getLogHistory = (client: Client) => {
 				const firstMonthDate = new Date();
 				firstMonthDate.setMonth(current.getMonth() - 11);
 
-				let cumulativeTotal = await Promise.all([
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', new Date(2023, 0, 1), new Date(firstMonthDate)),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', new Date(2023, 0, 1), new Date(firstMonthDate)),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', new Date(2023, 0, 1), new Date(firstMonthDate)),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', new Date(2023, 0, 1), new Date(firstMonthDate)),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', new Date(2023, 0, 1), new Date(firstMonthDate)),
-				]) as number[];
-
+				const startingValue = await client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates(new Date(2023, 0, 1), new Date(firstMonthDate));
 				for (let i = 11; i >= 0; i--) {
 					const start = new Date(current);
 					start.setMonth(current.getMonth() - i);
@@ -110,22 +85,15 @@ export const getLogHistory = (client: Client) => {
 					end.setMonth(start.getMonth() + 1);
 
 					const monthName = start.toLocaleString('default', { month: 'long' });
-					const users = await Promise.all([
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', start, end),
-					]);
-
-					cumulativeTotal = Array.from({ length: 5 }, (_, j) => (users[j] ?? 0) + (cumulativeTotal[j] ?? 0));
-					data[monthName] = {
-						user: cumulativeTotal[0],
-						file: cumulativeTotal[1],
-						storage: cumulativeTotal[2],
-						system: cumulativeTotal[3],
-						session: cumulativeTotal[4],
+					const nextValue = await client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates(start, end);
+					const cumulativeTotal = {
+						user: startingValue.USER + nextValue.USER,
+						file: startingValue.FILE + nextValue.FILE,
+						storage: startingValue.STORAGE + nextValue.STORAGE,
+						system: startingValue.SYSTEM + nextValue.SYSTEM,
+						session: startingValue.SESSION + nextValue.SESSION,
 					};
+					data[monthName] = cumulativeTotal;
 				}
 
 			 return res.json({ data });
@@ -136,14 +104,7 @@ export const getLogHistory = (client: Client) => {
 				const frameStart = new Date(today);
 				frameStart.setDate(today.getDate() - 14);
 
-				let cumulativeTotal = await Promise.all([
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', new Date(2023, 0, 1), frameStart),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', new Date(2023, 0, 1), frameStart),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', new Date(2023, 0, 1), frameStart),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', new Date(2023, 0, 1), frameStart),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', new Date(2023, 0, 1), frameStart),
-				]) as number[];
-
+				const startingValue = await client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates(new Date(2023, 0, 1), frameStart);
 				for (let i = 14; i >= 0; i--) {
 					const end = new Date();
 					end.setHours(0, 0, 0, 0);
@@ -152,23 +113,16 @@ export const getLogHistory = (client: Client) => {
 					const start = new Date(end);
 					start.setDate(start.getDate() - 1);
 
-					const dateStr = start.toISOString().split('T')[0];
-					const users = await Promise.all([
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', start, end),
-					]);
-
-					cumulativeTotal = Array.from({ length: 5 }, (_, j) => (users[j] ?? 0) + (cumulativeTotal[j] ?? 0));
-					data[dateStr] = {
-						user: cumulativeTotal[0],
-						file: cumulativeTotal[1],
-						storage: cumulativeTotal[2],
-						system: cumulativeTotal[3],
-						session: cumulativeTotal[4],
+					const dateStr = start.toISOString().split('T')[0]!;
+					const nextValue = await client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates(start, end);
+					const cumulativeTotal = {
+						user: startingValue.USER + nextValue.USER,
+						file: startingValue.FILE + nextValue.FILE,
+						storage: startingValue.STORAGE + nextValue.STORAGE,
+						system: startingValue.SYSTEM + nextValue.SYSTEM,
+						session: startingValue.SESSION + nextValue.SESSION,
 					};
+					data[dateStr] = cumulativeTotal;
 				}
 				return res.json({ data });
 			}
@@ -176,13 +130,7 @@ export const getLogHistory = (client: Client) => {
 				const now = new Date();
 				const frameStart = new Date(now);
 				frameStart.setHours(now.getHours() - 23, 0, 0, 0);
-				let cumulativeTotal = await Promise.all([
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', new Date(2023, 0, 1), frameStart),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', new Date(2023, 0, 1), frameStart),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', new Date(2023, 0, 1), frameStart),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', new Date(2023, 0, 1), frameStart),
-					client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', new Date(2023, 0, 1), frameStart),
-				]) as number[];
+				const startingValue = await client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates(new Date(2023, 0, 1), frameStart);
 
 				for (let i = 0; i < 24; i++) {
 					const start = new Date(frameStart);
@@ -191,22 +139,16 @@ export const getLogHistory = (client: Client) => {
 					end.setHours(start.getHours() + 1);
 
 					const dateStr = `${start.getHours().toString().padStart(2, '0')}:00`;
-					const users = await Promise.all([
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('USER', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('FILE', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('STORAGE', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SYSTEM', start, end),
-						client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates('SESSION', start, end),
-					]);
+					const nextValue = await client.AuditLogManager.fetchActivityByResourceTypeBetweenTwoDates(start, end);
 
-					cumulativeTotal = Array.from({ length: 5 }, (_, j) => (users[j] ?? 0) + (cumulativeTotal[j] ?? 0));
-					data[dateStr] = {
-						user: cumulativeTotal[0],
-						file: cumulativeTotal[1],
-						storage: cumulativeTotal[2],
-						system: cumulativeTotal[3],
-						session: cumulativeTotal[4],
+					const cumulativeTotal = {
+						user: startingValue.USER + nextValue.USER,
+						file: startingValue.FILE + nextValue.FILE,
+						storage: startingValue.STORAGE + nextValue.STORAGE,
+						system: startingValue.SYSTEM + nextValue.SYSTEM,
+						session: startingValue.SESSION + nextValue.SESSION,
 					};
+					data[dateStr] = cumulativeTotal;
 				}
 
 				return res.json({ data });
@@ -247,11 +189,10 @@ export const postLogListener = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		try {
-			const { type, events, name, targetUrl } = req.body;
-			const result = validateLogListener.safeParse({ type, events, name, targetUrl });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			const result = validateLogListener.safeParse(req.body);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const listener = await client.AuditLogManager.addListener({ userId: session!.userId, type: type as ListenerType, eventNames: events, name, targetUrl });
+			const listener = await client.AuditLogManager.addListener({ userId: session!.userId, ...result.data, eventNames: result.data.events });
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session?.user.id,
@@ -260,11 +201,11 @@ export const postLogListener = (client: Client) => {
 					message: 'Successfully created audit log listener.',
 					resourceId: listener.id,
 					ip: getIP(req),
-					userAgent: req.headers['user-agent'] ?? '',
+					userAgent: req.headers['user-agent'],
 					success: true,
 				});
 			});
-			res.json({ success: 'Successfully created log listener.', listener });
+			return res.json({ success: 'Successfully created log listener.', listener });
 		} catch (err) {
 			client.logger.error(err);
 
@@ -280,7 +221,7 @@ export const postLogListener = (client: Client) => {
 					success: false,
 				});
 			});
-			Error.GenericError(res, 'Failed to create log listener.');
+			return Error.GenericError(res, 'Failed to create log listener.');
 		}
 	};
 };
@@ -291,10 +232,11 @@ export const deleteLogListener = (client: Client) => {
 		const session = await getSession(client, req.headers);
 
 		// Fetch and validate listener ID
-		const { id } = req.params;
-		if (typeof id !== 'string') return Error.IncorrectQuery(res, 'Listener ID is required.');
+		const result = validateString.safeParse(req.params['id']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
+
 		try {
-			const listener = await client.AuditLogManager.removeListener(id);
+			const listener = await client.AuditLogManager.removeListener(result.data);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session?.user.id,
@@ -307,7 +249,8 @@ export const deleteLogListener = (client: Client) => {
 					success: true,
 				});
 			});
-			res.json({ success: 'Successfully deleted log listener.' });
+
+			return res.json({ success: 'Successfully deleted log listener.' });
 		} catch (err) {
 			client.logger.error(err);
 
@@ -317,13 +260,14 @@ export const deleteLogListener = (client: Client) => {
 					resourceType: 'SYSTEM',
 					eventName: 'LISTENER_UPDATED',
 					message: `Failed to delete audit log listener due to error: ${err}.`,
-					resourceId: id,
+					resourceId: result.data,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
 				});
 			});
-			Error.GenericError(res, 'Failed to delete log listener.');
+
+			return Error.GenericError(res, 'Failed to delete log listener.');
 		}
 	};
 };
@@ -334,14 +278,14 @@ export const patchLogListener = (client: Client) => {
 		const session = await getSession(client, req.headers);
 
 		// Fetch and validate listener ID
-		const { id } = req.params;
-		if (typeof id !== 'string') return Error.IncorrectQuery(res, 'Listener ID is required.');
-		try {
-			const { type, events, name, targetUrl, enabled } = req.body;
-			const result = validateLogListener.safeParse({ type, events, name, targetUrl, enabled });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		const result = validateString.safeParse(req.params['id']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const listener = await client.AuditLogManager.updateListener({ id, userId: session!.userId, type: type as ListenerType, eventNames: events, name, targetUrl, enabled });
+		try {
+			const bodyResult = validateLogListener.safeParse(req.body);
+			if (!bodyResult.success) return Error.IncorrectQuery(res, bodyResult.error.issues);
+
+			const listener = await client.AuditLogManager.updateListener({ id: result.data, userId: session!.userId, ...bodyResult.data, eventNames: bodyResult.data.events });
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session?.user.id,
@@ -354,7 +298,8 @@ export const patchLogListener = (client: Client) => {
 					success: true,
 				});
 			});
-			res.json({ success: 'Successfully created log listener.', listener });
+
+			return res.json({ success: 'Successfully created log listener.', listener });
 		} catch (err) {
 			client.logger.error(err);
 
@@ -364,13 +309,14 @@ export const patchLogListener = (client: Client) => {
 					resourceType: 'SYSTEM',
 					eventName: 'LISTENER_UPDATED',
 					message: `Failed to update audit log listener due to error: ${err}.`,
-					resourceId: id,
+					resourceId: result.data,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
 				});
 			});
-			Error.GenericError(res, 'Failed to update log listener.');
+
+			return Error.GenericError(res, 'Failed to update log listener.');
 		}
 	};
 };
@@ -396,18 +342,19 @@ export const getLogFiles = (client: Client) => {
 // Endpoint: GET /api/admin/logs/files/:date
 export const getSpecificLog = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const date = req.params.date;
+		const result = validateString.safeParse(req.params['date']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			// Check if the file exists
-			if (!existsSync(`${process.cwd()}/src/utils/logs/${date}`)) return Error.IncorrectQuery(res, 'Log file does not exist.');
+			if (!existsSync(`${process.cwd()}/src/utils/logs/${result.data}`)) return Error.MissingResource(res);
 
-			const log = await fs.readFile(`${process.cwd()}/src/utils/logs/${date}`, 'utf-8');
+			const log = await fs.readFile(`${process.cwd()}/src/utils/logs/${result.data}`, 'utf-8');
 			const logs = log.split(/\r?\n/).filter(line => line.trim() !== '');
-			res.json({ logs: logs, total: logs.length });
+			return res.json({ logs: logs, total: logs.length });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch log file.');
+			return Error.GenericError(res, 'Failed to fetch log file.');
 		}
 	};
 };

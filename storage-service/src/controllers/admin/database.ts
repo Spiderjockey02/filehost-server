@@ -1,5 +1,5 @@
+import { validateBackup } from '@/validators/endpointParams';
 import type { Request, Response } from 'express';
-import { validateBackup } from '@/validators';
 import type Client from '@/helpers/Client';
 import { Error, PATHS } from '@/utils';
 import { existsSync } from 'fs';
@@ -41,7 +41,7 @@ export const deleteBackupByName = (client: Client) => {
 		try {
 			const { timestamp } = req.params;
 			const result = validateBackup.safeParse({ timestamp });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			// Check if the database backups folder exists
 			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res);
@@ -64,9 +64,8 @@ export const deleteBackupByName = (client: Client) => {
 export const downloadBackupByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { timestamp } = req.params;
-			const result = validateBackup.safeParse({ timestamp });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			const result = validateBackup.safeParse(req.params);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			// Check if the database backups folder exists
 			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res);

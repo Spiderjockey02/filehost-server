@@ -57,7 +57,7 @@ export default class StorageManager extends StorageAccessor {
 	*/
 	async getProviderById(storageId: string): Promise<StorageProvider> {
 		const storage = await this.fetchById(storageId);
-		if (storage == null) throw 'Storage is missing';
+		if (storage == null) throw new Error('Storage is missing');
 
 		return this.getProvider(storage);
 	}
@@ -70,6 +70,8 @@ export default class StorageManager extends StorageAccessor {
 	  * @param {StorageProvider} newProvider The provider handler to move files
 	*/
 	async migrateUser(client: Client, files: File[], newStorageId: string, newProvider: StorageProvider) {
+		if (files.length == 0) throw new Error('No files were recieved.');
+
 		for (const file of files) {
 			try {
 				// Fetch the provider the file is currently stored and verify it's online
@@ -114,6 +116,6 @@ export default class StorageManager extends StorageAccessor {
 			}
 		}
 
-		await client.userManager.update({ id: files[0].userId, isMigrating: false });
+		await client.userManager.update({ id: files[0]!.userId, isMigrating: false });
 	}
 }

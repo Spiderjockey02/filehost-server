@@ -61,7 +61,7 @@ export interface DatabaseMetadata {
 export interface HTTPStripped {
 	headers: IncomingHttpHeaders
 	socket?: Socket
-	ip?: string
+	ip: string | undefined
 }
 
 export interface ExtractedMetadata {

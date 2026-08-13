@@ -1,27 +1,26 @@
 import { Prisma, type StorageType } from '@/types/generated/client';
+export type StorageDirection = 'DECRE' | 'INCRE' | 'SET'
 
-export interface createStorageMedium {
+export interface CreateMediumParams {
   type: StorageType
   name: string
   basePath: string
   location: string
-  endpoint?: string
-  maxSize?: bigint
-  usedSize?: bigint
-  thumbnailOnly?: boolean
-  avatarOnly?: boolean
+  endpoint?: string | undefined
+  maxSize?: bigint | undefined
+  usedSize?: bigint | undefined
+  avatarOnly?: boolean | undefined
 }
-export interface updateStorageMedium {
+export interface UpdateMediumParams {
   id: string
-  name?: string
-  basePath?: string
-  location?: string
-  endpoint?: string
-  maxSize?: bigint
-  usedSize?: bigint
-  isPrivate?: boolean
-  thumbnailOnly?: boolean
-  avatarOnly?: boolean
+  name?: string | undefined
+  basePath?: string | undefined
+  location?: string | undefined
+  endpoint?: string | undefined
+  maxSize?: bigint | undefined
+  usedSize?: bigint | undefined
+  isPrivate?: boolean | undefined
+  avatarOnly?: boolean | undefined
 }
 
 export type StorageWithCounts = Prisma.StorageMediumGetPayload<{

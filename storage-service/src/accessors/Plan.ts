@@ -1,5 +1,6 @@
-import type { createPlan, updatePlan } from '@/types/database/Plan';
+import { CreatePlanParams, UpdatePlanParams } from '@/types/database/Plan';
 import type { Plan } from '@/types/generated/client';
+import { skipUndefined } from '@/utils';
 import client from '.';
 
 export default class PlanAccessor {
@@ -11,13 +12,21 @@ export default class PlanAccessor {
 
 	/**
 	  * Creates a new plan in the database.
-	  * @param {createPlan} data The data for the new plan.
+	  * @param {CreatePlanParams} data The data for the new plan.
 	  * @returns {Plan} The created plan.
 	*/
-	async create(data: createPlan): Promise<Plan> {
+	async create(data: CreatePlanParams): Promise<Plan> {
 		try {
 			const plan = await client.plan.create({
-				data,
+				data: {
+					name: data.name,
+					maxStorageSize: skipUndefined(data. maxStorageSize),
+					maxFileSize: skipUndefined(data. maxFileSize),
+					deletedFileRetentionDays: skipUndefined(data.deletedFileRetentionDays),
+					price: skipUndefined(data. price),
+					priceId: skipUndefined(data. priceId),
+					isDefault: skipUndefined(data. isDefault),
+				},
 			});
 
 			this.cache.set(plan.id, plan);
@@ -29,16 +38,24 @@ export default class PlanAccessor {
 
 	/**
 	 * Updates an existing plan in the database.
-	 * @param {updatePlan} data The updated data for the plan.
+	 * @param {UpdatePlanParams} data The updated data for the plan.
 	 * @returns {Plan} The updated plan.
 	*/
-	async update(data: updatePlan): Promise<Plan> {
+	async update(data: UpdatePlanParams): Promise<Plan> {
 		try {
 			const plan = await client.plan.update({
 				where: {
 					id: data.id,
 				},
-				data,
+				data: {
+					name: skipUndefined(data.name),
+					maxStorageSize: skipUndefined(data.maxStorageSize),
+					maxFileSize: skipUndefined(data.maxFileSize),
+					deletedFileRetentionDays: skipUndefined(data.deletedFileRetentionDays),
+					price: skipUndefined(data.price),
+					priceId: skipUndefined(data.priceId),
+					isDefault: skipUndefined(data.isDefault),
+				},
 			});
 
 			this.cache.set(plan.id, plan);

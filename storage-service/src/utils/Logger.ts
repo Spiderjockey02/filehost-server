@@ -49,7 +49,7 @@ export default class Logger {
 				fileLogger.error(content);
 				break;
 			case 'debug':
-				if (!process.env.debug) return;
+				if (!process.env['DEBUG']) return;
 				this.logger.debug(content);
 				fileLogger.debug(content);
 				break;

@@ -1,7 +1,7 @@
 import { type HTTPMethod, Prisma } from '@/types/generated/client';
-import type { Pagination } from './File';
+import { Pagination } from '.';
 
-export type UserActivityInput = {
+export interface UserActivityInput {
 	userId: string | null;
 	method: HTTPMethod;
 	endpoint: string;
@@ -14,21 +14,20 @@ export type UserActivityInput = {
 	createdAt: Date;
 };
 
-export interface fetchTotalParams {
-	userId?: string
-	statusCode?: number
-	method?: HTTPMethod
+export interface FetchTotalParams {
+	userId?: string | undefined
+	statusCode?: number | undefined
+	method?: HTTPMethod | undefined
 }
 
-export type fetchActivityParams = fetchTotalParams & Pagination
+export type FetchActivityParams = FetchTotalParams & Pagination
 
 export interface NetworkFilter {
 	userId?: string
 	storageId?: string
 }
 
-export interface fetchUserAgentsParams {
+export interface FetchUserAgentsParams extends Pagination {
 	sortBy: 'name' | 'activity' | 'logs'
-	sortOrder: Prisma.SortOrder
-	page: number
+	sortOrder?: Prisma.SortOrder | undefined
 }

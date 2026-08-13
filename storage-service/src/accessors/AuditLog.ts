@@ -1,6 +1,7 @@
-import type { AddAuditLogListenerParams, CreateAuditLogEntryParams, fetchAuditLogsParams, FullAuditLogListener, UpdateAuditLogListenerParams } from '@/types/database/AuditLogs';
-import type { AuditLog, AuditLogListener, AuditLogNames, AuditLogResourceType } from '@/types/generated/client';
-import { parseIP, parseUserAgent } from '../utils';
+import type { AddAuditLogListenerParams, CreateAuditLogEntryParams, FetchAuditLogsParams, FullAuditLogListener, UpdateAuditLogListenerParams } from '@/types/database/AuditLogs';
+import { AuditLogResourceType, type AuditLog, type AuditLogListener, type AuditLogNames } from '@/types/generated/client';
+import { parseIP, parseUserAgent, skipUndefined } from '../utils';
+import { skip } from '@/types/generated/internal/prismaNamespace';
 import type Client from '@/helpers/Client';
 import client from '.';
 
@@ -41,14 +42,14 @@ export default class AuditLogAccessor {
 							},
 						},
 					},
-					message: params.message,
+					message: skipUndefined(params.message),
 					success: params.success,
-					resourceId: params.resourceId,
+					resourceId: skipUndefined(params.resourceId),
 					user: params.userId ? {
 						connect: {
 							id: params.userId,
 						},
-					} : undefined,
+					} : skip,
 					ipCon: params.ip ? {
 						connectOrCreate: {
 							where: {
@@ -58,7 +59,7 @@ export default class AuditLogAccessor {
 								...ip, ip: params.ip,
 							},
 						},
-					} : undefined,
+					} : skip,
 					userAgentCon: params.userAgent ? {
 						connectOrCreate: {
 							where: {
@@ -68,7 +69,7 @@ export default class AuditLogAccessor {
 								...userAgent, agent: params.userAgent,
 							},
 						},
-					} : undefined,
+					} : skip,
 				},
 				include: {
 					user: true,
@@ -92,16 +93,16 @@ export default class AuditLogAccessor {
 
 	/**
 	  * Fetch a list of audit logs
-	  * @param {fetchAuditLogsParams} data The filter data
+	  * @param {FetchAuditLogsParams} data The filter data
 		* @returns {{logs: AuditLog[], total: number}} The list of logs and a total
 	*/
-	async fetchAll(data: fetchAuditLogsParams): Promise<{logs: AuditLog[], total: number}> {
+	async fetchAll(data: FetchAuditLogsParams): Promise<{logs: AuditLog[], total: number}> {
 		try {
 			const [logs, total] = await Promise.all([
 				client.auditLog.findMany({
 					where: {
-						userId: data.userId,
-						eventId: data.eventName,
+						userId: skipUndefined(data.userId),
+						eventId: skipUndefined(data.eventName),
 					},
 					orderBy: {
 						createdAt: data.sortOrder ?? 'desc',
@@ -111,8 +112,8 @@ export default class AuditLogAccessor {
 				}),
 				client.auditLog.count({
 					where: {
-						userId: data.userId,
-						eventId: data.eventName,
+						userId: skipUndefined(data.userId),
+						eventId: skipUndefined(data.eventName),
 					},
 				}),
 			]);
@@ -141,17 +142,18 @@ export default class AuditLogAccessor {
 
 	/**
 	  * Fetch total logs with a certain resource type
-		* @param {AuditLogResourceType} resourceType The resource type
-		* @returns {number} The total number of audit logs
 	*/
-	async fetchCountByResourceType(resourceType: AuditLogResourceType): Promise<number> {
-		return client.auditLog.count({
-			where: {
-				event: {
-					resourceType: resourceType,
-				},
-			},
-		});
+	async fetchCountByResourceType() {
+		const rows = await client.$queryRaw<{ resourceType: AuditLogResourceType; count: bigint }[]>`
+			SELECT
+					n.resourceType,
+					COUNT(l.id) AS count
+			FROM AuditLogNames n
+			LEFT JOIN AuditLog l ON l.eventId = n.name
+			GROUP BY n.resourceType
+    `;
+
+		return Object.fromEntries(rows.map(({ resourceType, count }) => [resourceType, Number(count)])) as Record<AuditLogResourceType, number>;
 	}
 
 	/**
@@ -170,7 +172,7 @@ export default class AuditLogAccessor {
 					},
 					name: data.name,
 					type: data.type,
-					targetUrl: data.targetUrl,
+					targetUrl: skipUndefined(data.targetUrl),
 					enabled: true,
 				},
 			});
@@ -234,8 +236,8 @@ export default class AuditLogAccessor {
 				data: {
 					name: data.name,
 					type: data.type,
-					targetUrl: data.targetUrl,
-					enabled: data.enabled,
+					targetUrl: skipUndefined(data.targetUrl),
+					enabled: skipUndefined(data.enabled),
 				},
 			});
 
@@ -299,23 +301,25 @@ export default class AuditLogAccessor {
 
 	/**
 		* Fetch the total logs by a resource type between 2 dates
-		* @param {AuditLogResourceType} resourceType The resource type
 		* @param {Date} oldDate The old date.
 		* @param {Date} newDate The new date.
-		* @returns {number} The number of logs filtered by the resource type
 	*/
-	async fetchActivityByResourceTypeBetweenTwoDates(resourceType: AuditLogResourceType, oldDate: Date, newDate: Date): Promise<number> {
-		return client.auditLog.count({
-			where: {
-				event: {
-					resourceType: resourceType,
-				},
-				createdAt: {
-					gte: oldDate,
-					lte: newDate,
-				},
-			},
-		});
+	async fetchActivityByResourceTypeBetweenTwoDates(oldDate: Date, newDate: Date) {
+		const rows = await client.$queryRaw<{ resourceType: AuditLogResourceType; count: bigint }[]>`
+			SELECT
+				n.resourceType,
+				COUNT(l.id) AS count
+			FROM AuditLogNames n
+			LEFT JOIN AuditLog l
+				ON l.eventId = n.name
+				AND l.createdAt >= ${oldDate}
+				AND l.createdAt <= ${newDate}
+			GROUP BY n.resourceType
+    `;
+
+		const counts = Object.fromEntries(Object.values(AuditLogResourceType).map((resourceType) => [resourceType, 0])) as Record<AuditLogResourceType, number>;
+		for (const { resourceType, count } of rows) counts[resourceType] = Number(count);
+		return counts;
 	}
 
 	/**

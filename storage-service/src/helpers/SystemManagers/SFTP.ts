@@ -5,8 +5,8 @@ import type Client from '@/helpers/Client';
 import SFTPClient from 'ssh2-sftp-client';
 import { parseSFTPUrl } from '@/utils';
 import { promisify } from 'node:util';
+import { ZipArchive } from 'archiver';
 import { Response } from 'express';
-import archiver from 'archiver';
 import strm from 'stream';
 import path from 'path';
 const pipeline = promisify(strm.pipeline);
@@ -38,7 +38,7 @@ export default class SFTPManager implements StorageProvider {
 
 	async downloadFiles(res: Response, files: File[]) {
 		this.client.logger.debug(`[SFTP Client]: Downloading ${files.length} files.`);
-		const archive = archiver('zip', { zlib: { level: 9 } });
+		const archive = new ZipArchive({ zlib: { level: 9 } });
 		res.setHeader('Content-Type', 'application/zip');
 		res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
 		archive.pipe(res);
@@ -155,16 +155,14 @@ export default class SFTPManager implements StorageProvider {
 				const match = range.match(/bytes=(\d+)-(\d*)/);
 				if (!match) throw new Error('Invalid Range header');
 
-				const start = parseInt(match[1], 10);
-				const end = match[2]
-					? Math.min(parseInt(match[2], 10), fileSize - 1)
-					: Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
+				// Verify range match
+				const [, startValue, endValue] = match;
+				if (!startValue) throw new Error('Invalid Range header');
+				const start = Number.parseInt(startValue, 10);
+				const end = endValue ? Math.min(parseInt(endValue, 10), fileSize - 1) : Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
 
-				const stream = this.SFTPClient.createReadStream(key, {
-					start,
-					end,
-				});
-
+				// Create read stream to client
+				const stream = this.SFTPClient.createReadStream(key, { start, end });
 				res.writeHead(206, {
 					'Content-Range': `bytes ${start}-${end}/${fileSize}`,
 					'Accept-Ranges': 'bytes',
@@ -213,7 +211,7 @@ export default class SFTPManager implements StorageProvider {
 				host: this.config.host,
 				port: this.config.port,
 				username: this.config.username,
-				password: this.config.password,
+				password: this.config.password ?? '',
 			});
 			this.isOnline = true;
 			return true;

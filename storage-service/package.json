@@ -17,7 +17,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/archiver": "^7.0.0",
+    "@types/archiver": "^8.0.0",
     "@types/compression": "^1.7.2",
     "@types/cors": "^2.8.13",
     "@types/express": "^5.0.3",
@@ -30,14 +30,14 @@
     "eslint-plugin-perfectionist": "^5.9.1",
     "prisma": "^7.7.0",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.4.5"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.817.0",
     "@aws-sdk/lib-storage": "^3.820.0",
     "@prisma/adapter-mariadb": "^7.4.0",
     "@prisma/client": "^7.7.0",
-    "archiver": "^7.0.1",
+    "archiver": "^8.0.0",
     "canvas": "^3.1.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -57,5 +57,11 @@
     "tsc-alias": "^1.8.16",
     "ua-parser-js": "^2.0.3",
     "zod": "^4.1.11"
+  },
+  "allowScripts": {
+    "canvas@3.2.3": true,
+    "@prisma/engines@7.9.1": true,
+    "prisma@7.9.1": true,
+    "sharp@0.34.5": true
   }
 }

@@ -1,4 +1,4 @@
-import { validatePage, validateRecentlyViewed } from '@/validators';
+import { validatePage, validateRecentlyViewed, validateString } from '@/validators';
 import { Error, getIP, sanitiseObject } from '@/utils';
 import { avatarForm, getSession } from '@/middleware';
 import type { Request, Response } from 'express';
@@ -18,7 +18,7 @@ export const postChangeAvatar = (client: Client) => {
 			res.json({ success: 'Successfully uploaded user\'s avatar' });
 		} catch (err) {
 			client.logger.error(err);
-			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
+			if (typeof err == 'string') return Error.IncorrectQuery(res, [{ message: err }]);
 			Error.GenericError(res, `Failed to upload avatar due to: ${err}.`);
 		}
 	};
@@ -33,7 +33,7 @@ export const getRecentlyViewed = (client: Client) => {
 			const { sortBy, sortOrder, page } = req.query;
 
 			const result = validateRecentlyViewed.safeParse({ sortBy, sortOrder, page });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			const [files, total] = await Promise.all([
 				client.recentlyViewedFileManager.fetchUsersRecentlyViewed({ userId: session.user.id, ...result.data }),
@@ -97,7 +97,7 @@ export const getNotifications = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 			const { page } = req.query;
 			const result = validatePage.safeParse(page);
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			// Fetch notifications from the user
 			const [notifications, total] = await Promise.all([
@@ -113,23 +113,22 @@ export const getNotifications = (client: Client) => {
 	};
 };
 
-
 // Endpoint DELETE /api/session/notifications/:id
 export const deleteNotification = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const notifId = req.params.id;
-		if (typeof notifId !== 'string') return Error.IncorrectQuery(res, 'Notification ID is required.');
+		const result = validateString.safeParse(req.params['id']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Get the notification from the database and make sure it exists and is owned by the person in session.
-			const notification = await client.notificationManager.fetchById(notifId);
-			if (!notification) return Error.IncorrectQuery(res, 'Notification not found.');
+			const notification = await client.notificationManager.fetchById(result.data);
+			if (!notification) return Error.MissingResource(res);
 			if (notification.userId !== session.user.id) return Error.InvalidSession(res);
 
-			await client.notificationManager.delete(notifId);
+			await client.notificationManager.delete(result.data);
 			res.json({ success: 'Successfully deleted notification.' });
 		} catch (err) {
 			client.logger.error(err);
@@ -177,10 +176,10 @@ export const postUserInformation = (client: Client) => {
 		if (!session?.user) return Error.InvalidSession(res);
 
 		try {
-			const { name } = req.body;
-			if (typeof name !== 'string' || name.length == 0) return Error.IncorrectQuery(res, 'Name must be provided.');
+			const result = validateString.safeParse(req.body['name']);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			await client.userManager.update({ name, id: session.user.id	});
+			await client.userManager.update({ name: result.data, id: session.user.id	});
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					resourceType: 'USER',
@@ -257,7 +256,7 @@ export const putRestore = (client: Client) => {
 
 			// Get and validate the file paths for restoring
 			const { fileIds } = req.body;
-			if (!Array.isArray(fileIds) || fileIds.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
+			if (!Array.isArray(fileIds) || fileIds.length == 0) return Error.IncorrectQuery(res, [{ message: 'File paths are missing from request' }]);
 
 			// Loop through each path and restore them (Could take some time if it is multiple deep directories)
 			for (const fileId of fileIds) {

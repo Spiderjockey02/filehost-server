@@ -53,13 +53,13 @@ export class ConfigManager {
 		let obj: any = this.config;
 
 		for (let i = 0; i < keys.length - 1; i++) {
-			if (typeof obj[keys[i]] !== 'object') {
+			if (typeof obj[keys[i]!] !== 'object') {
 				throw new Error(`Invalid config path: ${path}`);
 			}
-			obj = obj[keys[i]];
+			obj = obj[keys[i]!];
 		}
 
-		obj[keys[keys.length - 1]] = value;
+		obj[keys[keys.length - 1]!] = value;
 		return this.save();
 	}
 

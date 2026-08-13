@@ -6,6 +6,7 @@ declare global {
       FRONTEND_URL: string;
       PORT: string;
       DEBUG: string;
+      LIBREOFFICE_PATH: string
     }
   }
 }

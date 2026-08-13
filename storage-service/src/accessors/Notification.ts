@@ -1,6 +1,7 @@
 import type { CreateNotificationParams, FetchByUserIdParams } from '@/types/database/Notification';
 import type { Notification } from '@/types/generated/client';
 import type { Server } from 'socket.io';
+import { skipUndefined } from '@/utils';
 import { LRUCache } from 'lru-cache';
 import client from '.';
 
@@ -27,7 +28,7 @@ export default class NotificationManager {
 				data: {
 					text: data.text,
 					title: data.title,
-					url: data.url,
+					url: skipUndefined(data.url),
 					user: {
 						connect: {
 							id: data.userId,
@@ -53,10 +54,9 @@ export default class NotificationManager {
 	*/
 	async fetchById(id: string): Promise<Notification | null> {
 		try {
-			const notif = this.cache.get(id)
-				?? await client.notification.findUnique({ where: { id } });
-
+			const notif = this.cache.get(id) ?? await client.notification.findUnique({ where: { id } });
 			if (notif) this.cache.set(id, notif);
+
 			return notif;
 		} catch (err) {
 			throw err;
@@ -84,7 +84,7 @@ export default class NotificationManager {
 	  * @param {string} userId The user id.
 	  * @returns {Notification[]} List of user's notifications
 	*/
-	async fetchByUserId({ userId, page }: FetchByUserIdParams): Promise<Notification[]> {
+	async fetchByUserId({ userId, page = 0 }: FetchByUserIdParams): Promise<Notification[]> {
 		return client.notification.findMany({
 			where: {
 				userId,

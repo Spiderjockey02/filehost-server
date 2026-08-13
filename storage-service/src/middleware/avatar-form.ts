@@ -9,7 +9,7 @@ import sharp from 'sharp';
 export default async (client: Client, req: Request, user: User) => {
 	// Get storage and it's provider
 	const storage = await client.FileManager.storageManager.fetchAvatarMedium();
-	if (storage == null) throw 'Storage not found';
+	if (storage == null) throw new Error('Storage not found');
 	const fileProvider = await client.FileManager.storageManager.getProvider(storage);
 
 	const form = formidable({
@@ -26,19 +26,19 @@ export default async (client: Client, req: Request, user: User) => {
 
 	// Parse the form data
 	const [fields, files] = await form.parse(req);
-	const file = files[Object.keys(files)[0]];
-	if (file == undefined) throw 'No file was uploaded.';
+	const file = files[Object.keys(files)[0]!];
+	if (file == undefined || file.length == 0) throw new Error('No file was uploaded.');
 
 	try {
 		// Now do some checks on the file
-		const metadata = await sharp(`${file[0].filepath}`, { pages: -1 }).metadata();
-		if ((metadata.width ?? 0) > 1024 || (metadata.height ?? 0) > 1024) throw 'Image dimensions must not exceed 1024x1024.';
+		const metadata = await sharp(`${file[0]!.filepath}`, { pages: -1 }).metadata();
+		if ((metadata.width ?? 0) > 1024 || (metadata.height ?? 0) > 1024) throw new Error('Image dimensions must not exceed 1024x1024.');
 
 		// Check if image is animated GIF etc
-		if ((metadata.pages ?? 1) > 1) throw 'Animated images are not allowed.';
+		if ((metadata.pages ?? 1) > 1) throw new Error('Animated images are not allowed.');
 
 		// Move to avatar directory, overwriting the old one
-		const buffer = await readFile(file[0].filepath);
+		const buffer = await readFile(file[0]!.filepath);
 		await fileProvider.writeFile(`${user.id}.webp`, buffer);
 
 		// User could have an avatar from an oauth2 provider, so we need to clear that too
@@ -73,7 +73,7 @@ export default async (client: Client, req: Request, user: User) => {
 			});
 		});
 
-		await fileProvider.deleteFile(file[0].filepath);
+		await fileProvider.deleteFile(file[0]!.filepath);
 		throw err;
 	}
 };

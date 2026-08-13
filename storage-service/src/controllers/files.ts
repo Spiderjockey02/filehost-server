@@ -1,6 +1,6 @@
 import { Error, getIP, sanitiseObject } from '@/utils';
 import { getSession, parseForm } from '@/middleware';
-import { FileType } from '@/types/generated/client';
+import { validateSearchQuery } from '@/validators';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 
@@ -39,7 +39,7 @@ export const postFileUpload = (client: Client) => {
 			res.json({ success: 'File(s) successfully uploaded.' });
 		} catch (err) {
 			client.logger.error(err);
-			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
+			if (typeof err == 'string') return Error.IncorrectQuery(res, [{ message: err }]);
 			Error.GenericError(res, 'Failed to upload file.');
 		}
 	};
@@ -57,7 +57,7 @@ export const deleteFile = (client: Client) => {
 			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before deleting files.');
 
 			// Validate request body
-			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
+			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
 
 			await client.FileManager.delete(session.user, fileId);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
@@ -87,7 +87,6 @@ export const deleteFile = (client: Client) => {
 					success: false,
 				});
 			});
-			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to delete item.');
 		}
 	};
@@ -104,7 +103,7 @@ export const deleteBulkFiles = (client: Client) => {
 
 		// Validate request body
 		const { paths } = req.body;
-		if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
+		if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, [{ message: 'File paths are missing from request' }]);
 
 		// Loop through and delete all files
 		let successfullyDeletion = 0;
@@ -133,9 +132,10 @@ export const postMoveFile = (client: Client) => {
 		if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before moving files.');
 
 		// Validate request body
+		console.log(req);
 		const { newDirId, fileId } = req.body;
-		if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, 'New directory ID is missing from request');
-		if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
+		if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, [{ message: 'New directory ID is missing from request' }]);
+		if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
 
 		try {
 			await client.FileManager.move(session.user, fileId, newDirId);
@@ -166,7 +166,6 @@ export const postMoveFile = (client: Client) => {
 					success: false,
 				});
 			});
-			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to move item.');
 		}
 	};
@@ -184,8 +183,8 @@ export const postCopyFile = (client: Client) => {
 			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before copying files.');
 
 			// Validate request body
-			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, 'New directory ID is missing from request');
-			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
+			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, [{ message: 'New directory ID is missing from request' }]);
+			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
 
 			await client.FileManager.copy(session.user, fileId, newDirId);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
@@ -214,8 +213,8 @@ export const postCopyFile = (client: Client) => {
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
 				});
-				if (typeof err == 'string') return Error.IncorrectQuery(res, err);
-				Error.GenericError(res, 'Failed to copy item.');
+
+				return Error.GenericError(res, 'Failed to copy item.');
 			});
 		}
 	};
@@ -230,7 +229,7 @@ export const postDownloadFile = (client: Client) => {
 
 		try {
 			// Validate the file ID
-			if (typeof id !== 'string' || id.length == 0) return Error.IncorrectQuery(res, 'File ID is missing from request');
+			if (typeof id !== 'string' || id.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
 
 			// Fetch file from database
 			const file = await client.FileManager.fetchById(id);
@@ -279,7 +278,7 @@ export const getBulkDownload = (client: Client) => {
 
 			// Validate request body
 			const { paths } = req.body;
-			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, 'File paths are missing from request');
+			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, [{ message: 'File paths are missing from request' }]);
 			const filePaths: string[] = paths;
 
 			const files = await Promise.all(filePaths.map(async (f) => await client.FileManager.fetchByFilePath(session?.user.id, f)));
@@ -299,8 +298,8 @@ export const postRenameFile = (client: Client) => {
 		if (!session?.user) return Error.InvalidSession(res);
 		const { fileId, newName } = req.body;
 
-		if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, 'fileId is missing from request');
-		if (typeof newName !== 'string' || newName.replace(/\.[^/.]+$/, '').length == 0) return Error.IncorrectQuery(res, 'newName is missing from request');
+		if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'fileId is missing from request' }]);
+		if (typeof newName !== 'string' || newName.replace(/\.[^/.]+$/, '').length == 0) return Error.IncorrectQuery(res, [{ message: 'newName is missing from request' }]);
 
 		try {
 			// User can't edit their files if they are migrating storages
@@ -335,7 +334,6 @@ export const postRenameFile = (client: Client) => {
 				});
 			});
 			client.logger.error(err);
-			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to rename item.');
 		}
 	};
@@ -352,7 +350,7 @@ export const postCreateFolder = (client: Client) => {
 			// User can't edit their files if they are migrating storages
 			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before creating a folder.');
 
-			if (typeof folderName !== 'string' || folderName.trim().length == 0) return Error.IncorrectQuery(res, 'Folder name is not a string.');
+			if (typeof folderName !== 'string' || folderName.trim().length == 0) return Error.IncorrectQuery(res, [{ message: 'Folder name is not a string.' }]);
 
 			// Decode & santise the referer path to ensure the folder is added to the correct path
 			await client.FileManager.createDirectory(session.user, parentId, folderName.trim());
@@ -383,7 +381,6 @@ export const postCreateFolder = (client: Client) => {
 					success: false,
 				});
 			});
-			if (typeof err == 'string') return Error.IncorrectQuery(res, err);
 			Error.GenericError(res, 'Failed to create folder.');
 		}
 	};
@@ -396,16 +393,16 @@ export const getSearchFile = (client: Client) => {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			// Search for file with extra information if sent aswell
-			const srch = req.query.query;
-			if (typeof srch !== 'string' || srch.length == 0) return Error.IncorrectQuery(res, 'Query is missing from request');
-
-			const fileType = req.query.fileType;
-			const type = [undefined, FileType.FILE, FileType.DIRECTORY][Number(fileType)] ?? undefined;
-			const files = await client.FileManager.searchByName(session.user.id, srch, type);
+			const result = validateSearchQuery.safeParse(req.query);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
+			const { query, fileType, page } = result.data;
 
 			// Only need to send the name and path for search query
-			res.json({ files: sanitiseObject(files) });
+			const [files, total] = await Promise.all([
+				client.FileManager.searchByName({ userId: session.user.id, query, type: fileType, page }),
+				client.FileManager.searchByNameCount({ userId: session.user.id, query, type: fileType }),
+			]);
+			res.json({ files: sanitiseObject(files), total });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to search for item.');

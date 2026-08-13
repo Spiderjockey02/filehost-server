@@ -1,5 +1,5 @@
 import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
-import { validateFileGrowth, validateGrouped, validatePage } from '@/validators';
+import { validateAdminRecentlyUploaded, validateFileGrowth, validateGrouped } from '@/validators/endpointParams';
 import type { Request, Response } from 'express';
 import { Error, sanitiseObject } from '@/utils';
 import type Client from '@/helpers/Client';
@@ -31,7 +31,7 @@ export const getFilesGrowth = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const { interval, storageId } = req.query;
 		const result = validateFileGrowth.safeParse({ interval, storageId });
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		let data: CountMap = {};
 		switch (result.data.interval) {
@@ -73,18 +73,17 @@ export const getRecentlyUploaded = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			// Allow pagination
-			const { page, userId } = req.query;
-			const result = validatePage.safeParse(page);
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			const result = validateAdminRecentlyUploaded.safeParse(req.query);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			const [files, total] = await Promise.all([
-				client.FileManager.fetchRecentlyUploaded({ page: result.data, userId: userId ? `${userId}` : undefined }),
-				client.FileManager.fetchTotal(userId ? `${userId}` : undefined),
+				client.FileManager.fetchRecentlyUploaded(result.data),
+				client.FileManager.fetchTotal(result.data.userId),
 			]);
-			res.json({ files: sanitiseObject(files), total: total.files });
+			return res.json({ files: sanitiseObject(files), total: total.files });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch recently uploaded files.');
+			return Error.GenericError(res, 'Failed to fetch recently uploaded files.');
 		}
 	};
 };
@@ -93,15 +92,14 @@ export const getRecentlyUploaded = (client: Client) => {
 export const getMimeTypes = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { grouped, type } = req.query;
-			const result = validateGrouped.safeParse({ grouped, type });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			const result = validateGrouped.safeParse(req.query);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const mimeTypes = await client.FileManager.fetchFileMediaTypes({ ...result.data });
-			res.json({ mimeTypes });
+			const mimeTypes = await client.FileManager.fetchFileMediaTypes(result.data);
+			return res.json(mimeTypes);
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch list of mime types.');
+			return Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
 	};
 };

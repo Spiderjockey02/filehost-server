@@ -1,5 +1,6 @@
-import type { createCronJobParams, createCronJobLogTypeParams } from '@/types/database/CronJob';
+import type { CreateCronJobLogTypeParams, CreateCronJobParams, UpdateCronJobParams } from '@/types/database/CronJob';
 import type { CronJob, CronJobLog, CronJobNames } from '@/types/generated/client';
+import { skipUndefined } from '@/utils';
 import client from '.';
 
 export default class CronJobAccessor {
@@ -11,28 +12,32 @@ export default class CronJobAccessor {
 
 	/**
 	  * Create a new CRON job
-	  * @param {createCronJobParams} data The data to make one
+	  * @param {CreateCronJobParams} data The data to make one
 	  * @returns {CronJob} The new CRON job
 	*/
-	async create(data: createCronJobParams): Promise<CronJob> {
+	async create(data: CreateCronJobParams): Promise<CronJob> {
 		return client.cronJob.create({
-			data,
+			data: {
+				name: data.name,
+				schedule: data.schedule,
+				latestStatus: skipUndefined(data.latestStatus),
+			},
 		});
 	}
 
 	/**
 	  * Update an existing CRON job
-	  * @param {createCronJobParams} data The data to make one
+	  * @param {UpdateCronJobParams} data The data to make one
 	  * @returns {CronJob} The updated CRON job
 	*/
-	async update(data: createCronJobParams): Promise<CronJob> {
+	async update(data: UpdateCronJobParams): Promise<CronJob> {
 		return client.cronJob.update({
 			where: {
 				name: data.name,
 			},
 			data: {
-				schedule: data.schedule,
-				latestStatus: data.latestStatus,
+				schedule: skipUndefined(data.schedule),
+				latestStatus: skipUndefined(data.latestStatus),
 			},
 		});
 	}
@@ -54,10 +59,10 @@ export default class CronJobAccessor {
 
 	/**
 	  * Create a CRON job log
-	  * @param {createCronJobLogTypeParams} data The CRON job log data
+	  * @param {CreateCronJobLogTypeParams} data The CRON job log data
 	  * @returns {CronJobLog} The CRON job log.
 	*/
-	async createLog(data: createCronJobLogTypeParams): Promise<CronJobLog> {
+	async createLog(data: CreateCronJobLogTypeParams): Promise<CronJobLog> {
 		try {
 			const log = await client.cronJobLog.create({
 				data: {

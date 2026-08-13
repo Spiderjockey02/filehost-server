@@ -1,5 +1,4 @@
 import { Logger, parseMySQLConnectionString, PATHS } from '@/utils';
-// All accessor imports
 import RecentlyViewedFileManager from './RecentlyViewedFile';
 import { PrismaClient } from '@/types/generated/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
@@ -19,7 +18,7 @@ import fs from 'fs/promises';
 import 'dotenv/config';
 const LoggerClass = new Logger();
 
-const database = parseMySQLConnectionString(process.env.DATABASE_URL as string);
+const database = parseMySQLConnectionString(process.env.DATABASE_URL);
 const adapter = new PrismaMariaDb({
 	host: database.host,
 	user: database.username,
@@ -67,7 +66,7 @@ const prismaClient = client.$extends({
 			// Check if the database backups folder exists
 			if (!existsSync(PATHS.DATABASE_BACKUPS)) await fs.mkdir(PATHS.DATABASE_BACKUPS, { recursive: true });
 
-			const mysqlArgs = parseMySQLConnectionString(process.env.DATABASE_URL as string);
+			const mysqlArgs = parseMySQLConnectionString(process.env.DATABASE_URL);
 			const timestamp = new Date();
 
 			return new Promise((resolve, reject) => {

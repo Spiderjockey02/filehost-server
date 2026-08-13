@@ -1,37 +1,39 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "baseUrl": ".",
     "rootDir": "./src",
     "types": ["node"],
     "outDir": "./dist",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "es2024",
     "lib": [
       "es2024"
     ],
-    "target": "es2024",
-    "skipLibCheck": true,
-    "moduleResolution": "node",
-    "strict": true,
-    "noImplicitAny": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "CommonJS",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "strictNullChecks": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
+    "exactOptionalPropertyTypes": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "ignoreDeprecations": "6.0",
     "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "pretty": true,
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "verbatimModuleSyntax": false,
     "resolveJsonModule": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "skipLibCheck": true,
+    "strict": true,
+    "strictPropertyInitialization": true,
+    "useUnknownInCatchVariables": true,
+    "verbatimModuleSyntax": false,
+
   },
   "exclude": ["node_modules", "prisma.config.ts"]
 }

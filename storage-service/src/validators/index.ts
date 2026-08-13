@@ -1,5 +1,6 @@
-import { AuditLogEventName, HTTPMethod } from '@/types/generated/client';
+import { AuditLogEventName, FileType, HTTPMethod } from '@/types/generated/client';
 import MIMEList from '../../assets/MIME-list.json';
+import { Prisma } from '@/types/generated/browser';
 import { z } from 'zod';
 
 export const validatePage = z
@@ -9,21 +10,21 @@ export const validatePage = z
 	.refine((n) => n >= 0, { message: 'page must be a positive number.' })
 	.optional();
 
-export const validateGrouped = z.object({
-	grouped: z
-		.string()
-		.refine((val) => ['true', 'false'].includes(val), {
-			message: 'grouped must be either true or false.',
-		})
-		.transform((val) => val === 'true')
-		.optional(),
-	type: z.string().optional(),
-});
+export const validateString = z.string();
 
+export const validateOptionalString = z.string().optional();
+
+export const validateUserId = z.string();
 
 export const validateInterval = z.enum(['yearly', 'monthly', 'daily', 'hourly'], {
 	message: 'interval must be one of the following: yearly, monthly, daily or hourly',
 });
+
+export const validateSortOrder = z
+	.enum(Prisma.SortOrder, {
+		message: 'sortOrder is invalid',
+	})
+	.optional();
 
 export const validateIntervalWithFilters = z.object({
 	interval: validateInterval,
@@ -31,17 +32,11 @@ export const validateIntervalWithFilters = z.object({
 	userId: z.string().optional(),
 });
 
-export const validateFileGrowth = z.object({
-	storageId: z.string().optional(),
-	interval: validateInterval,
-});
-
 export const validateAdminLogs = z.object({
 	userId: z.string().optional(),
 	page: validatePage,
 	eventName: z
-		.string()
-		.refine((val) => Object.keys(AuditLogEventName).includes(val), {
+		.enum(AuditLogEventName, {
 			message: 'eventName is invalid',
 		})
 		.optional(),
@@ -57,18 +52,17 @@ export const validateLogListener = z
 		type: z.enum(['WEBHOOK', 'NOTIFICATION'], {
 			message: 'Invalid listener type provided.',
 		}),
-		events: z
-			.array(z.string(), {
+		events: z.array(
+			z.enum(AuditLogEventName, {
 				message: 'Invalid events provided.',
-			})
-			.nonempty({ message: 'Invalid events provided.' }),
+			}),
+		),
 		name: z.string().min(1, { message: 'Invalid name provided.' }),
 		targetUrl: z
 			.string()
 			.optional(),
 		enabled: z
-			.boolean()
-			.optional(),
+			.boolean(),
 	})
 	.superRefine((data, ctx) => {
 		if (data.type == 'WEBHOOK' && data.targetUrl?.trim() == '') {
@@ -91,7 +85,7 @@ export const validateStorage = z
 		basePath: z
 			.string()
 			.min(1, { message: 'basePath is required and must be a non-empty string.' }),
-		location: z.string().optional(),
+		location: z.string(),
 		endpoint: z.string().optional(),
 		maxSize: z
 			.preprocess((val) => {
@@ -246,15 +240,6 @@ export const validateBan = z.object({
 		.min(1, { message: 'reason must be a non-empty string.' }),
 });
 
-export const validateBackup = z.object({
-	timestamp: z
-		.string()
-		.regex(/^(\d+)\.dump\.sql$/, {
-			message: 'Timestamp is an invalid format.',
-		})
-		.transform(val => val.match(/^(\d+)\.dump\.sql$/)![1]),
-});
-
 export const createPlanSchema = z.object({
 	name: z
 		.string({ message: 'Plan name is required.' })
@@ -318,4 +303,19 @@ export const validateNetworkList = z.object({
 		.refine((val) => val === undefined || val >= 0, { message: 'deletedFileRetentionDays must be non-negative.' }),
 	method: z
 		.enum(HTTPMethod).optional(),
+});
+
+export const validateSearchQuery = z.object({
+	query: z
+		.string()
+		.trim()
+		.min(1, 'Query is missing from request'),
+	page: validatePage,
+	fileType: z
+		.preprocess((value) => {
+			if (value === undefined) return undefined;
+
+			const type = [undefined, FileType.FILE, FileType.DIRECTORY][Number(value)];
+			return type;
+		}, z.nativeEnum(FileType).optional()),
 });

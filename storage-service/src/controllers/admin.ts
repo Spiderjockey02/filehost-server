@@ -54,7 +54,7 @@ export const getCronJobs = (client: Client) => {
 // Endpoint GET /api/admin/cron-jobs/:name/logs
 export const getCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const name = req.params.name;
+		const name = req.params['name'];
 		try {
 			if (typeof name !== 'string' || !client.CRONManager.isValidCronJobName(name)) return Error.MissingResource(res);
 			const logs = await client.CRONManager.fetchAllLogs(name);
@@ -71,19 +71,18 @@ export const getCronJobsByName = (client: Client) => {
 export const postCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const cronJob = req.params.name;
+			const cronJob = req.params['name'];
 			const { schedule } = req.body;
 
 			// Validate cronJob name and schedule (CRON format)
 			if (typeof cronJob !== 'string' || !client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res);
 			const result = validateCRONSchedule.safeParse(schedule);
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			if (!result.success && result.error.issues.length > 0) return Error.IncorrectQuery(res, result.error.issues);
 
 			client.CRONManager.updateAndReschedule(cronJob, req.body.schedule);
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to update CRON job.');
-
 		}
 	};
 };
@@ -92,7 +91,7 @@ export const postCronJobsByName = (client: Client) => {
 // Endpoint POST /api/admin/cron-jobs/:name/run
 export const postCronJobsByNameRun = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const name = req.params.name;
+		const name = req.params['name'];
 		let log: CronJobLog;
 
 		const session = await getSession(client, req.headers);
@@ -191,7 +190,7 @@ export const postNotification = (client: Client) => {
 		// Validate body
 		const { text, title, url, userId } = req.body;
 		const result = validateNotification.safeParse({ text, title, url, userId });
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		// Check session
 		const session = await getSession(client, req.headers);
@@ -199,7 +198,7 @@ export const postNotification = (client: Client) => {
 
 		// Check recipient is a valid user
 		const user = await client.userManager.fetchbyParam({ id: userId });
-		if (user == null) return Error.IncorrectQuery(res, 'UserId is not a valid user.');
+		if (user == null) return Error.IncorrectQuery(res, [{ message: 'UserId is not a valid user.' }]);
 
 		try {
 			const notification = await client.notificationManager.create({ text, title, url, userId: user.id });
@@ -251,7 +250,7 @@ export const postConfig = (client: Client) => {
 
 		const result = validateConfig.safeParse({ MAX_AVATAR_SIZE, MAX_CHARS_FILE_NAME, DISALLOWED_MIME_TYPES, INVALID_CHARS_IN_FILE_NAME,
 			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE, RATE_LIMIT });
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		// Log audit
 		client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
@@ -275,9 +274,9 @@ export const postConfig = (client: Client) => {
 export const getMimeTypesSearch = () => {
 	return async (req: Request, res: Response) => {
 		const { query } = req.query;
-		if (typeof query !== 'string') return Error.IncorrectQuery(res, 'query must be type string.');
+		if (typeof query !== 'string') return Error.IncorrectQuery(res, [{ message: 'query must be type string.' }]);
 
 		const list = MIMEList.filter((a) => a.startsWith(query)).sort((a, b) => a.localeCompare(b)).slice(0, 9);
-		res.json({ list });
+		return res.json({ list });
 	};
 };

@@ -1,3 +1,4 @@
+import { validateCacheName } from '@/validators/endpointParams';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 import { Error } from '@/utils';
@@ -5,8 +6,10 @@ import { Error } from '@/utils';
 // Endpoint: DELETE /api/admin/cache/:name
 export const deleteCacheByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const name = req.params.name;
+		const result = validateCacheName.safeParse(req.params['name']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
+		const name = result.data;
 		try {
 			switch (name) {
 				case 'users':
@@ -30,13 +33,12 @@ export const deleteCacheByName = (client: Client) => {
 				case 'userAgents':
 					client.userActivityManager.userAgentCache.clear();
 					break;
-				default:
-					return Error.IncorrectQuery(res, 'name must be one of users, files, history, sessions, mimetype, ips or userAgents.');
 			}
-			res.json({ success: `Successfully reset cache: ${name}.` });
+
+			return res.json({ success: `Successfully reset cache: ${name}.` });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, `Failed to reset cache: ${name}.`);
+			return Error.GenericError(res, `Failed to reset cache: ${name}.`);
 		}
 	};
 };

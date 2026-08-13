@@ -11,13 +11,13 @@ import formidable from 'formidable';
 
 export default async (client: Client, req: Request, user: UserWithPlan) => {
 	// Make sure they haven't already uploaded past their max storage
-	if (user.totalStorageSize >= user.plan.maxStorageSize) throw 'Max storage reached';
+	if (user.totalStorageSize >= user.plan.maxStorageSize) throw new Error('Max storage reached');
 
 	// Get storage and it's provider
 	const storage = await client.FileManager.storageManager.fetchById(user.storageId);
-	if (storage == null) throw 'Storage not found';
+	if (storage == null) throw new Error('Storage not found');
 	const fileProvider = await client.FileManager.storageManager.getProvider(storage);
-	if (fileProvider.isOnline == false) throw 'Storage medium is offline';
+	if (fileProvider.isOnline == false) throw new Error('Storage medium is offline');
 
 	const form = formidable({
 		allowEmptyFiles: false,
@@ -35,25 +35,25 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 	// Parse the form data & get the metadata
 	const [fields, files] = await form.parse(req);
-	if (fields.metadata == undefined) throw 'No metadata provided';
-	const metadata = JSON.parse(fields.metadata[0]);
-	if (metadata.parentId == undefined) throw 'No parentId provided';
+	if (fields['metadata'] == undefined) throw new Error('No metadata provided');
+	const metadata = JSON.parse(fields['metadata'][0] ?? '');
+	if (metadata.parentId == undefined) throw new Error('No parentId provided');
 
-	for (const file of files.media ?? []) {
+	for (const file of files['media'] ?? []) {
 		let uploadedFile: FullFile | null = null;
 		try {
 			let dir = await client.FileManager.fetchById(metadata.parentId);
-			if (!dir) throw 'Missing parent directory';
+			if (!dir) throw new Error('Missing parent directory');
 
 			// Ensure the file would not bring the user over their max storage
-			if ((BigInt(file.size) + user.totalStorageSize) >= user.plan.maxStorageSize) throw 'File is too large';
+			if ((BigInt(file.size) + user.totalStorageSize) >= user.plan.maxStorageSize) throw new Error('File is too large');
 
 			// Make sure the storage medium has enough space aswell
-			if ((BigInt(file.size) + storage.usedSize) >= storage.maxSize) throw 'Storage medium does not have enough space';
+			if ((BigInt(file.size) + storage.usedSize) >= storage.maxSize) throw new Error('Storage medium does not have enough space');
 
 			// Check the file isn't already in the directory (Upload CONFLICT)
 			const existingFile = await client.FileManager.fetchByFilePath(user.id, `${dir.path}${file.originalFilename}`);
-			if (existingFile) throw 'File with that name already exists';
+			if (existingFile) throw new Error('File with that name already exists');
 
 			// Update user's storage size
 			await client.userManager.modifyStorageSize(user.id, BigInt(file.size), 'INCRE');
@@ -67,7 +67,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 				// Add the file to the folder
 				dir = await ensureFolderExists(client, dir, user.id, folderPath, storage.id);
-				if (!dir) throw 'Missing parent directory';
+				if (!dir) throw new Error('Missing parent directory');
 
 				uploadedFile = await client.FileManager.create({
 					userId: user.id,

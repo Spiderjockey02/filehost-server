@@ -1,20 +1,20 @@
 import { Prisma } from '@/types/generated/client';
-import type { Pagination } from './File';
+import { Pagination } from '.';
 
 export interface FetchUsers {
-	name?: string
-	sortOrder?: 'desc' | 'asc'
-	sortBy?: 'createdAt' | 'lastActive' | 'uploadedFiles'
-	storageId?: string
+	name?: string | undefined
+	sortOrder?: 'desc' | 'asc' | undefined
+	sortBy?: 'createdAt' | 'lastActive' | 'uploadedFiles' | undefined
+	storageId?: string | undefined
 }
 
-export type fetchUserbyParam = {
+export interface FetchUserbyParam {
 	email?: string
 	id?: string
 	force?: boolean
 }
 
-export interface updateUser {
+export interface UpdateUserParams {
 	id: string
 	email?: string
 	name?: string
@@ -25,7 +25,7 @@ export interface updateUser {
 	image?: string | null
 }
 
-export type AddToPlanProps = {
+export interface AddUserToPlanParams {
 	userId: string
 	planId: string
 }
@@ -43,15 +43,13 @@ export type UserWithPlan = Prisma.UserGetPayload<{
   }
 }>
 
-export type storageDirection = 'DECRE' | 'INCRE' | 'SET'
-
-export type setUserBan = {
+export type SetUserBanStatusParams = {
 	userId: string
 	issuedByUserId: string
 	expiresAt: Date
 	reason: string
 }
 
-export type fetchByStorageIdParams = {
+export type FetchByStorageIdParams = {
 	storageId: string
 } & Pagination

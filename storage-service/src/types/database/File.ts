@@ -1,6 +1,6 @@
 import { type FileType, Prisma } from '@/types/generated/client';
 
-export interface createFile {
+export interface CreateFileParams {
   path: string
   name: string
   size: bigint
@@ -11,7 +11,7 @@ export interface createFile {
   storageId: string
 }
 
-export interface addMetadata {
+export interface AddMetadataToFileParams {
   width?: number
   height?: number
   duration?: number
@@ -24,28 +24,34 @@ export interface addMetadata {
   exif?: any
 }
 
-export interface updateFile {
+export interface UpdateFileParams {
   id: string
   path?: string
   name?: string
   size?: bigint
   deletedAt?: Date | null
   parentId?: string
-  children?: createFile
+  children?: CreateFileParams
   storageId?: string
 }
 
-export interface updateFilePath {
+export interface UpdateFilePathParams {
   userId: string
   parentId: string
   oldPath: string
   newPath: string
 }
 
-export interface fetchByOwner {
+export interface FetchByOwnerParams {
   userId: string
   type?: FileType
   isDeleted?: boolean
+}
+
+export interface SearchForFilesParams {
+  userId: string
+  query: string
+  type?: FileType | undefined
 }
 
 export type FullFile = Prisma.FileGetPayload<{
@@ -57,11 +63,7 @@ export type FullFile = Prisma.FileGetPayload<{
   }
 }>
 
-export interface Pagination {
-  page?: number
-}
-
-export interface fetchFileMediaTypesParams {
-  grouped?: boolean
-  mediaType?: string
+export interface FetchFileMediaTypesParams {
+  grouped?: boolean | undefined
+  type?: string | undefined
 }

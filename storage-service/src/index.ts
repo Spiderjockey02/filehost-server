@@ -2,6 +2,7 @@ import { generateRoutes, logUserActivity, PATHS } from './utils';
 import type { customRequest, customResponse } from './types';
 import { userPostRateLimit } from './middleware/rateLimiter';
 import { getSession } from './middleware';
+import createRoutes from './routes/index';
 import { createServer } from 'node:http';
 import compression from 'compression';
 import Client from './helpers/Client';
@@ -87,7 +88,7 @@ const client = new Client(io);
 		.use(await userPostRateLimit(client))
 		.use(logUserActivity(client))
 		.use(express.json())
-		.use('/', (await import('./routes/index')).default(client));
+		.use('/', createRoutes(client));
 
 	for (const endpoint of endpoints) {
 		app.use(endpoint.route, await (await import(endpoint.path)).default(client));

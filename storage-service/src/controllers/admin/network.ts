@@ -1,5 +1,6 @@
 import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
 import { validateIntervalWithFilters, validateNetworkList } from '@/validators';
+import { validateUserAgents } from '@/validators/endpointParams';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 import type { CountMap } from '@/types';
@@ -30,7 +31,7 @@ export const getActivityRequests = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const { interval, userId, storageId } = req.query;
 		const result = validateIntervalWithFilters.safeParse({ interval, userId, storageId });
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		let data: CountMap = {};
 		switch (result.data.interval) {
@@ -59,7 +60,7 @@ export const getActivityTraffic = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const { interval, userId, storageId } = req.query;
 		const result = validateIntervalWithFilters.safeParse({ interval, userId, storageId });
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		let data: CountMap = {};
 		switch (result.data.interval) {
@@ -90,16 +91,16 @@ export const getActivityList = (client: Client) => {
 			// Allow pagination
 			const { page, userId, status, method } = req.query;
 			const result = validateNetworkList.safeParse({ page, userId, status, method });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			const [activity, total] = await Promise.all([
 				client.userActivityManager.fetchActivity({ page: result.data.page, userId: result.data.userId, statusCode: result.data.status, method: result.data.method }),
 				client.userActivityManager.fetchTotal({ userId: result.data.userId, statusCode: result.data.status, method: result.data.method }),
 			]);
-			res.json({ activity, total });
+			return res.json({ activity, total });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch recently uploaded files.');
+			return Error.GenericError(res, 'Failed to fetch recently uploaded files.');
 		}
 	};
 };
@@ -108,15 +109,14 @@ export const getActivityList = (client: Client) => {
 export const getUserAgents = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { sortBy, sortOrder, page } = req.query;
-			if (typeof sortBy !== 'string' || (sortBy !== 'name' && sortBy !== 'activity' && sortBy !== 'logs')) return Error.IncorrectQuery(res, 'sortBy must be a name or activity');
-			if (typeof sortOrder !== 'string' || (sortOrder !== 'desc' && sortOrder !== 'asc')) return Error.IncorrectQuery(res, 'sortOrder must be desc or asc');
+			const result = validateUserAgents.safeParse(req.query);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const agents = await client.userActivityManager.fetchUserAgents({ sortBy, sortOrder, page: Number(page) });
-			res.json({ agents: agents[0], total: agents[1] });
+			const agents = await client.userActivityManager.fetchUserAgents(result.data);
+			return res.json({ agents: agents[0], total: agents[1] });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch user agents.');
+			return Error.GenericError(res, 'Failed to fetch user agents.');
 		}
 	};
 };

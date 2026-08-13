@@ -1,3 +1,5 @@
+import type { Pagination } from '.';
+
 export interface CreateNotificationParams {
   text: string
   title: string
@@ -5,7 +7,6 @@ export interface CreateNotificationParams {
   userId: string
 }
 
-export interface FetchByUserIdParams {
+export interface FetchByUserIdParams extends Pagination {
   userId: string
-  page: number
 }

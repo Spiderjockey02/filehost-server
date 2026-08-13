@@ -1,15 +1,15 @@
 import type { FileOptions, HTTPStripped, MySQLConnectionOptions, S3Options, SFTPOptions } from '@/types';
 import type { NextFunction, Request, Response } from 'express';
+import { HTTPMethod, Prisma } from '@/types/generated/client';
 import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
 import { readdirSync, statSync, readFileSync } from 'fs';
-import { HTTPMethod } from '@/types/generated/client';
 import { PATHS, ipRegex } from './CONSTANTS';
 import type Client from '@/helpers/Client';
 import { getSession } from '@/middleware';
 import { join, parse, sep } from 'path';
 import { UAParser } from 'ua-parser-js';
+import APIError from './Error';
 import Logger from './Logger';
-import Error from './Error';
 
 // Setup MaxMind GeoIP
 const db = readFileSync('./assets/GeoLite2-City.mmdb');
@@ -120,25 +120,20 @@ export function getIP(req: HTTPStripped): string {
 	};
 
 	if (req.headers) {
-		const headerOrder = [
-			'x-client-ip',
-			'cf-connecting-ip',
-			'fastly-client-ip',
-			'true-client-ip',
-			'x-real-ip',
-			'x-cluster-client-ip',
-			'x-forwarded-for',
-			'forwarded-for',
-			'forwarded',
-		];
+		const ipHeaderNames = ['x-client-ip', 'cf-connecting-ip', 'fastly-client-ip', 'true-client-ip', 'x-real-ip', 'x-cluster-client-ip', 'x-forwarded-for', 'forwarded-for', 'forwarded'];
 
-		for (const header of headerOrder) {
-			const raw = req.headers[header];
-			const value = typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] : undefined;
+		for (const headerName of ipHeaderNames) {
+			const rawHeaderValue = req.headers[headerName];
 
-			if (!value) continue;
-			const candidate = value.split(',')[0].trim();
-			if (ipRegex.test(candidate)) return normalizeIP(candidate);
+			const headerValue = typeof rawHeaderValue === 'string' ? rawHeaderValue : Array.isArray(rawHeaderValue) ? rawHeaderValue[0] : undefined;
+			if (!headerValue) continue;
+
+			const ipAddress = headerValue.split(',')[0]?.trim();
+			if (!ipAddress) continue;
+
+			if (ipRegex.test(ipAddress)) {
+				return normalizeIP(ipAddress);
+			}
 		}
 	}
 
@@ -169,9 +164,12 @@ export function normalizePath(path: string): string {
 export function parseMySQLConnectionString(connectionString: string): MySQLConnectionOptions {
 	const regex = /^mysql:\/\/([^:]+):([^/]+)@([^/:]+):(\d+)\/(.+)$/;
 	const match = connectionString.match(regex);
+	if (!match) throw new Error('Invalid MySQL connection string format');
 
-	if (!match) throw 'Invalid MySQL connection string format';
+	// Destructure the matched query and ensure nothing is missing
 	const [, username, password, host, port, database] = match;
+	if (!username || !password || !host || !port || !database) throw new Error('Invalid MySQL connection string format');
+
 	return { username, password, host, database, port: parseInt(port, 10) };
 }
 
@@ -189,6 +187,8 @@ export function parseS3Url(s3Url: string): S3Options {
 	const endpoint = `${parsed.protocol.slice(0, -1)}://${parsed.hostname}${parsed.port ? `:${parsed.port}` : ''}`;
 	const bucket = parsed.pathname.replace(/^\/+/, '').split('/')[0];
 	const region = parsed.searchParams.get('region') ?? 'eu-west-1';
+
+	if (!endpoint || !region || !accessKeyId || !secretAccessKey || !bucket) throw new Error('Invalid S3 connection string format');
 
 	return { endpoint, region, accessKeyId, secretAccessKey, bucket };
 }
@@ -283,4 +283,6 @@ export function logUserActivity(client: Client): (req: Request, res: Response, n
 	};
 }
 
-export { PATHS, ipRegex, Logger, Error };
+const skipUndefined = <T>(value: T | undefined): T | typeof Prisma.skip => value === undefined ? Prisma.skip : value;
+
+export { PATHS, ipRegex, Logger, APIError as Error, skipUndefined };

@@ -1,20 +1,20 @@
-export interface createPlan {
+export interface CreatePlanParams {
   name: string
-  maxStorageSize?: number
-  maxFileSize?: number
-  deletedFileRetentionDays?: number
-  price?: number
-  priceId?: string
-  isDefault?: boolean
+  maxStorageSize?: number | undefined
+  maxFileSize?: number | undefined
+  deletedFileRetentionDays?: number | undefined
+  price?: number | undefined
+  priceId?: string | undefined
+  isDefault?: boolean | undefined
 }
 
-export interface updatePlan {
+export interface UpdatePlanParams {
   id: string
-  name?: string
-  maxStorageSize?: number
-  maxFileSize?: number
-  deletedFileRetentionDays?: number
-  price?: number
-  priceId?: string
-  isDefault?: boolean
+  name?: string | undefined
+  maxStorageSize?: number | undefined
+  maxFileSize?: number | undefined
+  deletedFileRetentionDays?: number | undefined
+  price?: number | undefined
+  priceId?: string | undefined
+  isDefault?: boolean | undefined
 }

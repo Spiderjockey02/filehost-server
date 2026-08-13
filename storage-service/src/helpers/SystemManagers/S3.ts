@@ -6,9 +6,9 @@ import { Upload } from '@aws-sdk/lib-storage';
 import type Client from '@/helpers/Client';
 import { PassThrough } from 'node:stream';
 import type { Response } from 'express';
+import { ZipArchive } from 'archiver';
 import { promisify } from 'node:util';
 import { parseS3Url } from '@/utils';
-import archiver from 'archiver';
 import stream from 'stream';
 const pipeline = promisify(stream.pipeline);
 
@@ -45,7 +45,7 @@ export default class S3Manager implements StorageProvider {
 
 	async downloadFiles(res: Response, files: File[]) {
 		this.client.logger.debug(`[S3 Client]: Downloading ${files.length} files.`);
-		const archive = archiver('zip', { zlib: { level: 9 } });
+		const archive = new ZipArchive({ zlib: { level: 9 } });
 		res.setHeader('Content-Type', 'application/zip');
 		res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
 		archive.pipe(res);
@@ -137,7 +137,7 @@ export default class S3Manager implements StorageProvider {
 		const command = new GetObjectCommand({
 			Bucket: this.bucketName,
 			Key: `${file.userId}/${file.id}`,
-			Range: (file.mimetype == null || !file.mimetype.split('/')[0].startsWith('video')) ? undefined : `bytes=${0}-${5 * 1024 * 1024}`,
+			Range: (file.mimetype == null || !file.mimetype.split('/')[0]!.startsWith('video')) ? undefined : `bytes=${0}-${5 * 1024 * 1024}`,
 		 });
 		const s3Response = await this.s3.send(command);
 		const chunks: Buffer[] = [];
@@ -161,8 +161,12 @@ export default class S3Manager implements StorageProvider {
 				const CHUNK_SIZE = 10 * 10 ** 6;
 				const match = range.match(/bytes=(\d+)-(\d*)/);
 				if (!match) throw new Error('Invalid Range header');
-				const start = parseInt(match[1], 10);
-				const end = match[2] ? Math.min(parseInt(match[2], 10), fileSize - 1) : Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
+
+				// Verify range match
+				const [, startValue, endValue] = match;
+				if (!startValue) throw new Error('Invalid Range header');
+				const start = Number.parseInt(startValue, 10);
+				const end = endValue ? Math.min(parseInt(endValue, 10), fileSize - 1) : Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
 
 				const command = new GetObjectCommand({
 					Bucket: this.bucketName,

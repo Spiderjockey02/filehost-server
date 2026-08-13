@@ -45,7 +45,7 @@ export async function buildMonthlyHistory({ func, params }: BuildHistoryParams) 
 
 	const monthlyData = await Promise.all(ranges.map(r => func(r.start, r.end, params)));
 	monthlyData.forEach((_, index) => {
-		const monthName = ranges[index].start.toLocaleString('default', { month: 'long' });
+		const monthName = ranges[index]?.start.toLocaleString('default', { month: 'long' })!;
 		if (typeof monthlyData[index] == 'number') {
 			cumulativeTotal += monthlyData[index];
 			data[monthName] = cumulativeTotal;
@@ -79,7 +79,7 @@ export async function buildDailyHistory({ func, params }: BuildHistoryParams) {
 
 	const dailyData = await Promise.all(ranges.map(r => func(r.start, r.end, params)));
 	dailyData.forEach((_, index) => {
-		const dateStr = ranges[index].start.toISOString().split('T')[0];
+		const dateStr = ranges[index]!.start.toISOString().split('T')[0]!;
 		if (typeof dailyData[index] == 'number') {
 			cumulativeTotal += dailyData[index];
 			data[dateStr] = cumulativeTotal;
@@ -110,7 +110,7 @@ export async function buildHourlyHistory({ func, params	 }: BuildHistoryParams) 
 
 	const hourlyData = await Promise.all(ranges.map(r => func(r.start, r.end, params)));
 	hourlyData.forEach((_, index) => {
-		const hourLabel = `${ranges[index].start.getHours().toString().padStart(2, '0')}:00`;
+		const hourLabel = `${ranges[index]?.start.getHours().toString().padStart(2, '0')}:00`;
 		if (typeof hourlyData[index] != 'number') {
 			cumulativeTotal += hourlyData[index];
 			data[hourLabel] = hourlyData[index];

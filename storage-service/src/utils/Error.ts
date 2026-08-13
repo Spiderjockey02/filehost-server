@@ -55,12 +55,13 @@ export default class Error {
 	/**
 		* Tell the requestee their query is invalid
 		* @param {Response} res The response to the requestee
-		* @param {string} errMsg The error message
+		* @param {$ZodIssue[]} errors The error message
 	*/
-	public static IncorrectQuery(res: Response, errMsg: unknown) {
-		res
-			.status(412)
-			.json({ error: errMsg });
+	public static IncorrectQuery(res: Response, errors: {message: string}[]) {
+		const issue = errors.at(0);
+		if (!issue) return res.status(412).json({ error: 'Unknown validation error.' });
+
+		return res.status(412).json({ error: issue.message });
 	}
 
 	/**

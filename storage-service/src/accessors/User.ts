@@ -1,6 +1,9 @@
-import type { FetchUsers, fetchUserbyParam, updateUser, FullUser, storageDirection, setUserBan, AddToPlanProps, fetchByStorageIdParams } from '@/types/database/User';
+import type { AddUserToPlanParams, FetchByStorageIdParams, FetchUserbyParam, FetchUsers, FullUser, SetUserBanStatusParams, UpdateUserParams } from '@/types/database/User';
 import type { Account, User, UserBans } from '@/types/generated/client';
-import type { Pagination } from '@/types/database/File';
+import { StorageDirection } from '@/types/database/StorageMedium';
+import { skip } from '@prisma/client/runtime/client';
+import { Pagination } from '@/types/database';
+import { skipUndefined } from '@/utils';
 import { LRUCache } from 'lru-cache';
 import client from '.';
 
@@ -19,20 +22,20 @@ export default class UserManager {
 	  * @param {updateUser} data The user data.
 		* @returns {UserWithGroup} The updated user.
 	*/
-	async update(data: updateUser): Promise<FullUser> {
+	async update(data: UpdateUserParams): Promise<FullUser> {
 		try {
 			const user = await client.user.update({
 				where: {
 					id: data.id,
 				},
 				data: {
-					email: data.email,
-					totalStorageSize: data.totalStorageSize,
-					updatedAt: data.updatedAt,
-					isMigrating: data.isMigrating,
-					image: data.image,
-					name: data.name,
-					languageCode: data.languageCode,
+					email: skipUndefined(data.email),
+					totalStorageSize: skipUndefined(data.totalStorageSize),
+					updatedAt: skipUndefined(data.updatedAt),
+					isMigrating: skipUndefined(data.isMigrating),
+					image: skipUndefined(data.image),
+					name: skipUndefined(data.name),
+					languageCode: skipUndefined(data.languageCode),
 				},
 				include: {
 					plan: true,
@@ -55,8 +58,8 @@ export default class UserManager {
 		try {
 			const users = await client.user.findMany({
 				where: {
-					name: name?.length ? { startsWith: name } : undefined,
-					storageId,
+					name: name?.length ? { startsWith: name } : skip,
+					storageId: skipUndefined(storageId),
 				},
 				include: {
 					plan: true,
@@ -109,7 +112,7 @@ export default class UserManager {
 	  * @param {AddToPlanProps} data The user data.
 		* @returns {UserWithGroup} The updated user.
 	*/
-	async addToPlan(data: AddToPlanProps): Promise<FullUser> {
+	async addToPlan(data: AddUserToPlanParams): Promise<FullUser> {
 		return client.user.update({
 			where: {
 				id: data.userId,
@@ -133,14 +136,14 @@ export default class UserManager {
 	  * @param {fetchUserbyParam} data The user data.
 		* @returns {UserWithGroup | null} The updated user.
 	*/
-	async fetchbyParam(data: fetchUserbyParam): Promise<FullUser | null> {
+	async fetchbyParam(data: FetchUserbyParam): Promise<FullUser | null> {
 		try {
 			let user = !data.force ? (this.cache.find(u => u.id === data.id || u.email === data.email) ?? null) : null;
 			if (user == null) {
 				user = await client.user.findUnique({
 					where: {
-						email: data.email,
-						id: data.id,
+						email: skipUndefined(data.email),
+						id: skipUndefined(data.id),
 					},
 					include: {
 						plan: true,
@@ -168,16 +171,16 @@ export default class UserManager {
 	  * @param {storageDirection} direction The direction to modify the storage size.
 	  * @returns The updated user.
 	*/
-	async modifyStorageSize(userId: string, size: bigint, direction: storageDirection): Promise<FullUser> {
+	async modifyStorageSize(userId: string, size: bigint, direction: StorageDirection): Promise<FullUser> {
 		return client.user.update({
 			where: {
 				id: userId,
 			},
 			data: {
 				totalStorageSize: {
-					set: direction === 'SET' ? size : undefined,
-					decrement: direction === 'DECRE' ? size : undefined,
-					increment: direction === 'INCRE' ? size : undefined,
+					set: direction === 'SET' ? size : skip,
+					decrement: direction === 'DECRE' ? size : skip,
+					increment: direction === 'INCRE' ? size : skip,
 				},
 			},
 			include: {
@@ -200,12 +203,12 @@ export default class UserManager {
 			const [total, active, newUser] = await Promise.all([
 				client.user.count({
 					where: {
-						storageId,
+						storageId: skipUndefined(storageId),
 					},
 				}),
 				client.user.count({
 					where: {
-						storageId,
+						storageId: skipUndefined(storageId),
 						sessions: {
 							some: {
 								createdAt: {
@@ -217,7 +220,7 @@ export default class UserManager {
 				}),
 				client.user.count({
 					where: {
-						storageId,
+						storageId: skipUndefined(storageId),
 						createdAt: {
 							gte: last7days,
 						},
@@ -309,7 +312,7 @@ export default class UserManager {
 			const domainCount: Record<string, number> = {};
 			for (const user of users) {
 				const email = user.email!;
-				const domain = email.split('@')[1].toLowerCase();
+				const domain = email.split('@')[1]!.toLowerCase();
 				if (domain) domainCount[domain] = (domainCount[domain] || 0) + 1;
 			}
 
@@ -368,7 +371,7 @@ export default class UserManager {
 		* @param {setUserBan} data The ban data
 		* @returns The created ban record.
 	*/
-	async setBanStatus(data: setUserBan): Promise<UserBans> {
+	async setBanStatus(data: SetUserBanStatusParams): Promise<UserBans> {
 		return client.userBans.create({
 			data: {
 				expiresAt: data.expiresAt,
@@ -459,7 +462,7 @@ export default class UserManager {
 		* @param {string} storageId The ID of the storage
 		* @returns The users associated with the storage.
 	*/
-	async fetchByStorageId({ storageId, page = 0 }: fetchByStorageIdParams): Promise<User[]> {
+	async fetchByStorageId({ storageId, page = 0 }: FetchByStorageIdParams): Promise<User[]> {
 		return client.user.findMany({
 			where: {
 				storageId,

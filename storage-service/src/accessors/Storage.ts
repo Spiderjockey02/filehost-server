@@ -1,7 +1,8 @@
-import type { createStorageMedium, StorageWithCounts, updateStorageMedium } from '@/types/database/StorageMedium';
+import type { CreateMediumParams, StorageDirection, StorageWithCounts, UpdateMediumParams } from '@/types/database/StorageMedium';
 import type { StorageMedium } from '@/types/generated/client';
-import type { storageDirection } from '@/types/database/User';
-import type { Pagination } from '@/types/database/File';
+import { skip } from '@prisma/client/runtime/client';
+import { Pagination } from '@/types/database';
+import { skipUndefined } from '@/utils';
 import client from '.';
 
 export default class StorageAccessor {
@@ -17,10 +18,19 @@ export default class StorageAccessor {
 	 * @param data The data to create a storage medium.
 	 * @returns {StorageMedium} The created storage medium.
 	 */
-	async create(data: createStorageMedium): Promise<StorageMedium> {
+	async create(data: CreateMediumParams): Promise<StorageMedium> {
 		try {
 			const storage = await client.storageMedium.create({
-				data,
+				data: {
+					type: data.type,
+					name: data.name,
+					basePath: data.basePath,
+					location: data.location,
+					endpoint: skipUndefined(data.endpoint),
+					maxSize: skipUndefined(data.maxSize),
+					usedSize: skipUndefined(data.usedSize),
+					avatarOnly: skipUndefined(data.avatarOnly),
+				},
 				include: {
 					_count: true,
 				},
@@ -38,13 +48,21 @@ export default class StorageAccessor {
 	  * @param {updateStorageMedium} data The data to update the storage medium.
 	  * @returns {StorageMedium} The updated storage medium.
 	*/
-	async update(data: updateStorageMedium): Promise<StorageMedium> {
+	async update(data: UpdateMediumParams): Promise<StorageMedium> {
 		try {
 			const storage = await client.storageMedium.update({
 				where: {
 					id: data.id,
 				},
-				data,
+				data: {
+					name: skipUndefined(data.name),
+					basePath: skipUndefined(data.basePath),
+					location: skipUndefined(data.location),
+					endpoint: skipUndefined(data.endpoint),
+					maxSize: skipUndefined(data.maxSize),
+					usedSize: skipUndefined(data.usedSize),
+					avatarOnly: skipUndefined(data.avatarOnly),
+				},
 				include: {
 					_count: true,
 				},
@@ -76,7 +94,7 @@ export default class StorageAccessor {
 	  * @param {storageDirection} direction The direction to modify the storage size.
 	  * @returns {StorageMedium} The updated storage.
 	*/
-	async modifyUsage(storageId: string, size: bigint, direction: storageDirection): Promise<StorageMedium> {
+	async modifyUsage(storageId: string, size: bigint, direction: StorageDirection): Promise<StorageMedium> {
 		try {
 			const storage = await client.storageMedium.update({
 				where: {
@@ -84,9 +102,9 @@ export default class StorageAccessor {
 				},
 				data: {
 					usedSize: {
-						set: direction === 'SET' ? size : undefined,
-						decrement: direction === 'DECRE' ? size : undefined,
-						increment: direction === 'INCRE' ? size : undefined,
+						set: direction === 'SET' ? size : skip,
+						decrement: direction === 'DECRE' ? size : skip,
+						increment: direction === 'INCRE' ? size : skip,
 					},
 				},
 				include: {
@@ -108,13 +126,12 @@ export default class StorageAccessor {
 	*/
 	async fetchById(id: string): Promise<StorageWithCounts | null> {
 		try {
-			const storage = this.cache.get(id)
-				?? await client.storageMedium.findFirst({
-					where: { id },
-					include: {
-						_count: true,
-					},
-				});
+			const storage = this.cache.get(id) ?? await client.storageMedium.findFirst({
+				where: { id },
+				include: {
+					_count: true,
+				},
+			});
 
 			if (storage !== null) this.cache.set(id, storage);
 			return storage;

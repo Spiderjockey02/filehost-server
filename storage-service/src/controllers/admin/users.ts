@@ -1,5 +1,5 @@
 import { buildDailyHistory, buildHourlyHistory, buildMonthlyHistory, buildYearlyHistory } from '@/utils/analyticTimeSeries';
-import { validateBan, validateInterval, validatePage, validateUser } from '@/validators';
+import { validateBan, validateInterval, validatePage, validateString, validateUser } from '@/validators';
 import type { FullSession } from '@/types/database/Session';
 import type { Request, Response } from 'express';
 import { Error, sanitiseObject } from '@/utils';
@@ -13,14 +13,14 @@ export const getUsers = (client: Client) => {
 		try {
 			const { page, name, sortBy, sortOrder, storageId } = req.query;
 			const result = validateUser.safeParse({ page, name, sortBy, sortOrder, storageId });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const users = await client.userManager.fetchAll({ ...result.data });
+			const users = await client.userManager.fetchAll(result.data);
 			const { total } = await client.userManager.fetchTotal(result.data.storageId);
-			res.json({ users: sanitiseObject(users), total });
+			return res.json({ users: sanitiseObject(users), total });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch list of users.');
+			return Error.GenericError(res, 'Failed to fetch list of users.');
 		}
 	};
 };
@@ -42,9 +42,8 @@ export const getUsersByLanguageCode = (client: Client) => {
 // Endpoint: GET /api/admin/users/growth
 export const getUserGrowth = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const interval = req.query.interval;
-		const result = validateInterval.safeParse(interval);
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		const result = validateInterval.safeParse(req.query['interval']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		let data: CountMap = {};
 		switch (result.data) {
@@ -117,14 +116,14 @@ export const getUserStats = (client: Client) => {
 export const getUserSessions = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const userId = req.query.userId;
-			if (userId !== undefined && typeof userId !== 'string') return Error.IncorrectQuery(res, 'userID must be a string or undefined.');
+			const result = validateString.safeParse(req.query['userId']);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const sessions = await client.sessionManager.fetchAll(userId);
-			res.json({ sessions });
+			const sessions = await client.sessionManager.fetchAll(result.data);
+			return res.json({ sessions });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch user.');
+			return Error.GenericError(res, 'Failed to fetch user.');
 		}
 	};
 };
@@ -150,7 +149,7 @@ export const getUserRetention = (client: Client) => {
 				const start = new Date(end);
 				start.setDate(start.getDate() - 1);
 
-				const dateStr = start.toISOString().split('T')[0];
+				const dateStr = start.toISOString().split('T')[0]!;
 				const [users, session] = await Promise.all([
 					client.userManager.fetchUsersWhoUploadedBetweenTwoDates(start, end),
 					client.userActivityManager.fetchUsersWhoHadActivityBetweenTwoDates(start, end),
@@ -172,18 +171,18 @@ export const getUserRetention = (client: Client) => {
 export const getUserById = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const userId = req.params.id;
-			if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
+			const result = validateString.safeParse(req.params['id']);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			const [user, bannedStatus] = await Promise.all([
-				client.userManager.fetchbyParam({ id: userId, force: true }),
-				client.userManager.fetchBanStatus(userId),
+				client.userManager.fetchbyParam({ id: result.data, force: true }),
+				client.userManager.fetchBanStatus(result.data),
 			]);
 
-			res.json({ user: sanitiseObject(user), bannedStatus });
+			return res.json({ user: sanitiseObject(user), bannedStatus });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch user.');
+			return Error.GenericError(res, 'Failed to fetch user.');
 		}
 	};
 };
@@ -192,13 +191,14 @@ export const getUserById = (client: Client) => {
 export const getUserByIdAccounts = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const userId = req.params.id;
-			if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
-			const accounts = await client.userManager.fetchAccountsByUserId(userId);
-			res.json({ accounts });
+			const result = validateString.safeParse(req.params['id']);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
+
+			const accounts = await client.userManager.fetchAccountsByUserId(result.data);
+			return res.json({ accounts });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch user\'s accounts.');
+			return Error.GenericError(res, 'Failed to fetch user\'s accounts.');
 		}
 	};
 };
@@ -208,24 +208,25 @@ export const banUserById = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const adminUser = await getSession(client, req.headers) as FullSession;
-			const userId = req.params.id;
+			const userId = req.params['id'];
 			const { expiresAt, reason } = req.body;
 
 			// Validate inputs
-			if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
-			if (adminUser.userId === userId) return Error.IncorrectQuery(res, 'You cannot ban yourself.');
+			if (typeof userId !== 'string') return Error.IncorrectQuery(res, [{ message: 'User ID is required.' }]);
+			if (adminUser.userId === userId) return Error.IncorrectQuery(res, [{ message: 'You cannot ban yourself.' }]);
+
 			const result = validateBan.safeParse({ expiresAt, reason });
-			if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			const ban = await client.userManager.setBanStatus({
 				userId,
 				issuedByUserId: adminUser.userId,
 				...result.data,
 			});
-			res.json({ ban });
+			return res.json({ ban });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to ban user.');
+			return Error.GenericError(res, 'Failed to ban user.');
 		}
 	};
 };
@@ -233,13 +234,13 @@ export const banUserById = (client: Client) => {
 // Endpoint GET /api/admin/users/:id/notifications
 export const getUsersNotification = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const userId = req.params.id;
+		const userId = req.params['id'];
 		const { page } = req.query;
 
 		// Validate input
 		const result = validatePage.safeParse(page);
-		if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		if (typeof userId !== 'string') return Error.IncorrectQuery(res, [{ message: 'User ID is required.' }]);
+		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues);
 
 		try {
 			const [notifications, total] = await Promise.all([
@@ -247,10 +248,10 @@ export const getUsersNotification = (client: Client) => {
 				client.notificationManager.fetchCount(userId),
 			]);
 
-			res.json({ notifications, total });
+			return res.json({ notifications, total });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch user\'s notifications.');
+			return Error.GenericError(res, 'Failed to fetch user\'s notifications.');
 		}
 	};
 };
@@ -258,20 +259,20 @@ export const getUsersNotification = (client: Client) => {
 // Endpoint GET /api/admin/users/:id/logs
 export const getUsersLogs = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const userId = req.params.id;
-		const page = req.query.page;
+		const userId = req.params['id'];
+		const page = req.query['page'];
 
 		// Validate input
 		const result = validatePage.safeParse(page);
-		if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		if (typeof userId !== 'string') return Error.IncorrectQuery(res, [{ message: 'User ID is required.' }]);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			const { logs, total } = await client.AuditLogManager.fetchAll({ userId, page: result.data });
-			res.json({ logs, total });
+			return res.json({ logs, total });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch user\'s logs.');
+			return Error.GenericError(res, 'Failed to fetch user\'s logs.');
 		}
 	};
 };

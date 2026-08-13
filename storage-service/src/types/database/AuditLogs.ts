@@ -1,15 +1,16 @@
 import type { AuditLogEventName, AuditLogResourceType, ListenerType } from '@/types/generated/client';
 import { Prisma } from '@/types/generated/client';
+import { Pagination } from '.';
 
 export interface CreateAuditLogEntryParams {
   eventName: AuditLogEventName;
   message?: string;
   resourceType: AuditLogResourceType;
-	resourceId?: string
+	resourceId?: string | undefined
   success: boolean;
-  userId?: string;
+  userId?: string | undefined;
   ip?: string;
-  userAgent?: string;
+  userAgent?: string | undefined;
 }
 
 export interface AddAuditLogListenerParams {
@@ -17,19 +18,18 @@ export interface AddAuditLogListenerParams {
   type: ListenerType
   eventNames: AuditLogEventName[];
   name: string
-  targetUrl?: string
+  targetUrl?: string | undefined
 }
 
 export type UpdateAuditLogListenerParams = {
   id: string
-  enabled?: boolean
+  enabled: boolean | undefined
 } & AddAuditLogListenerParams
 
-export interface fetchAuditLogsParams {
-  page?: number;
-  userId?: string;
-  eventName?: AuditLogEventName
-  sortOrder?: Prisma.SortOrder
+export interface FetchAuditLogsParams extends Pagination {
+  userId?: string | undefined
+  eventName?: AuditLogEventName | undefined
+  sortOrder?: Prisma.SortOrder | undefined
 }
 
 export type FullAuditLogListener = Prisma.AuditLogListenerGetPayload<{

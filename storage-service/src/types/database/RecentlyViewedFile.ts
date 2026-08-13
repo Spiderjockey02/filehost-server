@@ -1,15 +1,15 @@
 import { Prisma } from '@/types/generated/client';
+import type { Pagination } from '.';
 
-export interface CreateRecentlyViewedFile {
+export interface UpsertRecentlyViewedParams {
   fileId: string;
   userId: string;
 }
 
-export interface fetchUserLatestProps {
+export interface FetchUserViewHistoryParams extends Pagination {
 	userId: string
   sortOrder?: Prisma.SortOrder
   sortBy?: 'name' | 'viewedAt'
-  page?: number
 }
 
 export type FullRecentlyViewedFile = Prisma.RecentlyViewedFileGetPayload<{

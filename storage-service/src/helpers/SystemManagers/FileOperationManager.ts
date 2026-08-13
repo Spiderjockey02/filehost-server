@@ -5,8 +5,8 @@ import { normalizePath, sanitiseObject } from '@/utils';
 import { S3ServiceException } from '@aws-sdk/client-s3';
 import type { FullFile } from '@/types/database/File';
 import type StorageManager from './StorageManager';
+import { Archiver, ZipArchive } from 'archiver';
 import type { StorageProvider } from '@/types';
-import archiver, { Archiver } from 'archiver';
 import { FileAccessor } from '@/accessors';
 import TrashHandler from '../TrashHandler';
 import type { Response } from 'express';
@@ -37,7 +37,7 @@ export default class FileManager extends FileAccessor {
 			this.fetchByFilePath(user.id, filePath),
 			this.storageManager.fetchById(user.storageId),
 		]);
-		if (storage == null) throw 'Storage not found';
+		if (storage == null) throw new Error('Storage not found');
 
 		// If it's user's first login, the directory doesn't exist so create it
 		if (files == null && filePath == '/') {
@@ -50,7 +50,7 @@ export default class FileManager extends FileAccessor {
 			files = await this.fetchByFilePath(user.id, filePath);
 		}
 
-		if (files?.deletedAt !== null) throw 'Directory not found';
+		if (files?.deletedAt !== null) throw new Error('Directory not found');
 		return sanitiseObject(files);
 	}
 
@@ -72,23 +72,23 @@ export default class FileManager extends FileAccessor {
 	*/
 	async move(user: User, fileId: string, newDirId: string) {
 		// First Make sure they are not the same IDs
-		if (fileId === newDirId) throw 'Cannot move a file into itself.';
+		if (fileId === newDirId) throw new Error('Cannot move a file into itself.');
 
 		// Fetch the files from the database
 		const oldFile = await this.fetchById(fileId);
 		const newDir = await this.fetchById(newDirId);
-		if (oldFile == null) throw 'File not found';
-		if (newDir == null || newDir.type !== 'DIRECTORY') throw 'Directory not found';
+		if (oldFile == null) throw new Error('File not found');
+		if (newDir == null || newDir.type !== 'DIRECTORY') throw new Error('Directory not found');
 
 		// Check the owner of the file and folder
-		if (oldFile.userId !== user.id || newDir.userId !== user.id) throw 'You do not have permission to move this file.';
+		if (oldFile.userId !== user.id || newDir.userId !== user.id) throw new Error('You do not have permission to move this file.');
 
 		// Generate new file path for the current item
 		const newFilePathInDb = `${normalizePath(newDir.path)}${oldFile.path.split('/').at(-1)}`;
 
 		// Make sure a file with the potential same name doesn't already exist
 		const existingFile = await this.fetchByFilePath(user.id, newFilePathInDb);
-		if (existingFile) throw 'A file with that name already exists in the same directory.';
+		if (existingFile) throw new Error('A file with that name already exists in the same directory.');
 
 		// Update the old parent directory
 		const oldParent = await this.fetchById(oldFile.parentId);
@@ -122,10 +122,10 @@ export default class FileManager extends FileAccessor {
 	*/
 	async rename(user: User, fileId: string, newName: string) {
 		const file = await this.fetchById(fileId);
-		if (file == null) throw 'File not found';
+		if (file == null) throw new Error('File not found');
 
 		// Check the owner of the file
-		if (file.userId !== user.id) throw 'You do not have permission to rename this file.';
+		if (file.userId !== user.id) throw new Error('You do not have permission to rename this file.');
 
 		// Update the file
 		const pathSegs = file.path.split('/');
@@ -133,14 +133,14 @@ export default class FileManager extends FileAccessor {
 		const newPath = pathSegs.join('/');
 
 		// Make sure the new name doesn't have any invalid characters in it
-		if (this.client.config.get('INVALID_CHARS_IN_FILE_NAME').some(c => newName.includes(c))) throw 'File name includes invalid characters.';
+		if (this.client.config.get('INVALID_CHARS_IN_FILE_NAME').some(c => newName.includes(c))) throw new Error('File name includes invalid characters.');
 
 		// Makes sure the new name is less than the max characters
 		if (newName.length > this.client.config.get('MAX_CHARS_FILE_NAME')) throw `New name must be less than ${this.client.config.get('MAX_CHARS_FILE_NAME')} characters.`;
 
 		// Make sure a file with the potential same name doesn't already exist
 		const existingFile = await this.fetchByFilePath(user.id, newPath);
-		if (existingFile) throw 'A file with that name already exists in the same directory.';
+		if (existingFile) throw new Error('A file with that name already exists in the same directory.');
 
 		// Will update to also support their children for path to be updated aswell (when it's a directory)
 		await this.update({ id: file.id, name: newName, path: newPath });
@@ -159,11 +159,11 @@ export default class FileManager extends FileAccessor {
 	async copy(user: User, fileId: string, newDirId: string) {
 		const file = await this.fetchById(fileId);
 		const newDir = await this.fetchById(newDirId);
-		if (file == null) throw 'File not found';
-		if (newDir == null || newDir.type !== 'DIRECTORY') throw 'Directory not found';
+		if (file == null) throw new Error('File not found');
+		if (newDir == null || newDir.type !== 'DIRECTORY') throw new Error('Directory not found');
 
 		// Check the owner of the files
-		if (file.userId !== user.id || newDir.userId !== user.id) throw 'You do not have permission to move this file.';
+		if (file.userId !== user.id || newDir.userId !== user.id) throw new Error('You do not have permission to move this file.');
 
 		// Delete the new file's cache
 		this.cache.delete(`${user.id}_${newDir.path}`);
@@ -184,17 +184,17 @@ export default class FileManager extends FileAccessor {
 	*/
 	async createDirectory(user: User, parentId: string, folderName: string) {
 		// Check if the folder name is longer than max chars
-		if (folderName.length > this.client.config.get('MAX_CHARS_FILE_NAME')) throw `Folder name must be less than ${this.client.config.get('MAX_CHARS_FILE_NAME')} characters.`;
+		if (folderName.length > this.client.config.get('MAX_CHARS_FILE_NAME')) throw new Error(`Folder name must be less than ${this.client.config.get('MAX_CHARS_FILE_NAME')} characters.`);
 
 		// Make sure the new name doesn't have any invalid characters in it
-		if (this.client.config.get('INVALID_CHARS_IN_FILE_NAME').some(c => folderName.includes(c))) throw 'Folder name includes invalid characters.';
+		if (this.client.config.get('INVALID_CHARS_IN_FILE_NAME').some(c => folderName.includes(c))) throw new Error('Folder name includes invalid characters.');
 
 		// Fetch the parent directory
 		const parentDir = await this.fetchById(parentId);
-		if (parentDir == null || parentDir.type !== 'DIRECTORY') throw 'Directory not found';
+		if (parentDir == null || parentDir.type !== 'DIRECTORY') throw new Error('Directory not found');
 
 		// Check the owner of the file
-		if (parentDir?.userId !== user.id) throw 'You do not have permission to rename this file.';
+		if (parentDir?.userId !== user.id) throw new Error('You do not have permission to rename this file.');
 
 		// Update the parent directory to include the new folder
 		const file = await this.update({
@@ -222,7 +222,7 @@ export default class FileManager extends FileAccessor {
 	private async _copyFile(user: User, oldFile: File, newDir: File) {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
+		if (storage == null) throw new Error('Storage not found');
 		const fileProvider = await this.storageManager.getProvider(storage);
 
 		// Generate the new file path
@@ -230,7 +230,7 @@ export default class FileManager extends FileAccessor {
 
 		// Check if file already exists in the target directory
 		const existingFile = await this.fetchByFilePath(user.id, newFilePath);
-		if (existingFile) throw 'A file with that name already exists in the same directory.';
+		if (existingFile) throw new Error('A file with that name already exists in the same directory.');
 
 		// Create the new file entry in the database
 		let newFile: FullFile | null = null;
@@ -265,7 +265,7 @@ export default class FileManager extends FileAccessor {
 
 		// Check if file already exists in the target directory
 		const existingFile = await this.fetchByFilePath(user.id, newFilePath);
-		if (existingFile) throw 'A file with that name already exists in the same directory.';
+		if (existingFile) throw new Error('A file with that name already exists in the same directory.');
 
 		// Create the new directory, but ensure the path doesn't include the old folder name twice
 		const newFolder = await this.create({
@@ -302,12 +302,12 @@ export default class FileManager extends FileAccessor {
 	async downloadFile(res: Response, user: User, file: FullFile) {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
+		if (storage == null) throw new Error('Storage not found');
 		const fileProvider = await this.storageManager.getProvider(storage);
 
 		// Download the file
 		if (file.type == 'DIRECTORY') {
-			const archive = archiver('zip', { zlib: { level: 9 } });
+			const archive = new ZipArchive({ zlib: { level: 9 } });
 			res.setHeader('Content-Type', 'application/zip');
 			res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
 			archive.pipe(res);
@@ -351,7 +351,7 @@ export default class FileManager extends FileAccessor {
 	async downloadFiles(res: Response, user: User, files: File[]) {
 	// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
+		if (storage == null) throw new Error('Storage not found');
 		const fileProvider = await this.storageManager.getProvider(storage);
 
 		// Download the file
@@ -366,11 +366,11 @@ export default class FileManager extends FileAccessor {
 	async sendFile(res: Response, user: User, file: File, range?: string) {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw 'Storage not found';
+		if (storage == null) throw new Error('Storage not found');
 
 		// Fetch the storage medium and check it's online
 		const storageProvider = await this.storageManager.getProviderById(file.storageId);
-		if (storageProvider.isOnline == false) throw 'Storage medium is offline';
+		if (storageProvider.isOnline == false) throw new Error('Storage medium is offline');
 
 		// Download the file
 		return storageProvider.sendFile(res, file, range);
@@ -383,7 +383,7 @@ export default class FileManager extends FileAccessor {
 	async deleteAvatar(userId: string) {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchAvatarMedium();
-		if (storage == null) throw 'Storage not found';
+		if (storage == null) throw new Error('Storage not found');
 		const fileProvider = await this.storageManager.getProvider(storage);
 		fileProvider.deleteFile(`${userId}.webp`);
 	}
@@ -396,7 +396,7 @@ export default class FileManager extends FileAccessor {
 	async sendAvatar(res: Response, userId: string) {
 		// Get storage and it's provider
 		const storage = await this.storageManager.fetchAvatarMedium();
-		if (storage == null) throw 'Storage not found';
+		if (storage == null) throw new Error('Storage not found');
 		const fileProvider = await this.storageManager.getProvider(storage);
 
 		const hasCustomAvatar = await fileProvider.checkFileExists(`${userId}.webp`);

@@ -1,5 +1,5 @@
 import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
-import { createPlanSchema, validateInterval } from '@/validators';
+import { createPlanSchema, validateInterval, validateString } from '@/validators';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 import { getSession } from '@/middleware';
@@ -28,9 +28,8 @@ export const getPlanStats = (client: Client) => {
 // Endpoint: GET /api/admin/plan/trends
 export const getPlanTrends = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const interval = req.query.interval;
-		const result = validateInterval.safeParse(interval);
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		const result = validateInterval.safeParse(req.query['interval']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		let data: CountMap = {};
 		switch (result.data) {
@@ -61,7 +60,7 @@ export const postPlan = (client: Client) => {
 		const session = await getSession(client, req.headers);
 
 		const result = createPlanSchema.safeParse({ name, price, maxStorageSize, maxFileSize, deletedFileRetentionDays, priceId });
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			const parsedStorageSize = result.data.maxStorageSize == undefined ? undefined : result.data.maxStorageSize * (1024 ** 3);
@@ -106,17 +105,18 @@ export const patchPlan = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const { name, price, maxStorageSize, maxFileSize, retentionDays: deletedFileRetentionDays, priceId } = req.body;
 		const session = await getSession(client, req.headers);
-		const planId = req.params.planId;
+
+		const result = validateString.safeParse(req.params['planId']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		// Validate input
-		const result = createPlanSchema.safeParse({ name, price, maxStorageSize, maxFileSize, deletedFileRetentionDays, priceId });
-		if (typeof planId !== 'string') return Error.IncorrectQuery(res, 'Plan ID is required.');
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		const bodyResult = createPlanSchema.safeParse({ name, price, maxStorageSize, maxFileSize, deletedFileRetentionDays, priceId });
+		if (!bodyResult.success) return Error.IncorrectQuery(res, bodyResult.error.issues);
 
 		try {
-			const parsedStorageSize = result.data.maxStorageSize == undefined ? undefined : result.data.maxStorageSize * (1024 ** 3);
-			const parsedFileSize = result.data.maxFileSize == undefined ? undefined : result.data.maxFileSize * (1024 ** 3);
-			const plan = await client.PlanManager.update({ ...result.data, id: planId, maxStorageSize: parsedStorageSize, maxFileSize: parsedFileSize });
+			const parsedStorageSize = bodyResult.data.maxStorageSize == undefined ? undefined : bodyResult.data.maxStorageSize * (1024 ** 3);
+			const parsedFileSize = bodyResult.data.maxFileSize == undefined ? undefined : bodyResult.data.maxFileSize * (1024 ** 3);
+			const plan = await client.PlanManager.update({ ...bodyResult.data, id: result.data, maxStorageSize: parsedStorageSize, maxFileSize: parsedFileSize });
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
@@ -140,7 +140,7 @@ export const patchPlan = (client: Client) => {
 					resourceType: 'SUBSCRIPTION',
 					eventName: 'PLAN_UPDATED',
 					message: `Failed to update plan due to error: ${err}.`,
-					resourceId: planId,
+					resourceId: result.data,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
@@ -155,11 +155,12 @@ export const patchPlan = (client: Client) => {
 export const deletePlan = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
-		const planId = req.params.planId;
-		if (typeof planId !== 'string') return Error.IncorrectQuery(res, 'Plan ID is required.');
+
+		const result = validateString.safeParse(req.params['planId']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
-			const plan = await client.PlanManager.delete(planId);
+			const plan = await client.PlanManager.delete(result.data);
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
@@ -183,7 +184,7 @@ export const deletePlan = (client: Client) => {
 					resourceType: 'SUBSCRIPTION',
 					eventName: 'PLAN_DELETED',
 					message: `Failed to delete plan due to error: ${err}.`,
-					resourceId: planId,
+					resourceId: result.data,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,

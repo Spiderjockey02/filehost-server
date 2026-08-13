@@ -1,6 +1,7 @@
+import { validateMigrateUser, validateUpdateStorage } from '@/validators/endpointParams';
+import { validatePage, validateStorage, validateString } from '@/validators';
 import { Error, getIP, sanitiseObject } from '@/utils';
 import type { Request, Response } from 'express';
-import { validateStorage } from '@/validators';
 import type Client from '@/helpers/Client';
 import { getSession } from '@/middleware';
 
@@ -8,15 +9,16 @@ import { getSession } from '@/middleware';
 export const getStorages = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { page } = req.query;
-			// Valid page index (if present)
-			if (page !== undefined && (typeof page !== 'string' || !/^\d+$/.test(page) || Number(page) < 0)) return Error.IncorrectQuery(res, 'page must be a positive number.');
+			const result = validatePage.safeParse(req.query['page']);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const avgStorageUsage = await client.FileManager.storageManager.fetchAvgStorageUsage();
-			const avgFileCount = await client.FileManager.storageManager.fetchAvgFileCount();
-			const storages = await client.FileManager.storageManager.fetchAll({ page: isNaN(Number(page)) ? undefined : Number(page) });
+			const [avgStorageUsage, avgFileCount, storages] = await Promise.all([
+				client.FileManager.storageManager.fetchAvgStorageUsage(),
+				client.FileManager.storageManager.fetchAvgFileCount(),
+				client.FileManager.storageManager.fetchAll({ page: result.data }),
+			]);
 
-			res.json({ storages: sanitiseObject(storages), avgFileCount: parseInt(`${avgFileCount}`), avgStorageUsage });
+			res.json({ storages: sanitiseObject(storages), avgFileCount, avgStorageUsage });
 		} catch (err) {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch storage mediums.');
@@ -27,12 +29,12 @@ export const getStorages = (client: Client) => {
 // Endpoint: GET /api/admin/storage/:storageId
 export const getStorageById = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const storageId = req.params.storageId;
-		if (typeof storageId !== 'string') return Error.IncorrectQuery(res, 'Storage ID is required.');
+		const result = validateString.safeParse(req.query['storageId']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
-			const storage = await client.FileManager.storageManager.fetchById(storageId);
-			if (!storage) return Error.IncorrectQuery(res, 'Storage not found.');
+			const storage = await client.FileManager.storageManager.fetchById(result.data);
+			if (!storage) return Error.MissingResource(res);
 
 			res.json({ storage: sanitiseObject(storage) });
 		} catch (err) {
@@ -46,12 +48,13 @@ export const getStorageById = (client: Client) => {
 export const deleteStorageById = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
-		const { storageId } = req.params;
-		if (typeof storageId !== 'string') return Error.IncorrectQuery(res, 'Storage ID is required.');
+
+		const result = validateString.safeParse(req.query['storageId']);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
-			const storage = await client.FileManager.storageManager.fetchById(storageId);
-			if (storage == null) return Error.IncorrectQuery(res, 'storageId is invalid');
+			const storage = await client.FileManager.storageManager.fetchById(result.data);
+			if (storage == null) return Error.MissingResource(res);
 
 			// Ensure no users or files are attached to this before deleting
 			if (storage._count.files > 0 || storage._count.users > 0) return Error.GenericError(res, 'Storage is not empty');
@@ -80,7 +83,7 @@ export const deleteStorageById = (client: Client) => {
 					resourceType: 'STORAGE',
 					eventName: 'STORAGE_DELETED',
 					message: `Failed to delete storage medium due to error: ${err}.`,
-					resourceId: storageId,
+					resourceId: result.data,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
@@ -97,14 +100,13 @@ export const postStorage = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 
-		const { type, name, basePath, location, endpoint, maxSize, isPrivate } = req.body;
-		const result = validateStorage.safeParse({ type, name, basePath, location, endpoint, maxSize, isPrivate });
-		if (!result.success) return Error.IncorrectQuery(res, result.error?.issues[0].message);
+		const result = validateStorage.safeParse(req.body);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			const storage = await client.FileManager.storageManager.create({
-				type, name, basePath, location, endpoint,
-				maxSize: BigInt(Number(maxSize) * (1024 ** 3)),
+				...result.data,
+				maxSize: BigInt(Number(result.data.maxSize) * (1024 ** 3)),
 			});
 
 			const medium = await client.FileManager.storageManager.getProvider(storage);
@@ -160,29 +162,27 @@ export const getStorageTypes = (client: Client) => {
 export const postStorageByStorageId = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
-		const storageId = req.params.storageId;
-		if (typeof storageId !== 'string') return Error.IncorrectQuery(res, 'Storage ID is required.');
+
+		const storageResult = validateString.safeParse(req.query['storageId']);
+		if (!storageResult.success) return Error.IncorrectQuery(res, storageResult.error.issues);
 
 		try {
-			const { name, maxSize, isPrivate } = req.body;
-
-			if (storageId !== undefined && typeof storageId !== 'string') return Error.IncorrectQuery(res, 'storageId must be a valid string.');
-			if (name !== undefined && typeof name !== 'string') return Error.IncorrectQuery(res, 'name must be a valid string.');
-			if (maxSize !== undefined && (isNaN(maxSize) || maxSize < 0 || !Number.isInteger(maxSize))) return Error.IncorrectQuery(res, 'maxSize must be a non-negative integer.');
-			if (isPrivate !== undefined && typeof isPrivate !== 'boolean') return Error.IncorrectQuery(res, 'isPrivate must be a boolean.');
+			const bodyResult = validateUpdateStorage.safeParse(req.body);
+			if (!bodyResult.success) return Error.IncorrectQuery(res, bodyResult.error.issues);
 
 			// Fetch storage to ensure new maxSize does not exceed current usage
-			const storage = await client.FileManager.storageManager.fetchById(storageId);
-			if (!storage) return Error.IncorrectQuery(res, 'Storage not found.');
-			const newMaxSize = Number(maxSize) * (1024 ** 3);
-			if (newMaxSize < storage.usedSize) return Error.IncorrectQuery(res, 'maxSize must be greater than current usage.');
+			const storage = await client.FileManager.storageManager.fetchById(storageResult.data);
+			if (!storage) return Error.MissingResource(res);
+
+			const newMaxSize = Number(bodyResult.data.maxSize) * (1024 ** 3);
+			if (newMaxSize < storage.usedSize) return Error.IncorrectQuery(res, [{ message: 'maxSize must be greater than current usage.' }]);
 
 			// Update storage
 			const newStorage = await client.FileManager.storageManager.update({
-				id: storageId,
-				name: name,
+				id: storageResult.data,
+				name: bodyResult.data.name,
 				maxSize: BigInt(newMaxSize),
-				isPrivate: isPrivate,
+				isPrivate: bodyResult.data.isPrivate,
 			});
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
@@ -207,7 +207,7 @@ export const postStorageByStorageId = (client: Client) => {
 					resourceType: 'STORAGE',
 					eventName: 'STORAGE_UPDATED',
 					message: `Failed to update storage medium: ${err}.`,
-					resourceId: storageId,
+					resourceId: storageResult.data,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
@@ -221,19 +221,18 @@ export const postStorageByStorageId = (client: Client) => {
 // Endpoint: POST /api/admin/storage/:storageId/migrate
 export const postMigrateUserFromStorage = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const storageId = req.params.storageId;
-		const { userId } = req.query;
-		if (typeof storageId !== 'string') return Error.IncorrectQuery(res, 'Storage ID is required.');
-		if (typeof userId !== 'string') return Error.IncorrectQuery(res, 'userId must be string.');
+		const result = validateMigrateUser.safeParse({ storageId: req.params['storageId'], userId: req.query['userId'] });
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
+
 
 		// Fetch all user's files
-		const files = await client.FileManager.fetchOwnedByUserId({ userId });
-		await client.userManager.update({ id: userId, isMigrating: true });
+		const files = await client.FileManager.fetchOwnedByUserId({ userId: result.data.userId });
+		await client.userManager.update({ id: result.data.userId, isMigrating: true });
 
-		const storage = await client.FileManager.storageManager.fetchById(storageId);
+		const storage = await client.FileManager.storageManager.fetchById(result.data.storageId);
 		if (storage == null) return Error.GenericError(res, 'storageId is invalid');
 
-		const newProvider = await client.FileManager.storageManager.getProviderById(storageId);
+		const newProvider = await client.FileManager.storageManager.getProviderById(result.data.storageId);
 		const isProviderOnline = await newProvider.verifyConnection();
 		if (!isProviderOnline) return Error.GenericError(res, 'Storage medium is not online');
 
@@ -243,6 +242,6 @@ export const postMigrateUserFromStorage = (client: Client) => {
 
 		res.json({ success: 'Successfully started migration of user' });
 
-		await client.FileManager.storageManager.migrateUser(client, files, storageId, newProvider);
+		await client.FileManager.storageManager.migrateUser(client, files, result.data.storageId, newProvider);
 	};
 };

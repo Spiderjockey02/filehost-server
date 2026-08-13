@@ -2,51 +2,68 @@ import { S3ServiceException } from '@aws-sdk/client-s3';
 import { Error, getIP, sanitiseObject } from '@/utils';
 import type { User } from '@/types/generated/client';
 import type { Request, Response } from 'express';
+import { validateUserId } from '@/validators';
 import type Client from '@/helpers/Client';
 import { getSession } from '@/middleware';
 
 // Endpoint GET /avatar/:userId
 export const getAvatar = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		if (typeof req.params.userId !== 'string') return Error.IncorrectQuery(res, 'User ID is required.');
+		const userId = req.params['userId'];
 
-		client.FileManager.sendAvatar(res, req.params.userId);
+		// Validate userId
+		const result = validateUserId.safeParse(userId);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
+
+		return client.FileManager.sendAvatar(res, result.data);
 	};
 };
 
 // Endpoint GET /thumbnail/:userid/:path(*)
 export const getThumbnail = (client: Client) => {
-	return async (req: Request<{ userid: string, path: string[] }>, res: Response) => {
-		const userId = req.params.userid;
-		const path = req.params.path.join('/');
+	return async (req: Request, res: Response) => {
+		// Validate userId
+		const userIdResult = validateUserId.safeParse(req.params['userid']);
+		if (!userIdResult.success) return Error.IncorrectQuery(res, userIdResult.error.issues);
+
+		// Validate path
+		const pathParam = req.params['path'];
+		if (!Array.isArray(pathParam) || pathParam.length === 0) return Error.IncorrectQuery(res, [{ message: 'Invalid file path.' }]);
+		const path = pathParam.join('/');
 
 		// Make sure they have access to view the thumbnail
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
-		if (session.user.id !== userId) return Error.InvalidAccess(res);
+		if (session.user.id !== userIdResult.data) return Error.InvalidAccess(res);
 
-		await client.FileManager.sendThumbnail(res, userId, path);
+		await client.FileManager.sendThumbnail(res, userIdResult.data, path);
 	};
 };
 
 // Endpoint GET /content/:userid/:path(*)
 export const getContent = (client: Client) => {
-	return async (req: Request<{ userid: string, path: string[] }>, res: Response) => {
+	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
 
-		const userId = req.params.userid;
-		const path = req.params.path.join('/').split('?')[0];
+		// Validate userId
+		const userIdResult = validateUserId.safeParse(req.params['userid']);
+		if (!userIdResult.success) return Error.IncorrectQuery(res, userIdResult.error.issues);
+
+		// Validate path
+		const pathParam = req.params['path'];
+		if (!Array.isArray(pathParam) || pathParam.length === 0) return Error.IncorrectQuery(res, [{ message: 'Invalid file path.' }]);
+		const path = pathParam.join('/');
 
 		// Fetch file from database
-		const file = await client.FileManager.fetchByFilePath(userId, path);
+		const file = await client.FileManager.fetchByFilePath(userIdResult.data, path);
 		if (file == null || file.deletedAt !== null) return Error.MissingResource(res);
 
 		// Make sure they have access to view the file
 		if (file.userId !== session.user.id) return Error.InvalidAccess(res);
 
 		// Update the user's recently viewed file history
-		await client.recentlyViewedFileManager.upsert({ userId, fileId: file.id }).catch(client.logger.error);
+		await client.recentlyViewedFileManager.upsert({ userId: userIdResult.data, fileId: file.id }).catch(client.logger.error);
 
 		try {
 			const owner = await client.userManager.fetchbyParam({ id: file.userId }) as User;
@@ -127,8 +144,8 @@ export const getPlans = (client: Client) => {
 export const getFilesMetadata = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		// Validate file ID
-		const fileId = req.params.fileId;
-		if (typeof fileId !== 'string') return Error.IncorrectQuery(res, 'File ID is required.');
+		const fileId = req.params['fileId'];
+		if (typeof fileId !== 'string') return Error.IncorrectQuery(res, [{ message: 'File ID is required.' }]);
 
 		try {
 			// Make sure only the file's owner can get the metadata
