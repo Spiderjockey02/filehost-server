@@ -1,4 +1,4 @@
-import type { loggerTypes, customRequest, customResponse } from '@/types';
+import type { LoggerTypes, CustomRequest, CustomResponse } from '@/types';
 import { createRollingFileLogger } from 'simple-node-logger';
 import onFinished from 'on-finished';
 import { getIP } from './';
@@ -33,7 +33,7 @@ export default class Logger {
 	api = this.logger.child({ source: 'api' });
 	db = this.logger.child({ source: 'database' });
 
-	log(content: unknown, type: loggerTypes = 'log') {
+	log(content: unknown, type: LoggerTypes = 'log') {
 		switch (type) {
 			case 'ready':
 			case 'log':
@@ -72,7 +72,7 @@ export default class Logger {
 		this.log(content, 'debug');
 	}
 
-	async connection(req: customRequest, res: customResponse) {
+	async connection(req: CustomRequest, res: CustomResponse) {
 		// Update request
 		await new Promise((resolve) => {
 			onFinished(req, function() {

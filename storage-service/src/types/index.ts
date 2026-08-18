@@ -5,9 +5,9 @@ import type { Writable } from 'node:stream';
 import type { Socket } from 'node:net';
 
 // For logger
-export type loggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
-export type customRequest = Request & { _startTime: number, _endTime: undefined | number }
-export type customResponse = Response & { _startTime: number, _endTime: undefined | number }
+export type LoggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
+export type CustomRequest = Request & { _startTime: number, _endTime: undefined | number }
+export type CustomResponse = Response & { _startTime: number, _endTime: undefined | number }
 
 // Prisma
 export interface IdParam {
@@ -124,7 +124,7 @@ export interface QueuedTask<T> {
   reject: (reason?: any) => void;
 }
 
-export type queueKeys = 'NOTIFICATIONS' | 'AUDIT_LOGS'
+export type QueueKeys = 'NOTIFICATIONS' | 'AUDIT_LOGS'
 
 export interface StorageProvider {
   isOnline: boolean

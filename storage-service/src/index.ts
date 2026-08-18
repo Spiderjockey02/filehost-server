@@ -1,5 +1,5 @@
 import { generateRoutes, logUserActivity, PATHS } from './utils';
-import type { customRequest, customResponse } from './types';
+import type { CustomRequest, CustomResponse } from './types';
 import { userPostRateLimit } from './middleware/rateLimiter';
 import { getSession } from './middleware';
 import createRoutes from './routes/index';
@@ -67,8 +67,8 @@ const client = new Client(io);
 		}))
 		.use(compression())
 		.use((req, res, next) => {
-			const newReq = req as customRequest;
-			const newRes = res as customResponse;
+			const newReq = req as CustomRequest;
+			const newRes = res as CustomResponse;
 
 			// Add time to request
 			newReq._startTime = new Date().getTime();

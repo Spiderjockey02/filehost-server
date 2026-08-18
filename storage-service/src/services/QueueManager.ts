@@ -1,10 +1,10 @@
-import type { QueuedTask, queueKeys, Task } from '@/types';
+import type { QueuedTask, QueueKeys, Task } from '@/types';
 
 export default class QueueManager {
 	private queues: Map<string, QueuedTask<any>[]> = new Map();
 	private processing: Map<string, boolean> = new Map();
 
-	async addToQueue<T>(key: queueKeys, task: Task<T>): Promise<T> {
+	async addToQueue<T>(key: QueueKeys, task: Task<T>): Promise<T> {
 		return new Promise<T>((resolve, reject) => {
 			const queuedTask: QueuedTask<T> = { task, resolve, reject };
 
@@ -15,7 +15,7 @@ export default class QueueManager {
 		});
 	}
 
-	private async processNext(key: queueKeys): Promise<void> {
+	private async processNext(key: QueueKeys): Promise<void> {
 		if (this.processing.get(key) || !this.queues.get(key)?.length) return;
 		this.processing.set(key, true);
 
