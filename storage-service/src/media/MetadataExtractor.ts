@@ -1,6 +1,8 @@
 import type { ExtractedMetadata } from '@/types';
 import { execFile } from 'child_process';
+import { open } from 'node:fs/promises';
 import type { File } from 'formidable';
+import { loadEsm } from 'load-esm';
 import { promisify } from 'util';
 import sharp from 'sharp';
 import exifr from 'exifr';
@@ -186,6 +188,150 @@ export default class MetadataExtractor {
 		}
 
 		return null;
+	}
+
+	/**
+	  * Detects the MIME type of a file.
+	  * @param {string} filePath - Path to the file to inspect.
+	  * @returns {string} A promise resolving to the detected MIME type string.
+	*/
+	async detectMimeType(filePath: string): Promise<string> {
+		const { fileTypeFromFile } = await loadEsm<typeof import('file-type')>('file-type');
+
+		// First try proper binary signature detection.
+		const detectedType = await fileTypeFromFile(filePath);
+		if (detectedType) return detectedType.mime;
+
+		// As detectedType was undefined, it might be a text file
+		const buffer = await this.readFileSample(filePath);
+		if (!this.isLikelyTextBuffer(buffer)) return 'application/octet-stream';
+
+		// See if it's structured text like JSON, HTMl or XML
+		const structuredType = this.sniffStructuredTextType(buffer);
+		return structuredType ?? 'text/plain';
+	}
+
+	/**
+	  * Reads the first 8192 bytes of a file for content sniffing.
+	  * @param {string} filePath - Path to the file to sample.
+	  * @returns {Buffer} A buffer containing up to 8192 bytes from the start of the file.
+	*/
+	private async readFileSample(filePath: string): Promise<Buffer> {
+		const handle = await open(filePath, 'r');
+		try {
+			const buffer = Buffer.alloc(8192);
+			const { bytesRead } = await handle.read(buffer, 0, 8192, 0);
+			return buffer.subarray(0, bytesRead);
+		} finally {
+			await handle.close();
+		}
+	}
+
+	/**
+	  * Determines whether a sample buffer looks like text rather than binary
+	  * data, using a combination of BOM detection, shebang detection, and a
+	  * byte-level heuristic for the remaining cases.
+	  *
+	  * @param {Buffer} buffer - A sample of the file's content (typically the first 8192 bytes).
+	  * @returns {boolean} If the buffer appears to contain text.
+	*/
+	private isLikelyTextBuffer(buffer: Buffer): boolean {
+		if (buffer.length === 0) return true;
+
+		// UTF-8 BOM
+		if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) return true;
+
+		// UTF-16 LE / BE BOM
+		if (buffer.length >= 2 && ((buffer[0] === 0xff && buffer[1] === 0xfe) || (buffer[0] === 0xfe && buffer[1] === 0xff))) return true;
+
+		// UTF-32 LE / BE BOM
+		if (buffer.length >= 4 && ((buffer[0] === 0xff && buffer[1] === 0xfe && buffer[2] === 0x00 &&	buffer[3] === 0x00)
+			|| (buffer[0] === 0x00 && buffer[1] === 0x00 && buffer[2] === 0xfe && buffer[3] === 0xff))) {
+			return true;
+		}
+
+		// A shebang is a very strong indication of a text/script file.
+		if (buffer[0] === 0x23 && buffer[1] === 0x21) return true;
+
+		return this.hasMostlyTextBytes(buffer);
+	}
+
+	/**
+	  * Heuristically determines whether a buffer is mostly text by counting "suspicious" bytes.
+	  * @param {Buffer} buffer - The buffer to inspect.
+	  * @returns {boolean} If suspicious bytes make up less than 1% of the buffer.
+	*/
+	private hasMostlyTextBytes(buffer: Buffer): boolean {
+		let suspiciousBytes = 0;
+		for (const byte of buffer) {
+			// NUL is a particularly strong indication of binary data.
+			if (byte === 0x00) {
+				suspiciousBytes++;
+				continue;
+			}
+			// Allow normal ASCII whitespace.
+			if (byte === 0x09 || byte === 0x0a || byte === 0x0d) continue;
+
+			// Other ASCII control characters are suspicious.
+			if (byte < 0x20) suspiciousBytes++;
+
+		}
+		return suspiciousBytes / buffer.length < 0.01;
+	}
+
+	/**
+	  * Attempts to identify a more specific structured text MIME type (JSON, XML, HTML) from a sample buffer.
+	  * @param {Buffer} buffer - The text-like buffer.
+	  * @returns {string | null} The detected structured MIME type, or `null` if no structured format was recognised.
+	*/
+	private sniffStructuredTextType(buffer: Buffer): string | null {
+		const text = buffer.toString('utf8').trim();
+		if (text.length === 0) return null;
+		if (this.looksLikeHtml(text)) return 'text/html';
+		if (this.looksLikeXml(text)) return 'application/xml';
+		if (this.looksLikeJson(text)) return 'application/json';
+		return null;
+	}
+
+	/**
+	  * Checks whether a text sample looks like an HTML document.
+	  * @param {string} text - The decoded, trimmed text sample to check.
+	  * @returns {boolean} If the sample appears to be HTML.
+	*/
+	private looksLikeHtml(text: string): boolean {
+		const head = text.slice(0, 512).toLowerCase();
+		return (head.startsWith('<!doctype html') || /<html[\s>]/.test(head) || /<head[\s>]/.test(head) || /<body[\s>]/.test(head));
+	}
+
+	/**
+ 	  * Checks whether a text sample looks like an XML document.
+	  * @param {string} text - The decoded, trimmed text sample to check.
+	  * @returns {boolean} If the sample appears to be XML.
+	*/
+	private looksLikeXml(text: string): boolean {
+		if (text.startsWith('<?xml')) return true;
+		return /^<[a-zA-Z][\w:-]*(\s[^>]*)?>/.test(text);
+	}
+
+	/**
+	  * Checks whether a text sample looks like a JSON document.
+	  * @param {string} text - The decoded, trimmed text sample to check.
+	  * @returns {boolean} If the sample was successfully parsed as JSON.
+	*/
+	private looksLikeJson(text: string): boolean {
+		const firstChar = text[0];
+		const lastChar = text[text.length - 1];
+
+		const bracketsMatch = (firstChar === '{' && lastChar === '}') || (firstChar === '[' && lastChar === ']');
+		if (!bracketsMatch) return false;
+
+		try {
+			JSON.parse(text);
+			return true;
+		} catch {
+			// Fall through — truncation or malformed JSON, can't confirm.
+			return false;
+		}
 	}
 
 	private parseFraction(fr: string): number | undefined {

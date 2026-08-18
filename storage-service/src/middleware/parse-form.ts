@@ -59,6 +59,15 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			await client.userManager.modifyStorageSize(user.id, BigInt(file.size), 'INCRE');
 			await client.FileManager.storageManager.modifyUsage(storage.id, BigInt(file.size), 'INCRE');
 
+			// Verify mime-type ('application/octet-stream' is the default mime-type, so try and analyse it for correct mime-type)
+			const metadataClass = new MetadataExtractor();
+			let fileMimeType = file.mimetype;
+			try {
+				if (fileMimeType == 'application/octet-stream') fileMimeType = await metadataClass.detectMimeType(file.filepath);
+			} catch (err) {
+				client.logger.error(err);
+			}
+
 			// Check if a folder was uploaded
 			const lastSlashIndex = `${file.originalFilename}`.lastIndexOf('/');
 			if (lastSlashIndex > -1) {
@@ -74,7 +83,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 					name: fileName,
 					path: `${dir.path}/${fileName}`,
 					size: BigInt(file.size),
-					mimetype: file.mimetype,
+					mimetype: fileMimeType,
 					storageId: storage.id,
 					parentId: dir.id,
 				});
@@ -97,14 +106,14 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 					name: `${file.originalFilename}`,
 					path: `${normalizePath(dir.path)}${file.originalFilename}`,
 					size: BigInt(file.size),
-					mimetype: file.mimetype,
+					mimetype: fileMimeType,
 					storageId: storage.id,
 					parentId: dir.id,
 				});
 			}
 
 			// Check if the uploaded file is a video
-			if (file.mimetype?.startsWith('video/')) await cleanUpVideo(client, file.filepath, `${file.originalFilename?.split('.').pop()}`);
+			if (fileMimeType?.startsWith('video/')) await cleanUpVideo(client, file.filepath, `${file.originalFilename?.split('.').pop()}`);
 
 			// Move the uploaded file away from temp folder to storage server
 			const buffer = await readFile(file.filepath);
@@ -112,7 +121,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 			// Extract metadata
 			try {
-				const meta = await new MetadataExtractor().extract(file);
+				const meta = await metadataClass.extract(file);
 				if (meta != null) await client.FileManager.addMetadata(uploadedFile.id, { ...meta });
 			} catch (err) {
 				client.logger.error(err);
