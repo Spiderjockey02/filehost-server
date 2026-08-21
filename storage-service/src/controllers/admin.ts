@@ -1,6 +1,6 @@
 import { validateConfig, validateCRONSchedule, validateNotification } from '@/validators';
 import type { CronJobLog } from '@/types/generated/client';
-import MIMEList from '../../assets/MIME-list.json';
+import MetadataExtractor from '@/media/MetadataExtractor';
 import type { Request, Response } from 'express';
 import { Error, getIP, PATHS } from '@/utils';
 import type Client from '@/helpers/Client';
@@ -276,7 +276,7 @@ export const getMimeTypesSearch = () => {
 		const { query } = req.query;
 		if (typeof query !== 'string') return Error.IncorrectQuery(res, [{ message: 'query must be type string.' }]);
 
-		const list = MIMEList.filter((a) => a.startsWith(query)).sort((a, b) => a.localeCompare(b)).slice(0, 9);
+		const list = new MetadataExtractor().getMimeTypes().filter((a) => a.startsWith(query)).sort((a, b) => a.localeCompare(b)).slice(0, 9);
 		return res.json({ list });
 	};
 };

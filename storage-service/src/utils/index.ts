@@ -1,14 +1,13 @@
 import type { FileOptions, HTTPStripped, MySQLConnectionOptions, S3Options, SFTPOptions } from '@/types';
-import { CUSTOM_MIME_TYPES, PATHS, ipRegex } from './CONSTANTS';
 import type { NextFunction, Request, Response } from 'express';
 import { HTTPMethod, Prisma } from '@/types/generated/client';
 import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
 import { readdirSync, statSync, readFileSync } from 'fs';
-import { extname, join, parse, sep } from 'path';
+import { PATHS, ipRegex } from './CONSTANTS';
 import type Client from '@/helpers/Client';
 import { getSession } from '@/middleware';
+import { join, parse, sep } from 'path';
 import { UAParser } from 'ua-parser-js';
-import { lookup } from 'mime-types';
 import APIError from './Error';
 import Logger from './Logger';
 
@@ -282,18 +281,6 @@ export function logUserActivity(client: Client): (req: Request, res: Response, n
 
 		next();
 	};
-}
-
-/**
- * Determines the MIME type of a file based on its filename or extension.
- * @param {string} fileName - The name or path of the file to determine the MIME type for.
- * @returns {string | null} The detected MIME type, or `false` if no MIME type can be determined.
- */
-export function lookupMimeType(fileName: string): string | false {
-	const extension = extname(fileName).slice(1).toLowerCase();
-	if (extension && extension in CUSTOM_MIME_TYPES) return CUSTOM_MIME_TYPES[extension]!;
-
-	return lookup(fileName);
 }
 
 const skipUndefined = <T>(value: T | undefined): T | typeof Prisma.skip => value === undefined ? Prisma.skip : value;

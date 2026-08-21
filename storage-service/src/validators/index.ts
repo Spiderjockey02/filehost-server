@@ -1,5 +1,5 @@
 import { AuditLogEventName, FileType, HTTPMethod } from '@/types/generated/client';
-import MIMEList from '../../assets/MIME-list.json';
+import MetadataExtractor from '@/media/MetadataExtractor';
 import { Prisma } from '@/types/generated/browser';
 import { z } from 'zod';
 
@@ -141,7 +141,7 @@ export const validateConfig = z.object({
 		.min(1, { message: 'MAX_CHARS_FILE_NAME must be a valid number greater than or equal to 1.' }),
 	DISALLOWED_MIME_TYPES: z
 		.array(
-			z.string().refine(m => MIMEList.includes(m), {
+			z.string().refine(m => new MetadataExtractor().getMimeTypes().includes(m), {
 				message: 'Each value in DISALLOWED_MIME_TYPES must be a valid mime type.',
 			}),
 		)

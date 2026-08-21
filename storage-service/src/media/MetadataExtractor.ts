@@ -1,9 +1,10 @@
+import { CUSTOM_MIME_TYPES } from '@/utils/CONSTANTS';
 import type { ExtractedMetadata } from '@/types';
+import { basename, extname } from 'node:path';
+import mime, { lookup } from 'mime-types';
 import { execFile } from 'child_process';
-import { lookupMimeType } from '@/utils';
 import { open } from 'node:fs/promises';
 import type { File } from 'formidable';
-import { basename } from 'node:path';
 import { loadEsm } from 'load-esm';
 import { promisify } from 'util';
 import sharp from 'sharp';
@@ -205,7 +206,7 @@ export default class MetadataExtractor {
 		if (detectedType) return detectedType.mime;
 
 		// Try the file extenstion next (THIS SHOULD BE ORIGINAL NAME)
-		const extensionType = lookupMimeType(basename(file.originalFilename ?? ''));
+		const extensionType = this.lookupMimeTypeFromName(basename(file.originalFilename ?? ''));
 
 		// As detectedType was undefined, it might be a text file
 		const buffer = await this.readFileSample(file.filepath);
@@ -337,6 +338,29 @@ export default class MetadataExtractor {
 			// Fall through — truncation or malformed JSON, can't confirm.
 			return false;
 		}
+	}
+
+	/**
+	  * Determines the MIME type of a file based on its filename or extension.
+	  * @param {string} fileName - The name or path of the file to determine the MIME type for.
+	  * @returns {string | null} The detected MIME type, or `false` if no MIME type can be determined.
+	*/
+	private lookupMimeTypeFromName(fileName: string): string | false {
+		const extension = extname(fileName).slice(1).toLowerCase();
+		if (extension && extension in CUSTOM_MIME_TYPES) return CUSTOM_MIME_TYPES[extension]!;
+
+		return lookup(fileName);
+	}
+
+	/**
+	  * Returns all supported MIME types.
+	  *
+	  * Combines MIME types from the Mime-DB & custom MIME mappings.
+	  *
+	  * @returns {string[]} An array containing all supported MIME types.
+	*/
+	getMimeTypes(): string[] {
+		return [...Object.keys(mime.extensions), ...Object.values(CUSTOM_MIME_TYPES)];
 	}
 
 	private parseFraction(fr: string): number | undefined {
