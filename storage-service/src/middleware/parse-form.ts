@@ -63,7 +63,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			const metadataClass = new MetadataExtractor();
 			let fileMimeType = file.mimetype;
 			try {
-				if (fileMimeType == 'application/octet-stream') fileMimeType = await metadataClass.detectMimeType(file.filepath);
+				fileMimeType = await metadataClass.detectMimeType(file);
 			} catch (err) {
 				client.logger.error(err);
 			}

@@ -1,7 +1,9 @@
 import type { ExtractedMetadata } from '@/types';
 import { execFile } from 'child_process';
+import { lookupMimeType } from '@/utils';
 import { open } from 'node:fs/promises';
 import type { File } from 'formidable';
+import { basename } from 'node:path';
 import { loadEsm } from 'load-esm';
 import { promisify } from 'util';
 import sharp from 'sharp';
@@ -192,23 +194,26 @@ export default class MetadataExtractor {
 
 	/**
 	  * Detects the MIME type of a file.
-	  * @param {string} filePath - Path to the file to inspect.
+	  * @param {File} file - The uploaded file.
 	  * @returns {string} A promise resolving to the detected MIME type string.
 	*/
-	async detectMimeType(filePath: string): Promise<string> {
+	async detectMimeType(file: File): Promise<string> {
 		const { fileTypeFromFile } = await loadEsm<typeof import('file-type')>('file-type');
 
 		// First try proper binary signature detection.
-		const detectedType = await fileTypeFromFile(filePath);
+		const detectedType = await fileTypeFromFile(file.filepath);
 		if (detectedType) return detectedType.mime;
 
+		// Try the file extenstion next (THIS SHOULD BE ORIGINAL NAME)
+		const extensionType = lookupMimeType(basename(file.originalFilename ?? ''));
+
 		// As detectedType was undefined, it might be a text file
-		const buffer = await this.readFileSample(filePath);
-		if (!this.isLikelyTextBuffer(buffer)) return 'application/octet-stream';
+		const buffer = await this.readFileSample(file.filepath);
+		if (!this.isTextLikeContent(buffer)) return extensionType || 'application/octet-stream';
 
 		// See if it's structured text like JSON, HTMl or XML
 		const structuredType = this.sniffStructuredTextType(buffer);
-		return structuredType ?? 'text/plain';
+		return structuredType || extensionType || 'text/plain';
 	}
 
 	/**
@@ -235,7 +240,7 @@ export default class MetadataExtractor {
 	  * @param {Buffer} buffer - A sample of the file's content (typically the first 8192 bytes).
 	  * @returns {boolean} If the buffer appears to contain text.
 	*/
-	private isLikelyTextBuffer(buffer: Buffer): boolean {
+	private isTextLikeContent(buffer: Buffer): boolean {
 		if (buffer.length === 0) return true;
 
 		// UTF-8 BOM
