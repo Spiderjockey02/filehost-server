@@ -1,3 +1,13 @@
+<div align="center">
+
+> ⚠️ **MAJOR REWRITE IN PROGRESS**
+>
+> This project is undergoing a major rewrite in the [`rewrite`](https://github.com/Spiderjockey02/filehost-server/tree/rewrite) branch.
+>
+> The `master` branch and this README does not reflect the current state of development.
+
+</div>
+
 <h1 align="center">
   <br>
   File hosting service
