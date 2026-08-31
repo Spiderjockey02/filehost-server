@@ -29,7 +29,7 @@ export const getStorages = (client: Client) => {
 // Endpoint: GET /api/admin/storage/:storageId
 export const getStorageById = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const result = validateString.safeParse(req.query['storageId']);
+		const result = validateString.safeParse(req.params['storageId']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {

@@ -19,7 +19,8 @@
     "KEEP_ORIGINAL_METADATA": true,
     "THUMBNAIL": {
         "WIDTH": 400,
-        "HEIGHT": 520
+        "HEIGHT": 520,
+        "CONCURRENT": 5
     },
     "RETENTION_POLICY_IN_DAYS": {
         "LOG_FILES": 90,
