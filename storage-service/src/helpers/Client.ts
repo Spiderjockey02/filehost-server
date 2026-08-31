@@ -23,6 +23,7 @@ export default class Client {
 	config: ConfigManager;
 	AuditLogManager: AuditLogAccessor;
 	PlanManager: PlanAccessor;
+	socket: Server;
 
 	constructor(io: Server) {
 		this.config = new ConfigManager();
@@ -37,6 +38,7 @@ export default class Client {
 		this.userActivityManager = new UserActivityManager();
 		this.AuditLogManager = new AuditLogAccessor(this);
 		this.PlanManager = new PlanAccessor();
+		this.socket = io;
 	}
 
 	async sendWebhook(listener: AuditLogListener, log: FullAuditLog) {

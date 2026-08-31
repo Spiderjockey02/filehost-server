@@ -411,55 +411,47 @@ export default class FileManager extends FileAccessor {
 	/**
 	  * Send the thumbnail of the file.
 	  * @param {Response} res The HTTP response object.
-	  * @param {string} userId The user's ID.
-	  * @param {string} filePath The filepath of the file for the thumbnail
+	  * @param {string} fileId The filepath of the file for the thumbnail
 	*/
-	async sendThumbnail(res: Response, userId: string, filePath: string) {
-		// Set default cache headers (1 hour)
-		res.setHeader('Cache-Control', 'public, max-age=3600');
-
-		// Get the mimeType of the file
-		const file = await this.fetchByFilePath(userId, filePath);
-		if (file == null || file.mimetype == null || file.deletedAt !== null) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
-
-		// Fetch the storage medium and check it's online
-		const storageProvider = await this.storageManager.getProviderById(file.storageId);
-		if (storageProvider.isOnline == false) return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
-
-		// Browser/CDN cache for 6 hours, revalidate after
-		const lastModified = file.updatedAt.toUTCString();
-		res.setHeader('Cache-Control', 'public, max-age=21600');
-		res.setHeader('Last-Modified', lastModified);
-
-		const ims = res.req.headers['if-modified-since'];
-		if (ims && new Date(ims).getTime() >= file.updatedAt.getTime()) return res.status(304).end();
-
-		// Send thumbnail if it exists, create it if it doesn't
-		try {
-			await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` });
-		} catch (err) {
-			if (err instanceof S3ServiceException) {
-				if (err.$metadata?.httpStatusCode == 404) {
-					try {
-						await this.ThumbnailCreator.createThumbnail(file);
-						return await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` });
-					} catch {
-						res.setHeader('Cache-Control', 'public, max-age=86400');
-						return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
-					}
-				}
-			} else if (err instanceof Error && (err as NodeJS.ErrnoException).code === 'ENOENT') {
-				try {
-					await this.ThumbnailCreator.createThumbnail(file);
-					return await storageProvider.sendFile(res, { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` });
-				} catch {
-					res.setHeader('Cache-Control', 'public, max-age=86400');
-					return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
-				}
-			}
+	async sendThumbnail(res: Response, fileId: string) {
+		// Fetch the file
+		const file = await this.fetchById(fileId);
+		if (file == null || file.mimetype == null || file.deletedAt !== null) {
 			res.setHeader('Cache-Control', 'public, max-age=86400');
 			return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 		}
+
+		// Fetch the storage provider and check if it is online
+		const storageProvider = await this.storageManager.getProviderById(file.storageId);
+		if (!storageProvider.isOnline) {
+			res.setHeader('Cache-Control', 'public, max-age=86400');
+			return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+		}
+
+		// Build the thumbnail
+		const thumbnail = { ...file, id: `thumbnails/${file.id}.${this.ThumbnailCreator.fileExtension}` };
+		try {
+			res.setHeader('Cache-Control', 'public, max-age=21600');
+			res.setHeader('Last-Modified', file.updatedAt.toUTCString());
+
+			const ims = res.req.headers['if-modified-since'];
+			if (ims && new Date(ims).getTime() >= file.updatedAt.getTime()) return res.status(304).end();
+			await storageProvider.sendFile(res, thumbnail);
+			return;
+		} catch (err) {
+			const isNotFound = (err instanceof S3ServiceException &&	err.$metadata?.httpStatusCode === 404) || (err instanceof Error && (err as NodeJS.ErrnoException).code === 'ENOENT');
+			if (!isNotFound) {
+				res.setHeader('Cache-Control', 'public, max-age=86400');
+				return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
+			}
+		}
+
+		// Thumbnail does not exist add it to queue
+		this.ThumbnailCreator.createThumbnail(file);
+
+		// Return a placeholder immediately.
+		res.setHeader('Cache-Control', 'public, max-age=5');
+		return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 	}
 
 	/**

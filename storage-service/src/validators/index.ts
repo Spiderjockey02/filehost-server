@@ -162,6 +162,9 @@ export const validateConfig = z.object({
 			HEIGHT: z
 				.number()
 				.min(1, { message: 'THUMBNAIL.HEIGHT must be a valid number greater than or equal to 1.' }),
+			CONCURRENT: z
+				.number()
+				.min(1, { message: 'THUMBNAIL.CONCURRENT must be a valid number greater than or equal to 1.' }),
 		})
 		.strict()
 		.refine(obj => typeof obj === 'object' && obj !== null, {
