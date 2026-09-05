@@ -1,4 +1,4 @@
-import type { AddMetadataToFileParams, CreateFileParams, FetchByOwnerParams, FetchFileMediaTypesParams, FullFile, SearchForFilesParams, UpdateFileParams, UpdateFilePathParams } from '@/types/database/File';
+import type { AddMetadataToFileParams, CreateFileParams, FetchByOwnerParams, FetchFileMediaTypesParams, FullFile, SearchForFilesParams, UpdateFileParams } from '@/types/database/File';
 import type { File, FileMetadata, MediaType } from '@/types/generated/client';
 import { skip } from '@prisma/client/runtime/client';
 import { Pagination } from '@/types/database';
@@ -39,7 +39,6 @@ export default class FileAccessor {
 
 			const file = await client.file.create({
 				data: {
-					path: data.path,
 					name: data.name,
 					size: data.size,
 					userId: data.userId,
@@ -53,16 +52,16 @@ export default class FileAccessor {
 				},
 			});
 
-			this.cache.set(`${file.userId}_${file.path}`, file);
+			this.cache.set(file.id, file);
 
 			// Have to do 2 layers (to get show proper children count)
 			if (file.parentId) {
 				const parent = await this.fetchById(file.parentId);
 				if (parent) {
-					this.cache.delete(`${parent.userId}_${parent.path}`);
+					this.cache.delete(file.id);
 					if (parent.parentId) {
 						const grandparent = await this.fetchById(parent.parentId);
-						if (grandparent) this.cache.delete(`${grandparent.userId}_${grandparent.path}`);
+						if (grandparent) this.cache.delete(file.id);
 					}
 				}
 			}
@@ -106,7 +105,6 @@ export default class FileAccessor {
 					id: data.id,
 				},
 				data: {
-					path:  skipUndefined(data.path),
 					name: skipUndefined(data.name),
 					size: skipUndefined(data.size),
 					parentId: skipUndefined(data.parentId),
@@ -137,11 +135,11 @@ export default class FileAccessor {
 			});
 
 			// Update it's own cached version
-			this.cache.delete(`${file.userId}_${file.path}`);
+			this.cache.delete(file.id);
 
 			// Update their parent's cached version aswell
 			const parentFile = await this.fetchById(file.parentId);
-			if (parentFile) this.cache.delete(`${file.userId}_${parentFile.path}`);
+			if (parentFile) this.cache.delete(file.id);
 			return file;
 		} catch (err) {
 			throw err;
@@ -188,38 +186,99 @@ export default class FileAccessor {
 	}
 
 	/**
-		* Fetch a file by it's path
-		* @param {string} userId The file's owners Id.
-		* @param {string} filePath The file path.
-		* @param {?boolean} includeDeleted Whether or not to check deleted file
-		* @returns {FullFile | null} The file.
+		* Fetch the user's root folder
+		* @param {string} userId The user id.
+		* @param {?boolean} includeDeleted Include deleted files
+		* @returns {FullFile | null} The file or null.
 	*/
-	async fetchByFilePath(userId: string, filePath: string, includeDeleted?: boolean): Promise<FullFile | null> {
-		try {
-			const cleanedFilePath = filePath.startsWith('/') ? filePath : `/${filePath}`;
-			let file = this.cache.get(`${userId}_${cleanedFilePath}`) ?? null;
-			if (file !== null) return file;
-
-			// Fetch from database
-			file = await client.file.findFirst({
-				where: {
-					userId,
-					deletedAt: includeDeleted ? skip : null,
-					path: {
-						equals: cleanedFilePath,
+	async fetchRoot(userId: string, includeDeleted?: boolean): Promise<FullFile | null> {
+		return client.file.findFirst({
+			where: {
+				userId,
+				parentId: null,
+			},
+			include: {
+				children: {
+					where: {
+						deletedAt: includeDeleted ? skip : null,
+					},
+					include: {
+						_count: {
+							select: {
+								children: {
+									where: {
+										deletedAt: includeDeleted ? skip : null,
+									},
+								},
+							},
+						},
 					},
 				},
+			},
+		});
+	}
+
+	/**
+	  * Fetchs the full file path
+	  * @param {string} fileId The file Id
+	  * @returns
+	*/
+	async fetchFilePath(fileId: string) {
+		return client.$queryRaw<
+    {
+			id: string;
+			name: string;
+			parentId: string | null;
+			depth: number;
+    }[]
+>`
+    WITH RECURSIVE ancestors AS (
+			SELECT
+				id,
+				name,
+				parentId,
+				0 AS depth
+			FROM File
+			WHERE id = ${fileId}
+
+			UNION ALL
+
+			SELECT
+				f.id,
+				f.name,
+				f.parentId,
+				a.depth + 1
+			FROM File f
+			INNER JOIN ancestors a
+				ON f.id = a.parentId
+    )
+    SELECT id, name, parentId, depth FROM ancestors ORDER BY depth DESC;
+`;
+	}
+
+	/**
+		* Fetch a file by it's Id
+		* @param {string} id The file id.
+		* @returns {File | null} The file or null.
+	*/
+	async fetchById(id: string | null): Promise<FullFile | null> {
+		if (id == null) return null;
+
+		let file = this.cache.find(f => f.id == id) ?? null;
+		if (file == null) {
+			file = await client.file.findUnique({
+				where: { id },
 				include: {
 					children: {
 						where: {
-							deletedAt: includeDeleted ? skip : null,
+							deletedAt: null,
 						},
 						include: {
 							_count: {
 								select: {
 									children: {
 										where: {
-											deletedAt: includeDeleted ? skip : null,
+											deletedAt: null,
 										},
 									},
 								},
@@ -228,34 +287,7 @@ export default class FileAccessor {
 					},
 				},
 			});
-
-			if (file !== null) {
-				await this.fetchChildrenByParentId(file.id);
-				this.cache.set(`${userId}_${file.path.startsWith('/') ? file.path : `/${file.path}`}`, file);
-			}
-
-			return file;
-		} catch (err) {
-			throw err;
-		}
-	}
-
-	/**
-		* Fetch a file by it's Id
-		* @param {string} id The file id.
-		* @returns {File | null} The file or null.
-	*/
-	async fetchById(id: string | null): Promise<File | null> {
-		if (id == null) return null;
-
-		let file = this.cache.find(f => f.id == id) ?? null;
-		if (file == null) {
-			file = await client.file.findUnique({
-				where: { id },
-				include: {
-					children: true,
-				},
-			});
+			if (file) this.cache.set(file.id, file);
 		}
 
 		return file;
@@ -266,7 +298,7 @@ export default class FileAccessor {
 		* @param {string} parentId The file's parent id.
 		* @returns {File[]} The files.
 	*/
-	async fetchChildrenByParentId(parentId: string): Promise<File[]> {
+	async fetchChildrenByParentId(parentId: string): Promise<FullFile[]> {
 		try {
 			const files = await client.file.findMany({
 				where: {
@@ -292,7 +324,7 @@ export default class FileAccessor {
 				},
 			});
 
-			for (const file of files) this.cache.set(`${file.userId}_${file.path}`, file);
+			for (const file of files) this.cache.set(file.id, file);
 			return files;
 		} catch (err) {
 			throw err;
@@ -365,13 +397,8 @@ export default class FileAccessor {
 		* @returns {File} The file.
 	*/
 	async deleteFromDB(fileId: string): Promise<File> {
-		const fileFromCache = this.cache.find(f => f.id == fileId);
-		if (fileFromCache) this.cache.delete(`${fileFromCache.userId}_${fileFromCache.path}`);
-		return client.file.delete({
-			where: {
-				id: fileId,
-			},
-		});
+		this.cache.delete(fileId);
+		return client.file.delete({ where: { id: fileId } });
 	}
 
 	/**

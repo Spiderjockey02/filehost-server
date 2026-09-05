@@ -2,12 +2,11 @@ import type { UserWithPlan } from '@/types/database/User';
 import MetadataExtractor from '@/media/MetadataExtractor';
 import { cleanUpVideo } from '@/media/VideoPreprocessor';
 import type { FullFile } from '@/types/database/File';
-import type { File } from '@/types/generated/client';
-import { getIP, normalizePath } from '@/utils';
 import { readFile } from 'node:fs/promises';
 import type Client from '@/helpers/Client';
 import type { Request } from 'express';
 import formidable from 'formidable';
+import { getIP } from '@/utils';
 
 export default async (client: Client, req: Request, user: UserWithPlan) => {
 	// Make sure they haven't already uploaded past their max storage
@@ -51,9 +50,17 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			// Make sure the storage medium has enough space aswell
 			if ((BigInt(file.size) + storage.usedSize) >= storage.maxSize) throw new Error('Storage medium does not have enough space');
 
+			// Resolve target directory & final filename, creating nested folders as needed
+			let fileName = `${file.originalFilename}`;
+			const lastSlashIndex = fileName.lastIndexOf('/');
+			if (lastSlashIndex > -1) {
+				const folderPath = fileName.substring(0, lastSlashIndex);
+				fileName = fileName.substring(lastSlashIndex + 1);
+				dir = await ensureFolderExists(client, dir, user.id, folderPath, storage.id);
+			}
+
 			// Check the file isn't already in the directory (Upload CONFLICT)
-			const existingFile = await client.FileManager.fetchByFilePath(user.id, `${dir.path}${file.originalFilename}`);
-			if (existingFile) throw new Error('File with that name already exists');
+			if (dir.children.find((f) => f.name == fileName)) throw new Error('File with that name already exists');
 
 			// Update user's storage size
 			await client.userManager.modifyStorageSize(user.id, BigInt(file.size), 'INCRE');
@@ -68,49 +75,14 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 				client.logger.error(err);
 			}
 
-			// Check if a folder was uploaded
-			const lastSlashIndex = `${file.originalFilename}`.lastIndexOf('/');
-			if (lastSlashIndex > -1) {
-				const folderPath = `${file.originalFilename?.substring(0, lastSlashIndex)}`;
-				const fileName = `${file.originalFilename}`.substring(lastSlashIndex + 1);
-
-				// Add the file to the folder
-				dir = await ensureFolderExists(client, dir, user.id, folderPath, storage.id);
-				if (!dir) throw new Error('Missing parent directory');
-
-				uploadedFile = await client.FileManager.create({
-					userId: user.id,
-					name: fileName,
-					path: `${dir.path}/${fileName}`,
-					size: BigInt(file.size),
-					mimetype: fileMimeType,
-					storageId: storage.id,
-					parentId: dir.id,
-				});
-			} else {
-				dir = await client.FileManager.fetchByFilePath(user.id, dir.path);
-				if (!dir) {
-					dir = await client.FileManager.create({
-						userId: user.id,
-						path: '/',
-						size: BigInt(client.config.get('FOLDER_SIZE')),
-						type: 'DIRECTORY',
-						name: '/',
-						mimetype: null,
-						storageId:  storage.id,
-					});
-				}
-
-				uploadedFile = await client.FileManager.create({
-					userId: user.id,
-					name: `${file.originalFilename}`,
-					path: `${normalizePath(dir.path)}${file.originalFilename}`,
-					size: BigInt(file.size),
-					mimetype: fileMimeType,
-					storageId: storage.id,
-					parentId: dir.id,
-				});
-			}
+			uploadedFile = await client.FileManager.create({
+				userId: user.id,
+				name: fileName,
+				size: BigInt(file.size),
+				mimetype: fileMimeType,
+				storageId: storage.id,
+				parentId: dir.id,
+			});
 
 			// Check if the uploaded file is a video
 			if (fileMimeType?.startsWith('video/')) await cleanUpVideo(client, file.filepath, `${file.originalFilename?.split('.').pop()}`);
@@ -204,29 +176,26 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 };
 
 // Helper function to create folders recursively
-async function ensureFolderExists(client: Client, parentDir: File, userId: string, fullPath: string, storageId: string) {
-	const pathParts = fullPath.split('/');
-	let currentPath = parentDir.path;
-	let dir = null;
+async function ensureFolderExists(client: Client, parentDir: FullFile, userId: string, folderPath: string, storageId: string) {
+	const pathParts = folderPath.split('/').filter(Boolean);
+	let dir = parentDir;
 
 	for (const part of pathParts) {
-		currentPath = `${currentPath.endsWith('/') ? currentPath : `${currentPath}/`}${part}`;
-		// Check if the directory already exists
-		dir = await client.FileManager.fetchByFilePath(userId, currentPath);
-		if (!dir) {
-			// If it doesn't exist, create it
-			dir = await client.FileManager.create({
+		const existing = dir.children.find((child) => child.type === 'DIRECTORY' && child.name === part);
+
+		const next = existing ? await client.FileManager.fetchById(existing.id)
+			: await client.FileManager.create({
 				userId,
 				name: part,
-				path: currentPath,
-				size: 4096n,
+				size: BigInt(client.config.get('FOLDER_SIZE')),
 				type: 'DIRECTORY',
 				mimetype: null,
-				storageId: storageId,
-				parentId: parentDir.id,
-			});
-		}
-		parentDir = dir;
+				storageId,
+				parentId: dir.id,
+			  });
+
+		if (!next) throw new Error('Missing parent directory');
+		dir = next;
 	}
 
 	return dir;

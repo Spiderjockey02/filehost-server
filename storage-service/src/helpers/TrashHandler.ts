@@ -39,11 +39,8 @@ export default class TrashHandler {
 				});
 
 				// Delete caches
-				this.client.FileManager.cache.delete(`${file.userId}_${file.path}`);
-
-				// Update their parent's cached version aswell
-				const parentFile = await this.client.FileManager.fetchById(file.parentId);
-				if (parentFile) this.client.FileManager.cache.delete(`${file.userId}_${parentFile.path}`);
+				this.client.FileManager.cache.delete(file.id);
+				if (file.parentId) this.client.FileManager.cache.delete(file.parentId);
 
 				// Carry on managing other files and fallback system
 				fileUpdates.push({ id: file.id, deletedAt: null });
@@ -170,7 +167,7 @@ export default class TrashHandler {
 				const storage = await this.client.FileManager.storageManager.fetchById(file.storageId);
 				if (storage !== null) {
 					const medium = await this.client.FileManager.storageManager.getProvider(storage);
-					medium.deleteFile(`${userId}${file.path}`);
+					medium.deleteFile(`${userId}/${file.id}`);
 				}
 
 				this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {

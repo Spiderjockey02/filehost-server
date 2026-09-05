@@ -1,7 +1,6 @@
-import type { File, User } from '@/types/generated/client';
+import { FileType, type File, type User } from '@/types/generated/client';
 import type { UserWithPlan } from '@/types/database/User';
 import ThumbnailCreator from '@/media/ThumbnailCreator';
-import { normalizePath, sanitiseObject } from '@/utils';
 import { S3ServiceException } from '@aws-sdk/client-s3';
 import type { FullFile } from '@/types/database/File';
 import type StorageManager from './StorageManager';
@@ -9,6 +8,7 @@ import { Archiver, ZipArchive } from 'archiver';
 import type { StorageProvider } from '@/types';
 import { FileAccessor } from '@/accessors';
 import TrashHandler from '../TrashHandler';
+import { sanitiseObject } from '@/utils';
 import type { Response } from 'express';
 import Client from '../Client';
 
@@ -29,29 +29,20 @@ export default class FileManager extends FileAccessor {
 	/**
 	  * Retrieves the files in a directory
 	  * @param {User} user The user.
-	  * @param {string} filePath file path of the directory.
+	  * @param {string} fileId file path of the directory.
 	*/
-	async getDirectory(user: User, filePath: string) {
-		// eslint-disable-next-line prefer-const
-		let [files, storage] = await Promise.all([
-			this.fetchByFilePath(user.id, filePath),
-			this.storageManager.fetchById(user.storageId),
-		]);
-		if (storage == null) throw new Error('Storage not found');
-
-		// If it's user's first login, the directory doesn't exist so create it
-		if (files == null && filePath == '/') {
-			await this.create({ userId: user.id, path: '/', size: BigInt(this.client.config.get('FOLDER_SIZE')), type: 'DIRECTORY', name: '/', mimetype: null, storageId: user.storageId });
-			await this.client.notificationManager.create({
-				title: 'Welcome!',
-				text: 'Thank you for registering. You can now start uploading files, customizing your storage, and exploring all the features.',
-				userId: user.id,
-			});
-			files = await this.fetchByFilePath(user.id, filePath);
+	async getDirectory(user: User, fileId: string) {
+		let directory: FullFile | null = null;
+		if (fileId == '') {
+			directory = await this.fetchRoot(user.id);
+		} else {
+			directory = await this.fetchById(fileId);
+			if (directory?.userId !== user.id) throw new Error('No access');
 		}
 
-		if (files?.deletedAt !== null) throw new Error('Directory not found');
-		return sanitiseObject(files);
+		// Double check it's not deleted
+		if (directory?.deletedAt !== null) throw new Error('Directory not found');
+		return sanitiseObject(directory);
 	}
 
 	/**
@@ -65,43 +56,34 @@ export default class FileManager extends FileAccessor {
 	}
 
 	/**
-	  * Moves a file
+	  * Moves a file to a new directory
 	  * @param {User} user The user.
 	  * @param {string} fileId The file's ID that is being moved
-		* @param {string} newDirId The new file path.
+		* @param {string} newDirId The new directory ID, the file is moving into
 	*/
 	async move(user: User, fileId: string, newDirId: string) {
 		// First Make sure they are not the same IDs
 		if (fileId === newDirId) throw new Error('Cannot move a file into itself.');
 
 		// Fetch the files from the database
-		const oldFile = await this.fetchById(fileId);
-		const newDir = await this.fetchById(newDirId);
+		const [oldFile, newDir] = await Promise.all([this.fetchById(fileId), this.fetchById(newDirId)]);
 		if (oldFile == null) throw new Error('File not found');
-		if (newDir == null || newDir.type !== 'DIRECTORY') throw new Error('Directory not found');
+		if (newDir == null || newDir.type !== FileType.DIRECTORY) throw new Error('Directory not found');
 
 		// Check the owner of the file and folder
 		if (oldFile.userId !== user.id || newDir.userId !== user.id) throw new Error('You do not have permission to move this file.');
 
-		// Generate new file path for the current item
-		const newFilePathInDb = `${normalizePath(newDir.path)}${oldFile.path.split('/').at(-1)}`;
-
 		// Make sure a file with the potential same name doesn't already exist
-		const existingFile = await this.fetchByFilePath(user.id, newFilePathInDb);
-		if (existingFile) throw new Error('A file with that name already exists in the same directory.');
+		if (newDir.children.find(f => f.name == oldFile.name)) throw new Error('A file with that name already exists in the same directory.');
 
 		// Update the old parent directory
 		const oldParent = await this.fetchById(oldFile.parentId);
-		if (oldParent !== null) this.cache.delete(`${oldParent.userId}_${oldParent.path}`);
+		if (oldParent !== null) this.cache.delete(oldFile.id);
 
-		await this.update({
-			id: oldFile.id,
-			parentId: newDir.id,
-			path: newFilePathInDb,
-		});
+		await this.update({ id: oldFile.id, parentId: newDir.id });
 
 		// If it's a folder, process its children (don't move the folder itself again)
-		if (oldFile.type === 'DIRECTORY') {
+		if (oldFile.type === FileType.DIRECTORY) {
 			const children = await this.fetchChildrenByParentId(oldFile.id);
 
 			// Check if the folder is empty
@@ -119,18 +101,14 @@ export default class FileManager extends FileAccessor {
 	  * @param {User} user The user.
 	  * @param {string} fileId The file's ID that is being renamed
 		* @param {string} newName The new name for the file
+		* @returns {FullFile} The new file
 	*/
-	async rename(user: User, fileId: string, newName: string) {
+	async rename(user: User, fileId: string, newName: string): Promise<FullFile> {
 		const file = await this.fetchById(fileId);
 		if (file == null) throw new Error('File not found');
 
 		// Check the owner of the file
 		if (file.userId !== user.id) throw new Error('You do not have permission to rename this file.');
-
-		// Update the file
-		const pathSegs = file.path.split('/');
-		pathSegs[pathSegs.length - 1] = newName;
-		const newPath = pathSegs.join('/');
 
 		// Make sure the new name doesn't have any invalid characters in it
 		if (this.client.config.get('INVALID_CHARS_IN_FILE_NAME').some(c => newName.includes(c))) throw new Error('File name includes invalid characters.');
@@ -139,15 +117,11 @@ export default class FileManager extends FileAccessor {
 		if (newName.length > this.client.config.get('MAX_CHARS_FILE_NAME')) throw `New name must be less than ${this.client.config.get('MAX_CHARS_FILE_NAME')} characters.`;
 
 		// Make sure a file with the potential same name doesn't already exist
-		const existingFile = await this.fetchByFilePath(user.id, newPath);
-		if (existingFile) throw new Error('A file with that name already exists in the same directory.');
+		const parentDir = await this.fetchById(file.parentId);
+		if (parentDir && parentDir.children.find(f => f.name == newName)) throw new Error('A file with that name already exists in the same directory.');
 
 		// Will update to also support their children for path to be updated aswell (when it's a directory)
-		await this.update({ id: file.id, name: newName, path: newPath });
-		if (file.type === 'DIRECTORY') await this.updateChildsPath({ parentId: file.id, userId: user.id, oldPath: file.path, newPath });
-
-		// Update file in the filesystem (If it fails rollback the database changes)
-		this.cache.delete(`${file.userId}_${file.path}`);
+		return this.update({ id: file.id, name: newName });
 	}
 
 	/**
@@ -166,13 +140,13 @@ export default class FileManager extends FileAccessor {
 		if (file.userId !== user.id || newDir.userId !== user.id) throw new Error('You do not have permission to move this file.');
 
 		// Delete the new file's cache
-		this.cache.delete(`${user.id}_${newDir.path}`);
+		this.cache.delete(file.id);
 
 		// If the old file is a directory, copy the directory and its contents recursively
 		if (file.type === 'DIRECTORY') {
-			await this._copyDirectory(user, file, newDir);
+			await this._copyDirectory(file, newDir);
 		} else {
-			await this._copyFile(user, file, newDir);
+			await this._copyFile(file, newDir);
 		}
 	}
 
@@ -197,57 +171,48 @@ export default class FileManager extends FileAccessor {
 		if (parentDir?.userId !== user.id) throw new Error('You do not have permission to rename this file.');
 
 		// Update the parent directory to include the new folder
-		const file = await this.update({
+		await this.update({
 			id: parentDir.id,
 			children: {
 				userId: user.id,
 				name: folderName,
-				path: `${normalizePath(parentDir.path)}${folderName}`,
 				size: BigInt(this.client.config.get('FOLDER_SIZE')),
 				type: 'DIRECTORY',
 				mimetype: null,
 				storageId: user.storageId,
 			},
 		});
-
-		return file.children.find(f => f.path == `${normalizePath(parentDir.path)}${folderName}`)!;
 	}
 
 	/**
 	  * Copies a file directly
-	  * @param {User} user The user's ID.
-	  * @param {File} oldFile file path of the directory.
-		* @param {File} newDir The name of the folder.
+	  * @param {FullFile} file file path of the directory.
+		* @param {FullFile} newDir The name of the folder, that file is moving into.
 	*/
-	private async _copyFile(user: User, oldFile: File, newDir: File) {
+	private async _copyFile(file: FullFile, newDir: FullFile) {
 		// Get storage and it's provider
-		const storage = await this.storageManager.fetchById(user.storageId);
+		const storage = await this.storageManager.fetchById(file.storageId);
 		if (storage == null) throw new Error('Storage not found');
 		const fileProvider = await this.storageManager.getProvider(storage);
 
-		// Generate the new file path
-		const newFilePath = `${newDir.path}${oldFile.path.substring(oldFile.path.lastIndexOf('/'))}`;
-
 		// Check if file already exists in the target directory
-		const existingFile = await this.fetchByFilePath(user.id, newFilePath);
-		if (existingFile) throw new Error('A file with that name already exists in the same directory.');
+		if (newDir.children.find(f => f.name == file.name)) throw new Error('A file with that name already exists in the same directory.');
 
 		// Create the new file entry in the database
 		let newFile: FullFile | null = null;
 		try {
 			newFile = await this.create({
-				path: newFilePath,
-				name: oldFile.name,
-				size: oldFile.size,
-				userId: oldFile.userId,
-				type: oldFile.type,
+				name: file.name,
+				size: file.size,
+				userId: file.userId,
+				type: file.type,
 				parentId: newDir.id,
-				mimetype: oldFile.mimetype,
-				storageId: user.storageId,
+				mimetype: file.mimetype,
+				storageId: file.storageId,
 			});
 
 			// Copy the actual file contents
-			await fileProvider.copyFile(`${user.id}/${oldFile.id}`, `${user.id}/${newFile.id}`);
+			await fileProvider.copyFile(`${file.userId}/${file.id}`, `${file.userId}/${newFile.id}`);
 		} catch (err) {
 			if (newFile?.id) await this.deleteFromDB(newFile.id);
 			throw err;
@@ -256,27 +221,21 @@ export default class FileManager extends FileAccessor {
 
 	/**
 	  * Copies a directory directly
-	  * @param {User} user The user's ID.
 	  * @param {File} oldDir file path of the directory.
-		* @param {File} newDir The name of the folder.
+		* @param {File} newDir The folder where oldDir is going in
 	*/
-	private async _copyDirectory(user: User, oldDir: File, newDir: File) {
-		const newFilePath = `${newDir.path}${oldDir.path.substring(oldDir.path.lastIndexOf('/'))}`;
-
-		// Check if file already exists in the target directory
-		const existingFile = await this.fetchByFilePath(user.id, newFilePath);
-		if (existingFile) throw new Error('A file with that name already exists in the same directory.');
+	private async _copyDirectory(oldDir: FullFile, newDir: FullFile) {
+		if (newDir.children.find(f => f.name == oldDir.name)) throw new Error('A file with that name already exists in the same directory.');
 
 		// Create the new directory, but ensure the path doesn't include the old folder name twice
 		const newFolder = await this.create({
-			path: newFilePath,
 			name: oldDir.name,
 			size: BigInt(this.client.config.get('FOLDER_SIZE')),
 			userId: oldDir.userId,
 			type: 'DIRECTORY',
 			parentId: newDir.id,
 			mimetype: null,
-			storageId: user.storageId,
+			storageId: oldDir.storageId,
 		});
 
 		// Recursively copy files and subdirectories inside this folder
@@ -285,10 +244,10 @@ export default class FileManager extends FileAccessor {
 		for (const child of children) {
 			if (child.type === 'DIRECTORY') {
 				// If it's a folder, copy it recursively
-				await this._copyDirectory(user, child, newFolder);
+				await this._copyDirectory(child, newFolder);
 			} else {
 				// If it's a file, copy it
-				await this._copyFile(user, child, newFolder);
+				await this._copyFile(child, newFolder);
 			}
 		}
 	}
@@ -315,10 +274,10 @@ export default class FileManager extends FileAccessor {
 			// Now loop and get the children's files
 			for (const child of file.children) {
 				if (child.type == 'DIRECTORY') {
-					const newFile = await this.fetchByFilePath(user.id, child.path);
-					if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider, file.path);
+					const newFile = await this.fetchById(child.id);
+					if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider);
 				} else {
-					archive.append(await fileProvider.readFile(child), { name: child.path.replace(file.path, '') });
+					archive.append(await fileProvider.readFile(child), { name: child.name });
 				}
 			}
 
@@ -328,28 +287,27 @@ export default class FileManager extends FileAccessor {
 		}
 	}
 
-	async traverseFilesForDownloading(archive: Archiver, file: FullFile, fileProvider: StorageProvider, parentFilePath: string) {
+	private async traverseFilesForDownloading(archive: Archiver, file: FullFile, fileProvider: StorageProvider) {
 		for (const child of file.children) {
 			if (child.type == 'DIRECTORY') {
-				const newFile = await this.fetchByFilePath(child.userId, child.path);
-				if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider, parentFilePath);
+				const newFile = await this.fetchById(child.id);
+				if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider);
 			} else {
-				archive.append(await fileProvider.readFile(child), { name: child.path.replace(parentFilePath, '') });
+				archive.append(await fileProvider.readFile(child), { name: child.name });
 			}
 		}
 
 		return archive;
 	}
 
-
 	/**
 	  * Send the thumbnail of the file.
 	  * @param {Response} res The user's ID.
 	  * @param {User} user The user's ID.
-	  * @param {File[]} filePaths The user's ID.
+	  * @param {File[]} files The user's ID.
 	*/
 	async downloadFiles(res: Response, user: User, files: File[]) {
-	// Get storage and it's provider
+		// Get storage and it's provider
 		const storage = await this.storageManager.fetchById(user.storageId);
 		if (storage == null) throw new Error('Storage not found');
 		const fileProvider = await this.storageManager.getProvider(storage);
@@ -400,11 +358,7 @@ export default class FileManager extends FileAccessor {
 		const fileProvider = await this.storageManager.getProvider(storage);
 
 		const hasCustomAvatar = await fileProvider.checkFileExists(`${userId}.webp`);
-		const file = {
-			path: hasCustomAvatar ? `${userId}.webp` : 'default-avatar.webp', userId: '', mimetype: 'image/webp',
-			id: hasCustomAvatar ? `${userId}.webp` : 'default-avatar.webp',
-		} as File;
-
+		const file = { userId: '', mimetype: 'image/webp', id: hasCustomAvatar ? `${userId}.webp` : 'default-avatar.webp' } as File;
 		fileProvider.sendFile(res, file);
 	}
 

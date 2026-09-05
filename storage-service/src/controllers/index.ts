@@ -19,44 +19,38 @@ export const getAvatar = (client: Client) => {
 	};
 };
 
-// Endpoint GET /thumbnail/:userid/:path(*)
+// Endpoint GET /thumbnail/:userid{/:fileId}
 export const getThumbnail = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		// Validate userId
-		const userIdResult = validateUserId.safeParse(req.params['userid']);
+		const userIdResult = validateUserId.safeParse(req.params['userId']);
 		if (!userIdResult.success) return Error.IncorrectQuery(res, userIdResult.error.issues);
 
-		// Validate path
-		const pathParam = req.params['path'];
-		if (!Array.isArray(pathParam) || pathParam.length === 0) return Error.IncorrectQuery(res, [{ message: 'Invalid file path.' }]);
-		const path = pathParam.join('/');
+		// Validate file Id
+		const fileId = typeof req.params['fileId'] === 'string' ? req.params['fileId'] : '';
 
 		// Make sure they have access to view the thumbnail
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
 		if (session.user.id !== userIdResult.data) return Error.InvalidAccess(res);
 
-		await client.FileManager.sendThumbnail(res, userIdResult.data, path);
+		await client.FileManager.sendThumbnail(res, fileId);
 	};
 };
 
-// Endpoint GET /content/:userid/:path(*)
+// Endpoint GET /content/:userid{/:fileId}
 export const getContent = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
 
 		// Validate userId
-		const userIdResult = validateUserId.safeParse(req.params['userid']);
+		const userIdResult = validateUserId.safeParse(req.params['userId']);
 		if (!userIdResult.success) return Error.IncorrectQuery(res, userIdResult.error.issues);
 
-		// Validate path
-		const pathParam = req.params['path'];
-		if (!Array.isArray(pathParam) || pathParam.length === 0) return Error.IncorrectQuery(res, [{ message: 'Invalid file path.' }]);
-		const path = pathParam.join('/');
-
-		// Fetch file from database
-		const file = await client.FileManager.fetchByFilePath(userIdResult.data, path);
+		// Verify file Id
+		const fileId = typeof req.params['fileId'] === 'string' ? req.params['fileId'] : '';
+		const file = await client.FileManager.fetchById(fileId);
 		if (file == null || file.deletedAt !== null) return Error.MissingResource(res);
 
 		// Make sure they have access to view the file

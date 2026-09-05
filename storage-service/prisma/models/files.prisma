@@ -5,7 +5,6 @@ enum FileType {
 
 model File {
   id                String          @id       @default(cuid())
-  path              String
   name              String
   size              BigInt
   type              FileType        @default(FILE)    
@@ -24,7 +23,6 @@ model File {
   recentlyViewedBy  RecentlyViewedFile[]
   metadata          FileMetadata?
 
-  @@unique([path, userId])
   @@index([userId])
   @@index([parentId])
   @@index([storageId])

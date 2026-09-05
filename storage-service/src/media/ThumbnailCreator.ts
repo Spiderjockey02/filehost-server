@@ -229,9 +229,9 @@ export default class ThumbnailCreator {
 		// As FILE_SYSTEM is local, no need to make temp file and stream
 		if (storageMedium.type == 'FILE_SYSTEM') {
 			// Convert the document to PDF using LibreOffice
-			const folder = join(storageMedium.basePath, file.userId, file.path.substring(0, file.path.lastIndexOf('/')));
+			const folder = join(storageMedium.basePath, file.userId, file.id);
 			await new Promise((resolve, reject) => {
-				exec(`"${process.env.LIBREOFFICE_PATH}" --headless --convert-to "pdf:writer_pdf_Export" "${join(storageMedium.basePath, file.userId, file.path)}" --outdir "${folder}"`, (err) => {
+				exec(`"${process.env.LIBREOFFICE_PATH}" --headless --convert-to "pdf:writer_pdf_Export" "${join(storageMedium.basePath, file.userId, file.id)}" --outdir "${folder}"`, (err) => {
 					if (err) reject(err);
 					else resolve(null);
 				});
@@ -239,7 +239,7 @@ export default class ThumbnailCreator {
 		} else {
 			// Make temp file, use that, delete temp file
 			const buffer = await fileProvider.readFile(file);
-			const tempInputPath = join(tmpdir(), `${randomUUID()}.${file.path.split('.').pop()!}`);
+			const tempInputPath = join(tmpdir(), `${randomUUID()}.${file.id}`);
 			await pipeline(Readable.from(buffer), createWriteStream(tempInputPath));
 
 			await new Promise((resolve, reject) => {
@@ -255,10 +255,10 @@ export default class ThumbnailCreator {
 		}
 
 		// Now convert the PDF to an image
-		await this.createFromPDF({ ...file, path: file.path.replace(/\.[^/.]+$/, '.pdf') });
+		await this.createFromPDF({ ...file });
 
 		// Delete the PDF file
-		await fileProvider.deleteFile(`/${file.userId}/${file.path.replace(/\.[^/.]+$/, '')}.pdf`);
+		await fileProvider.deleteFile(`/${file.userId}/${file.id}.pdf`);
 	}
 
 	/**

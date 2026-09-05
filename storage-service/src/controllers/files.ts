@@ -4,16 +4,19 @@ import { validateSearchQuery } from '@/validators';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 
-// Endpoint GET /api/files/:path
+// Endpoint GET /api/files{/:fileId}
 export const getFiles = (client: Client) => {
-	return async (req: Request<{ path: string[] }>, res: Response) => {
+	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			const filePath = req.params.path.join('/');
-			const file = await client.FileManager.getDirectory(session.user, filePath);
-			res.json({ file });
+			const fileId = typeof req.params['fileId'] === 'string' ? req.params['fileId'] : '';
+			const [file, path] = await Promise.all([
+				client.FileManager.getDirectory(session.user, fileId),
+				client.FileManager.fetchFilePath(fileId),
+			]);
+			res.json({ file, path });
 		} catch (err: any) {
 			client.logger.error(err);
 			if (err == 'Directory not found') return Error.MissingResource(res);
@@ -102,15 +105,15 @@ export const deleteBulkFiles = (client: Client) => {
 		if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before deleting files.');
 
 		// Validate request body
-		const { paths } = req.body;
-		if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, [{ message: 'File paths are missing from request' }]);
+		const { fileIds } = req.body;
+		if (!Array.isArray(fileIds) || fileIds.length == 0) return Error.IncorrectQuery(res, [{ message: 'fileIds are missing from request' }]);
 
 		// Loop through and delete all files
 		let successfullyDeletion = 0;
-		for (const filePath of paths) {
+		for (const fileId of fileIds) {
 			try {
 				// Delete file but also delete the access so no broken links in the recently viewed files
-				const file = await client.FileManager.delete(session.user, filePath);
+				const file = await client.FileManager.delete(session.user, fileId);
 				await client.recentlyViewedFileManager.delete(file.userId, file.id);
 				successfullyDeletion++;
 			} catch (err) {
@@ -119,7 +122,7 @@ export const deleteBulkFiles = (client: Client) => {
 		}
 
 		if (successfullyDeletion == 0) return Error.GenericError(res, 'Failed to delete any files.');
-		res.json({ success: `Successfully deleted ${successfullyDeletion}/${paths.length} items.` });
+		res.json({ success: `Successfully deleted ${successfullyDeletion}/${fileIds.length} items.` });
 	};
 };
 
@@ -128,11 +131,11 @@ export const postMoveFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
+
 		// User can't edit their files if they are migrating storages
 		if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before moving files.');
 
 		// Validate request body
-		console.log(req);
 		const { newDirId, fileId } = req.body;
 		if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, [{ message: 'New directory ID is missing from request' }]);
 		if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
@@ -231,13 +234,12 @@ export const postDownloadFile = (client: Client) => {
 			// Validate the file ID
 			if (typeof id !== 'string' || id.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
 
-			// Fetch file from database
+			// Fetch file from database and verify ownership
 			const file = await client.FileManager.fetchById(id);
 			if (!file) return Error.MissingResource(res);
 			if (file.userId !== session.user.id) return Error.MissingResource(res);
 
-			const fullFile = await client.FileManager.fetchByFilePath(session.user.id, file.path);
-			await client.FileManager.downloadFile(res, session.user, fullFile!);
+			await client.FileManager.downloadFile(res, session.user, file);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
@@ -277,11 +279,10 @@ export const getBulkDownload = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Validate request body
-			const { paths } = req.body;
-			if (!Array.isArray(paths) || paths.length == 0) return Error.IncorrectQuery(res, [{ message: 'File paths are missing from request' }]);
-			const filePaths: string[] = paths;
+			const { fileIds } = req.body;
+			if (!Array.isArray(fileIds) || fileIds.length == 0) return Error.IncorrectQuery(res, [{ message: 'File paths are missing from request' }]);
 
-			const files = await Promise.all(filePaths.map(async (f) => await client.FileManager.fetchByFilePath(session?.user.id, f)));
+			const files = await Promise.all(fileIds.map(async (f) => await client.FileManager.fetchById(f)));
 			client.FileManager.downloadFiles(res, session.user, files.filter(s => s !== null));
 		} catch (err) {
 			client.logger.error(err);

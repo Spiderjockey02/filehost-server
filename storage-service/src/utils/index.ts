@@ -52,7 +52,6 @@ export function parseUserAgent(userAgent: string) {
 	};
 }
 
-
 /**
   * Generates route mappings from a given directory structure.
   * @param directory - The base directory to generate routes from.
@@ -141,19 +140,6 @@ export function getIP(req: HTTPStripped): string {
 	const remote = req.socket?.remoteAddress;
 	if (remote && ipRegex.test(remote)) return normalizeIP(remote);
 	return normalizeIP(`${req.ip}`);
-}
-
-/**
-  * Normalizes a file path to ensure it starts and ends with a slash.
-  * @param {string} path The file path to normalize.
-  * @returns {string} The normalized file path.
-*/
-export function normalizePath(path: string): string {
-	if (!path || path == '/') return '/';
-
-	// Convert backslashes to forward slashes and ensure single slashes at start and end
-	const unixPath = path.replace(/\\/g, '/');
-	return `/${unixPath.replace(/^\/+|\/+$/g, '')}/`;
 }
 
 /**

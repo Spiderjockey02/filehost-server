@@ -1,7 +1,6 @@
 import { type FileType, Prisma } from '@/types/generated/client';
 
 export interface CreateFileParams {
-  path: string
   name: string
   size: bigint
   mimetype: string | null
@@ -26,20 +25,12 @@ export interface AddMetadataToFileParams {
 
 export interface UpdateFileParams {
   id: string
-  path?: string
   name?: string
   size?: bigint
   deletedAt?: Date | null
   parentId?: string
   children?: CreateFileParams
   storageId?: string
-}
-
-export interface UpdateFilePathParams {
-  userId: string
-  parentId: string
-  oldPath: string
-  newPath: string
 }
 
 export interface FetchByOwnerParams {

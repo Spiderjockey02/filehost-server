@@ -6,9 +6,9 @@ const router = Router();
 export default function(client: Client) {
 	router.get('/avatar/:userId', getAvatar(client));
 
-	router.get('/thumbnail/:userid/*path', getThumbnail(client));
+	router.get('/thumbnail/:userId{/:fileId}', getThumbnail(client));
 
-	router.get('/content/:userid/*path', getContent(client));
+	router.get('/content/:userId{/:fileId}', getContent(client));
 
 	router.get('/api/metadata/:fileId', getFilesMetadata(client));
 
