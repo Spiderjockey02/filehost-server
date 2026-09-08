@@ -56,24 +56,33 @@ export default class MetadataExtractor {
 			height = info.height;
 		} catch {}
 
-		let exifDate: Date | null = null;
-		let cameraModel = null;
-		let gpsLat;
-		let gpsLng;
-		let exif;
+		let exifDate: Date | undefined;
+		let cameraModel: string | undefined;
+		let gpsLat: number | undefined;
+		let gpsLng: number | undefined;
+		let exif: object | undefined;
 
 		try {
-			exif = await exifr.parse(filePath, { translateValues: true });
-			console.log(exif);
+			exif = await exifr.parse(filePath, { translateValues: true }) as object;
+			if (typeof exif === 'object' && exif !== null) {
+				const data = exif as Record<string, unknown>;
 
-			if (exif) {
-				exifDate = exif.DateTimeOriginal ? new Date(exif.DateTimeOriginal)
-					: exif.CreateDate
-						? new Date(exif.CreateDate) : null;
+				// Date
+				const dateValue = data['DateTimeOriginal'] ?? data['CreateDate'];
+				if (typeof dateValue === 'string' || dateValue instanceof Date) {
+					const date = new Date(dateValue);
+					if (!Number.isNaN(date.getTime())) exifDate = date;
+				}
 
-				cameraModel = exif.Model ?? null;
-				gpsLat = exif.latitude ? Number(parseFloat(exif.latitude).toFixed(2)) : undefined;
-				gpsLng = exif.longitude ? Number(parseFloat(exif.longitude).toFixed(2)) : undefined;
+				// Camera model
+				if (typeof data['Model'] === 'string') cameraModel = data['Model'];
+
+				// GPS latitude
+				if (typeof data['latitude'] === 'number' && Number.isFinite(data['latitude'])) gpsLat = Number(data['latitude'].toFixed(2));
+
+				// GPS longitude
+				if (typeof data['longitude'] === 'number' && Number.isFinite(data['longitude'])) gpsLng = Number(data['longitude'].toFixed(2));
+
 			}
 		} catch {}
 
@@ -85,7 +94,7 @@ export default class MetadataExtractor {
 			gpsLongitude: gpsLng,
 			exif,
 			// @ts-expect-error Won't be undefined when passing to database
-			originalCreatedAt: exifDate || undefined,
+			originalCreatedAt: exifDate,
 		};
 	}
 
@@ -95,12 +104,12 @@ export default class MetadataExtractor {
 	  * @returns {ExtractedMetadata} The extracted metadata
 	*/
 	async extractFromVideo(filePath: string): Promise<ExtractedMetadata> {
-		let width = null;
-		let height = null;
+		let width: number | undefined;
+		let height: number | undefined;
 		let duration: number | undefined;
-		let codec = null;
+		let codec: string | undefined;
 		let frameRate: number | undefined;
-		let exifDate: Date | null = null;
+		let exifDate: Date | undefined;
 
 		try {
 			const { stdout } = await execFileAsync('ffprobe', [
@@ -112,22 +121,95 @@ export default class MetadataExtractor {
 				filePath,
 			]);
 
-			const stream = JSON.parse(stdout).streams?.[0];
+			const parsed: unknown = JSON.parse(stdout);
+			if (typeof parsed !== 'object' || parsed === null || !('streams' in parsed) || !Array.isArray(parsed.streams)) {
+				return {
+					width,
+					height,
+					duration,
+					codec,
+					frameRate: undefined,
+					// @ts-expect-error Won't be undefined when passing to database
+					originalCreatedAt: undefined,
+				};
+			}
 
-			if (stream) {
-				width = stream.width ?? null;
-				height = stream.height ?? null;
-				duration = stream.duration ? Number(parseFloat(stream.duration).toFixed(2)) : undefined;
-				codec = stream.codec_name ?? null;
+			const stream: unknown = parsed.streams[0];
 
-				if (stream.avg_frame_rate && stream.avg_frame_rate !== '0/0') {
-					frameRate = this.parseFraction(stream.avg_frame_rate);
-				} else if (stream.r_frame_rate && stream.r_frame_rate !== '0/0') {
-					frameRate = this.parseFraction(stream.r_frame_rate);
+			if (typeof stream !== 'object' || stream === null) {
+				return {
+					width,
+					height,
+					duration,
+					codec,
+					frameRate: undefined,
+					// @ts-expect-error Won't be undefined when passing to database
+					originalCreatedAt: undefined,
+				};
+			}
+
+			const data = stream as Record<string, unknown>;
+
+			// Width
+			if (typeof data['width'] === 'number' && Number.isFinite(data['width']) && data['width'] > 0) {
+				width = data['width'];
+			}
+
+			// Height
+			if (typeof data['height'] === 'number' && Number.isFinite(data['height']) && data['height'] > 0) {
+				height = data['height'];
+			}
+
+			// Duration
+			if (typeof data['duration'] === 'string') {
+				const parsedDuration = Number(data['duration']);
+
+				if (Number.isFinite(parsedDuration) && parsedDuration >= 0) {
+					duration = Number(parsedDuration.toFixed(2));
 				}
+			} else if (typeof data['duration'] === 'number') {
+				if (Number.isFinite(data['duration']) && data['duration'] >= 0) {
+					duration = Number(data['duration'].toFixed(2));
+				}
+			}
 
-				// Video taken date
-				if (stream.tags?.creation_time) exifDate = new Date(stream.tags.creation_time);
+			// Codec
+			if (typeof data['codec_name'] === 'string') {
+				codec = data['codec_name'];
+			}
+
+			// Frame rate
+			const avgFrameRate = data['avg_frame_rate'];
+			const realFrameRate = data['r_frame_rate'];
+
+			if (typeof avgFrameRate === 'string' && avgFrameRate !== '0/0') {
+				const parsedFrameRate = this.parseFraction(avgFrameRate);
+
+				if (Number.isFinite(parsedFrameRate) && parsedFrameRate > 0) {
+					frameRate = parsedFrameRate;
+				}
+			} else if (typeof realFrameRate === 'string' && realFrameRate !== '0/0') {
+				const parsedFrameRate = this.parseFraction(realFrameRate);
+
+				if (Number.isFinite(parsedFrameRate) && parsedFrameRate > 0) {
+					frameRate = parsedFrameRate;
+				}
+			}
+
+			// Video creation date
+			const tags = data['tags'];
+
+			if (typeof tags === 'object' && tags !== null) {
+				const tagData = tags as Record<string, unknown>;
+				const creationTime = tagData['creation_time'];
+
+				if (typeof creationTime === 'string') {
+					const date = new Date(creationTime);
+
+					if (!Number.isNaN(date.getTime())) {
+						exifDate = date;
+					}
+				}
 			}
 		} catch {}
 
@@ -136,9 +218,9 @@ export default class MetadataExtractor {
 			height,
 			duration,
 			codec,
-			frameRate: frameRate ? Math.round(frameRate) : undefined,
+			frameRate: frameRate !== undefined ? Math.round(frameRate) : undefined,
 			// @ts-expect-error Won't be undefined when passing to database
-			originalCreatedAt: exifDate || undefined,
+			originalCreatedAt: exifDate ?? undefined,
 		};
 	}
 
@@ -363,13 +445,13 @@ export default class MetadataExtractor {
 		return [...Object.keys(mime.extensions), ...Object.values(CUSTOM_MIME_TYPES)];
 	}
 
-	private parseFraction(fr: string): number | undefined {
+	private parseFraction(fr: string): number {
 		try {
 			const [num, den] = fr.split('/').map(Number);
-			if (!num || !den) return undefined;
+			if (!num || !den) return 0;
 			return num / den;
 		} catch {
-			return undefined;
+			return 0;
 		}
 	}
 }

@@ -2,6 +2,7 @@ import type { UserWithPlan } from '@/types/database/User';
 import MetadataExtractor from '@/media/MetadataExtractor';
 import { cleanUpVideo } from '@/media/VideoPreprocessor';
 import type { FullFile } from '@/types/database/File';
+import { validateUploadMetadata } from '@/validators';
 import { readFile } from 'node:fs/promises';
 import type Client from '@/helpers/Client';
 import type { Request } from 'express';
@@ -34,9 +35,11 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 
 	// Parse the form data & get the metadata
 	const [fields, files] = await form.parse(req);
-	if (fields['metadata'] == undefined) throw new Error('No metadata provided');
-	const metadata = JSON.parse(fields['metadata'][0] ?? '');
-	if (metadata.parentId == undefined) throw new Error('No parentId provided');
+	const metadataValue = fields['metadata']?.[0];
+	if (metadataValue === undefined) throw new Error('No metadata provided');
+	const result = validateUploadMetadata.safeParse(JSON.parse(metadataValue));
+	if (!result.success) throw new Error('No parentId provided');
+	const metadata = result.data;
 
 	for (const file of files['media'] ?? []) {
 		let uploadedFile: FullFile | null = null;
@@ -94,7 +97,7 @@ export default async (client: Client, req: Request, user: UserWithPlan) => {
 			// Extract metadata
 			try {
 				const meta = await metadataClass.extract(file);
-				if (meta != null) await client.FileManager.addMetadata(uploadedFile.id, { ...meta });
+				if (meta != null) await client.FileManager.addMetadata(uploadedFile.id, meta);
 			} catch (err) {
 				client.logger.error(err);
 			}
