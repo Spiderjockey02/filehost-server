@@ -1,5 +1,4 @@
 import { validatePage, validateRecentlyViewed, validateString, validateUserName } from '@/validators';
-import { validateFileIds } from '@/validators/fileValidation';
 import { Error, getIP, sanitiseObject } from '@/utils';
 import { avatarForm, getSession } from '@/middleware';
 import { validateFileIds } from '@/validators/files';
@@ -37,12 +36,17 @@ export const getRecentlyViewed = (client: Client) => {
 			const result = validateRecentlyViewed.safeParse({ sortBy, sortOrder, page });
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const [files, total] = await Promise.all([
+			const [history, total] = await Promise.all([
 				client.recentlyViewedFileManager.fetchUsersRecentlyViewed({ userId: session.user.id, ...result.data }),
 				client.recentlyViewedFileManager.fetchUsersTotalViewed(session.user.id),
 			]);
 
-			res.json({ files: sanitiseObject(files), total });
+			const historyWithFilePaths = await Promise.all(history.map(async (f) => {
+				const path = await client.FileManager.fetchFilePath(f.fileId);
+				return { ...f, file: { ...f.file, path: `/${path.sort((a, b) => Number(b.depth) - Number(a.depth)).map(file => file.name).join('/')}` } };
+			}));
+
+			res.json({ history: sanitiseObject(historyWithFilePaths), total });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch recently viewed files.');

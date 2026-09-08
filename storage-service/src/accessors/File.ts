@@ -1,7 +1,8 @@
-import type { AddMetadataToFileParams, CreateFileParams, FetchByOwnerParams, FetchFileMediaTypesParams, FullFile, SearchForFilesParams, UpdateFileParams } from '@/types/database/File';
+import type { CreateFileParams, FetchByOwnerParams, FetchFileMediaTypesParams, FileWithPath, FullFile, SearchForFilesParams, UpdateFileParams } from '@/types/database/File';
 import type { File, FileMetadata, MediaType } from '@/types/generated/client';
 import { skip } from '@prisma/client/runtime/client';
 import { Pagination } from '@/types/database';
+import { ExtractedMetadata } from '@/types';
 import { skipUndefined } from '@/utils';
 import { LRUCache } from 'lru-cache';
 import client from '.';
@@ -75,10 +76,10 @@ export default class FileAccessor {
 	/**
 	  * Create a metadata entry for a file (width, height, duration etc)
 	  * @param {string} fileId The file Id
-	  * @param {AddMetadataToFileParams} data The metadata
+	  * @param {ExtractedMetadata} data The metadata
 	  * @returns {FileMetadata} The new metadata
 	*/
-	async addMetadata(fileId: string, data: AddMetadataToFileParams): Promise<FileMetadata> {
+	async addMetadata(fileId: string, data: ExtractedMetadata): Promise<FileMetadata> {
 		return client.fileMetadata.create({
 			data: {
 				file: {
@@ -86,7 +87,16 @@ export default class FileAccessor {
 						id: fileId,
 					},
 				},
-				...data,
+				width: skipUndefined(data.width),
+				height: skipUndefined(data.height),
+				duration: skipUndefined(data.duration),
+				codec:skipUndefined(data.codec),
+				cameraModel: skipUndefined(data.cameraModel),
+				gpsLatitude: skipUndefined(data.gpsLatitude),
+				gpsLongitude: skipUndefined(data.gpsLongitude),
+				frameRate: skipUndefined(data.frameRate),
+				originalCreatedAt: skipUndefined(data.originalCreatedAt),
+				exif: JSON.stringify(data.exif),
 			},
 		});
 	}
@@ -147,42 +157,17 @@ export default class FileAccessor {
 	}
 
 	/**
-	 * Updates a file's path and all of it's children
-	 * @param {UpdateFilePathParams} data The file data.
-	 * @returns {number} The number of rows updated.
+	  * Update a bulk list of file names
+	  * @param data An array of file Id's and their new names
 	*/
-	async updateChildsPath({ userId, parentId, oldPath, newPath }: UpdateFilePathParams): Promise<number> {
-		try {
-			const updatedRows = await client.$executeRawUnsafe(
-				`UPDATE \`File\`
-				SET path = REPLACE(path, ?, ?)
-				WHERE path LIKE CONCAT(?, '%') 
-				AND path != ?
-				AND parentId = ?`,
-				oldPath,
-				newPath,
-				oldPath,
-				oldPath,
-				parentId,
-			);
+	async updateBulkName(data: {fileId: string, newName: string}[]) {
+		await client.$transaction(data.map(({ fileId, newName }) => client.file.update({
+			where: { id: fileId },
+			data: { name: newName },
+		})));
 
-			// Fetch the cached files that need replacing
-			const keys = [...this.cache.keys()];
-			const filteredKeys = keys.filter(key => key.startsWith(`${userId}_${oldPath}`));
-			for (const key of filteredKeys) {
-				const file = this.cache.get(key);
-				if (!file || file.parentId !== parentId) continue;
-
-				// Update the cache key
-				const [keyUserId, keyPath] = key.split('_', 2);
-				const newKey = `${keyUserId}_${keyPath!.replace(oldPath, newPath)}`;
-				this.cache.delete(key);
-				this.cache.set(newKey, { ...file, path: file.path.replace(oldPath, newPath) });
-			}
-			return updatedRows;
-		} catch (err) {
-			throw err;
-		}
+		// Delete cache of all new names
+		for (const file of data) this.cache.delete(file.fileId);
 	}
 
 	/**
@@ -224,36 +209,17 @@ export default class FileAccessor {
 	  * @returns
 	*/
 	async fetchFilePath(fileId: string) {
-		return client.$queryRaw<
-    {
-			id: string;
-			name: string;
-			parentId: string | null;
-			depth: number;
-    }[]
->`
-    WITH RECURSIVE ancestors AS (
-			SELECT
-				id,
-				name,
-				parentId,
-				0 AS depth
-			FROM File
-			WHERE id = ${fileId}
-
-			UNION ALL
-
-			SELECT
-				f.id,
-				f.name,
-				f.parentId,
-				a.depth + 1
-			FROM File f
-			INNER JOIN ancestors a
-				ON f.id = a.parentId
-    )
-    SELECT id, name, parentId, depth FROM ancestors ORDER BY depth DESC;
-`;
+		return client.$queryRaw<{ id: string; name: string; parentId: string | null; depth: BigInt; }[]>`
+			WITH RECURSIVE ancestors AS (
+				SELECT id, name, parentId, 0 AS depth FROM File WHERE id = ${fileId}
+				UNION ALL
+				SELECT f.id, f.name, f.parentId, a.depth + 1
+				FROM File f
+				INNER JOIN ancestors a
+					ON f.id = a.parentId
+			)
+			SELECT id, name, parentId, depth FROM ancestors WHERE parentId IS NOT NULL ORDER BY depth DESC;
+	`;
 	}
 
 	/**
@@ -335,8 +301,8 @@ export default class FileAccessor {
 		* Search for files by name
 		* @returns {File[]} The files.
 	*/
-	async searchByName({ userId, query, type, page = 0 }: SearchForFilesParams & Pagination): Promise<File[]> {
-		return client.file.findMany({
+	async searchByName({ userId, query, type, page = 0 }: SearchForFilesParams & Pagination): Promise<FileWithPath[]> {
+		const files = await client.file.findMany({
 			where: {
 				userId,
 				name: {
@@ -359,6 +325,13 @@ export default class FileAccessor {
 			take: 20,
 			skip: page * 20,
 		});
+
+		const fileWithPaths = await Promise.all(files.map(async (f) => {
+			const path = await this.fetchFilePath(f.id);
+			return { ...f, path: `/${path.sort((a, b) => Number(b.depth) - Number(a.depth)).map(file => file.name).join('/')}` };
+		}));
+
+		return fileWithPaths;
 	}
 
 	async searchByNameCount({ userId, query, type }: SearchForFilesParams) {
