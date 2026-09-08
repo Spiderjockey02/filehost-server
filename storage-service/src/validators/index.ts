@@ -313,3 +313,7 @@ export const validateNetworkList = z.object({
 export const validateUserName = z.object({
 	name: validateString,
 });
+
+export const validateUploadMetadata = z.object({
+	parentId: z.string(),
+});
