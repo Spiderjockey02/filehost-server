@@ -292,3 +292,19 @@ export const getUserGallery = (client: Client) => {
 		}
 	};
 };
+
+// Endpoint GET /api/session/config
+export const getUserConfig = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			// Get user's plan
+			res.json({ plan: sanitiseObject(session.user.plan), language: session.user.languageCode });
+		} catch (err) {
+			client.logger.error(err);
+			return Error.GenericError(res, 'Failed to get user\'s config');
+		}
+	};
+};
