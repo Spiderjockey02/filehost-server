@@ -3,12 +3,15 @@ import perfectionist from 'eslint-plugin-perfectionist';
 import tsParser from '@typescript-eslint/parser';
 
 export default [{
-	ignores: ['**/dist/**', '**/node_modules/**'],
-	files: ['**/*.ts', '**/*.tsx', '**/*.js'],
+	ignores: ['**/dist/**', '**/node_modules/**', '**/types/generated/**', '**/__tests__/**', 'prisma.config.ts'],
+	files: ['**/*.ts', '**/*.tsx'],
 	languageOptions: {
 		parser: tsParser,
 		ecmaVersion: 2021,
 		sourceType: 'module',
+		parserOptions: {
+			projectService: true,
+		},
 		globals: {
 			node: 'readonly',
 		},
@@ -21,6 +24,16 @@ export default [{
 		'perfectionist/sort-imports': [
 			'error', { type: 'line-length', order: 'desc', groups: []	},
 		],
+		'@typescript-eslint/naming-convention': ['error',
+			{ selector: 'interface', format: ['PascalCase'] },
+			{ selector: 'typeAlias', format: ['PascalCase'] },
+		],
+		'@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-unsafe-argument': 'error',
+    '@typescript-eslint/no-unsafe-assignment': 'error',
+    '@typescript-eslint/no-unsafe-return': 'error',
+    '@typescript-eslint/no-unsafe-member-access': 'error',
+    '@typescript-eslint/no-unsafe-call': 'error',
 		'brace-style': ['error', '1tbs', { allowSingleLine: true }],
 		'comma-dangle': ['error', 'always-multiline'],
 		'comma-spacing': 'error',

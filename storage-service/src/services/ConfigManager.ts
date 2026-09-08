@@ -28,7 +28,14 @@ export class ConfigManager {
 	  * @returns {NestedValue<typeof config, Path>}
 	*/
 	get<Path extends NestedPaths<typeof config>>(path: Path): NestedValue<typeof config, Path> {
-		return path.split('.').reduce((obj: any, key) => obj[key], this.config);
+		let value: unknown = this.config;
+
+		for (const key of path.split('.')) {
+			if (typeof value !== 'object' || value === null || !(key in value)) throw new Error(`Invalid config path: ${path}`);
+			value = (value as Record<string, unknown>)[key];
+		}
+
+		return value as NestedValue<typeof config, Path>;
 	}
 
 	/**
@@ -50,16 +57,15 @@ export class ConfigManager {
 	*/
 	setNested(path: string, value: unknown): Promise<boolean> {
 		const keys = path.split('.');
-		let obj: any = this.config;
+		let obj: unknown = this.config;
 
 		for (let i = 0; i < keys.length - 1; i++) {
-			if (typeof obj[keys[i]!] !== 'object') {
-				throw new Error(`Invalid config path: ${path}`);
-			}
-			obj = obj[keys[i]!];
+			if (typeof obj !== 'object' || obj === null || !(keys[i]! in obj)) throw new Error(`Invalid config path: ${path}`);
+			obj = (obj as Record<string, unknown>)[keys[i]!];
 		}
 
-		obj[keys[keys.length - 1]!] = value;
+		if (typeof obj !== 'object' || obj === null) throw new Error(`Invalid config path: ${path}`);
+		(obj as Record<string, unknown>)[keys[keys.length - 1]!] = value;
 		return this.save();
 	}
 
@@ -93,7 +99,7 @@ export class ConfigManager {
 	private async load() {
 		try {
 			if (!existsSync(this.configPath)) throw new Error(`Config file not found: ${this.configPath}`);
-			this.config = JSON.parse(await fs.readFile(this.configPath, 'utf-8'));
+			this.config = JSON.parse(await fs.readFile(this.configPath, 'utf-8')) as typeof config;
 		} catch (err) {
 			console.error('Error loading config:', err);
 		}

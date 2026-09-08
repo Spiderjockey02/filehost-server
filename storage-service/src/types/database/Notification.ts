@@ -3,7 +3,7 @@ import type { Pagination } from '.';
 export interface CreateNotificationParams {
   text: string
   title: string
-  url?: string
+  url?: string | undefined
   userId: string
 }
 

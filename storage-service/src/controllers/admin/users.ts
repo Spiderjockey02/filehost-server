@@ -11,8 +11,7 @@ import type { CountMap } from '@/types';
 export const getUsers = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { page, name, sortBy, sortOrder, storageId } = req.query;
-			const result = validateUser.safeParse({ page, name, sortBy, sortOrder, storageId });
+			const result = validateUser.safeParse(req.query);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			const users = await client.userManager.fetchAll(result.data);
@@ -209,13 +208,12 @@ export const banUserById = (client: Client) => {
 		try {
 			const adminUser = await getSession(client, req.headers) as FullSession;
 			const userId = req.params['id'];
-			const { expiresAt, reason } = req.body;
 
 			// Validate inputs
 			if (typeof userId !== 'string') return Error.IncorrectQuery(res, [{ message: 'User ID is required.' }]);
 			if (adminUser.userId === userId) return Error.IncorrectQuery(res, [{ message: 'You cannot ban yourself.' }]);
 
-			const result = validateBan.safeParse({ expiresAt, reason });
+			const result = validateBan.safeParse(req.body);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			const ban = await client.userManager.setBanStatus({

@@ -100,7 +100,7 @@ export function getFilesRecursively(directory: string, files: string[] = []): st
   * @returns {unknown} The sanitized object.
 */
 export function sanitiseObject(obj: unknown): unknown {
-	return JSON.parse(JSON.stringify(obj, (_, value) =>
+	return JSON.parse(JSON.stringify(obj, (_, value: unknown) =>
 		typeof value === 'bigint' ? value.toString() : value,
 	));
 }
@@ -216,7 +216,7 @@ export function logUserActivity(client: Client): (req: Request, res: Response, n
 		let requestBodySize = 0;
 
 		if (!isMultipart) {
-			req.on('data', chunk => {
+			req.on('data', (chunk: string | ArrayBufferLike) => {
 				requestBodySize += Buffer.byteLength(chunk);
 			});
 		} else if (contentLength) {
@@ -233,8 +233,14 @@ export function logUserActivity(client: Client): (req: Request, res: Response, n
 			return originalWrite(chunk, encoding!, cb);
 		}) as typeof res.write;
 
-		res.end = ((chunk?: any, encoding?: any, cb?: () => void): Response => {
-			if (chunk) responseBodySize += Buffer.byteLength(chunk, encoding);
+		res.end = ((chunkOrCallback?: string | Uint8Array | (() => void), encodingOrCallback?: BufferEncoding | (() => void), cb?: () => void): Response => {
+			const chunk = typeof chunkOrCallback === 'function' ? undefined : chunkOrCallback;
+			const encoding = typeof encodingOrCallback === 'function' ? undefined : encodingOrCallback;
+			const callback = typeof encodingOrCallback === 'function' ? encodingOrCallback : cb;
+
+			if (chunk !== undefined) {
+				responseBodySize += typeof chunk === 'string' ? Buffer.byteLength(chunk, encoding ?? 'utf8') : chunk.byteLength;
+			}
 
 			res.once('finish', () => {
 				const statusLine = `HTTP/${req.httpVersion} ${res.statusCode} ${res.statusMessage ?? ''}\r\n`;
@@ -262,7 +268,9 @@ export function logUserActivity(client: Client): (req: Request, res: Response, n
 				}).catch(client.logger.error);
 			});
 
-			return originalEnd(chunk, encoding, cb);
+			if (chunk === undefined) return callback ? originalEnd(callback) : originalEnd();
+			if (encoding === undefined) return callback ? originalEnd(chunk, callback) : originalEnd(chunk);
+			return originalEnd(chunk, encoding, callback);
 		});
 
 		next();

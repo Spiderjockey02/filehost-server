@@ -4,6 +4,7 @@ import MetadataExtractor from '@/media/MetadataExtractor';
 import type { Request, Response } from 'express';
 import { Error, getIP, PATHS } from '@/utils';
 import type Client from '@/helpers/Client';
+import { DatabaseMetadata } from '@/types';
 import { getSession } from '@/middleware';
 import fs from 'fs/promises';
 import os from 'os';
@@ -72,14 +73,13 @@ export const postCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const cronJob = req.params['name'];
-			const { schedule } = req.body;
 
 			// Validate cronJob name and schedule (CRON format)
 			if (typeof cronJob !== 'string' || !client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res);
-			const result = validateCRONSchedule.safeParse(schedule);
+			const result = validateCRONSchedule.safeParse(req.body);
 			if (!result.success && result.error.issues.length > 0) return Error.IncorrectQuery(res, result.error.issues);
 
-			client.CRONManager.updateAndReschedule(cronJob, req.body.schedule);
+			client.CRONManager.updateAndReschedule(cronJob, result.data?.schedule);
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to update CRON job.');
@@ -179,7 +179,7 @@ export const getSystemStats = (client: Client) => {
 				count: logs.length,
 			},
 			network: (lastSevenDays?.incomingBytes ?? 0) + (lastSevenDays?.outgoingBytes ?? 0),
-			backup: JSON.parse(backup),
+			backup: JSON.parse(backup) as DatabaseMetadata,
 		});
 	};
 };
@@ -188,8 +188,7 @@ export const getSystemStats = (client: Client) => {
 export const postNotification = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		// Validate body
-		const { text, title, url, userId } = req.body;
-		const result = validateNotification.safeParse({ text, title, url, userId });
+		const result = validateNotification.safeParse(req.body);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		// Check session
@@ -197,11 +196,11 @@ export const postNotification = (client: Client) => {
 		if (!session?.user) return Error.InvalidSession(res);
 
 		// Check recipient is a valid user
-		const user = await client.userManager.fetchbyParam({ id: userId });
+		const user = await client.userManager.fetchbyParam({ id: result.data.userId });
 		if (user == null) return Error.IncorrectQuery(res, [{ message: 'UserId is not a valid user.' }]);
 
 		try {
-			const notification = await client.notificationManager.create({ text, title, url, userId: user.id });
+			const notification = await client.notificationManager.create(result.data);
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
@@ -245,11 +244,7 @@ export const postConfig = (client: Client) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
 
-		const { MAX_AVATAR_SIZE, MAX_CHARS_FILE_NAME, DISALLOWED_MIME_TYPES, INVALID_CHARS_IN_FILE_NAME,
-			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE, RATE_LIMIT } = req.body;
-
-		const result = validateConfig.safeParse({ MAX_AVATAR_SIZE, MAX_CHARS_FILE_NAME, DISALLOWED_MIME_TYPES, INVALID_CHARS_IN_FILE_NAME,
-			KEEP_ORIGINAL_METADATA, THUMBNAIL, RETENTION_POLICY_IN_DAYS, FOLDER_SIZE, RATE_LIMIT });
+		const result = validateConfig.safeParse(req.body);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		// Log audit

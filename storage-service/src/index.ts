@@ -23,6 +23,12 @@ const io = new Server(server, {
 });
 const client = new Client(io);
 
+// Checks if the file module is an express router function or not
+function isRouteModule(value: unknown): value is { default: (client: Client) => Promise<express.Router> } {
+	if (typeof value !== 'object' || value === null || !('default' in value)) return false;
+	return typeof (value as Record<string, unknown>)['default'] === 'function';
+}
+
 (async () => {
 	// Create plans if not present
 	const defaultPlan = await client.PlanManager.fetchDefault();
@@ -91,7 +97,9 @@ const client = new Client(io);
 		.use('/', createRoutes(client));
 
 	for (const endpoint of endpoints) {
-		app.use(endpoint.route, await (await import(endpoint.path)).default(client));
+		const routeModule: unknown = await import(endpoint.path);
+		if (!isRouteModule(routeModule)) throw new Error(`Invalid route module: ${endpoint.path}`);
+		app.use(endpoint.route, await routeModule.default(client));
 	}
 
 	// Handle socket.io connections

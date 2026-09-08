@@ -1,4 +1,4 @@
-import { AuditLogEventName, FileType, HTTPMethod } from '@/types/generated/client';
+import { AuditLogEventName, HTTPMethod } from '@/types/generated/client';
 import MetadataExtractor from '@/media/MetadataExtractor';
 import { Prisma } from '@/types/generated/browser';
 import { z } from 'zod';
@@ -107,10 +107,12 @@ export const validateStorage = z
 		{ message: 'basePath is required and must be a non-empty string.', path: ['basePath'] },
 	);
 
-export const validateCRONSchedule = z
-	.string()
-	.min(1, { message: 'Schedule is required.' })
-	.regex(/^[0-9\-\*\/, ]+$/, { message: 'Schedule must be a valid CRON expression.' });
+export const validateCRONSchedule = z.object({
+	schedule: z
+		.string()
+		.min(1, { message: 'Schedule is required.' })
+		.regex(/^[0-9\-\*\/, ]+$/, { message: 'Schedule must be a valid CRON expression.' }),
+});
 
 export const validateNotification = z.object({
 	text: z
@@ -308,17 +310,6 @@ export const validateNetworkList = z.object({
 		.enum(HTTPMethod).optional(),
 });
 
-export const validateSearchQuery = z.object({
-	query: z
-		.string()
-		.trim()
-		.min(1, 'Query is missing from request'),
-	page: validatePage,
-	fileType: z
-		.preprocess((value) => {
-			if (value === undefined) return undefined;
-
-			const type = [undefined, FileType.FILE, FileType.DIRECTORY][Number(value)];
-			return type;
-		}, z.nativeEnum(FileType).optional()),
+export const validateUserName = z.object({
+	name: validateString,
 });

@@ -56,10 +56,9 @@ export const getPlanTrends = (client: Client) => {
 // Endpoint: POST /api/admin/plan
 export const postPlan = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const { name, price, maxStorageSize, maxFileSize, retentionDays: deletedFileRetentionDays, priceId } = req.body;
 		const session = await getSession(client, req.headers);
 
-		const result = createPlanSchema.safeParse({ name, price, maxStorageSize, maxFileSize, deletedFileRetentionDays, priceId });
+		const result = createPlanSchema.safeParse(req.body);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
@@ -103,14 +102,13 @@ export const postPlan = (client: Client) => {
 // Endpoint: PATCH /api/admin/plan/:planId
 export const patchPlan = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const { name, price, maxStorageSize, maxFileSize, retentionDays: deletedFileRetentionDays, priceId } = req.body;
 		const session = await getSession(client, req.headers);
 
 		const result = validateString.safeParse(req.params['planId']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		// Validate input
-		const bodyResult = createPlanSchema.safeParse({ name, price, maxStorageSize, maxFileSize, deletedFileRetentionDays, priceId });
+		const bodyResult = createPlanSchema.safeParse(req.body);
 		if (!bodyResult.success) return Error.IncorrectQuery(res, bodyResult.error.issues);
 
 		try {

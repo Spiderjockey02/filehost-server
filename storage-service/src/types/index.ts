@@ -65,15 +65,15 @@ export interface HTTPStripped {
 }
 
 export interface ExtractedMetadata {
-  width?: number;
-  height?: number;
-  duration?: number;
-  codec?: string;
-  cameraModel?: string;
+  width?: number | undefined;
+  height?: number | undefined;
+  duration?: number | undefined;
+  codec?: string | undefined;
+  cameraModel?: string | undefined;
   gpsLatitude?: number;
   gpsLongitude?: number;
-  exif?: any;
-  frameRate?: number
+  exif?: object;
+  frameRate?: number | undefined
   originalCreatedAt: Date
 }
 
@@ -121,7 +121,7 @@ export type Task<T> = () => Promise<T>;
 export interface QueuedTask<T> {
   task: Task<T>;
   resolve: (value: T) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }
 
 export type QueueKeys = 'NOTIFICATIONS' | 'AUDIT_LOGS'

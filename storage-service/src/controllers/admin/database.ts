@@ -1,6 +1,7 @@
 import { validateBackup } from '@/validators/endpointParams';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
+import { DatabaseMetadata } from '@/types';
 import { Error, PATHS } from '@/utils';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
@@ -24,7 +25,7 @@ export const getDatabaseBackups = (client: Client) => {
 					if (!stats.isFile()) return null;
 
 					const data = await fs.readFile(filePath, 'utf-8');
-					return JSON.parse(data);
+					return JSON.parse(data) as DatabaseMetadata;
 				}),
 			);
 			res.json({ backups });

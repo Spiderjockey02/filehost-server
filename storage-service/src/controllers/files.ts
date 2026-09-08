@@ -1,6 +1,6 @@
+import { validateCreateFolder, validateFileId, validateFileIds, validateFileRenames, validateMoveFile, validateRenameFile, validateSearchQuery } from '@/validators/files';
 import { Error, getIP, sanitiseObject } from '@/utils';
 import { getSession, parseForm } from '@/middleware';
-import { validateSearchQuery } from '@/validators';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 
@@ -16,8 +16,8 @@ export const getFiles = (client: Client) => {
 				client.FileManager.getDirectory(session.user, fileId),
 				client.FileManager.fetchFilePath(fileId),
 			]);
-			res.json({ file, path });
-		} catch (err: any) {
+			res.json({ file, path: sanitiseObject(path.map(p => ({ ...p, depth: Number(p.depth) }))) });
+		} catch (err) {
 			client.logger.error(err);
 			if (err == 'Directory not found') return Error.MissingResource(res);
 			Error.GenericError(res, 'Failed to fetch file.');
@@ -53,23 +53,22 @@ export const deleteFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
-		const { fileId } = req.body;
+
+		const result = validateFileId.safeParse(req.body);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			// User can't edit their files if they are migrating storages
 			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before deleting files.');
 
-			// Validate request body
-			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
-
-			await client.FileManager.delete(session.user, fileId);
+			await client.FileManager.delete(session.user, result.data.fileId);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventName: 'FILE_TRASHED',
 					message: 'File successfully moved to trash.',
-					resourceId: fileId,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: true,
@@ -84,7 +83,7 @@ export const deleteFile = (client: Client) => {
 					resourceType: 'FILE',
 					eventName: 'FILE_TRASHED',
 					message: `File failed to move to trash due to error: ${err}.`,
-					resourceId: fileId,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
@@ -105,12 +104,12 @@ export const deleteBulkFiles = (client: Client) => {
 		if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before deleting files.');
 
 		// Validate request body
-		const { fileIds } = req.body;
-		if (!Array.isArray(fileIds) || fileIds.length == 0) return Error.IncorrectQuery(res, [{ message: 'fileIds are missing from request' }]);
+		const result = validateFileIds.safeParse(req.body);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		// Loop through and delete all files
 		let successfullyDeletion = 0;
-		for (const fileId of fileIds) {
+		for (const fileId of result.data.fileIds) {
 			try {
 				// Delete file but also delete the access so no broken links in the recently viewed files
 				const file = await client.FileManager.delete(session.user, fileId);
@@ -122,7 +121,7 @@ export const deleteBulkFiles = (client: Client) => {
 		}
 
 		if (successfullyDeletion == 0) return Error.GenericError(res, 'Failed to delete any files.');
-		res.json({ success: `Successfully deleted ${successfullyDeletion}/${fileIds.length} items.` });
+		res.json({ success: `Successfully deleted ${successfullyDeletion}/${result.data.fileIds.length} items.` });
 	};
 };
 
@@ -136,19 +135,18 @@ export const postMoveFile = (client: Client) => {
 		if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before moving files.');
 
 		// Validate request body
-		const { newDirId, fileId } = req.body;
-		if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, [{ message: 'New directory ID is missing from request' }]);
-		if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
+		const result = validateMoveFile.safeParse(req.body);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
-			await client.FileManager.move(session.user, fileId, newDirId);
+			await client.FileManager.move(session.user, result.data.fileId, result.data.newDirId);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventName: 'FILE_MOVE',
-					message: `File successfully moved to directory ${newDirId}.`,
-					resourceId: fileId,
+					message: `File successfully moved to directory ${result.data.newDirId}.`,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: true,
@@ -162,8 +160,8 @@ export const postMoveFile = (client: Client) => {
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventName: 'FILE_MOVE',
-					message: `File failed to move to directory ${newDirId} due to error: ${err}.`,
-					resourceId: fileId,
+					message: `File failed to move to directory ${result.data.newDirId} due to error: ${err}.`,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
@@ -179,24 +177,23 @@ export const postCopyFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
-		const { newDirId, fileId } = req.body;
+
+		// Validate request body
+		const result = validateMoveFile.safeParse(req.body);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			// User can't edit their files if they are migrating storages
 			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before copying files.');
 
-			// Validate request body
-			if (typeof newDirId !== 'string' || newDirId.length == 0) return Error.IncorrectQuery(res, [{ message: 'New directory ID is missing from request' }]);
-			if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
-
-			await client.FileManager.copy(session.user, fileId, newDirId);
+			await client.FileManager.copy(session.user, result.data.fileId, result.data.newDirId);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventName: 'FILE_COPY',
-					message: `File successfully copied to directory ${newDirId}.`,
-					resourceId: fileId,
+					message: `File successfully copied to directory ${result.data.newDirId}.`,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: true,
@@ -210,8 +207,8 @@ export const postCopyFile = (client: Client) => {
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventName: 'FILE_COPY',
-					message: `File failed to be copied to directory ${newDirId} due to error: ${err}.`,
-					resourceId: fileId,
+					message: `File failed to be copied to directory ${result.data.newDirId} due to error: ${err}.`,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
@@ -228,14 +225,14 @@ export const postDownloadFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
-		const { id } = req.body;
+
+		// Validate request body
+		const result = validateFileId.safeParse(req.body);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
-			// Validate the file ID
-			if (typeof id !== 'string' || id.length == 0) return Error.IncorrectQuery(res, [{ message: 'File ID is missing from request' }]);
-
 			// Fetch file from database and verify ownership
-			const file = await client.FileManager.fetchById(id);
+			const file = await client.FileManager.fetchById(result.data.fileId);
 			if (!file) return Error.MissingResource(res);
 			if (file.userId !== session.user.id) return Error.MissingResource(res);
 
@@ -260,7 +257,7 @@ export const postDownloadFile = (client: Client) => {
 					resourceType: 'FILE',
 					eventName: 'FILE_DOWNLOAD',
 					message: `File failed to download due to error: ${err}.`,
-					resourceId: id,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
@@ -279,10 +276,10 @@ export const getBulkDownload = (client: Client) => {
 			if (!session?.user) return Error.InvalidSession(res);
 
 			// Validate request body
-			const { fileIds } = req.body;
-			if (!Array.isArray(fileIds) || fileIds.length == 0) return Error.IncorrectQuery(res, [{ message: 'File paths are missing from request' }]);
+			const result = validateFileIds.safeParse(req.body);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const files = await Promise.all(fileIds.map(async (f) => await client.FileManager.fetchById(f)));
+			const files = await Promise.all(result.data.fileIds.map(async (f) => await client.FileManager.fetchById(f)));
 			client.FileManager.downloadFiles(res, session.user, files.filter(s => s !== null));
 		} catch (err) {
 			client.logger.error(err);
@@ -297,24 +294,24 @@ export const postRenameFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
-		const { fileId, newName } = req.body;
 
-		if (typeof fileId !== 'string' || fileId.length == 0) return Error.IncorrectQuery(res, [{ message: 'fileId is missing from request' }]);
-		if (typeof newName !== 'string' || newName.replace(/\.[^/.]+$/, '').length == 0) return Error.IncorrectQuery(res, [{ message: 'newName is missing from request' }]);
+		// Validate request body
+		const result = validateRenameFile.safeParse(req.body);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			// User can't edit their files if they are migrating storages
 			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before renaming files.');
 
 			// Rename file
-			await client.FileManager.rename(session.user, fileId, newName);
+			await client.FileManager.rename(session.user, result.data.fileId, result.data.newName);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventName: 'FILE_RENAME',
-					message: `File renamed to ${newName}.`,
-					resourceId: fileId,
+					message: `File renamed to ${result.data.newName}.`,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: true,
@@ -327,8 +324,8 @@ export const postRenameFile = (client: Client) => {
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventName: 'FILE_RENAME',
-					message: `File failed to rename to ${newName} due to error: ${err}.`,
-					resourceId: fileId,
+					message: `File failed to rename to ${result.data.newName} due to error: ${err}.`,
+					resourceId: result.data.fileId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,
@@ -345,23 +342,23 @@ export const postCreateFolder = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
-		const { parentId, folderName } = req.body;
+
+		const result = validateCreateFolder.safeParse(req.body);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
 			// User can't edit their files if they are migrating storages
 			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before creating a folder.');
 
-			if (typeof folderName !== 'string' || folderName.trim().length == 0) return Error.IncorrectQuery(res, [{ message: 'Folder name is not a string.' }]);
-
 			// Decode & santise the referer path to ensure the folder is added to the correct path
-			await client.FileManager.createDirectory(session.user, parentId, folderName.trim());
+			await client.FileManager.createDirectory(session.user, result.data.parentId, result.data.folderName.trim());
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
 					resourceType: 'FILE',
 					eventName: 'FOLDER_CREATE',
 					message: 'Successfully created folder.',
-					resourceId: parentId,
+					resourceId: result.data.parentId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: true,
@@ -376,7 +373,7 @@ export const postCreateFolder = (client: Client) => {
 					resourceType: 'FILE',
 					eventName: 'FOLDER_CREATE',
 					message: `Failed to create folder due to error: ${err}.`,
-					resourceId: parentId,
+					resourceId: result.data.parentId,
 					ip: getIP(req),
 					userAgent: req.headers['user-agent'] ?? '',
 					success: false,

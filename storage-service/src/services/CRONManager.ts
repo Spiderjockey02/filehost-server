@@ -130,7 +130,7 @@ export default class CRONManager extends CronJobAccessor {
 	 * @param {CronJobNames} name The name of the CRON job
 	 * @param {string} newSchedule The new CRON schedule expression
 	*/
-	async updateAndReschedule(name: CronJobNames, newSchedule: string) {
+	async updateAndReschedule(name: CronJobNames, newSchedule?: string) {
 		// Check if name is valid
 		const job = this.activeJobs.get(name);
 		if (job == undefined) throw new Error(`CRON job: ${name} is not an active job.`);

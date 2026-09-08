@@ -1,6 +1,8 @@
-import { validatePage, validateRecentlyViewed, validateString } from '@/validators';
+import { validatePage, validateRecentlyViewed, validateString, validateUserName } from '@/validators';
+import { validateFileIds } from '@/validators/fileValidation';
 import { Error, getIP, sanitiseObject } from '@/utils';
 import { avatarForm, getSession } from '@/middleware';
+import { validateFileIds } from '@/validators/files';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 
@@ -176,10 +178,10 @@ export const postUserInformation = (client: Client) => {
 		if (!session?.user) return Error.InvalidSession(res);
 
 		try {
-			const result = validateString.safeParse(req.body['name']);
+			const result = validateUserName.safeParse(req.body);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			await client.userManager.update({ name: result.data, id: session.user.id	});
+			await client.userManager.update({ name: result.data.name, id: session.user.id	});
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					resourceType: 'USER',
@@ -254,12 +256,12 @@ export const putRestore = (client: Client) => {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			// Get and validate the file paths for restoring
-			const { fileIds } = req.body;
-			if (!Array.isArray(fileIds) || fileIds.length == 0) return Error.IncorrectQuery(res, [{ message: 'File paths are missing from request' }]);
+			// Validate request body
+			const result = validateFileIds.safeParse(req.body);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 			// Loop through each path and restore them (Could take some time if it is multiple deep directories)
-			for (const fileId of fileIds) {
+			for (const fileId of result.data.fileIds) {
 				await client.FileManager.TrashHandler.restoreFile(session.user.id, fileId);
 			}
 

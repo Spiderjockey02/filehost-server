@@ -13,11 +13,13 @@ import { Error } from '@/utils';
   * @return {Promise<Session | null>} - The session object or null if not found
 */
 export async function getSession(client: Client, headers: IncomingHttpHeaders): Promise<FullSession | null> {
+	const authName = process.env['NEXT_PUBLIC_COMPANY_NAME']?.replace(/\s+/g, '-') ?? '';
+
 	// Get the session token from the cookies
 	if (headers.cookie == undefined) return null;
 	const cookies = headers['cookie'].split('; ');
 	const parsedCookies = cookies.map((i: string) => i.split('='));
-	const sessionToken = parsedCookies.find(i => ['better-auth.session_token', '__Secure-better-auth.session_token'].includes(i[0]!))?.[1];
+	const sessionToken = parsedCookies.find(i => [`${authName}.session_token`, `__Secure-${authName}.session_token`].includes(i[0]!))?.[1];
 	if (!sessionToken) return null;
 
 	// Fetch the session using the session token
