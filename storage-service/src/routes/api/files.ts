@@ -1,6 +1,6 @@
 import { postCopyFile, postCreateFolder, deleteFile, postDownloadFile, getFiles,
 	postMoveFile, postFileUpload, postRenameFile, getSearchFile, getAllDirectories,
-	getBulkDownload, deleteBulkFiles } from '@/controllers/files';
+	getBulkDownload, deleteBulkFiles, postBulkRename } from '@/controllers/files';
 import type Client from '@/helpers/Client';
 import { Router } from 'express';
 const router = Router();
@@ -29,6 +29,9 @@ export default function(client: Client) {
 
 	// Rename a file/folder
 	router.post('/rename', postRenameFile(client));
+
+	// Rename multiple files
+	router.post('/bulk-rename', postBulkRename(client));
 
 	// Search for a file
 	router.get('/search', getSearchFile(client));

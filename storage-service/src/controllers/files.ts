@@ -337,6 +337,27 @@ export const postRenameFile = (client: Client) => {
 	};
 };
 
+// Endpoint POST /api/files/bulk-rename
+export const postBulkRename = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		const session = await getSession(client, req.headers);
+		if (!session?.user) return Error.InvalidSession(res);
+
+		try {
+			// Validate request body
+			const result = validateFileRenames.safeParse(req.body);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
+
+			client.FileManager.renameBulk(session.user, result.data.files);
+
+			res.json({ success: 'Successfully updated all files' });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to update file names.');
+		}
+	};
+};
+
 // Endpoint POST /api/files/create-folder
 export const postCreateFolder = (client: Client) => {
 	return async (req: Request, res: Response) => {

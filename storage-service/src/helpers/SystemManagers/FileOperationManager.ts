@@ -125,6 +125,25 @@ export default class FileManager extends FileAccessor {
 	}
 
 	/**
+	  * Rename a bulk list of files
+	  * @param {User} user The user.
+	  * @param {object} data The file's ID and their new name
+	*/
+	async renameBulk(user: User, data: {fileId: string, newName: string}[]) {
+		// Validate files
+		const files = await Promise.all(data.map(async (f) => await this.fetchById(f.fileId)));
+		if (files.filter(f => f == null).length != files.length) throw new Error('Contains invalid files.');
+		if (files.some(f => f?.userId !== user.id)) throw new Error('Contains files you dont own.');
+
+		try {
+			await this.renameBulk(user, data);
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	/**
 	  * Copies a file
 	  * @param {User} user The user's ID.
 	  * @param {string} fileId The file / directory that will be copied
