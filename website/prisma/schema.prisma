@@ -27,6 +27,8 @@ model User {
   bans              UserBans[]  @relation("bannedUser")
   issuedBans        UserBans[]  @relation("issuedUser")
   banned            Boolean     @default(false)
+  banReason         String?
+	banExpires        DateTime?
   plan              Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
   planId            String
   totalStorageSize  Int  @default(0)
@@ -62,6 +64,7 @@ model Session {
 
 model Account {
   id                    String    @id
+  issuer                String
   accountId             String    @db.Text
   providerId            String    @db.Text
   userId                String
@@ -114,7 +117,6 @@ enum FileType {
 
 model File {
   id          String    @id @default(cuid())
-  path        String
   name        String
   size        Int
   type        FileType  @default(FILE)    
@@ -133,7 +135,6 @@ model File {
   recentlyViewedBy  RecentlyViewedFile[]
   metadata    FileMetadata?
 
-  @@unique([path, userId])
   @@index([userId])
   @@index([parentId])
   @@index([storageId])
@@ -422,7 +423,7 @@ model Plan {
   maxStorageSize            Int       @default(5368709120)
   maxFileSize               Int       @default(2147483648)
   deletedFileRetentionDays  Int       @default(30)
-  price                     Decimal   @default(0.00)
+  price                     Int       @default(0)
   priceId                   String?
   isDefault                 Boolean   @default(false)
   users                     User[]
@@ -459,7 +460,12 @@ model subscription {
   periodStart	          DateTime?
   periodEnd	            DateTime?
   cancelAtPeriodEnd	    Boolean?
+  cancelAt              DateTime?
+	canceledAt            DateTime?
+	endedAt               DateTime?
   seats	                Int?
   trialStart            DateTime?
   trialEnd              DateTime?
+  billingInterval       String?
+	stripeScheduleId      String?
 }
