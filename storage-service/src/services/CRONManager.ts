@@ -1,7 +1,10 @@
 import type { CronJobLog, CronJobNames } from '@/types/generated/client';
 import type { CronJobList } from '@/types/database/CronJob';
 import dbClient, { CronJobAccessor } from '@/accessors';
+import type { User } from '@/types/generated/browser';
 import type Client from '../helpers/Client';
+import type { Request } from 'express';
+import { getIP } from '@/utils';
 import { CronJob } from 'cron';
 import fs from 'fs/promises';
 
@@ -312,10 +315,68 @@ export default class CRONManager extends CronJobAccessor {
 			const duration = Date.now() - start;
 			return this.createLog({ jobName: 'DELETE_OLD_TRASHED_FILES', status: 'FAILURE', message: `${err}`, duration });
 		}
-
 	}
 
-	isValidCronJobName(name: string): name is CronJobNames {
-		return this.names.has(name as CronJobNames);
+	/**
+	  * Run a CRON job manually
+	  * @param {CronJobNames} name Name of the CRON job to run
+	  * @param {User} user User who ran the method
+	  * @param {Request} req Request for logging purposes
+	*/
+	async runCRONJobManually(name: CronJobNames, user: User, req: Request) {
+		let log: CronJobLog | null = null;
+		try {
+			switch (name) {
+				case 'BACKED_UP_DATABASE':
+					log = await this.backupDatabase();
+					break;
+				case 'DELETE_EXPIRED_SESSIONS':
+					log = await this.deleteExpiredSessions();
+					break;
+				case 'DELETE_OLD_LOG_FILES':
+					log = await this.deleteOldLogFiles();
+					break;
+				case 'RECALCULATE_USER_STORAGE':
+					log = await this.recalculateUserStorage();
+					break;
+				case 'RECALCULATE_STORAGE_USAGE':
+					log = await this.recalculateStorageUsage();
+					break;
+				case 'DELETE_OLD_BACKUPS':
+					log = await this.deleteOldBackups();
+					break;
+				default:
+					throw new Error('Invalid CRON Job name.');
+			}
+
+			if (log.status == 'FAILURE') throw new Error(log.message ?? 'CRON job failed to execute.');
+			this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await this.client.AuditLogManager.create({
+					eventName: 'CRONJOB_RAN',
+					resourceType: 'SYSTEM',
+					resourceId: name,
+					success: true,
+					message: 'Successfully ran CRON job.',
+					userId: user.id,
+					userAgent: req.headers['user-agent'],
+					ip: getIP(req),
+				});
+			});
+			return true;
+		} catch (err) {
+			this.client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
+				await this.client.AuditLogManager.create({
+					eventName: 'CRONJOB_RAN',
+					resourceType: 'SYSTEM',
+					resourceId: `${name}`,
+					success: false,
+					message: `Failed to run CRON job due to error: ${err}.`,
+					userId: user.id,
+					userAgent: req.headers['user-agent'],
+					ip: getIP(req),
+				});
+			});
+			throw err;
+		}
 	}
 }

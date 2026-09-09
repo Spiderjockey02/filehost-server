@@ -2,6 +2,7 @@ import { Logger, parseMySQLConnectionString, PATHS } from '@/utils';
 import RecentlyViewedFileManager from './RecentlyViewedFile';
 import { PrismaClient } from '@/types/generated/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { validateDatabaseMetadata } from '@/validators';
 import UserActivityAccessor from './UserActivity';
 import NotificationManager from './Notification';
 import type { DatabaseMetadata } from '@/types';
@@ -14,8 +15,8 @@ import PlanAccessor from './Plan';
 import FileAccessor from './File';
 import UserManager from './User';
 import { existsSync } from 'fs';
-import fs from 'fs/promises';
 import 'dotenv/config';
+import fs from 'fs/promises';
 const LoggerClass = new Logger();
 
 const database = parseMySQLConnectionString(process.env.DATABASE_URL);
@@ -85,6 +86,40 @@ const prismaClient = client.$extends({
 					resolve(metadata);
 				});
 			});
+		},
+		async $getBackups(): Promise<DatabaseMetadata[]> {
+			// Check if the database backups folder exists
+			if (!existsSync(PATHS.DATABASE_BACKUPS)) await fs.mkdir(PATHS.DATABASE_BACKUPS, { recursive: true });
+
+			// Get list of JSON files in the database backups folder
+			let files = await fs.readdir(PATHS.DATABASE_BACKUPS);
+			files = files.filter((f) => f.endsWith('.json'));
+
+			// Read each file and parse the JSON data
+			const backups = await Promise.all(
+				files.map(async (file) => {
+					const filePath = `${PATHS.DATABASE_BACKUPS}/${file}`;
+					const stats = await fs.stat(filePath);
+					if (!stats.isFile()) return null;
+
+					const backupContents = await fs.readFile(filePath, 'utf-8');
+					const parsed: unknown = JSON.parse(backupContents);
+					const result = validateDatabaseMetadata.safeParse(parsed);
+					return result.success ? result.data : null;
+				}),
+			);
+
+			return backups.filter(b => b != null);
+		},
+		async deleteBackup(timestamp: string) {
+			// Check if the database backups folder exists
+			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${timestamp}.dump.sql`)) throw new Error('Missing database backup file');
+
+			// Delete the backup files
+			await Promise.all([
+				fs.rm(`${PATHS.DATABASE_BACKUPS}/${timestamp}.meta.json`),
+				fs.rm(`${PATHS.DATABASE_BACKUPS}/${timestamp}.dump.sql`),
+			]);
 		},
 	},
 });

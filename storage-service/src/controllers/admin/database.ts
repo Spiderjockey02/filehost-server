@@ -1,33 +1,15 @@
 import { validateBackup } from '@/validators/endpointParams';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
-import { DatabaseMetadata } from '@/types';
 import { Error, PATHS } from '@/utils';
+import dbClient from '@/accessors';
 import { existsSync } from 'fs';
-import fs from 'fs/promises';
 
 // Endpoint: GET /api/admin/database/backups
 export const getDatabaseBackups = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			// Check if the database backups folder exists
-			if (!existsSync(PATHS.DATABASE_BACKUPS)) await fs.mkdir(PATHS.DATABASE_BACKUPS, { recursive: true });
-
-			// Get list of JSON files in the database backups folder
-			let files = await fs.readdir(PATHS.DATABASE_BACKUPS);
-			files = files.filter((f) => f.endsWith('.json'));
-
-			// Read each file and parse the JSON data
-			const backups = await Promise.all(
-				files.map(async (file) => {
-					const filePath = `${PATHS.DATABASE_BACKUPS}/${file}`;
-					const stats = await fs.stat(filePath);
-					if (!stats.isFile()) return null;
-
-					const data = await fs.readFile(filePath, 'utf-8');
-					return JSON.parse(data) as DatabaseMetadata;
-				}),
-			);
+			const backups = await dbClient.$getBackups();
 			res.json({ backups });
 		} catch (err) {
 			client.logger.error(err);
@@ -40,23 +22,14 @@ export const getDatabaseBackups = (client: Client) => {
 export const deleteBackupByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const { timestamp } = req.params;
-			const result = validateBackup.safeParse({ timestamp });
+			const result = validateBackup.safeParse(req.params);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			// Check if the database backups folder exists
-			if (!existsSync(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`)) return Error.MissingResource(res);
-
-			// Delete the backup files
-			await Promise.all([
-				fs.rm(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.meta.json`),
-				fs.rm(`${PATHS.DATABASE_BACKUPS}/${result.data.timestamp}.dump.sql`),
-			]);
-
-			res.json({ success: `Successfully deleted backup: ${result.data.timestamp}` });
+			await dbClient.deleteBackup(result.data.timestamp);
+			return res.json({ success: `Successfully deleted backup: ${result.data.timestamp}.` });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to delete database backup.');
+			return Error.GenericError(res, 'Failed to delete database backup.');
 		}
 	};
 };

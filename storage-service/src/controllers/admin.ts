@@ -1,11 +1,13 @@
-import { validateConfig, validateCRONSchedule, validateNotification } from '@/validators';
-import type { CronJobLog } from '@/types/generated/client';
+import { validateCronJobName, validateCRONSchedule } from '@/validators/admin';
+import { validateConfig, validateNotification } from '@/validators';
+import { getCPU, getMemory } from '@/helpers/SystemManager';
 import MetadataExtractor from '@/media/MetadataExtractor';
 import type { Request, Response } from 'express';
-import { Error, getIP, PATHS } from '@/utils';
 import type Client from '@/helpers/Client';
 import { DatabaseMetadata } from '@/types';
 import { getSession } from '@/middleware';
+import dbClient from '@/accessors';
+import { Error } from '@/utils';
 import fs from 'fs/promises';
 import os from 'os';
 
@@ -13,23 +15,21 @@ import os from 'os';
 export const getStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const mediums = await client.FileManager.getFileSystemStatistics();
-			const { files } = await client.FileManager.fetchTotal();
+			const [mediums, { files }, users, cpu] = await Promise.all([
+				client.FileManager.getFileSystemStatistics(),
+				client.FileManager.fetchTotal(),
+				client.userManager.fetchTotal(),
+				getCPU(),
+			]);
 
 			res.json({
 				storage: {
 					totalFiles: files,
-					mediums,
+					mediums: mediums,
 				},
-				memory: {
-					using: Number(process.memoryUsage().heapUsed.toFixed(2)),
-					total:  Number(os.totalmem().toFixed(2)),
-				},
-				cpu: {
-					total: 0,
-					avg: os.loadavg(),
-				},
-				users: await client.userManager.fetchTotal(),
+				cpu,
+				memory: getMemory(),
+				users,
 				uptime: process.uptime(),
 			});
 		} catch (err) {
@@ -55,15 +55,16 @@ export const getCronJobs = (client: Client) => {
 // Endpoint GET /api/admin/cron-jobs/:name/logs
 export const getCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const name = req.params['name'];
-		try {
-			if (typeof name !== 'string' || !client.CRONManager.isValidCronJobName(name)) return Error.MissingResource(res);
-			const logs = await client.CRONManager.fetchAllLogs(name);
+		// Validate params
+		const result = validateCronJobName.safeParse(req.params);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			res.json({ logs });
+		try {
+			const logs = await client.CRONManager.fetchAllLogs(result.data.name);
+			return res.json({ logs });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch list of mime types.');
+			return Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
 	};
 };
@@ -72,17 +73,19 @@ export const getCronJobsByName = (client: Client) => {
 export const postCronJobsByName = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
-			const cronJob = req.params['name'];
+			// Validate params
+			const resultCronJobName = validateCronJobName.safeParse(req.params);
+			if (!resultCronJobName.success) return Error.IncorrectQuery(res, resultCronJobName.error.issues);
 
 			// Validate cronJob name and schedule (CRON format)
-			if (typeof cronJob !== 'string' || !client.CRONManager.isValidCronJobName(cronJob)) return Error.MissingResource(res);
 			const result = validateCRONSchedule.safeParse(req.body);
-			if (!result.success && result.error.issues.length > 0) return Error.IncorrectQuery(res, result.error.issues);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			client.CRONManager.updateAndReschedule(cronJob, result.data?.schedule);
+			await client.CRONManager.updateAndReschedule(resultCronJobName.data.name, result.data.schedule);
+			res.json({ success: `Successfully updated CRON Job: ${resultCronJobName.data.name}` });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to update CRON job.');
+			return Error.GenericError(res, 'Failed to update CRON job.');
 		}
 	};
 };
@@ -91,65 +94,19 @@ export const postCronJobsByName = (client: Client) => {
 // Endpoint POST /api/admin/cron-jobs/:name/run
 export const postCronJobsByNameRun = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const name = req.params['name'];
-		let log: CronJobLog;
-
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
+
+		// Validate params
+		const result = validateCronJobName.safeParse(req.params);
+		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
+
 		try {
-			switch (name) {
-				case 'BACKED_UP_DATABASE':
-					log = await client.CRONManager.backupDatabase();
-					break;
-				case 'DELETE_EXPIRED_SESSIONS':
-					log = await client.CRONManager.deleteExpiredSessions();
-					break;
-				case 'DELETE_OLD_LOG_FILES':
-					log = await client.CRONManager.deleteOldLogFiles();
-					break;
-				case 'RECALCULATE_USER_STORAGE':
-					log = await client.CRONManager.recalculateUserStorage();
-					break;
-				case 'RECALCULATE_STORAGE_USAGE':
-					log = await client.CRONManager.recalculateStorageUsage();
-					break;
-				case 'DELETE_OLD_BACKUPS':
-					log = await client.CRONManager.deleteOldBackups();
-					break;
-				default:
-					return Error.MissingResource(res);
-			}
-
-			if (log.status == 'FAILURE') throw log.message ?? 'CRON job failed to execute.';
-			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await client.AuditLogManager.create({
-					eventName: 'CRONJOB_RAN',
-					resourceType: 'SYSTEM',
-					resourceId: name,
-					success: true,
-					message: 'Successfully ran CRON job.',
-					userId: session.user?.id,
-					userAgent: req.headers['user-agent'],
-					ip: getIP(req),
-				});
-			});
-			res.json({ success: 'Successfully ran CRON job.' });
+			await client.CRONManager.runCRONJobManually(result.data.name, session.user, req);
+			res.json({ success: `Successfully ran CRON Job manually: ${result.data.name}.` });
 		} catch (err) {
-			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
-				await client.AuditLogManager.create({
-					eventName: 'CRONJOB_RAN',
-					resourceType: 'SYSTEM',
-					resourceId: `${name}`,
-					success: false,
-					message: `Failed to run CRON job due to error: ${err}.`,
-					userId: session.user?.id,
-					userAgent: req.headers['user-agent'],
-					ip: getIP(req),
-				});
-			});
-
-			client.logger.error(err);
-			Error.GenericError(res, 'Failed to fetch list of mime types.');
+			client.logger.error(`Failed to fetch system statistics: ${err}`);
+			return Error.GenericError(res, 'Failed to run CRON job manually.');
 		}
 	};
 };
@@ -157,30 +114,60 @@ export const postCronJobsByNameRun = (client: Client) => {
 // Endpoint: GET /api/admin/system/stats
 export const getSystemStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
-		// Fetch all logs and total byte size
-		const logs = await fs.readdir(`${process.cwd()}/src/utils/logs`);
-		const stats = await Promise.all(logs.map(path => fs.stat(`${process.cwd()}/src/utils/logs/${path}`)));
-		const totalLogSize = stats.reduce((acc, stat) => acc + stat.size, 0);
+		try {
+			// Fetch log information
+			const logsPath = `${process.cwd()}/src/utils/logs`;
+			let logFiles: string[] = [];
+			try {
+				logFiles = await fs.readdir(logsPath);
+			} catch {
+				logFiles = [];
+			}
 
-		const files = await fs.readdir(PATHS.DATABASE_BACKUPS);
-		const latestBackup = files.filter(a => a.endsWith('.json')).sort((a, b) => b.localeCompare(a))[0];
-		const backup = await fs.readFile(`${PATHS.DATABASE_BACKUPS}/${latestBackup}`, 'utf-8');
+			const logStats = await Promise.all(logFiles.map(async (file) => {
+				try {
+					const stat = await fs.stat(`${logsPath}/${file}`);
+					return stat.isFile() ? stat.size : 0;
+				} catch {
+					return 0;
+				}
+			}));
+			const totalLogSize = logStats.reduce((total, size) => total + size, 0);
 
-		const lastSevenDays = await client.userActivityManager.calculateTransferBetweenTwoDates(new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), new Date());
+			// Fetch latest database backup
+			let backup: DatabaseMetadata | null = null;
 
-		res.json({
-			memory: {
-				using: Number((process.memoryUsage().heapUsed).toFixed(2)),
-				total:  Number((os.totalmem()).toFixed(2)),
-			},
-			uptime: process.uptime(),
-			logs: {
-				totalByteSize: totalLogSize,
-				count: logs.length,
-			},
-			network: (lastSevenDays?.incomingBytes ?? 0) + (lastSevenDays?.outgoingBytes ?? 0),
-			backup: JSON.parse(backup) as DatabaseMetadata,
-		});
+			try {
+				const backups = await dbClient.$getBackups();
+				backup = backups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null;
+			} catch (err) {
+				client.logger.error(`Failed to retrieve database backups: ${err}`);
+				backup = null;
+			}
+
+			// Last 7 days of network transfer
+			const now = new Date();
+			const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+			const lastSevenDays = await client.userActivityManager.calculateTransferBetweenTwoDates(sevenDaysAgo, now);
+
+			return res.json({
+				memory: {
+					using: process.memoryUsage().heapUsed,
+					total: os.totalmem(),
+				},
+				uptime: process.uptime(),
+				logs: {
+					totalByteSize: totalLogSize,
+					count: logFiles.length,
+				},
+				network: (lastSevenDays?.incomingBytes ?? 0) + (lastSevenDays?.outgoingBytes ?? 0),
+				backup,
+			});
+		} catch (err) {
+			client.logger.error(err);
+			console.error('Failed to fetch system statistics:', err);
+			return Error.GenericError(res, 'Failed to retrieve system statistics');
+		}
 	};
 };
 

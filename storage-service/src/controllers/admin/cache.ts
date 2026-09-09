@@ -1,4 +1,4 @@
-import { validateCacheName } from '@/validators/endpointParams';
+import { validateCacheName } from '@/validators/admin';
 import type { Request, Response } from 'express';
 import type Client from '@/helpers/Client';
 import { Error } from '@/utils';
@@ -9,9 +9,8 @@ export const deleteCacheByName = (client: Client) => {
 		const result = validateCacheName.safeParse(req.params['name']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-		const name = result.data;
 		try {
-			switch (name) {
+			switch (result.data) {
 				case 'users':
 					client.userManager.cache.clear();
 					break;
@@ -35,10 +34,10 @@ export const deleteCacheByName = (client: Client) => {
 					break;
 			}
 
-			return res.json({ success: `Successfully reset cache: ${name}.` });
+			return res.json({ success: `Successfully reset cache: ${result.data}.` });
 		} catch (err) {
 			client.logger.error(err);
-			return Error.GenericError(res, `Failed to reset cache: ${name}.`);
+			return Error.GenericError(res, `Failed to reset cache: ${result.data}.`);
 		}
 	};
 };
@@ -47,49 +46,19 @@ export const deleteCacheByName = (client: Client) => {
 export const getCachedStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const fileStats = {
-				size: client.FileManager.cache.size,
-				max: client.FileManager.cache.max,
-				ttl: client.FileManager.cache.ttl,
-			};
+			const getStats = (cache: {size: number; max: number; ttl: number; }) => ({
+				size: cache.size, max: cache.max, ttl: cache.ttl,
+			});
 
-			const mimeTypeStats = {
-				size: client.FileManager.mimeTypeCache.size,
-				max: client.FileManager.mimeTypeCache.max,
-				ttl: client.FileManager.mimeTypeCache.ttl,
-			};
-
-			const userStats = {
-				size: client.userManager.cache.size,
-				max: client.userManager.cache.max,
-				ttl: client.userManager.cache.ttl,
-			};
-
-			const userHistoryStats = {
-				size: client.recentlyViewedFileManager.cache.size,
-				max: client.recentlyViewedFileManager.cache.max,
-				ttl: client.recentlyViewedFileManager.cache.ttl,
-			};
-
-			const sessionStats = {
-				size: client.sessionManager.cache.size,
-				max: client.sessionManager.cache.max,
-				ttl: client.sessionManager.cache.ttl,
-			};
-
-			const ipStats = {
-				size: client.userActivityManager.ipCache.size,
-				max: client.userActivityManager.ipCache.max,
-				ttl: client.userActivityManager.ipCache.ttl,
-			};
-
-			const userAgentStats = {
-				size: client.userActivityManager.userAgentCache.size,
-				max: client.userActivityManager.userAgentCache.max,
-				ttl: client.userActivityManager.userAgentCache.ttl,
-			};
-
-			res.json({ files: fileStats, mimeTypes: mimeTypeStats, users: userStats, userHistory: userHistoryStats, sessions: sessionStats, ips: ipStats, userAgents: userAgentStats });
+			res.json({
+				files: getStats(client.FileManager.cache),
+				mimeTypes: getStats(client.FileManager.mimeTypeCache),
+				users: getStats(client.userManager.cache),
+				userHistory: getStats(client.recentlyViewedFileManager.cache),
+				sessions: getStats(client.sessionManager.cache),
+				ips: getStats(client.userActivityManager.ipCache),
+				userAgents: getStats(client.userActivityManager.userAgentCache),
+			});
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to get cached stats.');

@@ -107,12 +107,6 @@ export const validateStorage = z
 		{ message: 'basePath is required and must be a non-empty string.', path: ['basePath'] },
 	);
 
-export const validateCRONSchedule = z.object({
-	schedule: z
-		.string()
-		.min(1, { message: 'Schedule is required.' })
-		.regex(/^[0-9\-\*\/, ]+$/, { message: 'Schedule must be a valid CRON expression.' }),
-});
 
 export const validateNotification = z.object({
 	text: z
@@ -316,4 +310,13 @@ export const validateUserName = z.object({
 
 export const validateUploadMetadata = z.object({
 	parentId: z.string(),
+});
+
+export const validateDatabaseMetadata = z.object({
+	createdAt: z.iso.datetime(),
+	filename: z.string().min(1),
+	status: z.enum(['success', 'failed']),
+	sizeBytes: z.number().int().nonnegative(),
+	errorMessage: z.string().min(1).nullable(),
+	db: z.string().min(1),
 });

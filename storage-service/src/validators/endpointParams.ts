@@ -1,17 +1,13 @@
 import { validateInterval, validateOptionalString, validatePage, validateSortOrder, validateString } from '.';
 import z from 'zod';
 
-export const validateCacheName = z.enum(['users', 'files', 'history', 'sessions', 'mimetype', 'ips', 'userAgents'], {
-	error: 'name must be one of users, files, history, sessions, mimetype, ips or userAgents.',
-});
-
 export const validateBackup = z.object({
 	timestamp: z
 		.string()
-		.regex(/^(\d+)\.dump\.sql$/, {
+		.regex(/^\d+\.dump\.sql$/, {
 			message: 'Timestamp is an invalid format.',
 		})
-		.transform(val => val.match(/^(\d+)\.dump\.sql$/)![1]),
+		.transform((val) => val.replace(/\.dump\.sql$/, '')),
 });
 
 export const validateAdminRecentlyUploaded = z.object({
