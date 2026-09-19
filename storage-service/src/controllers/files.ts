@@ -36,9 +36,7 @@ export const postFileUpload = (client: Client) => {
 			if (session.user.isMigrating) return Error.GenericError(res, 'Please wait for migration to finish before uploading files.');
 
 			// Parse and save file(s)
-			const { files } = await parseForm(client, req, session.user);
-			if (Object.keys(files).length == 0) throw 'No files uploaded';
-
+			await parseForm(client, req, session.user);
 			res.json({ success: 'File(s) successfully uploaded.' });
 		} catch (err) {
 			client.logger.error(err);

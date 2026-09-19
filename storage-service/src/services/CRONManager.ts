@@ -4,9 +4,11 @@ import dbClient, { CronJobAccessor } from '@/accessors';
 import type { User } from '@/types/generated/browser';
 import type Client from '../helpers/Client';
 import type { Request } from 'express';
+import { join } from 'node:path';
 import { getIP } from '@/utils';
 import { CronJob } from 'cron';
 import fs from 'fs/promises';
+import os from 'node:os';
 
 export default class CRONManager extends CronJobAccessor {
 	client: Client;
@@ -33,6 +35,7 @@ export default class CRONManager extends CronJobAccessor {
 			{ name: 'RECALCULATE_USER_STORAGE', schedule: '0 0,6,12,18 * * *' },
 			{ name: 'RECALCULATE_STORAGE_USAGE', schedule: '0 * * * *' },
 			{ name: 'DELETE_OLD_TRASHED_FILES', schedule: '0 * * * *' },
+			{ name: 'CLEANUP_UPLOAD_SESSIONS', schedule: '0 * * * *' },
 		] as CronJobList[];
 
 		for (const job of defaultJobs) {
@@ -72,6 +75,9 @@ export default class CRONManager extends CronJobAccessor {
 					break;
 				case 'DELETE_OLD_TRASHED_FILES':
 					this.scheduleJob(name, cronJob.schedule, this.deleteOldTrashedFiles.bind(this));
+					break;
+				case 'CLEANUP_UPLOAD_SESSIONS':
+					this.scheduleJob(name, cronJob.schedule, this.cleanUpUploadSessions.bind(this));
 					break;
 				default:
 					this.client.logger.error(`[CRONMANAGER]: ${name} is not a valid CRON job.`);
@@ -318,6 +324,46 @@ export default class CRONManager extends CronJobAccessor {
 	}
 
 	/**
+	  * Clean up and delete any uploaded chunks that were not completed
+		* @returns {CronJobLog}
+	*/
+	async cleanUpUploadSessions(): Promise<CronJobLog> {
+		const start = Date.now();
+		const UPLOAD_TEMP_DIR = os.tmpdir();
+		const UPLOAD_SESSION_EXPIRY = 24 * 60 * 60 * 1000;
+		let deletedChunks = 0;
+
+		try {
+			const files = await fs.readdir(UPLOAD_TEMP_DIR);
+			const manifests = files.filter((file) => file.startsWith('storage-upload-') && file.endsWith('-manifest.json'));
+
+			for (const manifestFile of manifests) {
+				const manifestPath = join(UPLOAD_TEMP_DIR, manifestFile);
+				const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8')) as {updatedAt: string; status: 'uploading' | 'completed';};
+				if (manifest.status !== 'uploading') continue;
+
+				const updatedAt = new Date(manifest.updatedAt).getTime();
+				if (!Number.isFinite(updatedAt) || start - updatedAt < UPLOAD_SESSION_EXPIRY)	continue;
+
+				const sessionPrefix = manifestFile.replace(/-manifest\.json$/, '');
+				const sessionFiles = files.filter((file) => file.startsWith(`${sessionPrefix}-`));
+				for (const file of sessionFiles) {
+					deletedChunks++;
+					await fs.rm(join(UPLOAD_TEMP_DIR, file), { force: true });
+				}
+
+				await fs.rm(manifestPath, { force: true });
+			}
+
+			const duration = Date.now() - start;
+			return this.createLog({ jobName: 'CLEANUP_UPLOAD_SESSIONS', status: 'SUCCESS', message: `Deleted ${deletedChunks} upload chunks.`, duration });
+		} catch (err) {
+			const duration = Date.now() - start;
+			return this.createLog({ jobName: 'CLEANUP_UPLOAD_SESSIONS', status: 'FAILURE', message: `${err}`, duration });
+		}
+	}
+
+	/**
 	  * Run a CRON job manually
 	  * @param {CronJobNames} name Name of the CRON job to run
 	  * @param {User} user User who ran the method
@@ -344,6 +390,12 @@ export default class CRONManager extends CronJobAccessor {
 					break;
 				case 'DELETE_OLD_BACKUPS':
 					log = await this.deleteOldBackups();
+					break;
+				case 'CLEANUP_UPLOAD_SESSIONS':
+					log = await this.cleanUpUploadSessions();
+					break;
+				case 'DELETE_OLD_TRASHED_FILES':
+					log = await this.deleteOldTrashedFiles();
 					break;
 				default:
 					throw new Error('Invalid CRON Job name.');

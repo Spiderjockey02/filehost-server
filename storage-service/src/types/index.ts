@@ -124,7 +124,7 @@ export interface QueuedTask<T> {
   reject: (reason?: unknown) => void;
 }
 
-export type QueueKeys = 'NOTIFICATIONS' | 'AUDIT_LOGS'
+export type QueueKeys = 'NOTIFICATIONS' | 'AUDIT_LOGS' | 'FILE_MIGRATION'
 
 export interface StorageProvider {
   isOnline: boolean
@@ -205,4 +205,34 @@ export interface StorageProvider {
     * @returns {boolean} If it connected successfully or not
   */
   verifyConnection(): Promise<boolean>
+}
+
+export interface UploadMetadata {
+  fingerprint: string;
+  chunkIndex: number;
+  totalChunks: number;
+  totalSize: number;
+  chunkSize: number;
+}
+
+export interface UploadManifest {
+  fingerprint: string;
+  parentId: string;
+  targetDirectoryId: string;
+  fileName: string;
+  totalSize: number;
+  totalChunks: number;
+  chunkSize: number;
+  mimeType: string | null;
+  createdAt: string;
+  updatedAt: string;
+  status: 'uploading' | 'completed';
+  fileId?: string;
+}
+
+export interface StoredChunk {
+  index: number;
+  hash: string;
+  path: string;
+  size: number;
 }

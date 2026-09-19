@@ -1,3 +1,4 @@
+import { CHUNK_SIZE } from '@/middleware/parse-form';
 import { FileType } from '@/types/generated/enums';
 import { validatePage, validateString } from '.';
 import { z } from 'zod';
@@ -59,4 +60,28 @@ export const validateSearchQuery = z.object({
 			const type = [undefined, FileType.FILE, FileType.DIRECTORY][Number(value)];
 			return type;
 		}, z.nativeEnum(FileType).optional()),
+});
+
+export const validateChunkMetadata = z.object({
+	fingerprint: z.string().min(1).max(256),
+	chunkIndex: z.number().int().nonnegative(),
+	totalChunks: z.number().int().positive(),
+	totalSize: z.number().int().positive(),
+	chunkSize: z.literal(CHUNK_SIZE),
+}).superRefine((metadata, ctx) => {
+	if (metadata.chunkIndex >= metadata.totalChunks) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['chunkIndex'],
+			message: 'Invalid chunk index',
+		});
+	}
+
+	if (metadata.totalChunks !== Math.ceil(metadata.totalSize / metadata.chunkSize)) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['totalChunks'],
+			message: 'Invalid total chunk count',
+		});
+	}
 });
