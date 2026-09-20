@@ -1,4 +1,4 @@
-import type { CreateFileParams, FetchByOwnerParams, FetchFileMediaTypesParams, FileWithPath, FullFile, SearchForFilesParams, UpdateFileParams } from '@/types/database/File';
+import type { CreateFileParams, FetchByOwnerParams, FetchFileMediaTypesParams, FilePath, FileWithPath, FullFile, SearchForFilesParams, UpdateFileParams } from '@/types/database/File';
 import type { File, FileMetadata, MediaType } from '@/types/generated/client';
 import { skip } from '@prisma/client/runtime/client';
 import { Pagination } from '@/types/database';
@@ -54,12 +54,11 @@ export default class FileAccessor {
 			});
 
 			this.cache.set(file.id, file);
-
 			// Have to do 2 layers (to get show proper children count)
 			if (file.parentId) {
 				const parent = await this.fetchById(file.parentId);
 				if (parent) {
-					this.cache.delete(file.id);
+					this.cache.delete(file.parentId);
 					if (parent.parentId) {
 						const grandparent = await this.fetchById(parent.parentId);
 						if (grandparent) this.cache.delete(file.id);
@@ -96,7 +95,7 @@ export default class FileAccessor {
 				gpsLongitude: skipUndefined(data.gpsLongitude),
 				frameRate: skipUndefined(data.frameRate),
 				originalCreatedAt: skipUndefined(data.originalCreatedAt),
-				exif: JSON.stringify(data.exif),
+				exif:  skipUndefined(data.exif == undefined ? undefined : JSON.stringify(data.exif)),
 			},
 		});
 	}
@@ -209,7 +208,7 @@ export default class FileAccessor {
 	  * @returns
 	*/
 	async fetchFilePath(fileId: string) {
-		return client.$queryRaw<{ id: string; name: string; parentId: string | null; depth: BigInt; }[]>`
+		return client.$queryRaw<FilePath[]>`
 			WITH RECURSIVE ancestors AS (
 				SELECT id, name, parentId, 0 AS depth FROM File WHERE id = ${fileId}
 				UNION ALL
@@ -328,7 +327,7 @@ export default class FileAccessor {
 
 		const fileWithPaths = await Promise.all(files.map(async (f) => {
 			const path = await this.fetchFilePath(f.id);
-			return { ...f, path: `/${path.sort((a, b) => Number(b.depth) - Number(a.depth)).map(file => file.name).join('/')}` };
+			return { ...f, path };
 		}));
 
 		return fileWithPaths;

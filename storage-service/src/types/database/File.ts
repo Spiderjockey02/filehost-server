@@ -11,9 +11,15 @@ export interface CreateFileParams {
 }
 
 export type FileWithPath = {
-  path: string
+  path: FilePath[]
 } & File
 
+export type FilePath = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  depth: BigInt;
+}
 export interface UpdateFileParams {
   id: string
   name?: string

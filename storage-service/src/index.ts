@@ -49,6 +49,7 @@ function isRouteModule(value: unknown): value is { default: (client: Client) => 
 			location: 'Europe',
 			type: 'FILE_SYSTEM',
 			basePath: `${process.cwd()}/src/uploads/content`,
+			isDefaultLocation: true,
 		});
 
 		// Where avatars will be stored

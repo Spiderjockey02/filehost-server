@@ -10,6 +10,7 @@ export interface CreateMediumParams {
   maxSize?: bigint | undefined
   usedSize?: bigint | undefined
   avatarOnly?: boolean | undefined
+  isDefaultLocation?: boolean | undefined
 }
 export interface UpdateMediumParams {
   id: string

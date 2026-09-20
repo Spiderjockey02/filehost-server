@@ -26,6 +26,7 @@ export default class StorageAccessor {
 					name: data.name,
 					basePath: data.basePath,
 					location: data.location,
+					isDefaultLocation: skipUndefined(data.isDefaultLocation),
 					endpoint: skipUndefined(data.endpoint),
 					maxSize: skipUndefined(data.maxSize),
 					usedSize: skipUndefined(data.usedSize),
@@ -145,22 +146,30 @@ export default class StorageAccessor {
 		* @returns {StorageMedium | null} The storage medium.
 	*/
 	async fetchAvatarMedium(): Promise<StorageMedium | null> {
-		try {
-			const avatarMedium = this.cache.get('avatar')
-				?? await client.storageMedium.findFirst({
-					where: {
-						avatarOnly: true,
-					},
-					include: {
-						_count: true,
-					},
-				});
+		const avatarMedium = this.cache.get('avatar') ?? await client.storageMedium.findFirst({
+			where: {
+				avatarOnly: true,
+			},
+			include: {
+				_count: true,
+			},
+		});
 
-			if (avatarMedium !== null) this.cache.set('avatar', avatarMedium);
-			return avatarMedium;
-		} catch (err) {
-			throw err;
-		}
+		if (avatarMedium !== null) this.cache.set('avatar', avatarMedium);
+		return avatarMedium;
+	}
+
+	/**
+	  * Fetch the storage mediums where files are stored by default
+		* @returns {StorageMedium | null} The storage medium.
+	 */
+	async fetchDefaultUpload(): Promise<StorageMedium | null> {
+		return client.storageMedium.findFirst({
+			where: {
+				isDefaultLocation: true,
+				type: 'FILE_SYSTEM',
+			},
+		});
 	}
 
 	/**
