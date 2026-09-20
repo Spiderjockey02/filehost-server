@@ -1,6 +1,6 @@
 import { deleteNotification, deleteResetAvatar, getLinkedAccounts, getRecentlyViewed, getSessions,
 	postChangeAvatar, postUserInformation, getTrash, deleteEmpty, putRestore, getUserGallery,
-	getNotifications, getUserConfig } from '@/controllers/session';
+	getNotifications, getUserConfig, patchUserConfig } from '@/controllers/session';
 import type Client from '@/helpers/Client';
 import { Router } from 'express';
 const router = Router();
@@ -31,6 +31,8 @@ export default function(client: Client) {
 	router.get('/gallery', getUserGallery(client));
 
 	router.get('/config', getUserConfig(client));
+
+	router.patch('/config', patchUserConfig(client));
 
 	return router;
 }

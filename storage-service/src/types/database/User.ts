@@ -1,4 +1,4 @@
-import { Prisma } from '@/types/generated/client';
+import { Prisma, SettingGallerySortBy, SettingTheme } from '@/types/generated/client';
 import { Pagination } from '.';
 
 export interface FetchUsers {
@@ -18,7 +18,6 @@ export interface UpdateUserParams {
 	id: string
 	email?: string
 	name?: string
-	languageCode?: string
 	totalStorageSize?: bigint
 	updatedAt?: Date
 	isMigrating?: boolean
@@ -53,3 +52,12 @@ export type SetUserBanStatusParams = {
 export type FetchByStorageIdParams = {
 	storageId: string
 } & Pagination
+
+export type UpdateUserSettingsParams = {
+	userId: string
+	languageCode?: string | undefined
+	theme?: SettingTheme | undefined
+	isSearchHistoryEnabled?: boolean | undefined
+	isRecentFilesEnabled?: boolean | undefined
+	gallerySortBy?: SettingGallerySortBy | undefined
+}

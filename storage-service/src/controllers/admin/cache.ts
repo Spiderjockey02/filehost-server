@@ -14,6 +14,9 @@ export const deleteCacheByName = (client: Client) => {
 				case 'users':
 					client.userManager.cache.clear();
 					break;
+				case 'settings':
+					client.userManager.settingsCache.clear();
+					break;
 				case 'files':
 					client.FileManager.cache.clear();
 					break;
@@ -54,6 +57,7 @@ export const getCachedStats = (client: Client) => {
 				files: getStats(client.FileManager.cache),
 				mimeTypes: getStats(client.FileManager.mimeTypeCache),
 				users: getStats(client.userManager.cache),
+				settings: getStats(client.userManager.settingsCache),
 				userHistory: getStats(client.recentlyViewedFileManager.cache),
 				sessions: getStats(client.sessionManager.cache),
 				ips: getStats(client.userActivityManager.ipCache),

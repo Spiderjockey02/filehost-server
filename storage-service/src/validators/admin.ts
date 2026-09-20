@@ -1,8 +1,8 @@
 import { CronJobNames } from '@/types/generated/enums';
 import z from 'zod';
 
-export const validateCacheName = z.enum(['users', 'files', 'history', 'sessions', 'mimetype', 'ips', 'userAgents'], {
-	error: 'name must be one of users, files, history, sessions, mimetype, ips or userAgents.',
+export const validateCacheName = z.enum(['users', 'settings', 'files', 'history', 'sessions', 'mimetype', 'ips', 'userAgents'], {
+	error: 'name must be one of users, settings, files, history, sessions, mimetype, ips or userAgents.',
 });
 
 export const validateCronJobName = z.object({

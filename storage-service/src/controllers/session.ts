@@ -1,4 +1,4 @@
-import { validatePage, validateRecentlyViewed, validateString, validateUserName } from '@/validators';
+import { validatePage, validateRecentlyViewed, validateString, validateUpdateUserSettings, validateUserName } from '@/validators';
 import { Error, getIP, sanitiseObject } from '@/utils';
 import { avatarForm, getSession } from '@/middleware';
 import { validateFileIds } from '@/validators/files';
@@ -43,7 +43,7 @@ export const getRecentlyViewed = (client: Client) => {
 
 			const historyWithFilePaths = await Promise.all(history.map(async (f) => {
 				const path = await client.FileManager.fetchFilePath(f.fileId);
-				return { ...f, file: { ...f.file, path: `/${path.sort((a, b) => Number(b.depth) - Number(a.depth)).map(file => file.name).join('/')}` } };
+				return { ...f, file: { ...f.file, path } };
 			}));
 
 			res.json({ history: sanitiseObject(historyWithFilePaths), total });
@@ -300,8 +300,30 @@ export const getUserConfig = (client: Client) => {
 			const session = await getSession(client, req.headers);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			// Get user's plan
-			res.json({ plan: sanitiseObject(session.user.plan), language: session.user.languageCode });
+			// Get user's settings
+			const settings = await client.userManager.fetchConfig(session.userId);
+			res.json({ plan: sanitiseObject(session.user.plan), ...settings });
+		} catch (err) {
+			client.logger.error(err);
+			return Error.GenericError(res, 'Failed to get user\'s config');
+		}
+	};
+};
+
+// Endpoint PATCH /api/session/config
+export const patchUserConfig = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(client, req.headers);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			// Validate request body
+			const result = validateUpdateUserSettings.safeParse(req.body);
+			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
+
+			// Update user's config
+			await client.userManager.updateConfig({ userId: session.userId, ...result.data });
+			res.json({ success: 'Successfully updated settings' });
 		} catch (err) {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to get user\'s config');

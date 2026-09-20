@@ -1,7 +1,8 @@
-import type { AddUserToPlanParams, FetchByStorageIdParams, FetchUserbyParam, FetchUsers, FullUser, SetUserBanStatusParams, UpdateUserParams } from '@/types/database/User';
+import type { AddUserToPlanParams, FetchByStorageIdParams, FetchUserbyParam, FetchUsers, FullUser, SetUserBanStatusParams, UpdateUserParams, UpdateUserSettingsParams } from '@/types/database/User';
 import type { Account, User, UserBans } from '@/types/generated/client';
 import { StorageDirection } from '@/types/database/StorageMedium';
 import { skip } from '@prisma/client/runtime/client';
+import { Setting } from '@/types/generated/browser';
 import { Pagination } from '@/types/database';
 import { skipUndefined } from '@/utils';
 import { LRUCache } from 'lru-cache';
@@ -9,11 +10,17 @@ import client from '.';
 
 export default class UserManager {
 	cache: LRUCache<string, FullUser>;
+	settingsCache: LRUCache<string, Setting>;
 
 	constructor() {
 		this.cache = new LRUCache({
 			max: 100,
 			ttl: 1000 * 60 * 60,
+		});
+
+		this.settingsCache = new LRUCache({
+			max: 100,
+			ttl: 1000 * 60 * 5,
 		});
 	}
 
@@ -35,7 +42,6 @@ export default class UserManager {
 					isMigrating: skipUndefined(data.isMigrating),
 					image: skipUndefined(data.image),
 					name: skipUndefined(data.name),
-					languageCode: skipUndefined(data.languageCode),
 				},
 				include: {
 					plan: true,
@@ -281,7 +287,7 @@ export default class UserManager {
 	*/
 	async fetchGroupCountsByLanguageCodes() {
 		try {
-			const languageCode = await client.user.groupBy({
+			const languageCode = await client.setting.groupBy({
 				by: ['languageCode'],
 				_count: true,
 			});
@@ -470,5 +476,52 @@ export default class UserManager {
 			take: 20,
 			skip: page * 20,
 		});
+	}
+
+	/**
+	  * Fetch the user's config
+	  * @param {string} userId The user's ID
+	  * @returns {Setting | null} The settings, if found
+	*/
+	async fetchConfig(userId: string): Promise<Setting | null> {
+		if (this.settingsCache.has(userId)) return this.settingsCache.get(userId) ?? null;
+
+		const settings = await client.setting.findUnique({
+			where: {
+				userId,
+			},
+		});
+		if (settings != null) this.settingsCache.set(userId, settings);
+		return settings;
+	}
+
+	/**
+	  * Update the user's config
+	  * @param {UpdateUserSettingsParams} data
+	  * @returns {Setting | null} The updated settings, if found
+	*/
+	async updateConfig(data: UpdateUserSettingsParams): Promise<Setting | null> {
+		const settings = await client.setting.upsert({
+			where: {
+				userId: data.userId,
+			},
+			create: {
+				userId: data.userId,
+				languageCode: skipUndefined(data.languageCode),
+				theme: skipUndefined(data.theme),
+				isSearchHistoryEnabled: skipUndefined(data.isSearchHistoryEnabled),
+				isRecentFilesEnabled: skipUndefined(data.isRecentFilesEnabled),
+				gallerySortBy: skipUndefined(data.gallerySortBy),
+			},
+			update: {
+				languageCode: skipUndefined(data.languageCode),
+				theme: skipUndefined(data.theme),
+				isSearchHistoryEnabled: skipUndefined(data.isSearchHistoryEnabled),
+				isRecentFilesEnabled: skipUndefined(data.isRecentFilesEnabled),
+				gallerySortBy: skipUndefined(data.gallerySortBy),
+			},
+		});
+		this.settingsCache.set(data.userId, settings);
+		return settings;
 	}
 }

@@ -1,4 +1,4 @@
-import { AuditLogEventName, HTTPMethod } from '@/types/generated/client';
+import { AuditLogEventName, HTTPMethod, SettingGallerySortBy, SettingTheme } from '@/types/generated/client';
 import MetadataExtractor from '@/media/MetadataExtractor';
 import { Prisma } from '@/types/generated/browser';
 import { z } from 'zod';
@@ -319,4 +319,12 @@ export const validateDatabaseMetadata = z.object({
 	sizeBytes: z.number().int().nonnegative(),
 	errorMessage: z.string().min(1).nullable(),
 	db: z.string().min(1),
+});
+
+export const validateUpdateUserSettings = z.object({
+	languageCode: z.string().optional(),
+	theme: z.enum(SettingTheme).optional(),
+	isSearchHistoryEnabled: z.boolean().optional(),
+	isRecentFilesEnabled: z.boolean().optional(),
+	gallerySortBy: z.enum(SettingGallerySortBy).optional(),
 });

@@ -26,6 +26,7 @@ model User {
   role              String            @default("user")
   storage           StorageMedium     @relation(fields: [storageId], references: [id])
   storageId         String
+  settings          Setting?
   twoFactorEnabled  Boolean           @default(false)
   isMigrating       Boolean           @default(false)
   stripeCustomerId  String?
@@ -164,4 +165,27 @@ model subscription {
   trialEnd              DateTime?
   billingInterval       String?
 	stripeScheduleId      String?
+}
+
+enum SettingTheme {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum SettingGallerySortBy {
+  UPLOAD
+  CREATED
+}
+
+model Setting {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  languageCode            String        @default("en-GB")
+  theme                   SettingTheme  @default(SYSTEM)
+  isSearchHistoryEnabled  Boolean       @default(true)
+  isRecentFilesEnabled    Boolean       @default(true)
+  gallerySortBy           SettingGallerySortBy @default(UPLOAD)
 }
