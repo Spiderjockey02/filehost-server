@@ -1,5 +1,6 @@
-import type { FetchActivityParams, FetchTotalParams, FetchUserAgentsParams, NetworkFilter, UserActivityInput } from '@/types/database/UserActivity';
+import type { CreateSearchHistoryParams, FetchActivityParams, FetchTotalParams, FetchUserAgentsParams, NetworkFilter, UserActivityInput } from '@/types/database/UserActivity';
 import type { UserActivity, UserAgent } from '@/types/generated/client';
+import type { searchHistory } from '@/types/generated/browser';
 import { skip } from '@prisma/client/runtime/client';
 import { skipUndefined } from '@/utils';
 import client from '.';
@@ -185,21 +186,17 @@ export default class UserActivityAccessor {
 	  * @returns {string[]} An array of user Id's
 	*/
 	async fetchUsersWhoHadActivityBetweenTwoDates(oldDate: Date, newDate: Date): Promise<string[]> {
-		try {
-			const activity = await client.userActivity.findMany({
-				where: {
-					createdAt: {
-						gte: oldDate,
-						lte: newDate,
-					},
+		const activity = await client.userActivity.findMany({
+			where: {
+				createdAt: {
+					gte: oldDate,
+					lte: newDate,
 				},
-			});
+			},
+		});
 
-			const users = [...new Set(activity.map(s => s.userId).filter(s => s !== null))];
-			return users;
-		} catch (err) {
-			throw err;
-		}
+		const users = [...new Set(activity.map(s => s.userId).filter(s => s !== null))];
+		return users;
 	}
 
 	/**
@@ -227,5 +224,24 @@ export default class UserActivityAccessor {
 			}),
 			client.userAgent.count(),
 		]);
+	}
+
+	/**
+	  * Create a log of what the user searched
+	  * @param {CreateSearchHistoryParams} data
+	  * @returns {searchHistory}
+	*/
+	async createSearchHistory(data: CreateSearchHistoryParams): Promise<searchHistory> {
+		return client.searchHistory.create({
+			data: {
+				user: {
+					connect: {
+						id: data.userId,
+					},
+				},
+				fileType: skipUndefined(data.fileType),
+				query: data.query,
+			},
+		});
 	}
 }

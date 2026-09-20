@@ -203,3 +203,13 @@ model AuditLogEventSubscription {
   @@unique([listenerId, eventId])
   @@index([eventId])
 }
+
+model searchHistory {
+  id          String    @id     @default(cuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+
+  query       String
+  fileType    FileType?
+  createdAt   DateTime  @default(now())
+}

@@ -4,7 +4,6 @@ model User {
   email             String            @unique
   image             String?
   emailVerified     Boolean
-  languageCode      String            @default("en-GB")
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt
   sessions          Session[]
@@ -17,6 +16,7 @@ model User {
   auditListeners    AuditLogListener[]
   bans              UserBans[]        @relation("bannedUser")
   issuedBans        UserBans[]        @relation("issuedUser")
+  searches          searchHistory[]
   banned            Boolean           @default(false)
   banReason         String?
 	banExpires        DateTime?

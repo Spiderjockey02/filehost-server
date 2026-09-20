@@ -1,4 +1,4 @@
-import { type HTTPMethod, Prisma } from '@/types/generated/client';
+import { FileType, type HTTPMethod, Prisma } from '@/types/generated/client';
 import { Pagination } from '.';
 
 export interface UserActivityInput {
@@ -30,4 +30,10 @@ export interface NetworkFilter {
 export interface FetchUserAgentsParams extends Pagination {
 	sortBy: 'name' | 'activity' | 'logs'
 	sortOrder?: Prisma.SortOrder | undefined
+}
+
+export interface CreateSearchHistoryParams {
+	userId: string
+	query: string
+	fileType?: FileType | undefined
 }

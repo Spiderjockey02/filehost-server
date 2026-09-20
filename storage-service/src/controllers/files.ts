@@ -419,7 +419,12 @@ export const getSearchFile = (client: Client) => {
 				client.FileManager.searchByName({ userId: session.user.id, query, type: fileType, page }),
 				client.FileManager.searchByNameCount({ userId: session.user.id, query, type: fileType }),
 			]);
+
 			res.json({ files: sanitiseObject(files), total });
+
+			// If page is present log the query
+			const settings = await client.userManager.fetchConfig(session.userId);
+			if (page !== undefined && settings?.isSearchHistoryEnabled) client.userActivityManager.createSearchHistory({ userId: session.userId, ...result.data });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to search for item.');
