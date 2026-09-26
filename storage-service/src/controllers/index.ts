@@ -57,7 +57,8 @@ export const getContent = (client: Client) => {
 		if (file.userId !== session.user.id) return Error.InvalidAccess(res);
 
 		// Update the user's recently viewed file history
-		await client.recentlyViewedFileManager.upsert({ userId: userIdResult.data, fileId: file.id }).catch(client.logger.error);
+		const setting = await client.userManager.fetchConfig(session.userId);
+		if (setting && setting.isRecentFilesEnabled) await client.recentlyViewedFileManager.upsert({ userId: userIdResult.data, fileId: file.id }).catch(client.logger.error);
 
 		try {
 			const owner = await client.userManager.fetchbyParam({ id: file.userId }) as User;
