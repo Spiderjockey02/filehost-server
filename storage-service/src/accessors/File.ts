@@ -160,13 +160,17 @@ export default class FileAccessor {
 	  * @param data An array of file Id's and their new names
 	*/
 	async updateBulkName(data: {fileId: string, newName: string}[]) {
-		await client.$transaction(data.map(({ fileId, newName }) => client.file.update({
+		const files = await client.$transaction(data.map(({ fileId, newName }) => client.file.update({
 			where: { id: fileId },
 			data: { name: newName },
+			select: { parentId: true },
 		})));
 
-		// Delete cache of all new names
+		// Delete cache of all renamed files and their parents
 		for (const file of data) this.cache.delete(file.fileId);
+		const parentIds = new Set(files.map(({ parentId }) => parentId).filter((parentId): parentId is string => parentId !== null));
+		for (const parentId of parentIds) this.cache.delete(parentId);
+		return true;
 	}
 
 	/**

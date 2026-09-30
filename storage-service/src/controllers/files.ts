@@ -354,8 +354,7 @@ export const postBulkRename = (client: Client) => {
 			const result = validateFileRenames.safeParse(req.body);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			client.FileManager.renameBulk(session.user, result.data.files);
-
+			await client.FileManager.renameBulk(session.user, result.data);
 			res.json({ success: 'Successfully updated all files' });
 		} catch (err) {
 			client.logger.error(err);

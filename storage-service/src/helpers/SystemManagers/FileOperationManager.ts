@@ -133,12 +133,13 @@ export default class FileManager extends FileAccessor {
 	*/
 	async renameBulk(user: User, data: {fileId: string, newName: string}[]) {
 		// Validate files
-		const files = await Promise.all(data.map(async (f) => await this.fetchById(f.fileId)));
-		if (files.filter(f => f == null).length != files.length) throw new Error('Contains invalid files.');
-		if (files.some(f => f?.userId !== user.id)) throw new Error('Contains files you dont own.');
+		const files = await Promise.all(data.map((f) => this.fetchById(f.fileId)));
+		const notNullFiles = files.filter(f => f !== null);
+		if (notNullFiles.length != files.length) throw new Error('Contains invalid files.');
+		if (notNullFiles.every(f => f.userId !== user.id)) throw new Error('Contains files you dont own.');
 
 		try {
-			await this.renameBulk(user, data);
+			await this.client.FileManager.updateBulkName(data);
 			return true;
 		} catch (error) {
 			return false;

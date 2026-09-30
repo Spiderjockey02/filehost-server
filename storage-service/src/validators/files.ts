@@ -27,19 +27,15 @@ export const validateRenameFile = z.object({
 	newName: validateString,
 });
 
-export const validateFileRenames = z.object({
-	files: z
-		.array(
-			z.object({
-				fileId: z.string(),
-				newName: z.string(),
-			}), {
-				error: 'files are missing from request',
-			},
-		)
-		.min(1, {
-			error: 'files are missing from request',
-		}),
+export const validateFileRenames = z.array(
+	z.object({
+		fileId: z.string(),
+		newName: z.string(),
+	}), {
+		error: 'files are missing from request',
+	},
+).min(1, {
+	error: 'files are missing from request',
 });
 
 export const validateCreateFolder = z.object({
