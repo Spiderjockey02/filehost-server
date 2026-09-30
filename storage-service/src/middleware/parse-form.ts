@@ -213,8 +213,10 @@ const validateChunk = async (client: Client, user: UserWithPlan, storage: Storag
 		if (BigInt(metadata.totalSize) + user.totalStorageSize >= user.plan.maxStorageSize) throw new Error('File is too large');
 		if (BigInt(metadata.totalSize) + storage.usedSize >= storage.maxSize) throw new Error('Storage medium does not have enough space');
 
+		// Fetch the file and validate it
 		let dir = await client.FileManager.fetchById(parentId);
-		if (!dir) throw new Error('Missing parent directory');
+		if (!dir || dir.type == 'FILE') throw new Error('Missing parent directory');
+		if (dir.userId !== user.id) throw new Error('You do not have access to this file');
 
 		let fileName = `${uploadedMedia.originalFilename}`;
 		const lastSlashIndex = fileName.lastIndexOf('/');
