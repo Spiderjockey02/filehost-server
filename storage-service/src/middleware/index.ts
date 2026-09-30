@@ -24,7 +24,12 @@ export async function getSession(client: Client, headers: IncomingHttpHeaders): 
 
 	// Fetch the session using the session token
 	try {
-		return client.sessionManager.fetchByToken(sessionToken.split('.')[0]!);
+		const token = await client.sessionManager.fetchByToken(sessionToken.split('.')[0]!);
+		if (token == null) return null;
+
+		// Check expire date
+		if (token.expiresAt <= new Date()) return null;
+		return token;
 	} catch (err) {
 		client.logger.error(err);
 		return null;
