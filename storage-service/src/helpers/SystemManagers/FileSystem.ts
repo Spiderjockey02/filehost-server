@@ -94,42 +94,36 @@ export default class FileSystemManager implements StorageProvider {
 	async sendFile(res: Response, file: File, range?: string | undefined) {
 		this.client.logger.debug(`[FS Client]: Sending file: ${file.id}`);
 		const filePath = path.join(this.basePath, file.userId, file.id);
-		const mime = file.mimetype || 'application/octet-stream';
 
 		await fs.access(filePath);
-		if (mime.startsWith('video')) {
-			const stat = statSync(filePath);
-			const fileSize = stat.size;
+		const stat = statSync(filePath);
+		const fileSize = stat.size;
 
-			if (range) {
-				const CHUNK_SIZE = 10 * 10 ** 6;
-				const match = range.match(/bytes=(\d+)-(\d*)/);
-				if (!match) throw new Error('Invalid Range header');
+		if (range) {
+			const CHUNK_SIZE = 10 * 10 ** 6;
+			const match = range.match(/bytes=(\d+)-(\d*)/);
+			if (!match) throw new Error('Invalid Range header');
 
-				// Verify range match
-				const [, startValue, endValue] = match;
-				if (!startValue) throw new Error('Invalid Range header');
-				const start = Number.parseInt(startValue, 10);
-				const end = endValue ? Math.min(parseInt(endValue, 10), fileSize - 1) : Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
+			// Verify range match
+			const [, startValue, endValue] = match;
+			if (!startValue) throw new Error('Invalid Range header');
+			const start = Number.parseInt(startValue, 10);
+			const end = endValue ? Math.min(parseInt(endValue, 10), fileSize - 1) : Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
 
-				const headers = {
-					'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-					'Accept-Ranges': 'bytes',
-					'Content-Length': end - start + 1,
-					'Content-Type': mime,
-				};
+			const headers = {
+				'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+				'Accept-Ranges': 'bytes',
+				'Content-Length': end - start + 1,
+				'Content-Type': file.mimetype ?? 'application/octet-stream',
+			};
 
-				res.writeHead(206, headers);
-				createReadStream(filePath, { start, end }).pipe(res);
-			} else {
-				res.writeHead(200, {
-					'Content-Length': fileSize,
-					'Content-Type': mime,
-				});
-				createReadStream(filePath).pipe(res);
-			}
+			res.writeHead(206, headers);
+			createReadStream(filePath, { start, end }).pipe(res);
 		} else {
-			res.type(mime);
+			res.writeHead(200, {
+				'Content-Length': fileSize,
+				'Content-Type': file.mimetype ?? 'application/octet-stream',
+			});
 			createReadStream(filePath).pipe(res);
 		}
 	}

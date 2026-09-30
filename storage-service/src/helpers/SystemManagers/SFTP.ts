@@ -149,31 +149,29 @@ export default class SFTPManager implements StorageProvider {
 		const stats = await this.SFTPClient.stat(key);
 		const fileSize = stats.size;
 
-		if (file.mimetype?.startsWith('video')) {
-			if (range) {
-				const CHUNK_SIZE = 10 * 10 ** 6;
-				const match = range.match(/bytes=(\d+)-(\d*)/);
-				if (!match) throw new Error('Invalid Range header');
+		if (range) {
+			const CHUNK_SIZE = 10 * 10 ** 6;
+			const match = range.match(/bytes=(\d+)-(\d*)/);
+			if (!match) throw new Error('Invalid Range header');
 
-				// Verify range match
-				const [, startValue, endValue] = match;
-				if (!startValue) throw new Error('Invalid Range header');
-				const start = Number.parseInt(startValue, 10);
-				const end = endValue ? Math.min(parseInt(endValue, 10), fileSize - 1) : Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
+			// Verify range match
+			const [, startValue, endValue] = match;
+			if (!startValue) throw new Error('Invalid Range header');
+			const start = Number.parseInt(startValue, 10);
+			const end = endValue ? Math.min(parseInt(endValue, 10), fileSize - 1) : Math.min(start + CHUNK_SIZE - 1, fileSize - 1);
 
-				// Create read stream to client
-				const stream = this.SFTPClient.createReadStream(key, { start, end });
-				res.writeHead(206, {
-					'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-					'Accept-Ranges': 'bytes',
-					'Content-Length': end - start + 1,
-					'Content-Type': file.mimetype ?? 'application/octet-stream',
-				});
+			// Create read stream to client
+			const stream = this.SFTPClient.createReadStream(key, { start, end });
+			res.writeHead(206, {
+				'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+				'Accept-Ranges': 'bytes',
+				'Content-Length': end - start + 1,
+				'Content-Type': file.mimetype ?? 'application/octet-stream',
+			});
 
-				await pipeline(stream, res);
-				this.client.logger.debug(`[SFTP Client]: Streamed video range ${start}-${end}`);
-				return;
-			}
+			await pipeline(stream, res);
+			this.client.logger.debug(`[SFTP Client]: Streamed video range ${start}-${end}`);
+			return;
 		}
 
 		const stream = this.SFTPClient.createReadStream(key);
