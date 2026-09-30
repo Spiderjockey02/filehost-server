@@ -48,7 +48,7 @@ export default class SFTPManager implements StorageProvider {
 			const pass = new PassThrough();
 			const getPromise = this.SFTPClient.get(key, pass);
 
-			archive.append(pass, { name: file.path });
+			archive.append(pass, { name: file.name });
 			await getPromise;
 		}
 
@@ -101,7 +101,7 @@ export default class SFTPManager implements StorageProvider {
 				throw new Error('[SFTP Client]: Unsupported data type for writeFile');
 			}
 
-			dataStream.on('data', (chunk) => {
+			dataStream.on('data', (chunk: Buffer) => {
 				uploaded += chunk.length;
 				if (totalSize > 0) {
 					const percent = ((uploaded / totalSize) * 100).toFixed(2);
@@ -132,8 +132,8 @@ export default class SFTPManager implements StorageProvider {
 			buffer = data;
 		} else if (data instanceof Readable) {
 			const chunks: Buffer[] = [];
-			for await (const chunk of data) {
-				chunks.push(chunk);
+			for await (const chunk of data as AsyncIterable<Uint8Array>) {
+				chunks.push(Buffer.from(chunk));
 			}
 			buffer = Buffer.concat(chunks);
 		} else {
@@ -141,6 +141,14 @@ export default class SFTPManager implements StorageProvider {
 		}
 
 		return encoding ? buffer.toString(encoding) : buffer;
+	}
+
+	async getReadStream(file: File) {
+		this.client.logger.debug(`[SFTP Client]: Opening file stream: ${file.id}`);
+		const pass = new PassThrough();
+		const getPromise = this.SFTPClient.get(`${file.userId}/${file.id}`, pass);
+		getPromise.catch(error => pass.destroy(error instanceof Error ? error : new Error(String(error))));
+		return pass;
 	}
 
 	async sendFile(res: Response, file: File, range?: string): Promise<void> {
@@ -190,16 +198,16 @@ export default class SFTPManager implements StorageProvider {
 		try {
 			await this.SFTPClient.stat(filePath);
 			return true;
-		} catch (err: any) {
-			if (err.code === 2 || err.message?.includes('No such file')) return false;
-			throw err;
+		} catch (err) {
+			return false;
 		}
 	}
 
 	async verifyConnection() {
 		try {
 			// Make sure not to try and reconnect if connection is already made
-			if ((this.SFTPClient as any).sftp) {
+			const clientWithConnection = this.SFTPClient as SFTPClient & { sftp?: unknown };
+			if (clientWithConnection.sftp) {
 				this.client.logger.debug('[SFTP Client]: Already connected, skipping reconnect.');
 				this.isOnline = true;
 				return true;

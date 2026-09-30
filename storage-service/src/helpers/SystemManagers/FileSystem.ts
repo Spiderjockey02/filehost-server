@@ -91,6 +91,11 @@ export default class FileSystemManager implements StorageProvider {
 		}
 	}
 
+	async getReadStream(file: File) {
+		this.client.logger.debug(`[FS Client]: Opening file stream: ${file.id}`);
+		return createReadStream(path.join(this.basePath, file.userId, file.id));
+	}
+
 	async sendFile(res: Response, file: File, range?: string | undefined) {
 		this.client.logger.debug(`[FS Client]: Sending file: ${file.id}`);
 		const filePath = path.join(this.basePath, file.userId, file.id);

@@ -1,7 +1,7 @@
 import type { User, File } from '@/types/generated/client';
+import type { Readable, Writable } from 'node:stream';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { Request, Response } from 'express';
-import type { Writable } from 'node:stream';
 import type { Socket } from 'node:net';
 
 // For logger
@@ -152,20 +152,20 @@ export interface StorageProvider {
 
   /**
     * Delete a file
-    * @param {string} filePath The file path of the file being deleted
+    * @param {string} fileId The file path of the file being deleted
   */
-  deleteFile(filePath: string): Promise<void>;
+  deleteFile(fileId: string): Promise<void>;
 
   /**
     * Upload a file
-    * @param {string} filePath The file path where the file will be uploaded to
+    * @param {string} fileId The file path where the file will be uploaded to
     * @returns {{ stream: Writable, done: Promise<void> }}
   */
-  uploadFile(filePath: string): { stream: Writable, done: Promise<void> };
+  uploadFile(fileId: string): { stream: Writable, done: Promise<void> };
 
   /**
     * Write a file
-    * @param {string} filePath The file path where the file will be written to
+    * @param {string} filePath The file path where the file will be written to: 'userId/fileId'
     * @param {Buffer | string} data The data of the file
   */
   writeFile(filePath: string, data: Buffer | string): Promise<void>;
@@ -184,6 +184,13 @@ export interface StorageProvider {
 		* @return {string} The data read from the file.
 	*/
 	readFile(file: File, encoding?: BufferEncoding): Promise<string>;
+
+  /**
+   * Open a complete file stream for archive downloads.
+   * @param {File} file The file being streamed
+   * @return {Readable} A stream containing the complete file.
+   */
+  getReadStream(file: File): Promise<Readable>;
 
   /**
 	  * Send a file to the user.

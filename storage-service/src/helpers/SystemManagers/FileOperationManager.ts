@@ -4,13 +4,15 @@ import ThumbnailCreator from '@/media/ThumbnailCreator';
 import { S3ServiceException } from '@aws-sdk/client-s3';
 import type { FullFile } from '@/types/database/File';
 import type StorageManager from './StorageManager';
+import { pipeline } from 'node:stream/promises';
 import { Archiver, ZipArchive } from 'archiver';
-import type { StorageProvider } from '@/types';
+import type { Readable } from 'node:stream';
 import { FileAccessor } from '@/accessors';
 import TrashHandler from '../TrashHandler';
 import { sanitiseObject } from '@/utils';
 import type { Response } from 'express';
 import Client from '../Client';
+import path from 'path';
 
 export default class FileManager extends FileAccessor {
 	TrashHandler: TrashHandler;
@@ -274,65 +276,42 @@ export default class FileManager extends FileAccessor {
 	/**
 	  * Download a single file
 	  * @param {Response} res The response to pipe files to
-	  * @param {User} user The user who requested the download.
 	  * @param {File} file The file to download
 	*/
-	async downloadFile(res: Response, user: User, file: FullFile) {
-		// Get storage and it's provider
-		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw new Error('Storage not found');
-		const fileProvider = await this.storageManager.getProvider(storage);
-
+	async downloadFile(res: Response, file: FullFile) {
 		// Download the file
 		if (file.type == 'DIRECTORY') {
 			const archive = new ZipArchive({ zlib: { level: 9 } });
 			res.setHeader('Content-Type', 'application/zip');
-			res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
-			archive.pipe(res);
-
-			// Now loop and get the children's files
-			for (const child of file.children) {
-				if (child.type == 'DIRECTORY') {
-					const newFile = await this.fetchById(child.id);
-					if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider);
-				} else {
-					archive.append(await fileProvider.readFile(child), { name: child.name });
-				}
-			}
-
-			await archive.finalize();
+			res.setHeader('Content-Disposition', `attachment; filename=\"files-${new Date()}.zip\"`);
+			await this._writeArchive(res, archive, () => this._traverseFilesForDownloading(archive, file.children, file.name));
 		} else {
-			fileProvider.downloadFile(res, file);
+			const fileProvider = await this.storageManager.getProviderById(file.storageId);
+			await fileProvider.downloadFile(res, file);
 		}
-	}
-
-	private async traverseFilesForDownloading(archive: Archiver, file: FullFile, fileProvider: StorageProvider) {
-		for (const child of file.children) {
-			if (child.type == 'DIRECTORY') {
-				const newFile = await this.fetchById(child.id);
-				if (newFile) await this.traverseFilesForDownloading(archive, newFile, fileProvider);
-			} else {
-				archive.append(await fileProvider.readFile(child), { name: child.name });
-			}
-		}
-
-		return archive;
 	}
 
 	/**
-	  * Send the thumbnail of the file.
-	  * @param {Response} res The user's ID.
-	  * @param {User} user The user's ID.
-	  * @param {File[]} files The user's ID.
+	  * Download a list of files
+	  * @param {Response} res The HTTP response to pipe the download to.
+	  * @param {File[]} files The list of files to download.
 	*/
-	async downloadFiles(res: Response, user: User, files: File[]) {
-		// Get storage and it's provider
-		const storage = await this.storageManager.fetchById(user.storageId);
-		if (storage == null) throw new Error('Storage not found');
-		const fileProvider = await this.storageManager.getProvider(storage);
-
-		// Download the file
-		return fileProvider.downloadFiles(res, files);
+	async downloadFiles(res: Response, files: FullFile[]) {
+		const archive = new ZipArchive({ zlib: { level: 9 } });
+		res.setHeader('Content-Type', 'application/zip');
+		res.setHeader('Content-Disposition', `attachment; filename=\"files-${new Date()}.zip\"`);
+		await this._writeArchive(res, archive, async () => {
+			for (const file of files) {
+				if (file.type === 'FILE') {
+					const fileProvider = await this.storageManager.getProviderById(file.storageId);
+					const stream: Readable = await fileProvider.getReadStream(file);
+					archive.append(stream, { name: this._getArchivePath('', file.name) });
+				} else {
+					await this._traverseFilesForDownloading(archive, file.children, file.name);
+				}
+			}
+			return archive;
+		});
 	}
 
 	/**
@@ -434,5 +413,76 @@ export default class FileManager extends FileAccessor {
 	async getFileSystemStatistics() {
 		const storages = await this.storageManager.fetchAll({ page: 0 });
 		return storages.map(s => ({ name: s.name, used: Number(s.usedSize), total: Number(s.maxSize) }));
+	}
+
+	/**
+	 * Traverse a directory and append its files to an archive.
+	 * @param {Archiver} archive The archive receiving the file entries.
+	 * @param {File[]} children The directory children to traverse.
+	 * @param {string} parentName The archive path of the current directory.
+	 * @returns The archive after all descendants have been appended.
+	*/
+	private async _traverseFilesForDownloading(archive: Archiver, children: File[], parentName: string): Promise<Archiver> {
+		const batchSize = 5;
+		const directFiles = children.filter((file) => file.type === 'FILE');
+		for (let i = 0; i < directFiles.length; i += batchSize) {
+			const batch = directFiles.slice(i, i + batchSize);
+
+			const items = await Promise.all(batch.map(async (file) => {
+				const fileProvider = await this.storageManager.getProviderById(file.storageId);
+				const stream: Readable = await fileProvider.getReadStream(file);
+				return { file, stream };
+			}));
+
+			for (const { file, stream } of items) {
+				archive.append(stream, { name: this._getArchivePath(parentName, file.name) });
+			}
+		}
+
+		// Second get all directories
+		const directories = children.filter(file => file.type === 'DIRECTORY');
+		for (const d of directories) {
+			const newFile = await this.fetchById(d.id);
+			if (newFile) {
+				const nextParentName = this._getArchivePath(parentName, newFile.name);
+				await this._traverseFilesForDownloading(archive, newFile.children, nextParentName);
+			}
+		}
+
+		return archive;
+	}
+
+	/**
+	 * Build a sanitized POSIX-style path for a ZIP entry.
+	 * @param {string} parentName The archive path of the parent directory.
+	 * @param {string} name The file or directory name to append.
+	 * @returns The sanitized archive path.
+	 */
+	private _getArchivePath(parentName: string, name: string) {
+		const safeName = name.replace(/[\\/\0]/g, '_').replace(/^\.{1,2}$/, '_') || '_';
+		return path.posix.join(parentName, safeName);
+	}
+
+	/**
+	 * Pipe and finalize an archive with error handling.
+	 * @param {Response} res The HTTP response receiving the archive stream.
+	 * @param {Archiver} archive The archive to write and finalize.
+	 * @param {() => Promise<Archiver>} writeEntries Callback that appends entries.
+	 * @returns A promise that resolves after the response finishes.
+	 */
+	private async _writeArchive(res: Response, archive: Archiver, writeEntries: () => Promise<Archiver>) {
+		const output = pipeline(archive, res);
+
+		try {
+			await Promise.race([writeEntries(), output]);
+			await Promise.race([archive.finalize(), output]);
+			await output;
+		} catch (error) {
+			archive.abort();
+			if (!res.destroyed) res.destroy(error instanceof Error ? error : new Error(String(error)));
+
+			await output.catch(() => undefined);
+			throw error;
+		}
 	}
 }

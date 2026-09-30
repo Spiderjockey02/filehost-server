@@ -234,7 +234,7 @@ export const postDownloadFile = (client: Client) => {
 			if (!file) return Error.MissingResource(res);
 			if (file.userId !== session.user.id) return Error.MissingResource(res);
 
-			await client.FileManager.downloadFile(res, session.user, file);
+			await client.FileManager.downloadFile(res, file);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
 					userId: session.user.id,
@@ -277,8 +277,16 @@ export const getBulkDownload = (client: Client) => {
 			const result = validateFileIds.safeParse(req.body);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const files = await Promise.all(result.data.fileIds.map(async (f) => await client.FileManager.fetchById(f)));
-			client.FileManager.downloadFiles(res, session.user, files.filter(s => s !== null));
+			// Fetch files
+			const fileIds = result.data.fileIds;
+			const files = await Promise.all(fileIds.map((f) => client.FileManager.fetchById(f)));
+			const notNullFiles = files.filter(s => s !== null);
+
+			// Check ownership of requested files
+			const isValidOwner = notNullFiles.every(f => f.userId == session.userId);
+			if (!isValidOwner) return Error.InvalidAccess(res);
+
+			await client.FileManager.downloadFiles(res, notNullFiles);
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to download files.');

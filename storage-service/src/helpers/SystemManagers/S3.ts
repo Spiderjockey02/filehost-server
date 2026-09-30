@@ -1,10 +1,10 @@
 import { S3Client, GetObjectCommand, DeleteObjectCommand, CopyObjectCommand, ListObjectsV2Command, HeadObjectCommand, S3ServiceException } from '@aws-sdk/client-s3';
 import type { FullFile } from '@/types/database/File';
 import type { File } from '@/types/generated/client';
+import { PassThrough, Readable } from 'node:stream';
 import type { StorageProvider } from '@/types';
 import { Upload } from '@aws-sdk/lib-storage';
 import type Client from '@/helpers/Client';
-import { PassThrough } from 'node:stream';
 import type { Response } from 'express';
 import { ZipArchive } from 'archiver';
 import { promisify } from 'node:util';
@@ -55,7 +55,7 @@ export default class S3Manager implements StorageProvider {
 			const command = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
 			const s3Response = await this.s3.send(command);
 			if (s3Response.Body) {
-				archive.append(s3Response.Body as stream.Readable, { name: file.path });
+				archive.append(s3Response.Body as stream.Readable, { name: file.name });
 			}
 		}
 
@@ -78,15 +78,15 @@ export default class S3Manager implements StorageProvider {
 		await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: fileId }));
 	}
 
-	uploadFile(filePath: string) {
-		this.client.logger.debug(`[S3 Client]: Starting upload for file: ${filePath}`);
+	uploadFile(fileId: string) {
+		this.client.logger.debug(`[S3 Client]: Starting upload for file: ${fileId}`);
 		const pass = new PassThrough();
 
 		const upload = new Upload({
 			client: this.s3,
 			params: {
 				Bucket: this.bucketName,
-				Key: filePath,
+				Key: fileId,
 				Body: pass,
 			},
 			// 10 MB chunks & 4 concurrent uploads at once
@@ -96,7 +96,7 @@ export default class S3Manager implements StorageProvider {
 
 		upload.on('httpUploadProgress', (progress) => {
 			if (progress.total && progress.loaded) {
-				this.client.logger.debug(`[S3 Client]: Uploading file: ${filePath} (${(progress.loaded / progress.total * 100).toFixed(2)}%)`);
+				this.client.logger.debug(`[S3 Client]: Uploading file: ${fileId} (${(progress.loaded / progress.total * 100).toFixed(2)}%)`);
 			}
 		});
 
@@ -142,12 +142,23 @@ export default class S3Manager implements StorageProvider {
 		const s3Response = await this.s3.send(command);
 		const chunks: Buffer[] = [];
 		if (s3Response.Body) {
-			for await (const chunk of s3Response.Body as stream.Readable) {
-				chunks.push(chunk);
+			for await (const chunk of s3Response.Body as AsyncIterable<Uint8Array>) {
+				chunks.push(Buffer.from(chunk));
 			}
 		}
 		const buffer = Buffer.concat(chunks);
 		return encoding ? buffer.toString(encoding) : buffer;
+	}
+
+	async getReadStream(file: File) {
+		this.client.logger.debug(`[S3 Client]: Opening file stream: ${file.id}`);
+		const response = await this.s3.send(new GetObjectCommand({
+			Bucket: this.bucketName,
+			Key: `${file.userId}/${file.id}`,
+		}));
+		if (!response.Body) throw new Error(`File ${file.id} has no storage body.`);
+
+		return Readable.fromWeb(response.Body.transformToWebStream() as ReadableStream);
 	}
 
 	async sendFile(res: Response, file: File, range?: string) {
