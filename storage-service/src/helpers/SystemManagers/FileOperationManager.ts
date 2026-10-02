@@ -1,4 +1,5 @@
 import { FileType, type File, type User } from '@/types/generated/client';
+import { Error as APIError, sanitiseObject } from '@/utils';
 import type { UserWithPlan } from '@/types/database/User';
 import ThumbnailCreator from '@/media/ThumbnailCreator';
 import { S3ServiceException } from '@aws-sdk/client-s3';
@@ -7,9 +8,8 @@ import type StorageManager from './StorageManager';
 import { pipeline } from 'node:stream/promises';
 import { Archiver, ZipArchive } from 'archiver';
 import type { Readable } from 'node:stream';
-import { FileAccessor } from '@/accessors';
+import FileAccessor from '@/accessors/File';
 import TrashHandler from '../TrashHandler';
-import { sanitiseObject } from '@/utils';
 import type { Response } from 'express';
 import Client from '../Client';
 import path from 'path';
@@ -364,15 +364,19 @@ export default class FileManager extends FileAccessor {
 	/**
 	  * Send the thumbnail of the file.
 	  * @param {Response} res The HTTP response object.
+		* @param {string} userId The user Id
 	  * @param {string} fileId The filepath of the file for the thumbnail
 	*/
-	async sendThumbnail(res: Response, fileId: string) {
+	async sendThumbnail(res: Response, userId: string, fileId: string) {
 		// Fetch the file
 		const file = await this.fetchById(fileId);
 		if (file == null || file.mimetype == null || file.deletedAt !== null) {
 			res.setHeader('Cache-Control', 'public, max-age=86400');
 			return res.sendFile(`${process.cwd()}/assets/missing-file-icon.png`);
 		}
+
+		// Check if user can view thumbnail (Will update for when sharing is added etc)
+		if (file.userId !== userId) return APIError.InvalidAccess(res);
 
 		// Fetch the storage provider and check if it is online
 		const storageProvider = await this.storageManager.getProviderById(file.storageId);

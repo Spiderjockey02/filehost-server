@@ -32,9 +32,9 @@ export const getThumbnail = (client: Client) => {
 		// Make sure they have access to view the thumbnail
 		const session = await getSession(client, req.headers);
 		if (!session?.user) return Error.InvalidSession(res);
-		if (session.user.id !== userIdResult.data) return Error.InvalidAccess(res);
 
-		await client.FileManager.sendThumbnail(res, fileId);
+		// Send the thumbnail
+		await client.FileManager.sendThumbnail(res, session.userId, fileId);
 	};
 };
 
