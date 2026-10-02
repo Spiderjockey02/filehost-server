@@ -145,10 +145,7 @@ export default class FileAccessor {
 
 			// Update it's own cached version
 			this.cache.delete(file.id);
-
-			// Update their parent's cached version aswell
-			const parentFile = await this.fetchById(file.parentId);
-			if (parentFile) this.cache.delete(file.id);
+			if (file.parentId !== null) this.cache.delete(file.parentId);
 			return file;
 		} catch (err) {
 			throw err;
@@ -223,6 +220,25 @@ export default class FileAccessor {
 			)
 			SELECT id, name, parentId, depth FROM ancestors WHERE parentId IS NOT NULL ORDER BY depth DESC;
 	`;
+	}
+
+	/**
+	 * Fetches a file's ID and the IDs of its ancestors.
+	 * @param {string} fileId The file ID to start from.
+	 * @returns {Promise<string[]>} The file ID and its ancestor IDs.
+	 */
+	async fetchAncestorIds(fileId: string): Promise<string[]> {
+		const ancestors = await client.$queryRaw<{id: string}[]>`
+			WITH RECURSIVE ancestors AS (
+				SELECT id, parentId FROM File WHERE id = ${fileId}
+				UNION
+				SELECT f.id, f.parentId
+				FROM File f
+				INNER JOIN ancestors a ON f.id = a.parentId
+			)
+			SELECT id FROM ancestors;
+		`;
+		return ancestors.map(ancestor => ancestor.id);
 	}
 
 	/**

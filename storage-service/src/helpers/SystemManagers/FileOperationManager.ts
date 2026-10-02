@@ -70,32 +70,22 @@ export default class FileManager extends FileAccessor {
 		// Fetch the files from the database
 		const [oldFile, newDir] = await Promise.all([this.fetchById(fileId), this.fetchById(newDirId)]);
 		if (oldFile == null) throw new Error('File not found');
-		if (newDir == null || newDir.type !== FileType.DIRECTORY) throw new Error('Directory not found');
+		if (newDir == null || newDir.type !== FileType.DIRECTORY) throw new Error('Directory not found.');
 
 		// Check the owner of the file and folder
 		if (oldFile.userId !== user.id || newDir.userId !== user.id) throw new Error('You do not have permission to move this file.');
+		if (oldFile.parentId === newDir.id) throw new Error('The file already exists in this folder.');
+
+		if (oldFile.type === FileType.DIRECTORY) {
+			const destinationAncestors = await this.fetchAncestorIds(newDir.id);
+			if (destinationAncestors.includes(oldFile.id)) throw new Error('Cannot move a directory into itself.');
+		}
 
 		// Make sure a file with the potential same name doesn't already exist
 		if (newDir.children.find(f => f.name == oldFile.name)) throw new Error('A file with that name already exists in the same directory.');
 
-		// Update the old parent directory
-		const oldParent = await this.fetchById(oldFile.parentId);
-		if (oldParent !== null) this.cache.delete(oldFile.id);
-
 		await this.update({ id: oldFile.id, parentId: newDir.id });
-
-		// If it's a folder, process its children (don't move the folder itself again)
-		if (oldFile.type === FileType.DIRECTORY) {
-			const children = await this.fetchChildrenByParentId(oldFile.id);
-
-			// Check if the folder is empty
-			if (children.length > 0) {
-				// Move all child files/subfolders
-				for (const child of children) {
-					await this.move(user, child.id, oldFile.id);
-				}
-			}
-		}
+		if (oldFile.parentId !== null) this.cache.delete(oldFile.parentId);
 	}
 
 	/**
