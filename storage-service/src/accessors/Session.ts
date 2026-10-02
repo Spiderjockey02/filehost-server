@@ -62,19 +62,21 @@ export default class SessionManager {
 	*/
 	async fetchByToken(token: string): Promise<FullSession | null> {
 		try {
-			const session = this.cache.get(token)
-				?? await client.session.findUnique({
-					where: {
-						token,
+			const session = this.cache.get(token) ?? await client.session.findUnique({
+				where: {
+					token,
+					expiresAt: {
+						gte: new Date(),
 					},
-					include: {
-						user: {
-							include: {
-								plan: true,
-							},
+				},
+				include: {
+					user: {
+						include: {
+							plan: true,
 						},
 					},
-				});
+				},
+			});
 
 			if (session !== null) this.cache.set(token, session);
 			return session;
