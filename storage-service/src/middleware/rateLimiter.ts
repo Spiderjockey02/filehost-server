@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import type { RateLimitBucket } from '@/types';
 import type Client from '@/helpers/Client';
 import { Error, getIP } from '@/utils';
-import { getSession } from '.';
 const buckets: Map<string, RateLimitBucket> = new Map();
 
 export async function userPostRateLimit(client: Client) {
@@ -14,8 +13,7 @@ export async function userPostRateLimit(client: Client) {
 		if (req.path == '/api/files/upload') return next();
 
 		// Get the client key and bucket
-		const session = await getSession(client, req.headers);
-		const key = session?.userId || getIP(req);
+		const key = req.session?.userId || getIP(req);
 		const now = Date.now();
 		let bucket = buckets.get(key);
 		if (!bucket) {

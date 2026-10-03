@@ -1,5 +1,5 @@
+import type { UploadManifest, StoredChunk, UploadMetadata, StorageProvider, AuthenticatedRequest } from '@/types';
 import { readFile, writeFile, readdir, rm, rename, appendFile, stat } from 'node:fs/promises';
-import type { UploadManifest, StoredChunk, UploadMetadata, StorageProvider } from '@/types';
 import formidable, { type File as FormidableFile } from 'formidable';
 import type { StorageMedium } from '@/types/generated/browser';
 import { validateChunkMetadata } from '@/validators/files';
@@ -16,7 +16,8 @@ import type { Request } from 'express';
 import { getIP } from '@/utils';
 
 export const CHUNK_SIZE = 10 * 1024 * 1024;
-export default async (client: Client, req: Request, user: UserWithPlan) => {
+export default async (client: Client, req: AuthenticatedRequest) => {
+	const user = req.session.user;
 	if (user.totalStorageSize >= user.plan.maxStorageSize) throw new Error('Max storage reached');
 
 	// Fetch the local default storage medium for instant access instead of waiting to upload to S3 / SFTP

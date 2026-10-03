@@ -1,11 +1,13 @@
 import { validateCacheName } from '@/validators/admin';
-import type { Request, Response } from 'express';
+import { authenticatedHandler } from '@/middleware';
+import type { AuthenticatedRequest } from '@/types';
 import type Client from '@/helpers/Client';
+import type { Response } from 'express';
 import { Error } from '@/utils';
 
 // Endpoint: DELETE /api/admin/cache/:name
 export const deleteCacheByName = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const result = validateCacheName.safeParse(req.params['name']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
@@ -42,12 +44,12 @@ export const deleteCacheByName = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, `Failed to reset cache: ${result.data}.`);
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/cache/stats
 export const getCachedStats = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const getStats = (cache: {size: number; max: number; ttl: number; }) => ({
 				size: cache.size, max: cache.max, ttl: cache.ttl,
@@ -67,5 +69,5 @@ export const getCachedStats = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to get cached stats.');
 		}
-	};
+	});
 };

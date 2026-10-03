@@ -1,13 +1,27 @@
+import type { FullSession } from '@/types/database/Session';
 import type { User, File } from '@/types/generated/client';
 import type { Readable, Writable } from 'node:stream';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { Request, Response } from 'express';
 import type { Socket } from 'node:net';
 
+declare global {
+  namespace Express {
+    interface Request {
+      session: FullSession | null
+    }
+  }
+}
+
 // For logger
 export type LoggerTypes = 'log' | 'warn' | 'error' | 'debug' | 'ready'
-export type CustomRequest = Request & { _startTime: number, _endTime: undefined | number }
-export type CustomResponse = Response & { _startTime: number, _endTime: undefined | number }
+export type CustomRequest = Request & { _startTime: number, _endTime: undefined | number, session: FullSession | null }
+export type AuthenticatedRequest = CustomRequest & {
+	session: NonNullable<CustomRequest['session']> & {
+		user: NonNullable<NonNullable<CustomRequest['session']>['user']>
+	}
+}
+export type CustomResponse = Response & { _startTime: number, _endTime: undefined | number, session: Session | null }
 
 // Prisma
 export interface IdParam {

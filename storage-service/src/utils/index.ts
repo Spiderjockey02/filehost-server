@@ -5,7 +5,6 @@ import { AsnResponse, CityResponse, Reader } from 'mmdb-lib';
 import { readdirSync, statSync, readFileSync } from 'fs';
 import { PATHS, ipRegex } from './CONSTANTS';
 import type Client from '@/helpers/Client';
-import { getSession } from '@/middleware';
 import { join, parse, sep } from 'path';
 import { UAParser } from 'ua-parser-js';
 import APIError from './Error';
@@ -252,20 +251,18 @@ export function logUserActivity(client: Client): (req: Request, res: Response, n
 				const totalResponseSize = responseHeaderSize + responseBodySize;
 				const durationMs = Date.now() - startTime;
 
-				getSession(client, req.headers).then(session => {
-					client.userActivityManager.add({
-						userId: session?.userId ?? null,
-						method: req.method as HTTPMethod,
-						endpoint: req.originalUrl,
-						statusCode: res.statusCode,
-						incomingBytes: totalRequestSize,
-						outgoingBytes: totalResponseSize,
-						ipAddress: getIP(req),
-						userAgent: `${userAgent}`,
-						durationMs,
-						createdAt: new Date(),
-					});
-				}).catch(client.logger.error);
+				client.userActivityManager.add({
+					userId: req.session?.userId ?? null,
+					method: req.method as HTTPMethod,
+					endpoint: req.originalUrl,
+					statusCode: res.statusCode,
+					incomingBytes: totalRequestSize,
+					outgoingBytes: totalResponseSize,
+					ipAddress: getIP(req),
+					userAgent: `${userAgent}`,
+					durationMs,
+					createdAt: new Date(),
+				});
 			});
 
 			if (chunk === undefined) return callback ? originalEnd(callback) : originalEnd();

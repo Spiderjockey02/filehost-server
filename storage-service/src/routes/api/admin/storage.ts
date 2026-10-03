@@ -5,19 +5,21 @@ import { Router } from 'express';
 const router = Router();
 
 export default async function(client: Client) {
-	router.get('/', await checkAdmin(client), getStorages(client));
+	router.use(await checkAdmin());
 
-	router.get('/types', await checkAdmin(client), getStorageTypes(client));
+	router.get('/', getStorages(client));
 
-	router.get('/:storageId', await checkAdmin(client), getStorageById(client));
+	router.get('/types', getStorageTypes(client));
 
-	router.post('/', await checkAdmin(client), postStorage(client));
+	router.get('/:storageId', getStorageById(client));
 
-	router.post('/:storageId', await checkAdmin(client), postStorageByStorageId(client));
+	router.post('/', postStorage(client));
 
-	router.delete('/:storageId', await checkAdmin(client), deleteStorageById(client));
+	router.post('/:storageId', postStorageByStorageId(client));
 
-	router.post('/:storageId/migrate', await checkAdmin(client), postMigrateUserFromStorage(client));
+	router.delete('/:storageId', deleteStorageById(client));
+
+	router.post('/:storageId/migrate', postMigrateUserFromStorage(client));
 
 	return router;
 }

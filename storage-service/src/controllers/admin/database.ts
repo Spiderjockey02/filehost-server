@@ -1,13 +1,15 @@
 import { validateBackup } from '@/validators/endpointParams';
-import type { Request, Response } from 'express';
+import { authenticatedHandler } from '@/middleware';
+import type { AuthenticatedRequest } from '@/types';
 import type Client from '@/helpers/Client';
+import type { Response } from 'express';
 import { Error, PATHS } from '@/utils';
 import dbClient from '@/accessors';
 import { existsSync } from 'fs';
 
 // Endpoint: GET /api/admin/database/backups
 export const getDatabaseBackups = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const backups = await dbClient.$getBackups();
 			res.json({ backups });
@@ -15,12 +17,12 @@ export const getDatabaseBackups = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to get database backups.');
 		}
-	};
+	});
 };
 
 // Endpoint: DELETE /api/admin/database/backup/:timestamp
 export const deleteBackupByName = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateBackup.safeParse(req.params);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -31,12 +33,12 @@ export const deleteBackupByName = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to delete database backup.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/database/backup/:timestamp
 export const downloadBackupByName = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateBackup.safeParse(req.params);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -48,5 +50,5 @@ export const downloadBackupByName = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to download database backup.');
 		}
-	};
+	});
 };

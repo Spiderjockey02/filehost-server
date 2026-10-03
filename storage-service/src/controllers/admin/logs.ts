@@ -1,15 +1,16 @@
 import { validateAdminLogs, validateInterval, validateLogListener, validateString } from '@/validators';
-import type { Request, Response } from 'express';
+import { authenticatedHandler } from '@/middleware';
+import type { AuthenticatedRequest } from '@/types';
 import type { EntityCountMap } from '@/types';
 import type Client from '@/helpers/Client';
-import { getSession } from '@/middleware';
+import type { Response } from 'express';
 import { Error, getIP } from '@/utils';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 
 // Endpoint: GET /api/admin/logs
 export const getLogs = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateAdminLogs.safeParse(req.query);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -20,12 +21,12 @@ export const getLogs = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch logs.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/logs/types
 export const getLogTypes = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const [resourceTypes, successRates] = await Promise.all([
 				client.AuditLogManager.fetchCountByResourceType(),
@@ -37,12 +38,12 @@ export const getLogTypes = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log types.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/logs/history
 export const getLogHistory = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		// Get time frame and validate it
 		const result = validateInterval.safeParse(req.query['interval']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -154,12 +155,12 @@ export const getLogHistory = (client: Client) => {
 				return res.json({ data });
 			}
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/logs/events
 export const getLogEvents = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const events = await client.AuditLogManager.fetchAllEvents();
 			res.json({ events });
@@ -167,12 +168,12 @@ export const getLogEvents = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log events.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/logs/listeners
 export const getLogListeners = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const listeners = await client.AuditLogManager.fetchAllListeners();
 			res.json({ listeners });
@@ -180,22 +181,21 @@ export const getLogListeners = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log listeners.');
 		}
-	};
+	});
 };
 
 
 // Endpoint: POST /api/admin/logs/listeners
 export const postLogListener = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req.headers);
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateLogListener.safeParse(req.body);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
-			const listener = await client.AuditLogManager.addListener({ userId: session!.userId, ...result.data, eventNames: result.data.events });
+			const listener = await client.AuditLogManager.addListener({ userId: req.session.userId, ...result.data, eventNames: result.data.events });
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SYSTEM',
 					eventName: 'LISTENER_UPDATED',
 					message: 'Successfully created audit log listener.',
@@ -211,7 +211,7 @@ export const postLogListener = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SYSTEM',
 					eventName: 'LISTENER_UPDATED',
 					message: `Failed to create audit log listener due to error: ${err}.`,
@@ -223,14 +223,12 @@ export const postLogListener = (client: Client) => {
 			});
 			return Error.GenericError(res, 'Failed to create log listener.');
 		}
-	};
+	});
 };
 
 // Endpoint: DELETE /api/admin/logs/listeners/:id
 export const deleteLogListener = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req.headers);
-
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		// Fetch and validate listener ID
 		const result = validateString.safeParse(req.params['id']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -239,7 +237,7 @@ export const deleteLogListener = (client: Client) => {
 			const listener = await client.AuditLogManager.removeListener(result.data);
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SYSTEM',
 					eventName: 'LISTENER_UPDATED',
 					message: 'Successfully deleted audit log listener.',
@@ -256,7 +254,7 @@ export const deleteLogListener = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SYSTEM',
 					eventName: 'LISTENER_UPDATED',
 					message: `Failed to delete audit log listener due to error: ${err}.`,
@@ -269,14 +267,12 @@ export const deleteLogListener = (client: Client) => {
 
 			return Error.GenericError(res, 'Failed to delete log listener.');
 		}
-	};
+	});
 };
 
 // Endpoint: PATCH /api/admin/logs/listeners/:id
 export const patchLogListener = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req.headers);
-
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		// Fetch and validate listener ID
 		const result = validateString.safeParse(req.params['id']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -285,10 +281,10 @@ export const patchLogListener = (client: Client) => {
 			const bodyResult = validateLogListener.safeParse(req.body);
 			if (!bodyResult.success) return Error.IncorrectQuery(res, bodyResult.error.issues);
 
-			const listener = await client.AuditLogManager.updateListener({ id: result.data, userId: session!.userId, ...bodyResult.data, eventNames: bodyResult.data.events });
+			const listener = await client.AuditLogManager.updateListener({ id: result.data, userId: req.session.userId, ...bodyResult.data, eventNames: bodyResult.data.events });
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SYSTEM',
 					eventName: 'LISTENER_UPDATED',
 					message: 'Successfully updated audit log listener.',
@@ -305,7 +301,7 @@ export const patchLogListener = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SYSTEM',
 					eventName: 'LISTENER_UPDATED',
 					message: `Failed to update audit log listener due to error: ${err}.`,
@@ -318,13 +314,12 @@ export const patchLogListener = (client: Client) => {
 
 			return Error.GenericError(res, 'Failed to update log listener.');
 		}
-	};
+	});
 };
-
 
 // Endpoint: GET /api/admin/logs/files
 export const getLogFiles = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			// Fetch all logs and total byte size
 			const logs = await fs.readdir(`${process.cwd()}/src/utils/logs`);
@@ -336,12 +331,12 @@ export const getLogFiles = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch log files.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/logs/files/:date
 export const getSpecificLog = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const result = validateString.safeParse(req.params['date']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
@@ -356,5 +351,5 @@ export const getSpecificLog = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch log file.');
 		}
-	};
+	});
 };

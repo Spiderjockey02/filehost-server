@@ -1,14 +1,15 @@
 import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
 import { createPlanSchema, validateInterval, validateString } from '@/validators';
-import type { Request, Response } from 'express';
+import { authenticatedHandler } from '@/middleware';
+import type { AuthenticatedRequest } from '@/types';
 import type Client from '@/helpers/Client';
-import { getSession } from '@/middleware';
+import type { Response } from 'express';
 import type { CountMap } from '@/types';
 import { Error, getIP } from '@/utils';
 
 // Endpoint: GET /api/admin/plan/stats
 export const getPlanStats = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const [payingUsers, newCustomers, mostPopular, totalRevenue] = await Promise.all([
 				client.PlanManager.fetchPayingUsers(),
@@ -22,12 +23,12 @@ export const getPlanStats = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/plan/trends
 export const getPlanTrends = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const result = validateInterval.safeParse(req.query['interval']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
@@ -50,13 +51,12 @@ export const getPlanTrends = (client: Client) => {
 				return res.json({ data });
 			}
 		}
-	};
+	});
 };
 
 // Endpoint: POST /api/admin/plan
 export const postPlan = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req.headers);
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 
 		const result = createPlanSchema.safeParse(req.body);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -68,7 +68,7 @@ export const postPlan = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SUBSCRIPTION',
 					eventName: 'PLAN_CREATED',
 					message: 'Successfully created new plan.',
@@ -84,7 +84,7 @@ export const postPlan = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SUBSCRIPTION',
 					eventName: 'PLAN_CREATED',
 					message: `Failed to create new plan due to error: ${err}.`,
@@ -96,13 +96,12 @@ export const postPlan = (client: Client) => {
 			});
 			return Error.GenericError(res, 'Failed to create new plan.');
 		}
-	};
+	});
 };
 
 // Endpoint: PATCH /api/admin/plan/:planId
 export const patchPlan = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req.headers);
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 
 		const result = validateString.safeParse(req.params['planId']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -118,7 +117,7 @@ export const patchPlan = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SUBSCRIPTION',
 					eventName: 'PLAN_UPDATED',
 					message: 'Successfully updated plan.',
@@ -134,7 +133,7 @@ export const patchPlan = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SUBSCRIPTION',
 					eventName: 'PLAN_UPDATED',
 					message: `Failed to update plan due to error: ${err}.`,
@@ -146,13 +145,12 @@ export const patchPlan = (client: Client) => {
 			});
 			return Error.GenericError(res, 'Failed to update plan.');
 		}
-	};
+	});
 };
 
 // Endpoint: DELETE /api/admin/plan/:planId
 export const deletePlan = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req.headers);
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 
 		const result = validateString.safeParse(req.params['planId']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -162,7 +160,7 @@ export const deletePlan = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SUBSCRIPTION',
 					eventName: 'PLAN_DELETED',
 					message: 'Successfully deleted plan.',
@@ -178,7 +176,7 @@ export const deletePlan = (client: Client) => {
 
 			client.QueueManager.addToQueue('AUDIT_LOGS', async () => {
 				await client.AuditLogManager.create({
-					userId: session?.user.id,
+					userId: req.session.user.id,
 					resourceType: 'SUBSCRIPTION',
 					eventName: 'PLAN_DELETED',
 					message: `Failed to delete plan due to error: ${err}.`,
@@ -190,5 +188,5 @@ export const deletePlan = (client: Client) => {
 			});
 			return Error.GenericError(res, 'Failed to delete plan.');
 		}
-	};
+	});
 };

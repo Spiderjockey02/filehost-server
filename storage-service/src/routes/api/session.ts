@@ -1,11 +1,14 @@
 import { deleteNotification, deleteResetAvatar, getLinkedAccounts, getRecentlyViewed, getSessions,
 	postChangeAvatar, postUserInformation, getTrash, deleteEmpty, putRestore, getUserGallery,
 	getNotifications, getUserConfig, patchUserConfig } from '@/controllers/session';
+import { checkLoggedIn } from '@/middleware';
 import type Client from '@/helpers/Client';
 import { Router } from 'express';
 const router = Router();
 
-export default function(client: Client) {
+export default async function(client: Client) {
+	router.use(await checkLoggedIn());
+
 	router.post('/avatar/change', postChangeAvatar(client));
 
 	router.delete('/avatar/reset', deleteResetAvatar(client));

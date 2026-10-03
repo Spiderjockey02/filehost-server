@@ -1,14 +1,16 @@
 import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
 import { validateIntervalWithFilters, validateNetworkList } from '@/validators';
 import { validateUserAgents } from '@/validators/endpointParams';
-import type { Request, Response } from 'express';
+import { authenticatedHandler } from '@/middleware';
+import type { AuthenticatedRequest } from '@/types';
 import type Client from '@/helpers/Client';
+import type { Response } from 'express';
 import type { CountMap } from '@/types';
 import { Error } from '@/utils';
 
 // Endpoint: GET /api/admin/network/stats
 export const getNetworkStats = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const [network, methods, status, duration, total] = await Promise.all([
 				client.userActivityManager.fetchTotalBytesInActivity(),
@@ -23,12 +25,12 @@ export const getNetworkStats = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch logs.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/network/requests
 export const getActivityRequests = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const { interval, userId, storageId } = req.query;
 		const result = validateIntervalWithFilters.safeParse({ interval, userId, storageId });
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -52,12 +54,12 @@ export const getActivityRequests = (client: Client) => {
 				return res.json({ data });
 			}
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/network/traffic
 export const getActivityTraffic = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const { interval, userId, storageId } = req.query;
 		const result = validateIntervalWithFilters.safeParse({ interval, userId, storageId });
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -81,12 +83,12 @@ export const getActivityTraffic = (client: Client) => {
 				return res.json({ data });
 			}
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/network/list
 export const getActivityList = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			// Allow pagination
 			const { page, userId, status, method } = req.query;
@@ -102,12 +104,12 @@ export const getActivityList = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch recently uploaded files.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/network/user-agents
 export const getUserAgents = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateUserAgents.safeParse(req.query);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -118,5 +120,5 @@ export const getUserAgents = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch user agents.');
 		}
-	};
+	});
 };

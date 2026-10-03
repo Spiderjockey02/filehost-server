@@ -1,7 +1,7 @@
 import { generateRoutes, logUserActivity, PATHS } from './utils';
-import type { CustomRequest, CustomResponse } from './types';
 import { userPostRateLimit } from './middleware/rateLimiter';
-import { getSession } from './middleware';
+import { addSession, getSession } from './middleware';
+import type { CustomResponse } from './types';
 import createRoutes from './routes/index';
 import { createServer } from 'node:http';
 import compression from 'compression';
@@ -73,8 +73,8 @@ function isRouteModule(value: unknown): value is { default: (client: Client) => 
 			origin: process.env.FRONTEND_URL,
 		}))
 		.use(compression())
-		.use((req, res, next) => {
-			const newReq = req as CustomRequest;
+		.use(async (req, res, next) => {
+			const newReq = await addSession(client, req);
 			const newRes = res as CustomResponse;
 
 			// Add time to request
@@ -95,7 +95,7 @@ function isRouteModule(value: unknown): value is { default: (client: Client) => 
 		.use(await userPostRateLimit(client))
 		.use(logUserActivity(client))
 		.use(express.json())
-		.use('/', createRoutes(client));
+		.use('/', await createRoutes(client));
 
 	for (const endpoint of endpoints) {
 		const routeModule: unknown = await import(endpoint.path);

@@ -5,9 +5,11 @@ import { Router } from 'express';
 const router = Router();
 
 export default async function(client: Client) {
-	router.delete('/:name', await checkAdmin(client), deleteCacheByName(client));
+	router.use(await checkAdmin());
 
-	router.get('/stats', await checkAdmin(client), getCachedStats(client));
+	router.delete('/:name', deleteCacheByName(client));
+
+	router.get('/stats', getCachedStats(client));
 
 	return router;
 }

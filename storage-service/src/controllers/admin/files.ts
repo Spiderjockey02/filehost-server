@@ -1,13 +1,15 @@
 import { buildYearlyHistory, buildMonthlyHistory, buildDailyHistory, buildHourlyHistory } from '@/utils/analyticTimeSeries';
 import { validateAdminRecentlyUploaded, validateFileGrowth, validateGrouped } from '@/validators/endpointParams';
-import type { Request, Response } from 'express';
+import { authenticatedHandler } from '@/middleware';
+import type { AuthenticatedRequest } from '@/types';
 import { Error, sanitiseObject } from '@/utils';
 import type Client from '@/helpers/Client';
+import type { Response } from 'express';
 import type { CountMap } from '@/types';
 
 // Endpoint: GET /api/admin/files
 export const getFiles = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const [{ files, folders, newFiles }, avgSize, mostCommonFileTypes, deletedFiles, size] = await Promise.all([
 				client.FileManager.fetchTotal(),
@@ -23,12 +25,12 @@ export const getFiles = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch files.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/files/growth
 export const getFilesGrowth = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const { interval, storageId } = req.query;
 		const result = validateFileGrowth.safeParse({ interval, storageId });
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -52,12 +54,12 @@ export const getFilesGrowth = (client: Client) => {
 				return res.json({ data });
 			}
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/files/sized-categories
 export const getFileSizeCategories = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const categories = await client.FileManager.fetchUploadSizeDistribution();
 			res.json({ categories });
@@ -65,12 +67,12 @@ export const getFileSizeCategories = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch file size categories.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/files/recently-uploaded
 export const getRecentlyUploaded = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			// Allow pagination
 			const result = validateAdminRecentlyUploaded.safeParse(req.query);
@@ -85,12 +87,12 @@ export const getRecentlyUploaded = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch recently uploaded files.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/files/mimetypes
 export const getMimeTypes = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateGrouped.safeParse(req.query);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -101,5 +103,5 @@ export const getMimeTypes = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
-	};
+	});
 };

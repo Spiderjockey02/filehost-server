@@ -6,31 +6,33 @@ import { Router } from 'express';
 const router = Router();
 
 export default async function(client: Client) {
-	router.get('/', await checkAdmin(client), getUsers(client));
+	router.use(await checkAdmin());
 
-	router.get('/growth', await checkAdmin(client), getUserGrowth(client));
+	router.get('/', getUsers(client));
 
-	router.get('/language-codes', await checkAdmin(client), getUsersByLanguageCode(client));
+	router.get('/growth', getUserGrowth(client));
 
-	router.get('/emails', await checkAdmin(client), getUserEmails(client));
+	router.get('/language-codes', getUsersByLanguageCode(client));
 
-	router.get('/signUp-source', await checkAdmin(client), getUserSignupSource(client));
+	router.get('/emails', getUserEmails(client));
 
-	router.get('/stats', await checkAdmin(client), getUserStats(client));
+	router.get('/signUp-source', getUserSignupSource(client));
 
-	router.get('/sessions', await checkAdmin(client), getUserSessions(client));
+	router.get('/stats', getUserStats(client));
 
-	router.get('/retention', await checkAdmin(client), getUserRetention(client));
+	router.get('/sessions', getUserSessions(client));
 
-	router.get('/:id', await checkAdmin(client), getUserById(client));
+	router.get('/retention', getUserRetention(client));
 
-	router.get('/:id/accounts', await checkAdmin(client), getUserByIdAccounts(client));
+	router.get('/:id', getUserById(client));
 
-	router.post('/:id/ban', await checkAdmin(client), banUserById(client));
+	router.get('/:id/accounts', getUserByIdAccounts(client));
 
-	router.get('/:id/notifications', await checkAdmin(client), getUsersNotification(client));
+	router.post('/:id/ban', banUserById(client));
 
-	router.get('/:id/logs', await checkAdmin(client), getUsersLogs(client));
+	router.get('/:id/notifications', getUsersNotification(client));
+
+	router.get('/:id/logs', getUsersLogs(client));
 
 	return router;
 }

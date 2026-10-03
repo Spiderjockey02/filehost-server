@@ -2,10 +2,11 @@ import { validateCronJobName, validateCRONSchedule } from '@/validators/admin';
 import { validateConfig, validateNotification } from '@/validators';
 import { getCPU, getMemory } from '@/helpers/SystemManager';
 import MetadataExtractor from '@/media/MetadataExtractor';
-import type { Request, Response } from 'express';
+import { authenticatedHandler } from '@/middleware';
+import type { AuthenticatedRequest } from '@/types';
 import type Client from '@/helpers/Client';
 import { DatabaseMetadata } from '@/types';
-import { getSession } from '@/middleware';
+import type { Response } from 'express';
 import dbClient from '@/accessors';
 import { Error } from '@/utils';
 import fs from 'fs/promises';
@@ -13,7 +14,7 @@ import os from 'os';
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const [mediums, { files }, users, cpu] = await Promise.all([
 				client.FileManager.getFileSystemStatistics(),
@@ -36,12 +37,12 @@ export const getStats = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch system statistics.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/cron-jobs
 export const getCronJobs = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const cronJobs = await client.CRONManager.fetchAll();
 			res.json({ cronJobs });
@@ -49,12 +50,12 @@ export const getCronJobs = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/cron-jobs/:name/logs
 export const getCronJobsByName = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		// Validate params
 		const result = validateCronJobName.safeParse(req.params);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -66,12 +67,12 @@ export const getCronJobsByName = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch list of mime types.');
 		}
-	};
+	});
 };
 
 // Endpoint POST /api/admin/cron-jobs/:name
 export const postCronJobsByName = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			// Validate params
 			const resultCronJobName = validateCronJobName.safeParse(req.params);
@@ -87,33 +88,31 @@ export const postCronJobsByName = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to update CRON job.');
 		}
-	};
+	});
 };
 
 
 // Endpoint POST /api/admin/cron-jobs/:name/run
 export const postCronJobsByNameRun = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		const session = await getSession(client, req.headers);
-		if (!session?.user) return Error.InvalidSession(res);
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 
 		// Validate params
 		const result = validateCronJobName.safeParse(req.params);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
 		try {
-			await client.CRONManager.runCRONJobManually(result.data.name, session.user, req);
+			await client.CRONManager.runCRONJobManually(result.data.name, req);
 			res.json({ success: `Successfully ran CRON Job manually: ${result.data.name}.` });
 		} catch (err) {
 			client.logger.error(`Failed to fetch system statistics: ${err}`);
 			return Error.GenericError(res, 'Failed to run CRON job manually.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/system/stats
 export const getSystemStats = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			// Fetch log information
 			const logsPath = `${process.cwd()}/src/utils/logs`;
@@ -168,19 +167,15 @@ export const getSystemStats = (client: Client) => {
 			console.error('Failed to fetch system statistics:', err);
 			return Error.GenericError(res, 'Failed to retrieve system statistics');
 		}
-	};
+	});
 };
 
 // Endpoint: POST /api/admin/notification
 export const postNotification = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		// Validate body
 		const result = validateNotification.safeParse(req.body);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
-
-		// Check session
-		const session = await getSession(client, req.headers);
-		if (!session?.user) return Error.InvalidSession(res);
 
 		// Check recipient is a valid user
 		const user = await client.userManager.fetchbyParam({ id: result.data.userId });
@@ -195,8 +190,8 @@ export const postNotification = (client: Client) => {
 					resourceType: 'USER',
 					resourceId: notification.id,
 					success: true,
-					message: `Admin: ${session.user.id} successfully sent notification to user: ${user.id}.`,
-					userId: session.user.id,
+					message: `Admin: ${req.session.user.id} successfully sent notification to user: ${user.id}.`,
+					userId: req.session.user.id,
 				});
 			});
 			res.json({ success: 'Notification created successfully.', notification });
@@ -208,29 +203,26 @@ export const postNotification = (client: Client) => {
 					resourceType: 'USER',
 					resourceId: user.id,
 					success: false,
-					message: `Admin: ${session.user.id} failed to sent notification to user: ${user.id} due to error: ${err}.`,
-					userId: session.user.id,
+					message: `Admin: ${req.session.user.id} failed to sent notification to user: ${user.id} due to error: ${err}.`,
+					userId: req.session.user.id,
 				});
 			});
 			Error.GenericError(res, 'Failed to create / send new notification.');
 		}
-	};
+		return;
+	});
 };
 
 // Endpoint: GET /api/admin/config
 export const getConfig = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		res.json(client.config.getAll());
-	};
+	});
 };
 
 // Endpoint: POST /api/admin/config
 export const postConfig = (client: Client) => {
-	return async (req: Request, res: Response) => {
-		// Check session
-		const session = await getSession(client, req.headers);
-		if (!session?.user) return Error.InvalidSession(res);
-
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const result = validateConfig.safeParse(req.body);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
@@ -242,23 +234,23 @@ export const postConfig = (client: Client) => {
 				resourceId: '',
 				success: true,
 				message: 'Updated config',
-				userId: session.user.id,
+				userId: req.session.user.id,
 			});
 		});
 
 		client.config.setAll(result.data);
-		res.json({ success: 'Configuration updated successfully.' });
-	};
+		return res.json({ success: 'Configuration updated successfully.' });
+	});
 };
 
 
 // Endpoint: GET /api/admin/mime-types/search
 export const getMimeTypesSearch = () => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const { query } = req.query;
 		if (typeof query !== 'string') return Error.IncorrectQuery(res, [{ message: 'query must be type string.' }]);
 
 		const list = new MetadataExtractor().getMimeTypes().filter((a) => a.startsWith(query)).sort((a, b) => a.localeCompare(b)).slice(0, 9);
 		return res.json({ list });
-	};
+	});
 };

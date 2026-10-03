@@ -1,9 +1,8 @@
 import type { CronJobLog, CronJobNames } from '@/types/generated/client';
 import type { CronJobList } from '@/types/database/CronJob';
 import dbClient, { CronJobAccessor } from '@/accessors';
-import type { User } from '@/types/generated/browser';
+import { AuthenticatedRequest } from '@/types';
 import type Client from '../helpers/Client';
-import type { Request } from 'express';
 import { join } from 'node:path';
 import { getIP } from '@/utils';
 import { CronJob } from 'cron';
@@ -366,10 +365,9 @@ export default class CRONManager extends CronJobAccessor {
 	/**
 	  * Run a CRON job manually
 	  * @param {CronJobNames} name Name of the CRON job to run
-	  * @param {User} user User who ran the method
 	  * @param {Request} req Request for logging purposes
 	*/
-	async runCRONJobManually(name: CronJobNames, user: User, req: Request) {
+	async runCRONJobManually(name: CronJobNames, req: AuthenticatedRequest) {
 		let log: CronJobLog | null = null;
 		try {
 			switch (name) {
@@ -409,7 +407,7 @@ export default class CRONManager extends CronJobAccessor {
 					resourceId: name,
 					success: true,
 					message: 'Successfully ran CRON job.',
-					userId: user.id,
+					userId: req.session.user.id,
 					userAgent: req.headers['user-agent'],
 					ip: getIP(req),
 				});
@@ -423,7 +421,7 @@ export default class CRONManager extends CronJobAccessor {
 					resourceId: `${name}`,
 					success: false,
 					message: `Failed to run CRON job due to error: ${err}.`,
-					userId: user.id,
+					userId: req.session.user.id,
 					userAgent: req.headers['user-agent'],
 					ip: getIP(req),
 				});

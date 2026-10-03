@@ -1,15 +1,15 @@
 import { buildDailyHistory, buildHourlyHistory, buildMonthlyHistory, buildYearlyHistory } from '@/utils/analyticTimeSeries';
 import { validateBan, validateInterval, validatePage, validateString, validateUser } from '@/validators';
-import type { FullSession } from '@/types/database/Session';
-import type { Request, Response } from 'express';
+import { authenticatedHandler } from '@/middleware';
+import type { AuthenticatedRequest } from '@/types';
 import { Error, sanitiseObject } from '@/utils';
 import type Client from '@/helpers/Client';
-import { getSession } from '@/middleware';
+import type { Response } from 'express';
 import type { CountMap } from '@/types';
 
 // Endpoint: GET /api/admin/users
 export const getUsers = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateUser.safeParse(req.query);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -21,12 +21,12 @@ export const getUsers = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch list of users.');
 		}
-	};
+	});
 };
 
 // Endpoint: GET /api/admin/users/language-codes
 export const getUsersByLanguageCode = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const languageCodes = await client.userManager.fetchGroupCountsByLanguageCodes();
 			res.json({ languageCodes });
@@ -34,13 +34,13 @@ export const getUsersByLanguageCode = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of users.');
 		}
-	};
+	});
 };
 
 
 // Endpoint: GET /api/admin/users/growth
 export const getUserGrowth = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const result = validateInterval.safeParse(req.query['interval']);
 		if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
 
@@ -63,12 +63,12 @@ export const getUserGrowth = (client: Client) => {
 				return res.json({ data });
 			}
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/signUp-source
 export const getUserSignupSource = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const signupSource = await client.userManager.fetchSignUpSource();
 			res.json({ signupSource });
@@ -76,12 +76,12 @@ export const getUserSignupSource = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of sign up sources.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/emails
 export const getUserEmails = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const emails = await client.userManager.fetchCountsByEmailDomain();
 			res.json({ emails });
@@ -89,12 +89,12 @@ export const getUserEmails = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of email domains.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/stats
 export const getUserStats = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const [userTotal, avgstorageUsage, banned, admins] = await Promise.all([
 				client.userManager.fetchTotal(),
@@ -108,12 +108,12 @@ export const getUserStats = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch list of email domains.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/sessions
 export const getUserSessions = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateString.safeParse(req.query['userId']);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -124,12 +124,12 @@ export const getUserSessions = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch user.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/retention
 export const getUserRetention = (client: Client) => {
-	return async (_req: Request, res: Response) => {
+	return authenticatedHandler(async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			// Loop last 14 days get
 			const { total } = await client.userManager.fetchTotal();
@@ -163,12 +163,12 @@ export const getUserRetention = (client: Client) => {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/:id
 export const getUserById = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateString.safeParse(req.params['id']);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -183,12 +183,12 @@ export const getUserById = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch user.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/:id/accounts
 export const getUserByIdAccounts = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
 			const result = validateString.safeParse(req.params['id']);
 			if (!result.success) return Error.IncorrectQuery(res, result.error.issues);
@@ -199,14 +199,14 @@ export const getUserByIdAccounts = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch user\'s accounts.');
 		}
-	};
+	});
 };
 
 // Endpoint POST /api/admin/users/:id/ban
 export const banUserById = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		try {
-			const adminUser = await getSession(client, req.headers) as FullSession;
+			const adminUser = req.session;
 			const userId = req.params['id'];
 
 			// Validate inputs
@@ -226,12 +226,12 @@ export const banUserById = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to ban user.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/:id/notifications
 export const getUsersNotification = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const userId = req.params['id'];
 		const { page } = req.query;
 
@@ -251,12 +251,12 @@ export const getUsersNotification = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch user\'s notifications.');
 		}
-	};
+	});
 };
 
 // Endpoint GET /api/admin/users/:id/logs
 export const getUsersLogs = (client: Client) => {
-	return async (req: Request, res: Response) => {
+	return authenticatedHandler(async (req: AuthenticatedRequest, res: Response) => {
 		const userId = req.params['id'];
 		const page = req.query['page'];
 
@@ -272,5 +272,5 @@ export const getUsersLogs = (client: Client) => {
 			client.logger.error(err);
 			return Error.GenericError(res, 'Failed to fetch user\'s logs.');
 		}
-	};
+	});
 };

@@ -5,25 +5,27 @@ import { Router } from 'express';
 const router = Router();
 
 export default async function(client: Client) {
-	router.get('/', await checkAdmin(client), getLogs(client));
+	router.use(await checkAdmin());
 
-	router.get('/types', await checkAdmin(client), getLogTypes(client));
+	router.get('/', getLogs(client));
 
-	router.get('/history', await checkAdmin(client), getLogHistory(client));
+	router.get('/types', getLogTypes(client));
 
-	router.get('/events', await checkAdmin(client), getLogEvents(client));
+	router.get('/history', getLogHistory(client));
 
-	router.get('/listeners', await checkAdmin(client), getLogListeners(client));
+	router.get('/events', getLogEvents(client));
 
-	router.post('/listeners', await checkAdmin(client), postLogListener(client));
+	router.get('/listeners', getLogListeners(client));
 
-	router.delete('/listeners/:id', await checkAdmin(client), deleteLogListener(client));
+	router.post('/listeners', postLogListener(client));
 
-	router.patch('/listeners/:id', await checkAdmin(client), patchLogListener(client));
+	router.delete('/listeners/:id', deleteLogListener(client));
 
-	router.get('/files', await checkAdmin(client), getLogFiles(client));
+	router.patch('/listeners/:id', patchLogListener(client));
 
-	router.get('/files/:date', await checkAdmin(client), getSpecificLog(client));
+	router.get('/files', getLogFiles(client));
+
+	router.get('/files/:date', getSpecificLog(client));
 
 	return router;
 }

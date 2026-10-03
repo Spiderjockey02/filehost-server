@@ -1,11 +1,14 @@
 import { postCopyFile, postCreateFolder, deleteFile, postDownloadFile, getFiles,
 	postMoveFile, postFileUpload, postRenameFile, getSearchFile, getAllDirectories,
 	getBulkDownload, deleteBulkFiles, postBulkRename } from '@/controllers/files';
+import { checkLoggedIn } from '@/middleware';
 import type Client from '@/helpers/Client';
 import { Router } from 'express';
 const router = Router();
 
-export default function(client: Client) {
+export default async function(client: Client) {
+	router.use(await checkLoggedIn());
+
 	// Upload a new file
 	router.post('/upload', postFileUpload(client));
 
@@ -47,4 +50,3 @@ export default function(client: Client) {
 
 	return router;
 }
-

@@ -5,11 +5,13 @@ import { Router } from 'express';
 const router = Router();
 
 export default async function(client: Client) {
-	router.get('/backups', await checkAdmin(client), getDatabaseBackups(client));
+	router.use(await checkAdmin());
 
-	router.delete('/backup/:timestamp', await checkAdmin(client), deleteBackupByName(client));
+	router.get('/backups', getDatabaseBackups(client));
 
-	router.get('/backup/:timestamp', await checkAdmin(client), downloadBackupByName(client));
+	router.delete('/backup/:timestamp', deleteBackupByName(client));
+
+	router.get('/backup/:timestamp', downloadBackupByName(client));
 
 	return router;
 }
